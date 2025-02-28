@@ -1,0 +1,248 @@
+name: Products Release Notes and Tag
+defaults:
+  run:
+    shell: bash
+env:
+  TOKEN: ${{ secrets.X_TOKEN }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  
+on:
+  workflow_dispatch:
+    inputs:
+      OPERATION:
+        description: 'Create PR/TAG'
+        required: true
+        type: choice
+        options: ['PR', 'TAG', 'RELEASE']
+        default: "PR"
+      PUBLISH_VERSION:
+        description: 'Publish Version'
+        required: false
+        default: ""
+      PUBLISH_FRAMEWORK_VERSION:
+        description: 'Publish Framework Version'
+        required: false
+        default: "" 
+      PUBLISH_EZS_VERSION:
+        description: 'Publish Easysearch Version'
+        required: false
+        default: ""
+      AGENT_PUBLISH:
+        description: 'Agent'
+        required: false
+        type: boolean
+        default: true
+      CONSOLE_PUBLISH:
+        description: 'Console'
+        required: false
+        type: boolean
+        default: true
+      GATEWAY_PUBLISH:
+        description: 'Gateway'
+        required: false
+        type: boolean
+        default: true
+      LOADGEN_PUBLISH:
+        description: 'Loadgen'
+        required: false
+        type: boolean
+        default: true
+      FRAMEWORK_PUBLISH:
+        description: 'Framework'
+        required: false
+        type: boolean
+        default: true
+      EASYSEARCH_PUBLISH:
+        description: 'Easysearch'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  generate-matrix: 
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Generate matrix
+        id: gen-matrix
+        env:
+            AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
+            CONSOLE_PUBLISH: ${{ inputs.CONSOLE_PUBLISH }}
+            GATEWAY_PUBLISH: ${{ inputs.GATEWAY_PUBLISH }}
+            LOADGEN_PUBLISH: ${{ inputs.LOADGEN_PUBLISH }}
+            FRAMEWORK_PUBLISH: ${{ inputs.FRAMEWORk_PUBLISH }}
+            EASYSEARCH_PUBLISH: ${{ inputs.EASYSEARCH_PUBLISH }}
+        run: |
+          matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  publish:
+    needs: generate-matrix
+    name: Create ${{ inputs.OPERATION }} for ${{ matrix.product }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up and check env for ${{ matrix.product }}
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "${{ matrix.product }}" == "framework" ]]; then
+            VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
+            if [[ -z "$VERSION" ]]; then
+              echo "Please input the framework version"
+              exit 1
+            fi
+          elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+            VERSION=${{ inputs.PUBLISH_EZS_VERSION }}
+            if [[ -z "$VERSION" ]]; then
+              echo "Please input the easysearch version"
+              exit 1
+            fi
+          else
+            VERSION=${{ env.PUBLISH_VERSION }}
+          fi
+          
+          if [[ "${{ inputs.OPERATION }}" == "PR" ]]; then
+            PR_BRANCH="release_$VERSION"
+            PR_MESSAGE="chore: update release notes for publish $VERSION"
+            echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
+            echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          cat $GITHUB_ENV
+      - name: Release latest version
+        if: ${{ inputs.OPERATION == 'RELEASE' }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          if [[ "${{ inputs.OPERATION }}" == "RELEASE" ]]; then
+            VER=${{ env.PUBLISH_VERSION }}
+            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+            if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
+              echo "Please input the publish version and easysearch version"
+              exit 1
+            fi
+            SUFFIX=${VER#*-}
+            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              EZS_VER="${EZS_VER}-$SUFFIX"
+            fi
+            #check if the version is correct
+            if [[ "$VER" != *"-"* ]] || [[ "$EZS_VER" != *"-"* ]]; then
+              echo "Please input correct format Publish version and Easysearch version, like 1.0.0-1"
+              exit 1
+            fi
+            fname=".latest"
+            echo "Products publish version: $VER, Easysearch version: $EZS_VER"
+            wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+            jq --arg publish_version "$VER" \
+              --arg easysearch_version "$EZS_VER" \
+              '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+              "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+          fi
+          cat /tmp/$fname && echo && cat $GITHUB_WORKSPACE/$fname
+          if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
+            echo "Files are the same, no need to upload."
+          else
+            echo "Files are different, uploading..."
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
+            # Reset cache
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$VER"
+            # check if the cache is reset
+            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+          fi
+          # set actions variables
+          gh variable set PUBLISH_VERSION --body "$VER"
+          gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+
+      - name: Checkout ${{ matrix.product }} code
+        if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
+        run: |
+          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            git clone $SSH_GIT_REPO/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          else
+            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          fi
+
+      - name: Check tag and create tag for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'TAG'}}
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          echo "Check tag and create tag for ${{ matrix.product }}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          PVER=$(echo "v$VERSION" | sed 's/-.*//')
+          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
+          if [ "$tag_exists" == "false" ]; then
+            git tag -a $PVER -m "Release $PVER"
+            git push origin $PVER
+          fi
+          #wait for 1 minute to make sure the tag is created
+          sleep 60
+
+      - name: Create Branch for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          echo "Create Branch $PR_BRANCH for ${{ matrix.product }}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b "$PR_BRANCH"
+          #update release notes
+          PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
+          for f in en zh; do
+            if [[ "${{ matrix.product }}" == "framework" ]] && [[ "$f" == "zh" ]]; then
+              continue
+            fi
+            sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
+            sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### Breaking changes  \\n### Features  \\n### Bug fix  \\n### Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
+            git add docs/content.$f/docs/release-notes/_index.md
+          done
+
+      - name: Create Commit Message for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          git commit -m "$PR_MESSAGE"     
+          git push origin "$PR_BRANCH"
+
+      - name: Create Github Pull Request for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }} 
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          gh pr create --title "$PR_MESSAGE" \
+                  --body "This PR updates the release notes." \
+                  --base main \
+                  --head "$PR_BRANCH"
