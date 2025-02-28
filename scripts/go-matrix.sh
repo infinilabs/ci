@@ -2,17 +2,23 @@
 
 matrix_includes=()
 
-if [[ "${AGENT_PUBLSH:-true}" == "true" ]]; then
+if [[ "${AGENT_PUBLISH}" == "true" ]]; then
   matrix_includes+=('{"product": "agent"}')
 fi
-if [[ "${CONSOLE_PUBLSH:-true}" == "true" ]]; then
+if [[ "${CONSOLE_PUBLISH}" == "true" ]]; then
    matrix_includes+=('{"product": "console"}')
 fi
-if [[ "${GATEWAY_PUBLSH:-true}" == "true" ]]; then
+if [[ "${GATEWAY_PUBLISH}" == "true" ]]; then
   matrix_includes+=('{"product": "gateway"}')
 fi
-if [[ "${LOADGEN_PUBLSH:-true}" == "true" ]]; then
+if [[ "${LOADGEN_PUBLISH}" == "true" ]]; then
   matrix_includes+=('{"product": "loadgen"}')
+fi
+if [[ "${FRAMEWORK_PUBLISH}" == "true" ]]; then
+  matrix_includes+=('{"product": "framework"}')
+fi
+if [[ "${EASYSEARCH_PUBLISH}" == "true" ]]; then
+  matrix_includes+=('{"product": "easysearch"}')
 fi
 
 # if not triggered by workflow_dispatch, include all products

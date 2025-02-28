@@ -43,23 +43,23 @@ on:
         default: true
 
 jobs:
-  generate-matrix: # 新增作业
+  generate-matrix: 
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.gen-matrix.outputs.matrix }}
     steps:
-      - name: Checkout code # 检出代码以访问脚本
+      - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Generate matrix
         id: gen-matrix
+        env:
+            AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
+            CONSOLE_PUBLISH: ${{ inputs.CONSOLE_PUBLISH }}
+            GATEWAY_PUBLISH: ${{ inputs.GATEWAY_PUBLISH }}
+            LOADGEN_PUBLISH: ${{ inputs.LOADGEN_PUBLISH }}
         run: |
-          matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh \
-            AGENT_PUBLISH="${{ inputs.AGENT_PUBLISH }}" \
-            CONSOLE_PUBLISH="${{ inputs.CONSOLE_PUBLISH }}" \
-            GATEWAY_PUBLISH="${{ inputs.GATEWAY_PUBLISH }}" \
-            LOADGEN_PUBLISH="${{ inputs.LOADGEN_PUBLISH }}" \
-            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
-          )
+          matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           cat "$GITHUB_OUTPUT"
 

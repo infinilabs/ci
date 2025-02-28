@@ -8,6 +8,11 @@ env:
     JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_EXT_VERSION }}
     MAVEN_VERSION: ${{ vars.MAVEN_VERSION }}
     MAVEN_DOWNLOAD_URL: ${{ vars.MAVEN_DOWNLOAD_URL }}
+    OSS_EP: ${{ secrets.OSS_EP }}
+    OSS_AK: ${{ secrets.OSS_AK }}
+    OSS_SK: ${{ secrets.OSS_SK }}
+    OSS_BK: ${{ secrets.OSS_BK }}
+    OSS_MODE: ${{ secrets.OSS_MODE }}
 
 on:
   schedule:
@@ -91,8 +96,13 @@ jobs:
             fi
             # Build when not publish
             if [[ "${ver%%.*}" -lt 8 ]]; then
-              git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+              if [[ "$TNAME" == "elasticsearch" ]]; then
+                git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+              else
+                git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
+              fi
             fi
+
             echo "Current build for $TNAME version [ $ver ] with branch $(git rev-parse --abbrev-ref HEAD)"
             if [[ "${ver%%.*}" -lt 8 ]] && [[ "$TNAME" == "elasticsearch" ]]; then
               echo mvn package -DskipTests -D$TNAME.version=$ver
