@@ -1,0 +1,60 @@
+#!/bin/bash
+
+export LOCAL_REPO=registry.infini.dev
+
+# Usage function to display how to use the script
+usage() {
+    echo "Usage: $0 <image>"
+    echo "Example: $0 infinilabs/console:1.27.1-1950"
+    exit 1
+}
+
+# Function to pull, tag, push, and remove a docker image
+to_local() {
+    local image=$1
+    local local_image="$LOCAL_REPO/$image"
+
+    # Check if the image argument is provided
+    if [ -z "$image" ]; then
+        echo "Error: No image specified."
+        usage
+    fi
+
+    # Pull the image from the remote repository
+    if ! docker pull "$image"; then
+        echo "Failed to pull image: $image"
+        return 1
+    fi
+
+    # Tag the image with the local repository name
+    if ! docker tag "$image" "$local_image"; then
+        echo "Failed to tag image: $image as $local_image"
+        return 1
+    fi
+    echo "$image tag changed to $local_image"
+
+    # Push the image to the local repository
+    if ! docker push "$local_image"; then
+        echo "Failed to push image: $local_image"
+        return 1
+    fi
+    echo "$local_image pushed to local repository"
+
+    # Remove the images to free up space
+    if ! docker rmi "$local_image" "$image"; then
+        echo "Failed to remove images: $local_image $image"
+        return 1
+    fi
+}
+
+# Check if LOCAL_REPO environment variable is set
+if [ -z "$LOCAL_REPO" ]; then
+    echo "Error: LOCAL_REPO environment variable is not set."
+    usage
+fi
+
+# Call the to_local function with the first argument
+to_local "$1"
+
+# Example usage:
+# ./push_to_local infinilabs/console:1.27.1-1950

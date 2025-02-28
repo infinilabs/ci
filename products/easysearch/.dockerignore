@@ -1,0 +1,4 @@
+Dockerfile
+build-*.sh
+gradle/
+config/easysearch.yml

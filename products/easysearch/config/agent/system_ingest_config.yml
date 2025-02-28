@@ -1,0 +1,62 @@
+metrics:
+  enabled: true
+  queue: metrics
+  network:
+    enabled: true
+    summary: true
+    sockets: true
+    #throughput: true
+    details: true
+  memory:
+    metrics:
+      - swap
+      - memory
+  disk:
+    metrics:
+      - iops
+      - usage
+  cpu:
+    metrics:
+      - idle
+      - system
+      - user
+      - iowait
+      - load
+  instance:
+    enabled: true
+
+elastic:
+  availability_check:
+    enabled: false
+
+pipeline:
+  - name: replicate_message_to_cloud
+    enabled: true
+    auto_start: true
+    keep_running: true
+    processor:
+      - consumer:
+          max_worker_size: 3
+          queue_selector:
+            keys:
+              - metrics
+              - logs
+          consumer:
+            group: replication
+          processor:
+            - http:
+                max_sending_qps: 100
+                method: POST
+                path: /.infini_$[[queue_name]]/_doc/
+                headers:
+                    Content-Type: application/json
+                body: $[[message]]
+                basic_auth:
+                  username: ingest
+                  password: passwd
+                schema: "https"
+                hosts: # receiver endpoint, fallback in order
+                  - "127.0.0.1:9200"
+                valid_status_code: [200,201] #panic on other status code
+
+#MANAGED: false

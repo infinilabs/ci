@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# 修改远程仓库地址为 HTTPS
+echo "Changes config for remote url..."
+git remote set-url origin $INNER_SSH_GIT_REPO/$CN_REPO_NAME.git
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to change config remote url."
+    exit 1
+fi
+echo "Config remote url successfully."
+
+# 切换回 master 分支并删除临时分支
+echo "Switching back to master branch and deleting temporary branch $PR_BRANCH..."
+git checkout master
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to checkout master branch."
+    exit 1
+fi
+echo "Switching back to master branch successfully."
+
+# 删除 pr 分支
+git branch -D $PR_BRANCH
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to delete branch $PR_BRANCH."
+    exit 1
+fi
+echo "Temporary branch $PR_BRANCH deleted successfully."

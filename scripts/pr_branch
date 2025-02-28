@@ -1,0 +1,80 @@
+#!/bin/bash
+
+echo "Changes config for remote url..."
+git remote set-url origin $INNER_SSH_GIT_REPO/$CN_REPO_NAME.git
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to change config remote url."
+    exit 1
+fi
+echo "Config remote url successfully."
+
+echo "Current branch $(git rev-parse --abbrev-ref HEAD) at $(git remote -v )"
+
+# 更新子模块
+echo "Updating submodules..."
+git submodule update --init --recursive
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to update submodules."
+    exit 1
+fi
+echo "Submodules updated successfully."
+
+# 切换到 master 分支并拉取最新更改
+echo "Checking out master branch and pulling latest changes..."
+git checkout master
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to checkout master branch."
+    exit 1
+fi
+
+git pull
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to pull latest changes on master branch."
+    exit 1
+fi
+echo "Master branch updated successfully."
+
+# 切换 pr 分支并删除临时分支
+echo "Switching back to branch $PR_BRANCH..."
+git checkout -b $PR_BRANCH
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to checkout $PR_BRANCH branch."
+    exit 1
+fi
+echo "Switching back to branch $PR_BRANCH successfully."
+
+# 同步数据文件
+echo "Syncing data files..."
+cp -rf $GITHUB_WORKSPACE/publish/*.yaml $GITHUB_WORKSPACE/$CN_REPO_NAME/data
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to sync data files."
+    exit 1
+fi
+echo "Data files synced successfully."
+
+# 提交请求
+echo "Checking git commit..."
+git commit -am "chore: ci update version information after publish"
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to git commit."
+    exit 1
+fi
+echo "Git commit successfully."
+
+# 推送请求
+echo "Checking git push..."
+git push --set-upstream origin $PR_BRANCH
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to git push."
+    exit 1
+fi
+echo "Git push successfully."
+
+# 修改远程仓库地址为 HTTPS
+echo "Changes config for remote url..."
+git remote set-url origin $INNER_HTTP_GIT_REPO/$CN_REPO_NAME.git
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to change config remote url."
+    exit 1
+fi
+echo "Config remote url successfully."

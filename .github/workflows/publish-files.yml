@@ -1,0 +1,247 @@
+name: Products Files Publish
+defaults:
+  run:
+    shell: bash
+env:
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Version'
+        required: false
+        default: ""
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: true
+      AGENT_PUBLISH:
+        description: 'Agent'
+        required: false
+        type: boolean
+        default: true
+      CONSOLE_PUBLISH:
+        description: 'Console'
+        required: false
+        type: boolean
+        default: true
+      GATEWAY_PUBLISH:
+        description: 'Gateway'
+        required: false
+        type: boolean
+        default: true
+      LOADGEN_PUBLISH:
+        description: 'Loadgen'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          matrix_includes=()
+          targets=(win-amd64 win-386 linux-amd64 linux-386 linux-mips64 linux-mips64le linux-armv6 linux-armv7 linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64)
+          products=(agent console gateway loadgen)
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
+              for target in "${targets[@]}"; do
+                matrix_includes+=('{"product": "agent", "target": "'"$target"'" }')
+              done
+            fi
+            if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
+              for target in "${targets[@]}"; do
+                matrix_includes+=('{"product": "console", "target": "'"$target"'" }')
+              done
+            fi
+            if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
+              for target in "${targets[@]}"; do
+                matrix_includes+=('{"product": "gateway", "target": "'"$target"'" }')
+              done
+            fi
+
+            if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
+              for target in "${targets[@]}"; do
+                matrix_includes+=('{"product": "loadgen", "target": "'"$target"'" }')
+              done
+            fi
+          else
+            # 非手动触发：构建所有 product 和 target
+            for product in "${products[@]}"; do
+              for target in "${targets[@]}"; do
+                matrix_includes+=('{"product": "'"$product"'", "target": "'"$target"'" }')
+              done
+            done
+          fi
+
+          echo "matrix=[$(IFS=,; echo "${matrix_includes[*]}")]" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: generate-matrix
+    name: Publish ${{ matrix.product }} with ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    env:
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout framework code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework
+          ref: main
+          path: framework
+
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
+      - name: Checkout ${{ matrix.product }} code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
+          ref: main
+          path: ${{ matrix.product }}
+
+      - name: Setup ${{ matrix.product }} env
+        run: |
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Setup ${{ matrix.product }} go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: false
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Check ${{ matrix.product }} go toolchain
+        run: go version
+
+      - name: Set up nodejs toolchain
+        if: matrix.product == 'console'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - name: Check nodejs toolchain
+        if: matrix.product == 'console'
+        run: |
+          if ! command -v cnpm >/dev/null 2>&1; then
+            npm install -g rimraf
+            npm install -g cnpm@9.2.0
+          fi
+          node -v && npm -v && cnpm -v
+
+      - name: Preper ${{ matrix.product }} build code
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
+        run: |
+          cd $WORK/$PNAME
+          echo "Build $PNAME at $PWD"
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_VERSION="$PUBLISH_VERSION"
+            fi
+          else
+            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+          fi
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
+          echo BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S") >> $GITHUB_ENV
+
+      - name: Build ${{ matrix.product }} with ${{ matrix.target }}
+        run: |
+          if [[ "${{ matrix.product }}" == "console" ]]; then
+            cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
+          fi
+          cd $WORK/$PNAME && make build-${{ matrix.target }}
+
+      - name: Build ${{ matrix.product }} with ${{ matrix.target }} check
+        run: |
+          IFS='-' read -r p1 p2 <<< "${{ matrix.target }}"
+          TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+          [[ "$p1" == "win" ]] && TAG="$TAG.exe"
+          ls -lrt $WORK/$PNAME/bin
+          [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
+
+      - name: Build ${{ matrix.product }} with ${{ matrix.target }} License and notice process
+        run: |
+          if [[ "${{ matrix.product }}" == "console" ]]; then
+            mkdir -p $WORK/$PNAME/bin/config
+            PERMJSON=$WORK/$PNAME/modules/security/realm/authc/native/permission.json
+            if [ -e $PERMJSON ]; then
+              cp -rf $PERMJSON $WORK/$PNAME/bin/config
+            fi
+            cp -rf $WORK/$PNAME/config/*.tpl $WORK/$PNAME/bin/config
+            [ -d $WORK/$PNAME/config/setup ] && cp -rf $WORK/$PNAME/config/setup $WORK/$PNAME/bin/config
+          fi
+          cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
+          ls -lrt $WORK/$PNAME/bin
+
+      - name: Archive ${{ matrix.product }} with ${{ matrix.target }} files
+        run: |
+          cd $WORK/$PNAME/bin && mkdir -p config
+          IFS='-' read -r p1 p2 <<< "${{ matrix.target }}"
+          TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+          EXT=$TAG
+          [[ "$p1" == "win" ]] && EXT="$TAG.exe"
+
+          echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+          if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+            zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+          else
+            tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+          fi
+          ls -lrt $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.*
+                      
+      - name: Upload ${{ matrix.product }} with ${{ matrix.target }} files
+        run: | 
+          cd $WORK
+          IFS='-' read -r p1 p2 <<< "${{ matrix.target }}"
+          TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+          echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
+          if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+            [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+          else
+            [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+          fi

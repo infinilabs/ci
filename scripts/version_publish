@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Usage function to display how to use the script
+usage() {
+    echo "Usage: $0 <product> <version>"
+    echo "Example: $0 console 1.27.1"
+    exit 1
+}
+
+# Check if the number of arguments is exactly 2
+if [ "$#" -ne 2 ]; then
+    echo "Error: Invalid number of arguments."
+    usage
+fi
+
+# Extract arguments
+product="$1"
+version="$2"
+fname=".latest"
+
+# Check if necessary environment variables are set
+if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$GITHUB_WORKSPACE" ] || [ -z "$RELEASE_URL" ]; then
+    echo "Error: Required environment variables are not set."
+    echo "Ensure GITHUB_WORKSPACE, GITHUB_WORKSPACE, and RELEASE_URL are set."
+    exit 1
+fi
+
+# Change to the GitHub workspace directory
+cd "$GITHUB_WORKSPACE" || { echo "Error: Failed to change directory to $GITHUB_WORKSPACE"; exit 1; }
+
+# Update the JSON file using jq
+if ! jq --arg k "$product" --arg v "$version" '.[$k] = $v' "$GITHUB_WORKSPACE/$fname" > "$GITHUB_WORKSPACE/$fname.json"; then
+    echo "Error: Failed to update JSON file with jq."
+    exit 1
+fi
+
+# Move the temporary file to the original filename
+if ! mv "$GITHUB_WORKSPACE/$fname.json" "$GITHUB_WORKSPACE/$fname"; then
+    echo "Error: Failed to move updated JSON file to $GITHUB_WORKSPACE/$fname."
+    exit 1
+fi
+
+if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+    echo "The pre-release flag is set to true. Skipping the upload and cache reset."
+    exit 0
+fi
+
+# Upload the file using OSS
+if ! oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -f "$GITHUB_WORKSPACE/$fname"; then
+    echo "Error: Failed to upload file using oss."
+    exit 1
+fi
+
+# Reset cache
+if ! curl -s -H 'x-reset-cache: true' "$RELEASE_URL/${fname}"; then
+    echo "Error: Failed to reset cache for $fname."
+    exit 1
+fi
+
+if ! curl -s -H 'x-reset-cache: true' "$RELEASE_URL/${product}/stable/" -o /dev/null; then
+    echo "Error: Failed to reset cache for $product/stable/."
+    exit 1
+fi
+
+echo "Successfully updated and uploaded the file, and reset the cache."

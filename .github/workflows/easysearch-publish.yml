@@ -1,0 +1,219 @@
+name: Easysearch Files & Docker Publish 
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PNAME: easysearch
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
+  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
+  AGENT_VERSION: ${{ vars.PUBLISH_VERSION }}
+  ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
+  
+on:
+  schedule:
+    - cron: '45 16 * * *'  
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Version'
+        required: false
+        default: ""
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    name: Publish easysearch files and docker
+    runs-on: ubuntu-latest
+    container:      
+      image: gitea/runner-images:ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.PUBLISH_RELEASE == true }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up and check env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up gradle
+        run: |
+          if [ ! -d "$HOME/gradle-$GRADLE_VERSION" ]; then
+            wget -q -nc --show-progress --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
+          fi
+          ln -s $HOME/gradle-$GRADLE_VERSION/bin/gradle /bin/gradle
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
+          echo Gradle path is $HOME/gradle-$GRADLE_VERSION
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          echo "Checkout $PNAME repo done"
+          # for build init
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
+            echo "Publish release version"
+          else
+            $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
+            echo "Publish snapshot version"
+          fi
+      
+      - name: Cache Gradle packages and jdks
+        uses: actions/cache@v4
+        with:
+          path: |
+            /root/.gradle/caches
+            ${{ github.workspace }}/jdks
+          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
+
+      - name: Build Darwin aarch
+        run: |
+          echo "Build $PNAME start..."
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinAarch64Tar
+      
+      - name: Build Darwin
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinTar
+
+      - name: Build linux
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
+
+      - name: Build linux aarch
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxAarch64Tar
+
+      - name: Build win
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkWindowsZip
+
+      - name: Build plugins
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
+
+      - name: Repackage and publish
+        run: |
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
+            if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3}')
+            fi
+          else
+            PUBLISH_VERSION=$PUBLISH_VERSION
+            RUN_NUMBER=${{ github.run_number }}
+            OFFSET=${{ vars.OFFSET }}
+            DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+          fi
+          
+          DYNAMIC_BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S")
+
+          export VERSION=$DYNAMIC_VERSION
+          export BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER
+          export BUILD_DATE=$DYNAMIC_BUILD_DATE
+          
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          echo BUILD_DATE=$DYNAMIC_BUILD_DATE >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+          echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+
+          # 重新整理与生成 SHA256
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            $GITHUB_WORKSPACE/products/$PNAME/build-release.sh
+            $GITHUB_WORKSPACE/products/$PNAME/build-bundle.sh
+          else
+            $GITHUB_WORKSPACE/products/$PNAME/build-snapshot.sh
+          fi
+
+      - name: Build for docker
+        run: |
+          echo "Build docker for $PNAME start..."
+          #prepare docker build
+          chmod 755 $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          else
+            EZS_TAG="$VERSION-$BUILD_NUMBER" BUILD_NUMBER="$(date +%Y%m%d)" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          fi
+
+      - name: Set up qemu
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+        #with:
+        #  buildkitd-flags: --debug
+
+      - name: Login to dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker build meta
+        run: |
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+      - name: Docker Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          push: true
+          provenance: false
+          #no-cache: true
+

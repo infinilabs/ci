@@ -1,0 +1,7 @@
+{
+    "proxies": {
+      "http-proxy": "$PROXY",
+      "https-proxy": "$PROXY",
+      "no-proxy": ".docker.com,.docker.io,registry.docker.io,127.0.0.0/8"
+    }
+}
