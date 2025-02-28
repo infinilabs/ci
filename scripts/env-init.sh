@@ -65,5 +65,5 @@ if [[ ! -z "$GRADLE_VERSION" ]]; then
 
 	mkdir -p "$GRADLE_DIR"
 	cp "$GITHUB_WORKSPACE/products/$PNAME/gradle/"* "$GRADLE_DIR"
-	cho "Gradle config setting done."
+	echo "Gradle config setting done."
 fi
