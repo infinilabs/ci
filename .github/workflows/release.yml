@@ -170,7 +170,6 @@ jobs:
               '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
               "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
           fi
-          cat /tmp/$fname && echo && cat $GITHUB_WORKSPACE/$fname
           if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
             echo "Files are the same, no need to upload."
           else
@@ -180,11 +179,11 @@ jobs:
             curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$VER"
             # check if the cache is reset
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+            # set actions variables
+            gh variable set PUBLISH_VERSION --body "$VER"
+            gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
           fi
-          # set actions variables
-          gh variable set PUBLISH_VERSION --body "$VER"
-          gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
-
+          
       - name: Checkout ${{ matrix.product }} code
         if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
         run: |
