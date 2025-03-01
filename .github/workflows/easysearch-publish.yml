@@ -53,8 +53,6 @@ jobs:
   publish:
     name: Publish easysearch files and docker
     runs-on: ubuntu-latest
-    container:      
-      image: gitea/runner-images:ubuntu-latest
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.PUBLISH_RELEASE != '' }}
     steps:
       - name: Checkout code
@@ -81,13 +79,12 @@ jobs:
             wget -q -nc --show-progress --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
           fi
-          ln -s $HOME/gradle-$GRADLE_VERSION/bin/gradle /bin/gradle
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
           echo Gradle path is $HOME/gradle-$GRADLE_VERSION
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           echo "Checkout $PNAME repo done"
           # for build init
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
