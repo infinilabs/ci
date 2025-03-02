@@ -5,7 +5,7 @@ PNAME="console"  # 定义产品名称
 BASE_URL="${{ vars.RELEASE_URL }}/$PNAME" # 定义基础 URL
 WORK_PATH="/infini/demo-environment/$PNAME"  # 定义工作路径，即 $PNAME 程序所在目录
 UPDATE_DIR="update"            # 定义更新文件存放的临时目录
-VERSION="1.28.0_NIGHTLY-$(date +%Y%m%d)"  # 默认版本号，使用日期
+VERSION="1.29.0_NIGHTLY-$(TZ='Asia/Shanghai' date +%Y%m%d)"  # 默认版本号，使用日期
 REMOTE_UPDATE=false            # 默认本地更新，设置为 false 则进行本地更新
 VERSION_PROVIDED=false # 添加一个变量来表示是否提供了版本号
 NIGHTLY_VERSION=true # 标记当前版本是否是 NIGHTLY
@@ -28,7 +28,7 @@ while [ "$#" -gt 0 ]; do
                     exit 1
                   fi
              elif [[ "$1" != -* && -n "$1" ]] ; then
-                    VERSION="${1}_NIGHTLY-$(date +%Y%m%d)"  # 如果是-r version, 则使用 NIGHTLY
+                    VERSION="${1}_NIGHTLY-$(TZ='Asia/Shanghai' date +%Y%m%d)"  # 如果是-r version, 则使用 NIGHTLY
                     VERSION_PROVIDED=true
                     shift
              fi
@@ -106,7 +106,7 @@ update() {
     if [[ $REMOTE_UPDATE == true ]]; then
       # 查看日志
       echo "View service log..." # 输出提示信息
-      tail -f log/$PNAME/nodes/*/$PNAME.log  # 实时查看日志
+      tail -200 log/$PNAME/nodes/*/$PNAME.log  # 实时查看日志
     fi
 }
 
