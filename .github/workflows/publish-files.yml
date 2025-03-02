@@ -258,7 +258,7 @@ jobs:
         run: |
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 }} staging:/infini/demo-environment/console/update
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"

@@ -222,6 +222,6 @@ jobs:
 
       - name: Deploy easysearch to staging k8s
         run: |
-          #deploy docker
-          echo "kubectl -n apollo set image statefulsets.apps/easysearch easysearch=$EZS_REPO:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
+          #Deploy docker
+          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$EZS_REPO:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
           ssh staging 'bash -s' < /tmp/update_image.sh
