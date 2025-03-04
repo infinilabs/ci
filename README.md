@@ -1,12 +1,20 @@
-# Testing
+<p align="center">
+<a href="https://infinilabs.com/"><img src="docs/images/infinilabs.svg" alt="banner" width="200px"></a>
+</p>
 
-产品发布前自动化测试
+<p align="center">
+<b>The Github Actions for <i>Build, Publish and Testing</i> management</b>
+</p>
 
-## 各工作流说明
+## What is Repo do
 
-- `Analysis Plubins Publish` 自动发布 `analysis-ik` `analysis-pinyin` `analysis-stconvert` 插件
-- `Easysearch Files & Docker Publish` 自动发布 `Easysearch` 快照版本文件 (含 bundle 包) 及 Docker 镜像, 可手工触发发布 `Release` 版本
-- `Products Files & Docker Publish`  自动发布 `Agent/Console/Gateway/Loadgen` 快照版本文件及 Docker 镜像, 可手工触发发布 `Release` 版本
-- `Products Files Publish` 手工触发发布  `Agent/Console/Gateway/Loadgen` 文件
-- `Products Integration Test` 自动编译 `Agent/Console/Gateway/Loadgen` 源码测试，可手工触发下载安装指定版本进行测试
-- `Products Release Notes and Tag` 发版本使用，更新 `Release Notes` `Tag` 和 `.latest` 配置
+> English | [中文](README_zh.md)
+
+
+- `Analysis Plugins Publish`: Automatically publishes the `analysis-ik`, `analysis-pinyin`, and `analysis-stconvert` plugins.
+- `Coco Server Files & Docker Publish`: Automatically publishes `Easysearch` snapshot builds (including bundle packages) and Docker images.  Can be manually triggered to publish `Release` versions.
+- `Easysearch Files & Docker Publish`: Automatically publishes `Easysearch` snapshot builds (including bundle packages) and Docker images. Can be manually triggered to publish `Release` versions.
+- `Products Files & Docker Publish`: Automatically publishes `Agent/Console/Gateway/Loadgen` snapshot builds and Docker images. Can be manually triggered to publish `Release` versions.
+- `Products Files Publish`: Manually triggered publication of `Agent/Console/Gateway/Loadgen` files.
+- `Products Integration Test`: Automatically compiles and tests the source code for `Agent/Console/Gateway/Loadgen`. Can be manually triggered to download and install a specific version for testing.
+- `Products Release Notes and Tag`: Used for releasing versions, updating `Release Notes`, `Tag`, and `.latest` configuration.
