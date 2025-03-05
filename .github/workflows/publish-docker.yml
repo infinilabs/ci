@@ -6,7 +6,6 @@ env:
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
-  CONSOLE_REPO: infinilabs/console
   
 on:
   schedule:
@@ -292,5 +291,5 @@ jobs:
             echo "No $PNAME binary found"
           fi
           #Deploy docker
-          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$CONSOLE_REPO:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
+          ssh -o ConnectTimeout=60 staging 'bash -s' < /tmp/update_image.sh

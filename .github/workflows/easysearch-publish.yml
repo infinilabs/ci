@@ -6,7 +6,6 @@ defaults:
 
 env:
   PNAME: easysearch
-  EZS_REPO: infinilabs/easysearch
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
@@ -87,7 +86,7 @@ jobs:
       - name: Checkout ${{ env.PNAME }} repo
         run: |
           git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          echo "Checkout $PNAME repo done"
+          echo "Checkout $PNAME repo at $(git log -1 --format=%H)"
           # for build init
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
@@ -223,5 +222,5 @@ jobs:
       - name: Deploy easysearch to staging k8s
         run: |
           #Deploy docker
-          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$EZS_REPO:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
+          ssh -o ConnectTimeout=60 staging 'bash -s' < /tmp/update_image.sh
