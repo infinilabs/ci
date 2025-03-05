@@ -9,7 +9,7 @@ setup_coco() {
   local WORK_DIR=/app/easysearch/data
   local COCO_DIR=$WORK_DIR/coco
 
-  [! -d "$WORK_DIR" ] && mkdir -p "$WORK_DIR"
+  [ ! -d "$WORK_DIR" ] && mkdir -p "$WORK_DIR"
   [ ! -d "$COCO_DIR" ] && cp -rf /app/coco "$WORK_DIR"
 
   for dir in data config; do
