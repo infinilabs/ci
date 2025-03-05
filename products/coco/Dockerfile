@@ -33,7 +33,7 @@ ENV PATH=/sbin:/app/easysearch/jdk/bin:/app/easysearch/bin:$PATH
 WORKDIR /app/easysearch
 
 # 权限处理
-RUN chown -R ezs:ezs /app/easysearch
+RUN chown -R ezs:ezs /app/easysearch && chown -R ezs:ezs /app/coco
 
 EXPOSE 9000 2900
 
