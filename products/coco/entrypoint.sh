@@ -23,6 +23,8 @@ setup_coco() {
   if [ -z "$($COCO_DIR/coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     cd $COCO_DIR && echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD
   fi
+
+  [ "$(stat -c %U $COCO_DIR)" == "ezs" ] || chown -R ezs:ezs $COCO_DIR
 }
 
 # --- Root-only functions ---
@@ -48,13 +50,12 @@ trap "exit 0" SIGINT SIGTERM
 if [ "$(id -u)" = '0' ]; then
   if [ -z "${EASYSEARCH_INITIAL_ADMIN_PASSWORD}" ]; then
     log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Using default coco server password."
-    export EASYSEARCH_INITIAL_ADMIN_PASSWORD="(infini|coco-server)"
+    export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
   # for ezs init
   gosu ezs bash bin/initialize.sh -s
   # for coco
-  gosu ezs bash -c 'setup_coco'
-  setup_supervisor
+  setup_coco && setup_supervisor
   # start easysearch
   log "Starting Easysearch Process..."
   exec gosu ezs "$0" "$@"
