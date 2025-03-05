@@ -5,8 +5,6 @@ log() {
   echo "$(date -Iseconds) [$(basename "$0")] $@"
 }
 
-# --- Helper Functions (run as ezs) ---
-
 setup_coco() {
   local WORK_DIR=/app/easysearch/data
   local COCO_DIR=$WORK_DIR/coco
@@ -40,6 +38,7 @@ setup_supervisor() {
   if ! supervisorctl status > /dev/null 2>&1; then
     /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
   fi
+  return 0
 }
 
 # --- Main Script ---
@@ -52,10 +51,10 @@ if [ "$(id -u)" = '0' ]; then
     log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Using default coco server password."
     export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
-  # for ezs init
-  gosu ezs bash bin/initialize.sh -s
   # for coco
   setup_coco && setup_supervisor
+  # for ezs init
+  gosu ezs bash bin/initialize.sh -s
   # start easysearch
   log "Starting Easysearch Process..."
   exec gosu ezs "$0" "$@"
