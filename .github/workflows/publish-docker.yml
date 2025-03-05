@@ -5,6 +5,8 @@ defaults:
 env:
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
   
 on:
@@ -292,4 +294,4 @@ jobs:
           fi
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          ssh -o ConnectTimeout=60 staging 'bash -s' < /tmp/update_image.sh
+          ssh staging 'bash -s' < /tmp/update_image.sh

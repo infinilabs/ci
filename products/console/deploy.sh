@@ -2,7 +2,7 @@
 
 # 配置参数
 PNAME="console"  # 定义产品名称
-BASE_URL="${{ vars.RELEASE_URL }}/$PNAME" # 定义基础 URL
+BASE_URL="$RELEASE_URL/$PNAME" # 定义基础 URL
 WORK_PATH="/infini/demo-environment/$PNAME"  # 定义工作路径，即 $PNAME 程序所在目录
 UPDATE_DIR="update"            # 定义更新文件存放的临时目录
 VERSION="1.29.0_NIGHTLY-$(TZ='Asia/Shanghai' date +%Y%m%d)"  # 默认版本号，使用日期

@@ -223,4 +223,4 @@ jobs:
         run: |
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          ssh -o ConnectTimeout=60 staging 'bash -s' < /tmp/update_image.sh
+          ssh staging 'bash -s' < /tmp/update_image.sh
