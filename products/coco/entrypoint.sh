@@ -21,7 +21,7 @@ setup_coco() {
   done
 
   if [ -z "$($COCO_DIR/coco keystore list | grep -Eo ES_PASSWORD)" ]; then
-    cd $COCO_DIR && echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | $COCO_DIR/coco keystore add --stdin ES_PASSWORD
+    cd $COCO_DIR && echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD
   fi
 }
 
