@@ -70,9 +70,9 @@ jobs:
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
           # download easysearch
-          COCO_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
-          echo "Coco server build with Easysearch $COCO_VER"
-          echo COCO_VER=$COCO_VER >> $GITHUB_ENV
+          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          echo "Coco server build with Easysearch $EZS_VER"
+          echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=coco >> $GITHUB_ENV
