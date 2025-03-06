@@ -147,8 +147,8 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
           if [[ "${{ inputs.OPERATION }}" == "RELEASE" ]]; then
-            VER=${{ env.PUBLISH_VERSION }}
-            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+            VER=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+            EZS_VER=${{ env.PUBLISH_VERSION }}
             if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
               echo "Please input the publish version and easysearch version"
               exit 1
