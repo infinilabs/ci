@@ -66,4 +66,4 @@
     exec gosu ezs "$0" "$@"
   fi
 
-  exec "$@"
+exec "$@"
