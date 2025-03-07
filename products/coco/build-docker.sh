@@ -30,7 +30,8 @@ for t in amd64 arm64; do
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/$PNAME-linux-$t $WORK/$PNAME-$t
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/config $WORK/$PNAME-$t
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/{LICENSE,NOTICE,$PNAME.yml} $WORK/$PNAME-$t
-  # 更新配置
+  # TODO: 更新配置
+  echo "" >> $WORK/$PNAME-$t/$PNAME.yml
   echo "path.data: /app/easysearch/data/coco/data" >> $WORK/$PNAME-$t/$PNAME.yml
   echo "path.logs: /app/easysearch/data/coco/logs" >> $WORK/$PNAME-$t/$PNAME.yml
 
