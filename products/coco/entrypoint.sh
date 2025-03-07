@@ -60,6 +60,7 @@ if [ "$(id -u)" = '0' ]; then
   # for ezs init
   gosu ezs bash bin/initialize.sh -s
   # for coco
+  export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
   setup_coco && setup_supervisor
   # start easysearch
   log "Starting Easysearch Process..."
