@@ -28,7 +28,10 @@ for t in amd64 arm64; do
 
   # Copy coco
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/$PNAME-linux-$t $WORK/$PNAME-$t
+  cp -rf $GITHUB_WORKSPACE/$PNAME/bin/config $WORK/$PNAME-$t
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/{LICENSE,NOTICE,$PNAME.yml} $WORK/$PNAME-$t
+  # TODO: just fix
+  touch $WORK/$PNAME-$t/credentials.json
 
   # ES_DISTRIBUTION_TYPE need change to docker
   sed -i 's/tar/docker/' $WORK/$DNAME-$t/bin/$DNAME-env

@@ -202,14 +202,13 @@ jobs:
 
       - name: Build ${{ matrix.product }} License and notice process
         run: |
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
           if [[ "${{ matrix.product }}" == "console" ]]; then
-            mkdir -p $WORK/$PNAME/bin/config
             PERMJSON=$WORK/$PNAME/modules/security/realm/authc/native/permission.json
             if [ -e $PERMJSON ]; then
               cp -rf $PERMJSON $WORK/$PNAME/bin/config
             fi
-            cp -rf $WORK/$PNAME/config/*.tpl $WORK/$PNAME/bin/config
-            [ -d $WORK/$PNAME/config/setup ] && cp -rf $WORK/$PNAME/config/setup $WORK/$PNAME/bin/config
           fi
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
@@ -252,7 +251,7 @@ jobs:
 
       - name: Archive ${{ matrix.product }} files
         run: |
-          cd $WORK/$PNAME/bin && mkdir -p config
+          cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
@@ -261,9 +260,9 @@ jobs:
 
             echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-                zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+              zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             else
-                tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+              tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             fi
           done
           ls -lrt $WORK/$PNAME-$VERSION-*.*

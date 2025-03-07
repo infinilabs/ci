@@ -172,6 +172,8 @@ jobs:
             [[ "$p1" == "win" ]] && TAG="$TAG.exe"
             [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
           done
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
 
@@ -216,7 +218,7 @@ jobs:
 
       - name: Archive coco server files
         run: |
-          cd $WORK/$PNAME/bin && mkdir -p config
+          cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
