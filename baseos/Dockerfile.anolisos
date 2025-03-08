@@ -1,0 +1,88 @@
+FROM openanolis/anolisos:23 as builder
+
+ARG TARGETARCH
+
+# 指定工作目录
+WORKDIR /
+
+# 操作命令
+RUN dnf install -y --setopt install_weak_deps=False \
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip
+
+# 操作用户    
+RUN mkdir -p /app/easysearch \
+    && groupadd -r -g 602 ezs \
+    && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app ezs \
+    && usermod -c "INFINI Easysearch Running User" ezs
+
+# 安装 supervisor
+RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
+    && ln -s /usr/local/bin/* /usr/bin \
+    && supervisord -v
+
+# 配置可执行文件
+ADD $TARGETARCH/bin/* /sbin
+
+# 配置jdk
+ADD --chown=ezs:ezs $TARGETARCH/jdk-$TARGETARCH.tar.gz /usr/local
+
+# 环境配置
+RUN echo "alias ll='ls -l'" >> /root/.bashrc \
+    && cp -rf /root/.bash* /app \
+    && chown ezs:ezs /app/.bash*
+
+# 更新配置文件
+ADD etc/ezs.sh /etc/profile.d
+ADD etc/limits.conf /etc/security
+ADD etc/70-infini.conf /etc/sysctl.d
+
+# 更新系统信息
+COPY initOS.sh /tmp
+RUN chmod 755 /tmp/initOS.sh \
+    && /tmp/initOS.sh --from anolis
+
+# 更新日志配置
+COPY etc/journald.conf /tmp
+RUN cat /tmp/journald.conf >> /etc/systemd/journald.conf
+
+# 清理资源
+RUN dnf clean all \
+    && dnf autoremove \
+    && rm -rf /var/cache/dnf \
+    && rm -rf /etc/yum.repos.d/*.repo \
+    && rpm -e yum dnf \
+    && rm -rf /usr/lib/.build-id \
+    && find /var/log -type f -delete \
+    && find / -name "rpm" -print0 | xargs -0 -I {} echo "rm -rf {}" >> /tmp/del.sh \
+    && find / -name "dnf" -print0 | xargs -0 -I {} echo "rm -rf {}" >> /tmp/del.sh \
+    && find / -name "yum" -print0 | xargs -0 -I {} echo "rm -rf {}" >> /tmp/del.sh \
+    && chmod 755 /tmp/del.sh \
+    && /tmp/del.sh \
+    && rm -rf /tmp/*  \
+    && find /usr/share/zoneinfo -type f ! -name 'UTC' ! -name 'GMT' ! -name 'UCT' ! -name 'Universal' ! -name 'Zulu' -delete \
+    && find /usr/share/zoneinfo -type d -empty -delete
+
+# remove unnecessary units
+RUN find /etc/systemd/system \
+/lib/systemd/system \
+/usr/lib/systemd/system \
+-path '*.wants/*' \
+-not -name '*dbus*' \
+-not -name '*journald*' \
+-not -name '*systemd-tmpfiles*' \
+-not -name '*systemd-user-sessions*' \
+-exec rm -rvf {} \;
+
+# 最终阶段
+FROM scratch AS prod
+
+LABEL description="A customer linux os from almalinux with jdk 21."
+LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
+
+# 从构建阶段拷贝文件到最终镜像
+COPY --from=builder / /
+
+# 设置工作目录
+WORKDIR /
+
+CMD ["/bin/bash"]
