@@ -38,6 +38,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+
+          # Validate tag format (vX.Y.Z)
+          if ! [[ "${{ inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid tag format. Must be vX.Y.Z (e.g., v0.2.0)"
+            exit 1
+          fi
+
+          # Validate build_number (positive integer)
+          if ! [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Invalid build_number. Must be a positive integer."
+            exit 1
+          fi
+          
       - name: Setup env
         run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
