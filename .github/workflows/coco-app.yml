@@ -48,6 +48,7 @@ jobs:
           fi
           VERSION=$(echo "${{ inputs.tag }}" | sed 's/^v//')
           echo "VER=$VERSION" >> $GITHUB_ENV
+          echo "TAG=${{ inputs.tag }}" >> $GITHUB_ENV
           echo PNAME=coco/app >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
@@ -61,7 +62,7 @@ jobs:
 
       - name: Download and Install Assets
         run: |
-          BASE_URL="$BASE_URL_PREFIX/${{ inputs.tag }}"
+          BASE_URL="$BASE_URL_PREFIX/$TAG"
 
           grep -E -i "$FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
             echo "Downloading $filename ..."
@@ -71,7 +72,7 @@ jobs:
 
       - name: Download and Upgrade Assets
         run: |
-          BASE_URL="$BASE_URL_PREFIX/${{ inputs.tag }}"
+          BASE_URL="$BASE_URL_PREFIX/$TAG"
           mkdir -p upgrade
           grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
             echo "Downloading $filename ..."
@@ -80,12 +81,9 @@ jobs:
           done
       
       - name: Update the download url
-        env:
-          VER: ${{ env.VER }}
         run: |
-          export VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
           jq --arg VER "$VER" \
-             --arg URL "https://release.infinilabs.com/coco/app/stable/.upgrade/" \
+             --arg URL "https://release.infinilabs.com/coco/app/stable/.$VER/" \
              --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
             '
               .version = $VER |
@@ -104,7 +102,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          VERSION=$(echo "${{ inputs.tag }}" | sed 's/^v//')
+          VERSION=$VER
           BUILD_NUMBER="${{ inputs.build_number }}"
 
           echo "Repack VERSION: $VERSION, BUILD_NUMBER: $BUILD_NUMBER"
@@ -154,7 +152,7 @@ jobs:
           done
           # Upload upgrade files
           for upgrade_file in upgrade/*; do
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/.upgrade -f upgrade/$upgrade_file
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f $upgrade_file
           done
           # Upload .latest.json
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
