@@ -165,13 +165,11 @@ jobs:
         run: |
           # Upload repackaged files
           for file in *.zip; do
-            echo "Uploading $file ..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
-          # Upload upgrade files
-          for upgrade_file in upgrade/*; do
-            echo "Uploading $upgrade_file ..."
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f $upgrade_file
+          find upgrade/ \( -name "*.AppImage" -o -name "*.sig" -o -name "*.gz" -o -name "*.exe" \) -maxdepth 1 -type f -print0 |
+          while IFS= read -r -d $'\0' file; do
+            oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
           done
           # Upload .latest.json
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
