@@ -91,7 +91,7 @@ jobs:
                 end
               )
             )
-          ' upgrade/latest.json > upgrade/.latest.json && rm -rf upgrade/latest.json
+          ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
 
       - name: Repackage Assets
         run: |
@@ -150,4 +150,4 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/.upgrade -f upgrade/$upgrade_file
           done
           # Upload .latest.json
-          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f upgrade/.latest.json
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
