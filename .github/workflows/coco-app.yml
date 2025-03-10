@@ -11,7 +11,7 @@ env:
   GITHUB_API_RELEASES_URL: "https://api.github.com/repos/infinilabs/coco-app/releases"
   BASE_URL_PREFIX: "https://github.com/infinilabs/coco-app/releases/download"
   FILE_EXTENSIONS: '\.(dmg|deb|exe)$'
-  UPGRADE_FILE_EXTENSIONS: '\.(sig|AppImage|exe|json)$'
+  UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
 
 on:
   workflow_dispatch:
@@ -53,7 +53,7 @@ jobs:
             echo "::error::Invalid build_number. Must be a positive integer."
             exit 1
           fi
-          
+
       - name: Setup env
         run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
