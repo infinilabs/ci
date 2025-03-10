@@ -79,7 +79,7 @@ jobs:
       
       - name: Update the download url
         run: |
-          VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
+          export VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
           jq --arg version "$VER" '
             .version = $version |
             .platforms |= with_entries(
@@ -91,7 +91,7 @@ jobs:
                 end
               )
             )
-          ' upgrade/latest.json > upgrade/.latest.json
+          ' upgrade/latest.json > upgrade/.latest.json && rm -rf upgrade/latest.json
 
       - name: Repackage Assets
         run: |
