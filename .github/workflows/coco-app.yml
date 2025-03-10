@@ -162,19 +162,17 @@ jobs:
 
       - name: Upload coco app files
         run: |
+          ls -lh {.,upgrade}
           # Upload repackaged files
           for file in *.zip; do
-            echo "Uploading $file ..."
-            #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
+          # Upload upgrade files
           for file in *.exe; do
-            echo "Uploading $file ..."
-            #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f $file
           done
           find upgrade/ \( -name "*.AppImage" -o -name "*.sig" -o -name "*.gz" -o -name "*.exe" \) -maxdepth 1 -type f -print0 |
-          while IFS= read -r -d $'\0' file; do
-            echo "Uploading $file ..."
-            #oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
+          while IFS= read -r -d $'\0' file; dooss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
           done
           # Upload .latest.json
           #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
