@@ -95,7 +95,8 @@ jobs:
             url="$BASE_URL/$filename"
             curl -sSL -o upgrade/"$filename" "$url"
           done
-      
+          ls -lh upgrade
+                
       - name: Update the download url
         run: |
           jq --arg VER "$VER" \
