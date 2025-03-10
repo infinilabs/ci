@@ -46,6 +46,8 @@ jobs:
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
+          VERSION=$(echo "${{ inputs.tag }}" | sed 's/^v//')
+          echo "VER=$VERSION" >> $GITHUB_ENV
           echo PNAME=coco/app >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
@@ -78,20 +80,25 @@ jobs:
           done
       
       - name: Update the download url
+        env:
+          VER: ${{ env.VER }}
         run: |
           export VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
-          jq --arg version "$VER" '
-            .version = $VER |
-            .platforms |= with_entries(
-              .value.url |= (
-                if startswith("https://github.com/infinilabs/coco-app/releases/download/v" + $VER) then
-                  "https://release.infinilabs.com/coco/app/stable/.upgrade/" + (sub("https://github.com/infinilabs/coco-app/releases/download/v" + $VER + "/"; ""))
-                else
-                  .
-                end
+          jq --arg VER "$VER" \
+             --arg URL "https://release.infinilabs.com/coco/app/stable/.upgrade/" \
+             --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
+            '
+              .version = $VER |
+              .platforms |= map_values(
+                .url |= (
+                  if startswith("\($GH_URL)\($VER)") then
+                    "\($URL)\(sub("\($GH_URL)\($VER)/"; ""))"
+                  else
+                    .
+                  end
+                )
               )
-            )
-          ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
+            ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
 
       - name: Repackage Assets
         run: |
