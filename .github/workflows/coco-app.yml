@@ -162,7 +162,6 @@ jobs:
 
       - name: Upload coco app files
         run: |
-          ls -lh {.,upgrade}
           # Upload repackaged files
           for file in *.zip; do
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
@@ -175,4 +174,4 @@ jobs:
           while IFS= read -r -d $'\0' file; dooss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
           done
           # Upload .latest.json
-          #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
