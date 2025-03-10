@@ -86,35 +86,6 @@ jobs:
             curl -sSL -o "$filename" "$url"
           done
 
-      - name: Download and Upgrade Assets
-        run: |
-          BASE_URL="$BASE_URL_PREFIX/$TAG"
-          mkdir -p upgrade
-          grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
-            echo "Downloading $filename ..."
-            url="$BASE_URL/$filename"
-            curl -sSL -o upgrade/"$filename" "$url"
-          done
-          ls -lh upgrade
-                
-      - name: Update the download url
-        run: |
-          jq --arg VER "$VER" \
-             --arg URL "https://release.infinilabs.com/coco/app/stable/.$TAG/" \
-             --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
-            '
-              .version = $VER |
-              .platforms |= map_values(
-                .url |= (
-                  if startswith("\($GH_URL)\($VER)") then
-                    "\($URL)\(sub("\($GH_URL)\($VER)/"; ""))"
-                  else
-                    .
-                  end
-                )
-              )
-            ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
-
       - name: Repackage Assets
         run: |
           set -euo pipefail
@@ -161,6 +132,34 @@ jobs:
           echo "Repackaged files:"
           ls -lh *.zip
 
+      - name: Download and Upgrade Assets
+        run: |
+          BASE_URL="$BASE_URL_PREFIX/$TAG"
+          mkdir -p upgrade
+          grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
+            echo "Downloading $filename ..."
+            url="$BASE_URL/$filename"
+            curl -sSL -o upgrade/"$filename" "$url"
+          done
+      
+      - name: Update the download url
+        run: |
+          jq --arg VER "$VER" \
+             --arg URL "https://release.infinilabs.com/coco/app/stable/.$TAG/" \
+             --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
+            '
+              .version = $VER |
+              .platforms |= map_values(
+                .url |= (
+                  if startswith("\($GH_URL)\($VER)") then
+                    "\($URL)\(sub("\($GH_URL)\($VER)/"; ""))"
+                  else
+                    .
+                  end
+                )
+              )
+            ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
+        
       - name: Upload coco app files
         run: |
           # Upload repackaged files
@@ -168,9 +167,9 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
           # Upload upgrade files
-          ls -lh upgrade
-          find upgrade \( -name "*.AppImage" -o -name "*.sig" -o -name "*.gz" -o -name "*.exe" \) -maxdepth 2 -type f -print0 |
-          while IFS= read -r -d $'\0' file; dooss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
+          find upgrade \( -name "*.AppImage" -o -name "*.sig" -o -name "*.gz" -o -name "*.exe" \) -maxdepth 1 -type f -print0 |
+          while IFS= read -r -d $'\0' file; do
+            oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
           done
           # Upload .latest.json
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
