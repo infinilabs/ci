@@ -57,7 +57,7 @@ jobs:
           echo "$ASSET_NAMES" > asset_names.txt
           cat asset_names.txt
 
-      - name: Download and Filter Assets
+      - name: Download and Install Assets
         run: |
           BASE_URL="$BASE_URL_PREFIX/${{ inputs.tag }}"
 
@@ -67,14 +67,14 @@ jobs:
             curl -sSL -o "$filename" "$url"
           done
 
-      - name: Download and Filter Upgrade Assets
+      - name: Download and Upgrade Assets
         run: |
           BASE_URL="$BASE_URL_PREFIX/${{ inputs.tag }}"
-          mkdir -p upgrade && cd upgrade
+          mkdir -p upgrade
           grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
             echo "Downloading $filename ..."
             url="$BASE_URL/$filename"
-            curl -sSL -o "$filename" "$url"
+            curl -sSL -o upgrade/"$filename" "$url"
           done
       
       - name: Update the download url
@@ -91,7 +91,7 @@ jobs:
                 end
               )
             )
-          ' latest.json > .latest.json
+          ' upgrade/latest.json > upgrade/.latest.json
 
       - name: Repackage Assets
         run: |
@@ -141,10 +141,13 @@ jobs:
 
       - name: Upload coco app files
         run: |
+          # Upload repackaged files
           for file in *.zip; do
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
+          # Upload upgrade files
           for upgrade_file in upgrade/*; do
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/.upgrade -f $upgrade_file
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/.upgrade -f upgrade/$upgrade_file
           done
+          # Upload .latest.json
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f upgrade/.latest.json
