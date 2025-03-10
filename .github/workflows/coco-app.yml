@@ -95,6 +95,7 @@ jobs:
             url="$BASE_URL/$filename"
             curl -sSL -o upgrade/"$filename" "$url"
           done
+          ls -lh upgrade
       
       - name: Update the download url
         run: |
@@ -164,10 +165,12 @@ jobs:
         run: |
           # Upload repackaged files
           for file in *.zip; do
+            echo "Uploading $file ..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
           # Upload upgrade files
           for upgrade_file in upgrade/*; do
+            echo "Uploading $upgrade_file ..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f $upgrade_file
           done
           # Upload .latest.json
