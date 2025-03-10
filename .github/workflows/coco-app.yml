@@ -11,6 +11,7 @@ env:
   GITHUB_API_RELEASES_URL: "https://api.github.com/repos/infinilabs/coco-app/releases"
   BASE_URL_PREFIX: "https://github.com/infinilabs/coco-app/releases/download"
   FILE_EXTENSIONS: '\.(dmg|deb|exe)$'
+  UPGRADE_FILE_EXTENSIONS: '\.(sig|AppImage|exe|json)$'
 
 on:
   workflow_dispatch:
@@ -66,6 +67,32 @@ jobs:
             curl -sSL -o "$filename" "$url"
           done
 
+      - name: Download and Filter Upgrade Assets
+        run: |
+          BASE_URL="$BASE_URL_PREFIX/${{ inputs.tag }}"
+          mkdir -p upgrade && cd upgrade
+          grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
+            echo "Downloading $filename ..."
+            url="$BASE_URL/$filename"
+            curl -sSL -o "$filename" "$url"
+          done
+      
+      - name: Update the download url
+        run: |
+          VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
+          jq --arg version "$VER" '
+            .version = $version |
+            .platforms |= with_entries(
+              .value.url |= (
+                if startswith("https://github.com/infinilabs/coco-app/releases/download/v" + $VER) then
+                  "https://release.infinilabs.com/coco/app/stable/.upgrade/" + (sub("https://github.com/infinilabs/coco-app/releases/download/v" + $VER + "/"; ""))
+                else
+                  .
+                end
+              )
+            )
+          ' latest.json > .latest.json
+
       - name: Repackage Assets
         run: |
           set -euo pipefail
@@ -117,3 +144,7 @@ jobs:
           for file in *.zip; do
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
           done
+          for upgrade_file in upgrade/*; do
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/.upgrade -f $upgrade_file
+          done
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f upgrade/.latest.json

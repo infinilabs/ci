@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "notes": "",
+  "pub_date": "2025-03-07T09:54:07.073Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkErdVlETHlHYUo4MjY5VWJ3SXBaZ1ZGNThwTGpTM1Z1NnI2REhqV1Z3cGdKMjNNSUlzem1kMnY3NDBhWlBaS3NmNVRJV1RvcU1ucTZlcHd3ZGhIVndrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQwNzUzCWZpbGU6Q29jby1BSS5hcHAudGFyLmd6CmIrTzh4QlhlNWRJVlJCbW1JUUhVMmh6OXFEYndBRjgwZnliZVFjZ0I0SEE4R0NiTjRmb0ZUTUFHWDl0M1BCcUhFcTR2M3FadGtvbUUvQlVFZnVUWUNnPT0K",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_aarch64.app.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6blBVN1dKekY2YVROVERVRXkyNjRkd3U3UFNETUMxUGl1bUxONkFZMVd0SUxseGo3NEZmbzhCaXVjWUFpRkdSV2ZSVlRBZ1N4NktaeU9zTXQ1UVJac0E0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQwNzgxCWZpbGU6Q29jby1BSS5hcHAudGFyLmd6ClZpMzEwa2V1YTJKV0oybGI3TXBDZHVwOG1XMzNINTFjRlYrTk5IZ3BVSWwrcmxtaytGL0taMWtVdXZEUXNZWmFXNUFSK21lMDE0RGRLcmI4MWU1ZEN3PT0K",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_x64.app.tar.gz"
+    },
+    "linux-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkpYR2FpODFjYzVHeDMrVHZya2RDanRaZVdUdUE1bHNFOURIUFRnWDBMM2ZzeFRkOUJVakNBS2plZUV4WWl5eVNONjhNRW1kNkVFeEpnakR6NTBGNFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQwOTExCWZpbGU6Q29jby1BSV8wLjIuMF9hbWQ2NC5BcHBJbWFnZQorTkttR1VQVkN5cXc5QmQyenZEQm8yN1VMTG43UXhKS1A4bmhoc0dIOFJkT3cyeFpnRmVHQklmU1FldlFTdWtTRXBtNllhekovL2lRdHJxc1ZQWFFDZz09Cg==",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_0.2.0_amd64.AppImage"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkJ6NWxnSGd5d0V1bmRDS09GMEpyMU5iWmc0clltS1RtMVNtTzkwdUJML3RSVG9yNXYrNnZUT3RTQXhLV2xCVG5ZemxuMUJ5SWUwMFdiNzJFZUdSb2drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQxMjQ1CWZpbGU6Q29jby1BSV8wLjIuMF94ODYtc2V0dXAuZXhlClkxQm03YmRvMWhVMjdxSmYwMTZzamowdDZFcVVjRjdraEhNQ09VL2t3alhrdDNrZnRkRHNwRExkdnFaSms0WFprU2xXN0hDWW9jZXZwUUs1aElLdkR3PT0K",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_0.2.0_amd64-setup.exe"
+    },
+    "windows-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bk1yaHZSOTEzMDRrYmZIZlZuYllsU0FOYWRYVHNwK1pqYjBlSzhyQ21qZktoTzR4WHNOc3l0Q0pZODlKSUZqWnlGRDNhQWh3amc3MHdjOVFIWERWWWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQxMjI1CWZpbGU6Q29jby1BSV8wLjIuMF9hcm02NC1zZXR1cC5leGUKeTBFSnd5UWZxT2tCaFNhd3ZQYzI5aGI3cTZEeEY3ZUZPeE03OFRTUFhzOTlac2xnZ0JYWExlT01aOTA2TmU5dTNEY1p0UjdSOHNQMmlSSHFNN2c2Qmc9PQo=",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_0.2.0_arm64-setup.exe"
+    },
+    "windows-i686": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkJ6NWxnSGd5d0V1bmRDS09GMEpyMU5iWmc0clltS1RtMVNtTzkwdUJML3RSVG9yNXYrNnZUT3RTQXhLV2xCVG5ZemxuMUJ5SWUwMFdiNzJFZUdSb2drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQxMjQ1CWZpbGU6Q29jby1BSV8wLjIuMF94ODYtc2V0dXAuZXhlClkxQm03YmRvMWhVMjdxSmYwMTZzamowdDZFcVVjRjdraEhNQ09VL2t3alhrdDNrZnRkRHNwRExkdnFaSms0WFprU2xXN0hDWW9jZXZwUUs1aElLdkR3PT0K",
+      "url": "https://release.infinilabs.com/coco/app/stable/.upgrade/Coco-AI_0.2.0_x86-setup.exe"
+    }
+  }
+}
