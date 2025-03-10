@@ -83,7 +83,7 @@ jobs:
       - name: Update the download url
         run: |
           jq --arg VER "$VER" \
-             --arg URL "https://release.infinilabs.com/coco/app/stable/.$VER/" \
+             --arg URL "https://release.infinilabs.com/coco/app/stable/.$TAG/" \
              --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
             '
               .version = $VER |
