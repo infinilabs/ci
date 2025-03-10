@@ -81,7 +81,7 @@ jobs:
         run: |
           export VER=$(echo "${{ inputs.tag }}" | sed 's/^v//')
           jq --arg version "$VER" '
-            .version = $version |
+            .version = $VER |
             .platforms |= with_entries(
               .value.url |= (
                 if startswith("https://github.com/infinilabs/coco-app/releases/download/v" + $VER) then
