@@ -2,7 +2,7 @@
 set -e
 
 log() {
-  if [[ "${DEBUG-}" == "true" ]]; then
+  if [[ -n "$LOG" ]]; then
     echo "$(date -Iseconds) [$(basename "$0")] $@"
   fi
 }
@@ -72,8 +72,10 @@ if [ "$(id -u)" = '0' ]; then
     export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
   # for ezs init
-  if [ -z "$(ls -A plugins)" ]; then
+  if ! find config \( -name '*.crt' -o -name '*.key' \) -print -quit; then
     gosu ezs bash bin/initialize.sh -s
+  else
+    log "Certificates already exist. Skipping initialization."
   fi
   # for coco
   export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
