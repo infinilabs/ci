@@ -1,4 +1,4 @@
-name: Repackage Coco App Release
+name: Coco App Release Repackage
 
 defaults:
   run:

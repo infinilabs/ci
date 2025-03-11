@@ -15,20 +15,31 @@ setup_coco() {
 
   if [ ! -d "$COCO_DIR" ]; then
     cp -rf /app/coco $COCO_DIR
+    log "Copied coco to $COCO_DIR"
   fi
 
   for dir in data config; do
     if [ ! -d "$COCO_DIR/$dir" ]; then
       mkdir -p "$COCO_DIR/$dir"
+      log "Created $COCO_DIR/$dir"
     fi
   done
 
   if [ -z "$($COCO_DIR/coco keystore list | grep -Eo ES_PASSWORD)" ]; then
-    cd $COCO_DIR && echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD
+    echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD
+    log "Added ES_PASSWORD to keystore."
     chown -R ezs:ezs $COCO_DIR/data/coco/nodes/*/.keystore
+    log "Changed ownership of keystore files."
+  else
+    log "ES_PASSWORD already exists in keystore."
   fi
   
-  [ "$(stat -c %U $WORK_DIR)" == "ezs" ] || chown -R ezs:ezs $WORK_DIR
+  if [ "$(stat -c %U $WORK_DIR)" == "ezs" ] ; then
+    chown -R ezs:ezs $WORK_DIR
+  else
+    log "$WORK_DIR is not owned by ezs user."
+  fi
+  return 0
 }
 
 # --- Root-only functions ---
@@ -61,7 +72,12 @@ if [ "$(id -u)" = '0' ]; then
   gosu ezs bash bin/initialize.sh -s
   # for coco
   export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
-  setup_coco && setup_supervisor
+  log "Setting up Coco..."
+  setup_coco
+  # start supervisor
+  log "Starting Supervisor Process..."
+  setup_supervisor
+  
   # start easysearch
   log "Starting Easysearch Process..."
   exec gosu ezs "$0" "$@"

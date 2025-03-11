@@ -12,7 +12,8 @@
 
 
 - `Analysis Plugins Publish`: Automatically publishes the `analysis-ik`, `analysis-pinyin`, and `analysis-stconvert` plugins.
-- `Coco Server Files & Docker Publish`: Automatically publishes `Easysearch` snapshot builds (including bundle packages) and Docker images.  Can be manually triggered to publish `Release` versions.
+- `Coco App Release Repackage` Manually triggered repackage of `Release` files
+- `Coco Server Files & Docker Publish`: Automatically publishes `Coco-Server` snapshot builds and Docker images.  Can be manually triggered to publish `Release` versions.
 - `Easysearch Files & Docker Publish`: Automatically publishes `Easysearch` snapshot builds (including bundle packages) and Docker images. Can be manually triggered to publish `Release` versions.
 - `Products Files & Docker Publish`: Automatically publishes `Agent/Console/Gateway/Loadgen` snapshot builds and Docker images. Can be manually triggered to publish `Release` versions.
 - `Products Files Publish`: Manually triggered publication of `Agent/Console/Gateway/Loadgen` files.

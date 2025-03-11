@@ -15,6 +15,10 @@
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkpYR2FpODFjYzVHeDMrVHZya2RDanRaZVdUdUE1bHNFOURIUFRnWDBMM2ZzeFRkOUJVakNBS2plZUV4WWl5eVNONjhNRW1kNkVFeEpnakR6NTBGNFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQwOTExCWZpbGU6Q29jby1BSV8wLjIuMF9hbWQ2NC5BcHBJbWFnZQorTkttR1VQVkN5cXc5QmQyenZEQm8yN1VMTG43UXhKS1A4bmhoc0dIOFJkT3cyeFpnRmVHQklmU1FldlFTdWtTRXBtNllhekovL2lRdHJxc1ZQWFFDZz09Cg==",
       "url": "https://release.infinilabs.com/coco/app/stable/.v0.2.0/Coco-AI_0.2.0_amd64.AppImage"
     },
+    "linux-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkpYR2FpODFjYzVHeDMrVHZya2RDanRaZVdUdUE1bHNFOURIUFRnWDBMM2ZzeFRkOUJVakNBS2plZUV4WWl5eVNONjhNRW1kNkVFeEpnakR6NTBGNFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQwOTExCWZpbGU6Q29jby1BSV8wLjIuMF9hbWQ2NC5BcHBJbWFnZQorTkttR1VQVkN5cXc5QmQyenZEQm8yN1VMTG43UXhKS1A4bmhoc0dIOFJkT3cyeFpnRmVHQklmU1FldlFTdWtTRXBtNllhekovL2lRdHJxc1ZQWFFDZz09Cg==",
+      "url": "https://release.infinilabs.com/coco/app/stable/.v0.2.0/Coco-AI_0.2.0_arm64.AppImage"
+    },
     "windows-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUamU2Tlg1TTd6bkJ6NWxnSGd5d0V1bmRDS09GMEpyMU5iWmc0clltS1RtMVNtTzkwdUJML3RSVG9yNXYrNnZUT3RTQXhLV2xCVG5ZemxuMUJ5SWUwMFdiNzJFZUdSb2drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQxMzQxMjQ1CWZpbGU6Q29jby1BSV8wLjIuMF94ODYtc2V0dXAuZXhlClkxQm03YmRvMWhVMjdxSmYwMTZzamowdDZFcVVjRjdraEhNQ09VL2t3alhrdDNrZnRkRHNwRExkdnFaSms0WFprU2xXN0hDWW9jZXZwUUs1aElLdkR3PT0K",
       "url": "https://release.infinilabs.com/coco/app/stable/.v0.2.0/Coco-AI_0.2.0_x64-setup.exe"
