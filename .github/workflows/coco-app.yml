@@ -37,11 +37,12 @@ jobs:
         OSS_SK: ${{ secrets.OSS_SK }}
         OSS_BK: ${{ secrets.OSS_BK }}
         OSS_MODE: ${{ secrets.OSS_MODE }}
-    steps:
-      - name: Validate inputs
-        run: |
-          set -euo pipefail
+    steps:          
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Setup env
+        run: |
           if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
             version="${BASH_REMATCH[1]}"
             build_number="${BASH_REMATCH[2]}"
@@ -53,12 +54,6 @@ jobs:
             echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
             exit 1
           fi
-          
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup env
-        run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           $GITHUB_WORKSPACE/scripts/env-init.sh
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
