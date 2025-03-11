@@ -14,16 +14,19 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
 
 on:
+  schedule:
+    - cron: '30 16 * * *'    
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag (e.g., v0.2.0)'
+      PUBLISH_VERSION:
+        description: 'Publish Version'
         required: true
-        default: 'v0.2.0'
-      build_number:
-        description: 'Build number (e.g., 1992)'
+        default: ""
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
         required: true
-        default: '1992'
+        type: boolean
+        default: false
 
 jobs:
   repackage:
@@ -35,24 +38,24 @@ jobs:
         OSS_BK: ${{ secrets.OSS_BK }}
         OSS_MODE: ${{ secrets.OSS_MODE }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Validate inputs
         run: |
           set -euo pipefail
 
-          # Validate tag format (vX.Y.Z)
-          if ! [[ "${{ inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid tag format. Must be vX.Y.Z (e.g., v0.2.0)"
-            exit 1
-          fi
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            build_number="${BASH_REMATCH[2]}"
 
-          # Validate build_number (positive integer)
-          if ! [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]; then
-            echo "::error::Invalid build_number. Must be a positive integer."
+            echo "VER=$version" >> $GITHUB_ENV
+            echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
+            echo "TAG=v$version" >> $GITHUB_ENV
+          else
+            echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
             exit 1
           fi
+          
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup env
         run: |
@@ -62,9 +65,6 @@ jobs:
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
-          VERSION=$(echo "${{ inputs.tag }}" | sed 's/^v//')
-          echo "VER=$VERSION" >> $GITHUB_ENV
-          echo "TAG=${{ inputs.tag }}" >> $GITHUB_ENV
           echo PNAME=coco/app >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 

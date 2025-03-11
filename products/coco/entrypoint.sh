@@ -72,7 +72,7 @@ if [ "$(id -u)" = '0' ]; then
     export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
   # for ezs init
-  if [[ -z "$(ls -A plugins)" ]]; then
+  if [ -z "$(ls -A plugins)" ]; then
     gosu ezs bash bin/initialize.sh -s
   fi
   # for coco
