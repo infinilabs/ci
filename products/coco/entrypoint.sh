@@ -2,7 +2,9 @@
 set -e
 
 log() {
-  echo "$(date -Iseconds) [$(basename "$0")] $@"
+  if [[ "${DEBUG-}" == "true" ]]; then
+    echo "$(date -Iseconds) [$(basename "$0")] $@"
+  fi
 }
 
 setup_coco() {
@@ -35,10 +37,10 @@ setup_coco() {
     log "ES_PASSWORD already exists in keystore."
   fi
   
-  if [ "$(stat -c %U $WORK_DIR)" == "ezs" ] ; then
+  if [ "$(stat -c %U $WORK_DIR)" != "ezs" ] ; then
     chown -R ezs:ezs $WORK_DIR
   else
-    log "$WORK_DIR is not owned by ezs user."
+    log "$WORK_DIR is already owned by ezs user."
   fi
   return 0
 }
@@ -70,7 +72,9 @@ if [ "$(id -u)" = '0' ]; then
     export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
   # for ezs init
-  gosu ezs bash bin/initialize.sh -s
+  if [[ -z "$(ls -A plugins)" ]]; then
+    gosu ezs bash bin/initialize.sh -s
+  fi
   # for coco
   export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
   log "Setting up Coco..."
