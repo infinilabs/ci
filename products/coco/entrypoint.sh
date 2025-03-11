@@ -72,10 +72,10 @@ if [ "$(id -u)" = '0' ]; then
     export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
   fi
   # for ezs init
-  if ! find config \( -name '*.crt' -o -name '*.key' \) -print -quit; then
-    gosu ezs bash bin/initialize.sh -s
-  else
+  if [[ $(compgen -G "config/*.{crt,key}" 2>/dev/null) ]]; then
     log "Certificates already exist. Skipping initialization."
+  else
+    gosu ezs bash bin/initialize.sh -s
   fi
   # for coco
   export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
