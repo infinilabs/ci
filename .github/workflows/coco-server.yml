@@ -1,0 +1,282 @@
+name: Coco Server Files & Docker Publish 
+defaults:
+  run:
+    shell: bash
+env:
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
+  
+on:
+  schedule:
+    - cron: '30 16 * * *'    
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Version'
+        required: true
+        default: ""
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    name: Publish coco server files and docker
+    runs-on: ubuntu-latest
+    env:
+        DNAME: easysearch
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        TARGETS: win-amd64 linux-amd64 linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout framework code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework
+          ref: main
+          path: framework
+
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
+      - name: Checkout coco server code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/coco-server
+          ref: main
+          path: coco
+
+      - name: Setup coco server env
+        run: |
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            build_number="${BASH_REMATCH[2]}"
+            echo "Build $PNAME with $version-$build_number"
+          else
+            echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
+            exit 1
+          fi
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          # download easysearch
+          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          echo "Coco server build with Easysearch $EZS_VER"
+          echo EZS_VER=$EZS_VER >> $GITHUB_ENV
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PNAME=coco >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Setup coco server go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: false
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Check coco server go toolchain
+        run: go version
+
+      - name: Set up  with coco server nodejs toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - name: Check  with coco server nodejs toolchain
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+          node -v && npm -v && pnpm -v
+
+      - name: Preper coco server build code
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
+        run: |
+          cd $WORK/$PNAME
+          echo "Build $PNAME at $PWD"
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_VERSION="$PUBLISH_VERSION"
+            fi
+          else
+            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+          fi
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
+          echo BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S") >> $GITHUB_ENV
+
+      - name: Preper coco server dependencies
+        run: |
+          # download mod
+          cd $WORK
+          git clone --depth 1 git@github.com:googleapis/google-cloud-go.git $HOME/go/src/cloud.google.com/go
+          git clone --depth 1 git@github.com:felixge/httpsnoop.git $HOME/go/src/github.com/felixge/httpsnoop
+          git clone --depth 1 git@github.com:golang/groupcache.git $HOME/go/src/github.com/golang/groupcache
+          git clone --depth 1 git@github.com:google/s2a-go.git $HOME/go/src/github.com/google/s2a-go
+          git clone --depth 1 git@github.com:google/uuid.git $HOME/go/src/github.com/google/uuid
+          git clone --depth 1 git@github.com:googleapis/enterprise-certificate-proxy.git $HOME/go/src/github.com/googleapis/enterprise-certificate-proxy
+          git clone --depth 1 git@github.com:googleapis/gax-go.git $HOME/go/src/github.com/googleapis/gax-go
+          git clone --depth 1 git@github.com:census-instrumentation/opencensus-go.git $HOME/go/src/go.opencensus.io
+          git clone --depth 1 git@github.com:open-telemetry/opentelemetry-go-contrib.git $HOME/go/src/go.opentelemetry.io/contrib
+          git clone --depth 1 git@github.com:open-telemetry/opentelemetry-go.git $HOME/go/src/go.opentelemetry.io/otel
+          git clone --depth 1 git@github.com:open-telemetry/opentelemetry-go-instrumentation.git $HOME/go/src/go.opentelemetry.io/auto
+          git clone --depth 1 git@github.com:googleapis/google-api-go-client.git $HOME/go/src/google.golang.org/api
+          git clone --depth 1 git@github.com:googleapis/go-genproto.git $HOME/go/src/google.golang.org/genproto
+          git clone --depth 1 git@github.com:grpc/grpc-go.git $HOME/go/src/google.golang.org/grpc
+          git clone --depth 1 git@github.com:go-logr/logr.git $HOME/go/src/github.com/go-logr/logr
+          git clone --depth 1 git@github.com:go-logr/stdr.git $HOME/go/src/github.com/go-logr/stdr
+          git clone --depth 1 https://go.googlesource.com/sys.git $HOME/go/src/golang.org/x/sys
+          git clone --depth 1 https://go.googlesource.com/net.git $HOME/go/src/golang.org/x/net
+          git clone --depth 1 https://go.googlesource.com/text.git $HOME/go/src/golang.org/x/text
+          git clone --depth 1 https://go.googlesource.com/image.git $HOME/go/src/golang.org/x/image
+          git clone --depth 1 https://go.googlesource.com/oauth2.git $HOME/go/src/golang.org/x/oauth2
+          git clone --depth 1 https://go.googlesource.com/crypto.git $HOME/go/src/golang.org/x/crypto
+          git clone --depth 1 https://go.googlesource.com/protobuf.git $HOME/go/src/google.golang.org/protobuf
+
+      - name: Build coco server
+        run: |
+          # build web
+          cd $WORK/$PNAME/web && pnpm install --quiet && pnpm build
+          # build all targets
+          for tag in $TARGETS; do
+            cd $WORK/$PNAME && make build-$tag
+          done
+
+      - name: Build coco server check
+        run: |
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            [[ "$p1" == "win" ]] && TAG="$TAG.exe"
+            [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
+          done
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
+          cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
+          ls -lrt $WORK/$PNAME/bin
+
+      - name: Preper for Easysearch Docker
+        run: |
+          echo "Build docker for $PNAME start..."
+          #prepare docker build
+          chmod 755 $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+
+      - name: Set up qemu with coco server
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up docker buildx with coco server
+        uses: docker/setup-buildx-action@v3
+        #with:
+        #  buildkitd-flags: --debug
+
+      - name: Login to dockerhub with coco server
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker build meta with coco server
+        run: |
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+      - name: Docker build and push with coco server
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          push: true
+
+      - name: Archive coco server files
+        run: |
+          cd $WORK/$PNAME/bin
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            EXT=$TAG
+            [[ "$p1" == "win" ]] && EXT="$TAG.exe"
+
+            echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+            if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+                zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            else
+                tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            fi
+          done
+          ls -lrt $WORK/$PNAME-$VERSION-*.*
+                      
+      - name: Upload coco server files
+        run: | 
+          cd $WORK
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
+            if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+            else
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+            fi
+          done
+      - name: Update Release version variable
+        if: ${{ inputs.PUBLISH_RELEASE}}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            VER=${{ vars.COCO_PUBLISH_VERSION }}
+            COCO_VER=${{ inputs.PUBLISH_VERSION }}
+            if [[ -z "$VER" ]] || [[ -z "$COCO_VER" ]]; then
+              echo "Please input the publish version and easysearch version"
+              exit 1
+            fi
+            SUFFIX=${VER#*-}
+            if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              COCO_VER="${COCO_VER}-$SUFFIX"
+            fi
+            #check if the version is correct
+            if [[ "$VER" != *"-"* ]] || [[ "$COCO_VER" != *"-"* ]]; then
+              echo "Please input correct format Publish version and Coco-Server version, like 1.0.0-1"
+              exit 1
+            fi
+            # set actions variables
+            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+          fi
