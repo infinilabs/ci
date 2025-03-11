@@ -25,7 +25,8 @@ setup_coco() {
     fi
   done
 
-  if [ -z "$($COCO_DIR/coco keystore list | grep -Eo ES_PASSWORD)" ]; then
+  cd $COCO_DIR
+  if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD
     log "Added ES_PASSWORD to keystore."
     chown -R ezs:ezs $COCO_DIR/data/coco/nodes/*/.keystore
