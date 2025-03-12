@@ -6,6 +6,9 @@ ARG TARGETVARIANT
 # 指定工作目录
 WORKDIR /
 
+# 安装启动器
+RUN command -v tini || apk add --no-cache tini
+
 # 复制文件
 COPY ["gateway-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "gateway.yml", "LICENSE", "NOTICE", "/"]
 
@@ -24,4 +27,5 @@ COPY --from=builder / /
 # 设置工作目录
 WORKDIR /
 
+ENTRYPOINT ["tini", "--"]
 CMD ["/gateway"]
