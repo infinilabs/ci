@@ -56,7 +56,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
-plugins=(sql jieba analysis-hanlp analysis-icu analysis-ik analysis-pinyin analysis-stconvert async_search index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio cross-cluster-replication knn)
+plugins=(sql jieba analysis-hanlp analysis-icu analysis-ik analysis-pinyin analysis-stconvert index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio cross-cluster-replication knn)
 for p in ${plugins[@]}; do
   f=$DEST/plugins/$p/$p-$VERSION.zip
   if [ ! -d $DEST/plugins/$p ]; then
