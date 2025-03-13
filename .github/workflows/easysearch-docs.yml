@@ -1,4 +1,4 @@
-name: Build and Deploy Easysearch Docs
+name: Easysearch Docs Build and Deploy
 
 defaults:
   run:
@@ -31,6 +31,14 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ -n "${{ inputs.PUBLISH_TAG }}" ]]; then
+            if [[ "${{ inputs.PUBLISH_TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              echo "Publish Tag: ${{ inputs.PUBLISH_TAG }}"
+            else
+              echo "Error: Invalid version string format. Expected vX.Y.Z." >&2
+              exit 1
+            fi
+          fi
 
       - name: Run connect in background
         run: |
