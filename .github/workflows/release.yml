@@ -197,10 +197,10 @@ jobs:
           
       - name: Checkout ${{ matrix.product }} code
         if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
+        timeout-minutes: 10
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git config  https.proxy socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
-            git clone ${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            https.proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }}  git clone ${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
@@ -270,7 +270,7 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
         uses: arifer612/Gitea-PR-action@v1
         env:
-          http_proxy: socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
+          https_proxy: http://127.0.0.1:${{ vars.LOCAL_PORT }}
         with:
           url: https://git.infini.ltd
           token: ${{ secrets.GITEA_TOKEN }}
