@@ -127,6 +127,11 @@ jobs:
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV   
 
+      - name: Run connect in background for ${{ matrix.product }}
+        if: ${{ matrix.product == 'console' }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v5
         with:
