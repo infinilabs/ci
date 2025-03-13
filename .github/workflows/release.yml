@@ -200,7 +200,7 @@ jobs:
         timeout-minutes: 10
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            https_proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }}  git clone https://${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            https_proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }}  git clone https://${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
@@ -272,7 +272,7 @@ jobs:
         env:
           https_proxy: http://127.0.0.1:${{ vars.LOCAL_PORT }}
         with:
-          url: https://git.infini.ltd
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           tea-version: 0.9.2
           pr-label: bump
