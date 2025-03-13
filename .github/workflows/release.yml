@@ -122,10 +122,21 @@ jobs:
             fi
           elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
             connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-            VERSION=${{ inputs.PUBLISH_EZS_VERSION }}
-            if [[ -z "$VERSION" ]]; then
+            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+            if [[ -z "$EZS_VER" ]]; then
               echo "Please input the easysearch version"
               exit 1
+            fi
+            VER=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+            if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
+              echo "Please input the publish version and easysearch version"
+              exit 1
+            fi
+            SUFFIX=${VER#*-}
+            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              VERSION="${EZS_VER}-$SUFFIX"
+            else
+              VERSION=$EZS_VER
             fi
           else
             VERSION=${{ env.PUBLISH_VERSION }}
@@ -187,7 +198,7 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            export https_proxy=https://127.0.0.1:$LOCAL_PORT
+            export https_proxy=socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
             git clone ${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
@@ -257,6 +268,8 @@ jobs:
       - name: Create Pull Request for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
         uses: arifer612/Gitea-PR-action@v1
+        env:
+          http_proxy: socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
         with:
           url: https://git.infini.ltd
           token: ${{ secrets.GITEA_TOKEN }}
