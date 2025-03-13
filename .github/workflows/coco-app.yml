@@ -1,169 +1,109 @@
-name: Coco App Release Repackage
-
+name: Coco App Files Publish 
 defaults:
   run:
     shell: bash
 env:
-  GO_VERSION: ${{ vars.GO_VERSION }}
-  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
-  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  PNAME: coco-app
+  NODEJS_VERSION: 20
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  GITHUB_API_RELEASES_URL: "https://api.github.com/repos/infinilabs/coco-app/releases"
-  BASE_URL_PREFIX: "https://github.com/infinilabs/coco-app/releases/download"
-  FILE_EXTENSIONS: '\.(dmg|deb|exe)$'
-  UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_CERTIFICATE_PASSWORD: ""
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
 on:
-  schedule:
-    - cron: '30 16 * * *'    
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
         description: 'Publish Version'
-        required: true
+        required: false
         default: ""
       PUBLISH_RELEASE:
         description: 'Publish Release'
-        required: true
+        required: false
         type: boolean
-        default: false
-
+        default: true
 jobs:
-  repackage:
-    runs-on: ubuntu-latest
-    env:
-        OSS_EP: ${{ secrets.OSS_EP }}
-        OSS_AK: ${{ secrets.OSS_AK }}
-        OSS_SK: ${{ secrets.OSS_SK }}
-        OSS_BK: ${{ secrets.OSS_BK }}
-        OSS_MODE: ${{ secrets.OSS_MODE }}
-    steps:          
-      - name: Checkout code
+  build-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-latest"
+            target: "aarch64-apple-darwin"
+          - platform: "macos-latest"
+            target: "x86_64-apple-darwin"
+
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "i686-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "aarch64-pc-windows-msvc"
+
+          - platform: "ubuntu-22.04"
+            target: "x86_64-unknown-linux-gnu"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
+    
+      - name: Checkout coco app repository
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
+          ref: main
+          path: ${{ env.PNAME }}
 
-      - name: Setup env
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
-          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
-            version="${BASH_REMATCH[1]}"
-            build_number="${BASH_REMATCH[2]}"
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-            echo "VER=$version" >> $GITHUB_ENV
-            echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
-            echo "TAG=v$version" >> $GITHUB_ENV
-          else
-            echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
-            exit 1
-          fi
-          source $GITHUB_WORKSPACE/scripts/go-init.sh
-          $GITHUB_WORKSPACE/scripts/env-init.sh
-          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
-          fi
-          echo PNAME=coco/app >> $GITHUB_ENV
-          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+      - name: Install Rust stable
+        run: rustup toolchain install stable --no-self-update
 
-      - name: Get Release Asset Names
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install app dependencies and build web
+        working-directory: ${{ env.PNAME }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        working-directory: ${{ env.PNAME }}
+        run: pnpm tauri build --target ${{ matrix.target }}
+
+      - name: Check files
+        working-directory: ${{ env.PNAME }}
         run: |
-          ASSET_NAMES=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-            "$GITHUB_API_RELEASES_URL/tags/${{ inputs.tag }}" | \
-            jq -r '.assets[].name')
-          echo "$ASSET_NAMES" > asset_names.txt
-          cat asset_names.txt
-
-      - name: Download and Install Assets
-        run: |
-          BASE_URL="$BASE_URL_PREFIX/$TAG"
-
-          grep -E -i "$FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
-            echo "Downloading $filename ..."
-            url="$BASE_URL/$filename"
-            curl -sSL -o "$filename" "$url"
-          done
-
-      - name: Repackage Assets
-        run: |
-          set -euo pipefail
-
-          VERSION=$VER
-          BUILD_NUMBER="${{ inputs.build_number }}"
-
-          echo "Repack VERSION: $VERSION, BUILD_NUMBER: $BUILD_NUMBER"
-
-          declare -A FILE_MAP=(
-            ["x86-setup.exe"]="windows-386.exe"
-            ["x64-setup.exe"]="windows-amd64.exe"
-            ["arm64-setup.exe"]="windows-arm64.exe"
-            ["x64.dmg"]="mac-amd64.dmg"
-            ["aarch64.dmg"]="mac-arm64.dmg"
-            ["amd64.deb"]="linux-amd64.deb"
-            ["aarch64.deb"]="linux-arm64.deb"
-          )
-
-          while read -r old_name; do
-            base_name=$(basename "$old_name")
-            extension="${base_name##*.}"
-            matched=false
-            for pattern in "${!FILE_MAP[@]}"; do
-              if [[ "$base_name" == *"$pattern"* ]]; then
-                new_suffix_with_ext="${FILE_MAP[$pattern]}"
-                new_suffix=$(echo "$new_suffix_with_ext" | sed "s/\.${extension}$//")
-
-                new_base_name="Coco-AI-${VERSION}-${BUILD_NUMBER}-${new_suffix}"
-                new_name_with_ext="${new_base_name}.${extension}"
-
-                mv "$old_name" "$new_name_with_ext"
-                zip -q "$new_base_name.zip" "$new_name_with_ext"
-                matched=true
-                break
-              fi
-            done
-
-            if [ "$matched" = false ]; then
-                echo "Warning: No mapping found for $old_name.  Skipping." >&2
-            fi
-          done < <(find . -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.deb" \) | sort) 
-          # List repackaged files
-          echo "Repackaged files:"
-          ls -lh *.zip
-
-      - name: Download and Upgrade Assets
-        run: |
-          BASE_URL="$BASE_URL_PREFIX/$TAG"
-          mkdir -p upgrade
-          grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
-            echo "Downloading $filename ..."
-            url="$BASE_URL/$filename"
-            curl -sSL -o upgrade/"$filename" "$url"
-          done
-      
-      - name: Update the download url
-        run: |
-          jq --arg VER "$VER" \
-             --arg URL "https://release.infinilabs.com/coco/app/stable/.$TAG/" \
-             --arg GH_URL "https://github.com/infinilabs/coco-app/releases/download/v" \
-            '
-              .version = $VER |
-              .platforms |= map_values(
-                .url |= (
-                  if startswith("\($GH_URL)\($VER)") then
-                    "\($URL)\(sub("\($GH_URL)\($VER)/"; ""))"
-                  else
-                    .
-                  end
-                )
-              )
-            ' upgrade/latest.json > .latest.json && rm -rf upgrade/latest.json
-        
-      - name: Upload coco app files
-        run: |
-          # Upload repackaged files
-          for file in *.zip; do
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $file
-          done
-          # Upload upgrade files
-          find upgrade \( -name "*.AppImage" -o -name "*.sig" -o -name "*.gz" -o -name "*.exe" \) -maxdepth 1 -type f -print0 |
-          while IFS= read -r -d $'\0' file; do
-            oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -p "$PNAME/.${TAG}" -f "$file"
-          done
-          # Upload .latest.json
-          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f .latest.json
+          FILES=$(find "src-tauri/target" -type f -print0 | xargs -0)
+          echo "Found artifacts: $FILES"

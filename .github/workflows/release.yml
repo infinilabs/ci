@@ -155,7 +155,7 @@ jobs:
         if: ${{ matrix.product == 'easysearch' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          sleep 10 && curl -x http://127.0.0.1:${{ vars.LOCAL_PORT }} ip.sb
+          sleep 10 && curl -s -o /dev/null -w "%{http_code}" -x http://127.0.0.1:${{ vars.LOCAL_PORT }} ip.sb
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
