@@ -127,7 +127,7 @@ jobs:
               echo "Please input the easysearch version"
               exit 1
             fi
-            VER=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+            VER=${{ env.PUBLISH_VERSION }}
             if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
               echo "Please input the publish version and easysearch version"
               exit 1
@@ -148,9 +148,10 @@ jobs:
             echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
             echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
           fi
-
+          echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           cat $GITHUB_ENV
+
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
         env:
