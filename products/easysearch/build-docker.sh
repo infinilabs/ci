@@ -46,7 +46,7 @@ for t in amd64 arm64; do
 
   #plugin install
   if [ -z "$(ls -A $WORK/$PNAME-$t/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio cross-cluster-replication knn)
+    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
       echo y | $WORK/$PNAME-$t/bin/$PNAME-plugin install file:///$DEST/plugins/$p/$p-$VERSION.zip > /dev/null 2>&1
