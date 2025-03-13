@@ -119,14 +119,13 @@ jobs:
         run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
-          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV   
 
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v5

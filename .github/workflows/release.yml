@@ -121,7 +121,6 @@ jobs:
               exit 1
             fi
           elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
             EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
             if [[ -z "$EZS_VER" ]]; then
               echo "Please input the easysearch version"
@@ -151,6 +150,12 @@ jobs:
           echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           cat $GITHUB_ENV
+
+      - name: Run connect in background
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          sleep 10 & echo "Connect is running in background"
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}

@@ -61,7 +61,6 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
 
       - name: Run connect in background

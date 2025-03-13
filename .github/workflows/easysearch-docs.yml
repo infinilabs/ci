@@ -40,10 +40,6 @@ jobs:
             fi
           fi
 
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-
       - name: Checkout ${{ env.PNAME }} repo
         timeout-minutes: 10
         run: |
