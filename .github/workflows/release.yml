@@ -155,7 +155,7 @@ jobs:
         if: ${{ matrix.product == 'easysearch' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          sleep 10 & echo "Connect is running in background"
+          sleep 10 && curl -x http://127.0.0.1:${{ vars.LOCAL_PORT }} ip.sb
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
@@ -206,7 +206,7 @@ jobs:
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
             if [[ "${{ matrix.proOPERATIONduct }}" == "PR" ]]; then
-              https_proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }}  git clone https://${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+              https_proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }} git clone https://${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
             else
               git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
             fi
