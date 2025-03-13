@@ -1,0 +1,154 @@
+name: Build and Deploy Easysearch Docs
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PNAME: easysearch
+  HUGO_VERSION: 0.79.1
+  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+
+on:
+  workflow_dispatch: 
+    inputs:
+      PUBLISH_TAG:
+        description: 'Publish Tag'
+        required: false
+        default: 'v1.11.0'
+
+jobs:
+  build-deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Product Repo
+        uses: actions/checkout@v4
+          
+      - name: Set up and check env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          echo "Checkout $PNAME repo done"
+
+      - name: Set Variables Based on Ref
+        id: vars
+        working-directory: ${{ env.PNAME }}
+        run: |
+          PRODUCT_NAME=$(basename $(pwd))
+          echo "PRODUCT_NAME=$PRODUCT_NAME" >> $GITHUB_ENV
+          
+          IS_SEMVER=false
+          SEMVER_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
+
+          if [[ -n "${{ inputs.PUBLISH_TAG }}" ]]; then
+            REF_TYPE="tag"
+            git checkout ${{ inputs.PUBLISH_TAG }}
+            REF_NAME=$(git describe --tags --exact-match HEAD)
+          else
+            REF_TYPE="branch"
+            REF_NAME="main"
+          fi
+          
+          if [[ "${REF_TYPE}" == "branch" ]]; then
+            if [[ "$REF_NAME" == "main" ]]; then
+              echo "VERSION=main" >> $GITHUB_ENV
+              echo "BRANCH=main" >> $GITHUB_ENV
+            elif [[ "$REF_NAME" =~ $SEMVER_REGEX ]]; then
+              IS_SEMVER=true
+              echo "VERSION=$REF_NAME" >> $GITHUB_ENV
+              echo "BRANCH=$REF_NAME" >> $GITHUB_ENV
+            else
+              echo "Branch '$REF_NAME' is not a valid semantic version. Skipping build."
+              exit 0
+            fi
+          elif [[ "${REF_TYPE}" == "tag" ]]; then
+            if [[ "$REF_NAME" =~ $SEMVER_REGEX ]]; then
+              IS_SEMVER=true
+              echo "VERSION=$REF_NAME" >> $GITHUB_ENV
+              echo "BRANCH=main" >> $GITHUB_ENV  # Set BRANCH to 'main' for tags
+            else
+              echo "Tag '$REF_NAME' is not a valid semantic version. Skipping build."
+              exit 0
+            fi
+          fi
+
+          # Gather branches and tags, filter for semantic versions, sort, remove duplicates
+          VERSIONS=$(git for-each-ref refs/remotes/origin refs/tags --format="%(refname:short)" | \
+            grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | awk -F'[v]' '{print "v"$2}' | sort -Vr | uniq | tr '\n' ',' | sed 's/,$//')
+          echo "VERSIONS=main,$VERSIONS" >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+      - name: Install Hugo
+        run: |
+          wget -q -nc --show-progress --progress=bar:force:noscroll https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
+          tar -xzf hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
+          sudo mv hugo /usr/local/bin/
+
+      - name: Checkout Docs Repo
+        uses: actions/checkout@v4
+        with:
+          repository: infinilabs/docs
+          path: docs-output
+          token: ${{ secrets.REPO_PAT }}
+
+      - name: Build Documentation
+        working-directory: ${{ env.PNAME }}
+        run: |
+          (cd docs && OUTPUT=$(pwd)/../../docs-output make docs-build docs-place-redirect)
+
+      - name: Commit and Push Changes to Docs Repo
+        working-directory: docs-output
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          if [[ -n $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "Rebuild $PRODUCT_NAME docs for version $VERSION"
+            git push origin main
+          else
+            echo "No changes to commit."
+          fi
+
+      - name: Rebuild Docs for Latest Version (main), if not already on main
+        working-directory: ${{ env.PNAME }}
+        run: |
+          # Only rebuild the main branch docs if the current ref is not "main"
+          if [[ "$REF_NAME" != "main" ]]; then
+            echo "Switching to main branch and rebuilding docs for 'latest'"
+
+            # Checkout the main branch of the product repo to rebuild docs for "latest"
+            git checkout main
+
+            # Ensure the latest changes are pulled
+            git pull origin main
+            
+            # Build Docs for Main Branch (latest)
+            (cd docs && OUTPUT=$(pwd)/../../docs-output VERSION="main" BRANCH="main" make docs-build docs-place-redirect)
+
+            # Commit and Push Latest Docs to Main
+            cd $GITHUB_WORKSPACE/docs-output
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            
+            if [[ -n $(git status --porcelain) ]]; then
+              git add .
+              git commit -m "Rebuild $PRODUCT_NAME docs for main branch with latest version"
+              git push origin main
+            else
+              echo "No changes to commit for main."
+            fi
+          else
+            echo "Current ref is 'main', skipping rebuild for 'latest'."
+          fi
