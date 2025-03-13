@@ -3,6 +3,7 @@ defaults:
   run:
     shell: bash
 env:
+  PNAME: coco
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
@@ -60,7 +61,7 @@ jobs:
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
-          path: coco
+          path: ${{ env.PNAME }}
 
       - name: Setup coco server env
         run: |
@@ -83,7 +84,6 @@ jobs:
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
-          echo PNAME=coco >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Setup coco server go toolchain
@@ -101,8 +101,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - name: Check  with coco server nodejs toolchain
+      - name: Check with coco server nodejs toolchain
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             npm install -g pnpm

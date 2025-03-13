@@ -148,6 +148,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: "**/package.json"
 
       - name: Check  with ${{ matrix.product }} nodejs toolchain
         if: matrix.product == 'console'
