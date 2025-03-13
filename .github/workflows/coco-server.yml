@@ -101,8 +101,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Check with coco server nodejs toolchain
         run: |
@@ -165,6 +163,13 @@ jobs:
           git clone --depth 1 https://go.googlesource.com/crypto.git $HOME/go/src/golang.org/x/crypto
           git clone --depth 1 https://go.googlesource.com/protobuf.git $HOME/go/src/google.golang.org/protobuf
 
+      - name: Sync node cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          
       - name: Build coco server
         run: |
           # build web
