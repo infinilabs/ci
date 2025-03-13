@@ -132,7 +132,7 @@ jobs:
           fi
           
           if [[ "${{ inputs.OPERATION }}" == "PR" ]]; then
-            PR_BRANCH="release_$VERSION"
+            PR_BRANCH="ci_release_$VERSION"
             PR_MESSAGE="chore: update release notes for publish $VERSION"
             echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
             echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
