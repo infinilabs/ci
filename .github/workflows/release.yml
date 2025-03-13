@@ -5,7 +5,6 @@ defaults:
 env:
   TOKEN: ${{ secrets.X_TOKEN }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
   LOCAL_PORT: ${{ vars.LOCAL_PORT }}
@@ -159,7 +158,7 @@ jobs:
             fi
             #check if the version is correct
             if [[ "$VER" != *"-"* ]] || [[ "$EZS_VER" != *"-"* ]]; then
-              echo "Please input correct format Publish version and Easysearch version, like 1.0.0-1"
+              echo "Please input correct format Publish version and Easysearch version, like X.Y.Z-W"
               exit 1
             fi
             fname=".latest"
@@ -188,7 +187,8 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone $SSH_GIT_REPO/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            export https_proxy=https://127.0.0.1:$LOCAL_PORT
+            git clone ${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
@@ -227,6 +227,14 @@ jobs:
             sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### Breaking changes  \\n### Features  \\n### Bug fix  \\n### Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
             git add docs/content.$f/docs/release-notes/_index.md
           done
+          # udpate version
+          if [[ -d docs/data ]]; then
+            sed -i "s/\"version\":.*/\"version\": \"$VERSION\",/" docs/data/quick_start.yaml
+            if [[ "${{ matrix.product }}" == "easysearch" ]]; then
+              yq e '.console.version = "${{ env.PUBLISH_VERSION }}"' -i docs/data/quick_start.yaml
+            fi
+            git add docs/data/quick_start.yaml
+          fi
 
       - name: Create Commit Message for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
@@ -245,3 +253,13 @@ jobs:
                   --body "This PR updates the release notes." \
                   --base main \
                   --head "$PR_BRANCH"
+
+      - name: Create Pull Request for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
+        uses: arifer612/Gitea-PR-action@v1
+        with:
+          url: https://git.infini.ltd
+          token: ${{ secrets.GITEA_TOKEN }}
+          tea-version: 0.9.2
+          pr-label: bump
+          assignee: ${{ github.actor }}

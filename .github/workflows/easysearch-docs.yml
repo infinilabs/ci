@@ -45,6 +45,7 @@ jobs:
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
 
       - name: Checkout ${{ env.PNAME }} repo
+        timeout-minutes: 10
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           echo "Checkout $PNAME repo done"

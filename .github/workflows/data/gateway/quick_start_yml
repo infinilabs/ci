@@ -1,0 +1,11 @@
+gateway: {
+  shells: [
+    {
+      type: 'Linux',
+      shell: 'curl -sSL http://get.infini.cloud | bash -s -- -p gateway',
+      contacts: ' -v ',
+    }
+  ],
+  version: '1.29.0-2000',
+  doc: "https://docs.infinilabs.com/gateway/main/docs/getting-started/install/"
+}
