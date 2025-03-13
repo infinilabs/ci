@@ -199,7 +199,7 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            export https_proxy=socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
+            git config  https.proxy socks5://127.0.0.1:${{ vars.LOCAL_PORT }}
             git clone ${{ secrets.HTTP_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
