@@ -20,7 +20,12 @@ fi
 if [[ "${EASYSEARCH_PUBLISH}" == "true" ]]; then
   matrix_includes+=('{"product": "easysearch"}')
 fi
-
+if [[ "${COCO_APP_PUBLISH}" == "true" ]]; then
+  matrix_includes+=('{"product": "coco-app"}')
+fi
+if [[ "${COCO_SERVER_PUBLISH}" == "true" ]]; then
+  matrix_includes+=('{"product": "coco-server"}')
+fi
 # if not triggered by workflow_dispatch, include all products
 if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
    matrix_includes=()

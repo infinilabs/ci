@@ -30,14 +30,14 @@ on:
         type: choice
         options: ['PR', 'TAG', 'RELEASE']
         default: "PR"
+      PUBLISH_FRAMEWORK_VERSION:
+          description: 'Publish Framework Version'
+          required: false
+          default: "1.1.4" 
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
         default: "1.29.1-2000"
-      PUBLISH_FRAMEWORK_VERSION:
-        description: 'Publish Framework Version'
-        required: false
-        default: "1.1.4" 
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
@@ -50,33 +50,18 @@ on:
         description: 'Publish Coco Version'
         required: false
         default: "0.2.2-2000"
-      AGENT_PUBLISH:
-        description: 'Agent'
-        required: false
-        type: boolean
-        default: true
-      CONSOLE_PUBLISH:
-        description: 'Console'
-        required: false
-        type: boolean
-        default: true
-      GATEWAY_PUBLISH:
-        description: 'Gateway'
-        required: false
-        type: boolean
-        default: true
-      LOADGEN_PUBLISH:
-        description: 'Loadgen'
-        required: false
-        type: boolean
-        default: true
-      FRAMEWORK_PUBLISH:
-        description: 'Framework'
+      PRODUCTS_PUBLISH:
+        description: 'Products with agent/console...'
         required: false
         type: boolean
         default: true
       EASYSEARCH_PUBLISH:
         description: 'Easysearch'
+        required: false
+        type: boolean
+        default: true
+      COCO_PUBLISH:
+        description: 'Products with coco-app/coco-server...'
         required: false
         type: boolean
         default: true
@@ -93,12 +78,14 @@ jobs:
       - name: Generate matrix
         id: gen-matrix
         env:
-            AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
-            CONSOLE_PUBLISH: ${{ inputs.CONSOLE_PUBLISH }}
-            GATEWAY_PUBLISH: ${{ inputs.GATEWAY_PUBLISH }}
-            LOADGEN_PUBLISH: ${{ inputs.LOADGEN_PUBLISH }}
-            FRAMEWORK_PUBLISH: ${{ inputs.FRAMEWORk_PUBLISH }}
+            AGENT_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
+            CONSOLE_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
+            GATEWAY_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
+            LOADGEN_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
+            FRAMEWORK_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
             EASYSEARCH_PUBLISH: ${{ inputs.EASYSEARCH_PUBLISH }}
+            COCO_APP_PUBLISH: ${{ inputs.COCO_PUBLISH }}
+            COCO_SERVER_PUBLISH: ${{ inputs.COCO_PUBLISH }}
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -144,6 +131,18 @@ jobs:
               VERSION="${EZS_VER}-$SUFFIX"
             else
               VERSION=$EZS_VER
+            fi
+          elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
+            VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+            if [[ -z "$VERSION" ]]; then
+              echo "Please input the framework version"
+              exit 1
+            fi
+          elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
+            VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
+            if [[ -z "$VERSION" ]]; then
+              echo "Please input the framework version"
+              exit 1
             fi
           else
             VERSION=${{ env.PUBLISH_VERSION }}
