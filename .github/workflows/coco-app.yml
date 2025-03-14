@@ -3,8 +3,8 @@ defaults:
   run:
     shell: bash
 env:
-  REPO-NAME: coco-app
-  PNAME: coco/app
+  REPO-NAME: "coco-app"
+  PNAME: "coco/app"
   NODEJS_VERSION: 20
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
@@ -68,7 +68,7 @@ jobs:
             version="${BASH_REMATCH[1]}"
             build_number="${BASH_REMATCH[2]}"
 
-            echo "VER=$version" >> $GITHUB_ENV
+            echo "VERSION=$version" >> $GITHUB_ENV
             echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
             echo "TAG=v$version" >> $GITHUB_ENV
           else
