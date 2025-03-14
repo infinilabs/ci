@@ -13,12 +13,9 @@ env:
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
 
 on:
+  schedule:
+    - cron: '20 17 * * *'  
   workflow_dispatch: 
-    inputs:
-      PUBLISH_TAG:
-        description: 'Publish Tag'
-        required: false
-        default: 'v1.11.0'
 
 jobs:
   build-deploy-docs:
