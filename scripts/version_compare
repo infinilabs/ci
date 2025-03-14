@@ -15,22 +15,16 @@ if [ ! -f "$src_file" ] || [ ! -f "$dest_file" ]; then
   exit 1
 fi
 
-# 获取 src 文件中的所有 key
-keys=$(jq -r 'keys[]' "$src_file")
-echo "Keys: $keys"
-# 假设两个 JSON 文件的 key 是相同的，所以取 src 文件的 key 就够了
-# 循环比较每个 key 对应的 value
 versions_consistent=true
-IFS=$'\n' read -r -a key_arr <<< "$keys"
-for key in "${key_arr[@]}"; do
-  src_value=$(jq -r ".\"${key}\"" "$src_file")
-  dest_value=$(jq -r ".\"${key}\"" "$dest_file")
+while IFS=$'\n' read -r key; do
+  src_value=$(jq -r --arg key "$key" '.[$key]' "$src_file")
+  dest_value=$(jq -r --arg key "$key" '.[$key]' "$dest_file")
   echo "Comparing key ${key}: ${src_value} vs ${dest_value}"
   if [[ "$src_value" != "$dest_value" ]]; then
     versions_consistent=false
     break
   fi
-done
+done < <(jq -r 'keys[]' "$src_file")
 
 if [[ "$versions_consistent" == "true" ]]; then
     exit 0
