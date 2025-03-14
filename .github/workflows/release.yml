@@ -152,7 +152,7 @@ jobs:
           cat $GITHUB_ENV
 
       - name: Run connect in background
-        if: ${{ matrix.product == 'easysearch' }}
+        if: ${{ matrix.product == 'easysearch' && inputs.OPERATION != 'RELEASE' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           sleep 10 && curl -s -o /dev/null -w "%{http_code}" -x http://127.0.0.1:${{ vars.LOCAL_PORT }} ip.sb
@@ -186,6 +186,10 @@ jobs:
               '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
               "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
           fi
+          cat $GITHUB_WORKSPACE/$fname
+          echo 
+          cat /tmp/$fname
+          echo
           if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
             echo "Files are the same, no need to upload."
           else
