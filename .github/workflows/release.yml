@@ -252,7 +252,7 @@ jobs:
           done
           # udpate version
           if [[ -d docs/data ]]; then
-            sed -i "s/\"version\":.*/\"version\": \"$VERSION\",/" docs/data/quick_start.yaml
+            sed -i "s/version:.*/version: \"$VERSION\",/" docs/data/quick_start.yaml
             if [[ "${{ matrix.product }}" == "easysearch" ]]; then
               yq e '.console.version = "${{ env.PUBLISH_VERSION }}"' -i docs/data/quick_start.yaml
             fi
