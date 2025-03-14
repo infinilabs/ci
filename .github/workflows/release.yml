@@ -257,7 +257,7 @@ jobs:
           if [[ -d docs/data ]]; then
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-              yq e -i  --indent 2 '.console.version = strenv(PUBLISH_VERSION)' docs/data/quick_start.yaml
+              sed -i "19s/version:.*/version: '$PUBLISH_VERSION'/" docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
@@ -300,5 +300,6 @@ jobs:
           path: ${{ env.PNAME }}
           base: main
           branch: ${{ env.PR_BRANCH}}
+          assignee : hardy
           tea-version: 0.9.2
           pr-label: bump
