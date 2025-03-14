@@ -205,11 +205,7 @@ jobs:
         timeout-minutes: 10
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            if [[ "${{ matrix.OPERATION }}" == "PR" ]]; then
-              https_proxy=http://127.0.0.1:${{ vars.LOCAL_PORT }} git clone https://${{ secrets.GITEA_TOKEN }}@${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
-            else
-              git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
-            fi
+            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
@@ -263,20 +259,14 @@ jobs:
           fi
 
       - name: Create Commit Message for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
+        if: ${{ inputs.OPERATION == 'PR' }}
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           git commit -m "$PR_MESSAGE"     
           git push origin "$PR_BRANCH"
-
-      - name: Create Commit Message for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
-        env:
-          https_proxy: http://127.0.0.1:${{ vars.LOCAL_PORT }}
-        run: |
-          cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          git commit -m "$PR_MESSAGE"     
-          git push origin "$PR_BRANCH"
+          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            git remote set-url origin ${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
+          fi
 
       - name: Create Github Pull Request for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
