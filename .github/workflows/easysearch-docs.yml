@@ -41,14 +41,14 @@ jobs:
         timeout-minutes: 10
         run: |
           git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME
           echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
 
       - name: Set Variables Based on Ref
         id: vars
         working-directory: ${{ env.PNAME }}
         run: |
-          PRODUCT_NAME=$(basename $(pwd))
-          echo "PRODUCT_NAME=$PRODUCT_NAME" >> $GITHUB_ENV
+          echo "PRODUCT_NAME=${{ env.PNAME }}" >> $GITHUB_ENV
           
           IS_SEMVER=false
           SEMVER_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
