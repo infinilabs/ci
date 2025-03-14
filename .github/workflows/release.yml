@@ -194,7 +194,7 @@ jobs:
               --arg easysearch_version "$EZS_VER" \
               --arg coco_app_version "$COCO_APP_VER" \
               --arg coco_version "$COCO_VER" \
-              '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | .coco-app=$coco_app_version | .coco-server=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+              '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
               "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
           fi
           # check if the file is the same
