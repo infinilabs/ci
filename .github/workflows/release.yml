@@ -265,7 +265,7 @@ jobs:
           git commit -m "$PR_MESSAGE"     
           git push origin "$PR_BRANCH"
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git remote set-url origin ${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
+            git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
           fi
 
       - name: Create Github Pull Request for ${{ matrix.product }}
