@@ -25,7 +25,7 @@ IFS=$'\n' read -r -a key_arr <<< "$keys"
 for key in "${key_arr[@]}"; do
   src_value=$(jq -r ".\"${key}\"" "$src_file")
   dest_value=$(jq -r ".\"${key}\"" "$dest_file")
-
+  echo "Comparing ${key}: ${src_value} vs ${dest_value}"
   if [[ "$src_value" != "$dest_value" ]]; then
     versions_consistent=false
     break
