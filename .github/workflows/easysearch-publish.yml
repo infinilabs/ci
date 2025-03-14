@@ -85,7 +85,7 @@ jobs:
       - name: Checkout ${{ env.PNAME }} repo
         run: |
           git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          echo "Checkout $PNAME repo at $(git log -1 --format=%H)"
+          echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
           # for build init
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then

@@ -225,7 +225,7 @@ jobs:
           fi
           # Set up git
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          echo "Checkout $PNAME repo at $(git log -1 --format=%H)"
+          echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
           git config user.name github-actions
           git config user.email github-actions@github.com
 

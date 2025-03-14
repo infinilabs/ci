@@ -41,7 +41,7 @@ jobs:
         timeout-minutes: 10
         run: |
           git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          echo "Checkout $PNAME repo at $(git log -1 --format=%H)"
+          echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
 
       - name: Set Variables Based on Ref
         id: vars
