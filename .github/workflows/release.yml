@@ -244,9 +244,11 @@ jobs:
             if [[ "${{ matrix.product }}" == "framework" ]] && [[ "$f" == "zh" ]]; then
               continue
             fi
-            sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
-            sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### Breaking changes  \\n### Features  \\n### Bug fix  \\n### Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
-            git add docs/content.$f/docs/release-notes/_index.md
+            if ! grep -wq "$VERSION" docs/content.$f/docs/release-notes/_index.md; then
+              sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
+              sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### Breaking changes  \\n### Features  \\n### Bug fix  \\n### Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
+              git add docs/content.$f/docs/release-notes/_index.md
+            fi
           done
           # udpate version
           if [[ -d docs/data ]]; then
