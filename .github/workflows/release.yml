@@ -252,9 +252,9 @@ jobs:
           done
           # udpate version
           if [[ -d docs/data ]]; then
-            sed -i "s/version:.*/version: \"$VERSION\",/" docs/data/quick_start.yaml
+            sed -i "s/version:.*/version: '\"'$VERSION\",/" docs/data/quick_start.yaml
             if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-              yq e '.console.version = "${{ env.PUBLISH_VERSION }}"' -i docs/data/quick_start.yaml
+              sed -i 's/^\s*console:\s*{\s*version:\s*'\''[^'\'']*'\''\s*}/\tconsole: {\n\t\tversion: '"'"'${PUBLISH_VERSION}'"'"'\n\t}/' docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
