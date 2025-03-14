@@ -3,8 +3,14 @@ defaults:
   run:
     shell: bash
 env:
-  PNAME: coco-app
+  REPO-NAME: coco-app
+  PNAME: coco/app
   NODEJS_VERSION: 20
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -55,13 +61,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-    
+
+      - name: Setup env
+        run: |
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            build_number="${BASH_REMATCH[2]}"
+
+            echo "VER=$version" >> $GITHUB_ENV
+            echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
+            echo "TAG=v$version" >> $GITHUB_ENV
+          else
+            echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
+            exit 1
+          fi
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
       - name: Checkout coco app repository
         uses: actions/checkout@v4
         with: 
-          repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
+          repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
           ref: main
-          path: ${{ env.PNAME }}
+          path: ${{ env.REPO-NAME }}
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -97,22 +122,84 @@ jobs:
           cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Install app dependencies and build web
-        working-directory: ${{ env.PNAME }}
+        working-directory: ${{ env.REPO-NAME }}
         run: pnpm install --frozen-lockfile
 
       - name: Build app
-        working-directory: ${{ env.PNAME }}
+        working-directory: ${{ env.REPO-NAME }}
         run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Check files
-        working-directory: ${{ env.PNAME }}
+        working-directory: ${{ env.REPO-NAME }}
         run: |
-          find src-tauri/target/${{ matrix.target }}/release/bundle -type f \( \
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          find $target -type f \( \
                   -name "*.dmg" -o \
                   -name "*.deb" -o \
+                  -name "*.rpm" -o \
                   -name "*.exe" -o \
                   -name "*.AppImage" -o \
                   -name "*.gz" -o \
                   -name "*.sig" -o \
                   -name "*.json" \
               \)
+
+      - name: Repackage Assets
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          set -euo pipefail
+
+          echo "Repack VERSION: $VERSION, BUILD_NUMBER: $BUILD_NUMBER"
+
+          declare -A FILE_MAP=(
+            ["x86-setup.exe"]="windows-386.exe"
+            ["x64-setup.exe"]="windows-amd64.exe"
+            ["arm64-setup.exe"]="windows-arm64.exe"
+            ["x64.dmg"]="mac-amd64.dmg"
+            ["aarch64.dmg"]="mac-arm64.dmg"
+            ["amd64.deb"]="linux-amd64.deb"
+            ["aarch64.deb"]="linux-arm64.deb"
+            ["amd64.rpm"]="linux-amd64.rpm"
+            ["aarch64.rpm"]="linux-arm64.rpm"
+          )
+
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          while read -r old_name; do
+            base_name=$(basename "$old_name")
+            extension="${base_name##*.}"
+            matched=false
+            for pattern in "${!FILE_MAP[@]}"; do
+              if [[ "$base_name" == *"$pattern"* ]]; then
+                new_suffix_with_ext="${FILE_MAP[$pattern]}"
+                new_suffix=$(echo "$new_suffix_with_ext" | sed "s/\.${extension}$//")
+
+                new_base_name="Coco-AI-${VERSION}-${BUILD_NUMBER}-${new_suffix}"
+                new_name_with_ext="${new_base_name}.${extension}"
+
+                mv "$old_name" "$new_name_with_ext"
+                zip -q "$new_base_name.zip" "$new_name_with_ext"
+                # Upload to OSS
+                oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f "$new_base_name.zip"
+                matched=true
+                break
+              fi
+            done
+
+            if [ "$matched" = false ]; then
+                echo "Warning: No mapping found for $old_name.  Skipping." >&2
+            fi
+          done < <(find $target -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" \) | sort) 
+
+
+      - name: Upgrade Assets
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          set -euo pipefail
+
+          echo "Upgrade VERSION: $VERSION, BUILD_NUMBER: $BUILD_NUMBER"
+
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          while read -r file_name; do
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f "$file_name"
+          done < <(find $target -type f \( -name "*.sig" -o -name "*.gz" -o -name "*.AppImage" -o -name "*.exe" \) | sort) 
+
