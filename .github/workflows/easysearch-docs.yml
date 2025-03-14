@@ -7,6 +7,7 @@ defaults:
 env:
   PNAME: easysearch
   HUGO_VERSION: 0.79.1
+  DOCS_URL: ${{ vars.DOCS_URL }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -14,13 +15,8 @@ env:
 
 on:
   schedule:
-    - cron: '20 17 * * *'  
+    - cron: '20 17 * * *'
   workflow_dispatch:
-    inputs:
-      PUBLISH_TAG:
-        description: 'Publish Tag'
-        required: false
-        default: ""
 
 jobs:
   build-deploy-docs:
@@ -33,14 +29,6 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          if [[ -n "${{ inputs.PUBLISH_TAG }}" ]]; then
-            if [[ "${{ inputs.PUBLISH_TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-              echo "Publish Tag: ${{ inputs.PUBLISH_TAG }}"
-            else
-              echo "Error: Invalid version string format. Expected vX.Y.Z." >&2
-              exit 1
-            fi
-          fi
 
       - name: Checkout ${{ env.PNAME }} repo
         timeout-minutes: 10
@@ -55,16 +43,16 @@ jobs:
         run: |
           echo "PRODUCT_NAME=${{ env.PNAME }}" >> $GITHUB_ENV
           
+          REF_TYPE="branch"
+          REF_NAME="main"
           IS_SEMVER=false
           SEMVER_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
 
-          if [[ -n "${{ inputs.PUBLISH_TAG }}" ]]; then
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          if curl -I -m 10 -o /dev/null -s -w %{http_code} $DOCS_URL/$PNAME/$LATEST_TAG | grep -q 404; then
             REF_TYPE="tag"
-            git checkout ${{ inputs.PUBLISH_TAG }}
+            git checkout $LATEST_TAG
             REF_NAME=$(git describe --tags --exact-match HEAD)
-          else
-            REF_TYPE="branch"
-            REF_NAME="main"
           fi
           
           if [[ "${REF_TYPE}" == "branch" ]]; then
