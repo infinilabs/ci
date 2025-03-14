@@ -29,12 +29,12 @@ on:
         description: 'Easysearch Version'
         required: false
         type: string
-        default: '1.11.0-1992'
+        default: '1.11.1-2000'
       PRODUCT_VERSION:
         description: 'Products Version'
         required: false
         type: string
-        default: '1.29.0-1992'
+        default: '1.29.1-2000'
 
 jobs:
     compile-test:
