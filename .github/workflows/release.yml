@@ -206,7 +206,8 @@ jobs:
             # Reset cache
             curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$VER"
             # check if the cache is reset
-            sleep 120 && curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+            sleep 120
+            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
             # set actions variables
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
