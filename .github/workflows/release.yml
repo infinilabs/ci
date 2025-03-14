@@ -264,6 +264,15 @@ jobs:
           git commit -m "$PR_MESSAGE"     
           git push origin "$PR_BRANCH"
 
+      - name: Create Commit Message for ${{ matrix.product }}
+        if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
+        env:
+          https_proxy: http://127.0.0.1:${{ vars.LOCAL_PORT }}
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          git commit -m "$PR_MESSAGE"     
+          git push origin "$PR_BRANCH"
+
       - name: Create Github Pull Request for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
         env:
