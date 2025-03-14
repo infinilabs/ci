@@ -232,7 +232,7 @@ jobs:
           #wait for 1 minute to make sure the tag is created
           sleep 60
 
-      - name: Create Branch for ${{ matrix.product }}
+      - name: Create Branch and update release notes & data for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' }}
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
