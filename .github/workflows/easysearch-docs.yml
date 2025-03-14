@@ -15,7 +15,12 @@ env:
 on:
   schedule:
     - cron: '20 17 * * *'  
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      PUBLISH_TAG:
+        description: 'Publish Tag'
+        required: false
+        default: ""
 
 jobs:
   build-deploy-docs:
