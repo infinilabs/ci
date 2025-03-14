@@ -200,7 +200,7 @@ jobs:
             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
           fi
           
-      - name: Checkout ${{ matrix.product }} code
+      - name: Checkout code for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR'}}
         timeout-minutes: 10
         run: |
@@ -211,10 +211,11 @@ jobs:
           fi
           # Set up git
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          echo "Checkout $PNAME repo at $(git log -1 --format=%H)"
           git config user.name github-actions
           git config user.email github-actions@github.com
 
-      - name: Check tag and create tag for ${{ matrix.product }}
+      - name: Checkout and create tag for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'TAG'}}
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
