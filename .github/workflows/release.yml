@@ -201,13 +201,13 @@ jobs:
           fi
           
       - name: Checkout ${{ matrix.product }} code
-        if: ${{ inputs.OPERATION == 'PR' || inputs.OPERATION == 'TAG'}}
+        if: ${{ inputs.OPERATION == 'PR'}}
         timeout-minutes: 10
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone --depth 1 ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
-            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone --depth 1 ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
           # Set up git
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
@@ -217,7 +217,14 @@ jobs:
       - name: Check tag and create tag for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'TAG'}}
         run: |
+          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          else
+            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          fi
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           echo "Check tag and create tag for ${{ matrix.product }}"
           PVER=$(echo "v$VERSION" | sed 's/-.*//')
           tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
