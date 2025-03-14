@@ -55,13 +55,13 @@ on:
         required: false
         type: boolean
         default: true
-      EASYSEARCH_PUBLISH:
-        description: 'Easysearch'
+      COCO_PUBLISH:
+        description: 'Products with coco app/server...'
         required: false
         type: boolean
         default: true
-      COCO_PUBLISH:
-        description: 'Products with coco-app/coco-server...'
+      EASYSEARCH_PUBLISH:
+        description: 'Easysearch'
         required: false
         type: boolean
         default: true
