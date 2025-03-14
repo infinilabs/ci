@@ -17,7 +17,7 @@ fi
 
 # 获取 src 文件中的所有 key
 keys=$(jq -r 'keys[]' "$src_file")
-
+echo "Keys: $keys"
 # 假设两个 JSON 文件的 key 是相同的，所以取 src 文件的 key 就够了
 # 循环比较每个 key 对应的 value
 versions_consistent=true
@@ -25,7 +25,7 @@ IFS=$'\n' read -r -a key_arr <<< "$keys"
 for key in "${key_arr[@]}"; do
   src_value=$(jq -r ".\"${key}\"" "$src_file")
   dest_value=$(jq -r ".\"${key}\"" "$dest_file")
-  echo "Comparing ${key}: ${src_value} vs ${dest_value}"
+  echo "Comparing key ${key}: ${src_value} vs ${dest_value}"
   if [[ "$src_value" != "$dest_value" ]]; then
     versions_consistent=false
     break
