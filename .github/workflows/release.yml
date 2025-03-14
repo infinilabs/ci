@@ -163,8 +163,8 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
           if [[ "${{ inputs.OPERATION }}" == "RELEASE" ]]; then
-            VER=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
-            EZS_VER=${{ env.PUBLISH_VERSION }}
+            VER=${{ env.PUBLISH_VERSION  }}
+            EZS_VER=${{env.VERSION}}
             if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
               echo "Please input the publish version and easysearch version"
               exit 1
@@ -196,6 +196,7 @@ jobs:
             # check if the cache is reset
             sleep 10 && curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
             # set actions variables
+            echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
           fi
