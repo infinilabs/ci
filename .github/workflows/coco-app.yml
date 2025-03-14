@@ -107,4 +107,12 @@ jobs:
       - name: Check files
         working-directory: ${{ env.PNAME }}
         run: |
-          find src-tauri/target -type f -regextype posix-egrep -regex ".*\.(dmg|deb|exe|AppImage|gz|sig|json)$"
+          find src-tauri/target/${{ matrix.target }}/release/bundle -type f \( \
+                  -name "*.dmg" -o \
+                  -name "*.deb" -o \
+                  -name "*.exe" -o \
+                  -name "*.AppImage" -o \
+                  -name "*.gz" -o \
+                  -name "*.sig" -o \
+                  -name "*.json" \
+              \)
