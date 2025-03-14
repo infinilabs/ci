@@ -19,7 +19,7 @@ versions_consistent=true
 while IFS=$'\n' read -r key; do
   src_value=$(jq -r --arg key "$key" '.[$key]' "$src_file")
   dest_value=$(jq -r --arg key "$key" '.[$key]' "$dest_file")
-  echo "Comparing key ${key}: ${src_value} vs ${dest_value}"
+  
   if [[ "$src_value" != "$dest_value" ]]; then
     versions_consistent=false
     break

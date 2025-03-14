@@ -203,3 +203,14 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p "$PNAME/.${TAG}" -f "$file_name"
           done < <(find $target -type f \( -name "*.sig" -o -name "*.gz" -o -name "*.AppImage" -o -name "*.exe" \) | sort) 
 
+      - name: Update Release version variable
+        if: ${{ inputs.PUBLISH_RELEASE}}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            COCO_VER=${{ inputs.PUBLISH_VERSION }}
+            # set actions variables
+            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_VER"
+          fi

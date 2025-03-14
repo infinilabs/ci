@@ -283,7 +283,7 @@ jobs:
             fi
             #check if the version is correct
             if [[ "$VER" != *"-"* ]] || [[ "$COCO_VER" != *"-"* ]]; then
-              echo "Please input correct format Publish version and Coco-Server version, like 1.0.0-1"
+              echo "Please input correct format Publish version and Coco-Server version, like X.Y.Z-W"
               exit 1
             fi
             # set actions variables
