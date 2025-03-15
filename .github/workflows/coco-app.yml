@@ -79,8 +79,12 @@ jobs:
         run: |
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
-          $Match = [regex]::Match($Content, '^version\s*=\s*"(.*?)"([\r\n]|$)')
-          $CurrentVersion = $Match.Groups[1].Value
+          $VersionLine = [regex]::Match($Content, '^version\s*=\s*"(.*?)"([\r\n]|$)')
+          if (-not $match.Success) {
+              Write-Error "Could not find version line in Cargo.toml"
+              exit 1
+          }
+          $CurrentVersion = $VersionLine.Groups[1].Value
           echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
