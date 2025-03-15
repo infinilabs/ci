@@ -81,8 +81,19 @@ jobs:
           $PackageJsonPath = ".\package.json"
           $Package = Get-Content -Raw $PackageJsonPath | ConvertFrom-Json
           $CurrentVersion = $env:PUBLISH_VERSION
-          if ($CurrentVersion -match '-') {
-            $CurrentVersion = $CurrentVersion.Substring($CurrentVersion.IndexOf('-') + 1)
+          # Check if PUBLISH_VERSION is set and not empty
+          if ([string]::IsNullOrEmpty($CurrentVersion)) {
+            Write-Error "PUBLISH_VERSION is not set or is empty."
+            exit 1
+          }
+
+          # Extract x.y.z using a regular expression
+          $match = [regex]::Match($CurrentVersion, '^(\d+\.\d+\.\d+)')
+          if ($match.Success) {
+              $CurrentVersion = $match.Groups[1].Value
+          } else {
+              Write-Error "Invalid PUBLISH_VERSION format: '$CurrentVersion'. Expected x.y.z or x.y.z-suffix."
+              exit 1
           }
           echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
@@ -100,7 +111,19 @@ jobs:
         shell: bash
         run: |
           package_json="package.json"
-          current_version=${PUBLISH_VERSION#*-}
+          current_version=$PUBLISH_VERSION
+          if [ -z "$current_version" ]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          # Extract x.y.z using a regular expression
+          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            current_version="${BASH_REMATCH[1]}"
+          else
+            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
+            exit 1
+          fi
           echo "Current version: $current_version"
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
