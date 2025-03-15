@@ -77,37 +77,29 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         shell: pwsh
         run: |
-          $CargoTomlPath = ".\src-tauri\Cargo.toml"
-          $Content = Get-Content -Raw $CargoTomlPath
-          $VersionLine = [regex]::Match($Content, '^version')
-          if (-not $VersionLine.Success) {
-              Write-Error "Could not find version line in Cargo.toml"
-              exit 1
-          }
-          $CurrentVersion = $VersionLine.Groups[1].Value
+          $PackageJsonPath = ".\package.json"
+          $Package = Get-Content -Raw $PackageJsonPath | ConvertFrom-Json
+          $CurrentVersion = $Package.version
           echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
           $DateStr = Get-Date -Format yyyyMMdd
           $NewVersion = "$($VersionParts[0]).$($VersionParts[1]).$($VersionParts[2])-NIGHTLY-$DateStr"
-          $NewContent = $Content -replace ('(?m)^version\s*=\s*".*"', "version = `"$NewVersion`"")
-          Set-Content -NoNewline $CargoTomlPath $NewContent
+          $Package.version = $NewVersion
+          $Package | ConvertTo-Json -Depth 10 | Set-Content -NoNewline -Encoding UTF8 $PackageJsonPath
+          Write-Host "package.json version updated to: $NewVersion"
 
       - name: Set Version with macos-latest and ubuntu-22.04
         if: matrix.platform != 'windows-latest'
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
-          cargo_toml="src-tauri/Cargo.toml"
-          current_version=$(sed -n 's/^ *version *= *"\(.*\)"/\1/p' "$cargo_toml")
+          package_json="package.json"
+          current_version=$(jq -r '.version' "$package_json")
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
-          if ${{ matrix.platform == 'macos-latest' }}; then
-            sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
-          else
-            sed -i "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
-          fi
+          jq --arg new_version "$new_version" '.version = $new_version' "$package_json" | sponge "$package_json"
           echo "Cargo.toml version updated to: $new_version"
 
       - name: Setup node
