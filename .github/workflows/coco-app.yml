@@ -87,7 +87,7 @@ jobs:
           $NewVersion = "$($VersionParts[0]).$($VersionParts[1]).$($VersionParts[2])-NIGHTLY-$DateStr"
           $Package.version = $NewVersion
           $Package | ConvertTo-Json -Depth 10 | Set-Content -NoNewline -Encoding UTF8 $PackageJsonPath
-          Write-Host "package.json version updated to: $NewVersion"
+          Write-Host "Version updated to: $NewVersion"
 
       - name: Set Version with macos-latest and ubuntu-22.04
         if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform != 'windows-latest' }}
@@ -104,7 +104,7 @@ jobs:
           else
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
           fi
-          echo "Cargo.toml version updated to: $new_version"
+          echo "Version updated to: $new_version"
 
       - name: Setup node
         uses: actions/setup-node@v4
