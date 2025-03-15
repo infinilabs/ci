@@ -179,11 +179,11 @@ jobs:
         if: ${{ inputs.PUBLISH_RELEASE }}
         uses: infinilabs/oss-upload@v0
         with:
-          region: ${{ secrets.OSS_EP }}
+          region: oss-cn-shanghai
           access-key-id: ${{ secrets.OSS_AK }}
           access-key-secret: ${{ secrets.OSS_SK }}
           bucket: ${{ secrets.OSS_BK }}
-          secure: true
+          secure: false
           local-folder: src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '{*.sig,*.AppImage,*.exe,*.gz}'
           remote-dir: ${{ env.OSS_PATH }}    
