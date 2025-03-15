@@ -169,34 +169,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
-          if [[ "${{ inputs.OPERATION }}" == "RELEASE" ]]; then
-            VER=${{ env.PUBLISH_VERSION  }}
-            EZS_VER=${{env.VERSION}}
-            COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-            COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-            if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
-              echo "Please input the publish version and easysearch version"
-              exit 1
-            fi
-            SUFFIX=${VER#*-}
-            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              EZS_VER="${EZS_VER}-$SUFFIX"
-            fi
-            #check if the version is correct
-            if [[ "$VER" != *"-"* ]] || [[ "$EZS_VER" != *"-"* ]]; then
-              echo "Please input correct format Publish version and Easysearch version, like X.Y.Z-W"
-              exit 1
-            fi
-            fname=".latest"
-            echo "Products publish version: $VER, Easysearch version: $EZS_VER"
-            wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
-            jq --arg publish_version "$VER" \
-              --arg easysearch_version "$EZS_VER" \
-              --arg coco_app_version "$COCO_APP_VER" \
-              --arg coco_version "$COCO_VER" \
-              '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
-              "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+          VER=${{ env.PUBLISH_VERSION  }}
+          EZS_VER=${{env.VERSION}}
+          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
+            echo "Please input the publish version and easysearch version"
+            exit 1
           fi
+          SUFFIX=${VER#*-}
+          if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            EZS_VER="${EZS_VER}-$SUFFIX"
+          fi
+          #check if the version is correct
+          if [[ "$VER" != *"-"* ]] || [[ "$EZS_VER" != *"-"* ]]; then
+            echo "Please input correct format Publish version and Easysearch version, like X.Y.Z-W"
+            exit 1
+          fi
+          fname=".latest"
+          echo "Products publish version: $VER, Easysearch version: $EZS_VER"
+          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+          jq --arg publish_version "$VER" \
+            --arg easysearch_version "$EZS_VER" \
+            --arg coco_app_version "$COCO_APP_VER" \
+            --arg coco_version "$COCO_VER" \
+            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+            "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+
           # check if the file is the same
           if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
             echo "Files are the same, no need to upload."
@@ -212,6 +211,23 @@ jobs:
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+          fi
+
+          # coco website publish
+          git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
+          cd $GITHUB_WORKSPACE/coco-website
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          echo "Check tag and create tag for coco-website"
+          PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
+          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
+          if [ "$tag_exists" == "false" ]; then
+            git tag -a $PVER -m "Release $PVER"
+            git push origin $PVER
+            echo "Tag $PVER created for coco-website"
+            sleep 60 #wait for 1 minute to make sure the tag is created
+          else
+            echo "Tag $PVER already exists for coco-website"
           fi
           
       - name: Checkout code for ${{ matrix.product }}
@@ -250,7 +266,7 @@ jobs:
             sleep 60 #wait for 1 minute to make sure the tag is created
           else
             echo "Tag $PVER already exists for ${{ matrix.product }}"
-          fi          
+          fi
 
       - name: Create Branch and update release notes & data for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' }}
