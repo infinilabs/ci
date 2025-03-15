@@ -166,7 +166,7 @@ jobs:
       - name: Upload assets to OSS with {{ matrix.target }}
         uses: infinilabs/oss-upload@v0
         with:
-          region: ${{ secrets.OSS_EP }}
+          region: oss-cn-shanghai
           access-key-id: ${{ secrets.OSS_AK }}
           access-key-secret: ${{ secrets.OSS_SK }}
           bucket: ${{ secrets.OSS_BK }}
