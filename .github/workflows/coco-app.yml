@@ -128,10 +128,9 @@ jobs:
         run: rustup toolchain install stable --no-self-update
 
       - name: Rust cache
-        working-directory: ${{ env.REPO-NAME }}
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: './coco-app/src-tauri -> target'
 
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
