@@ -169,12 +169,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
-          VER=${{ env.PUBLISH_VERSION  }}
-          EZS_VER=${{env.VERSION}}
+          VER=${{ inputs.PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
           COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
-            echo "Please input the publish version and easysearch version"
+          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
+            echo "Please input the publish version, easysearch version, coco app version and coco version"
             exit 1
           fi
           SUFFIX=${VER#*-}
@@ -182,9 +182,11 @@ jobs:
             EZS_VER="${EZS_VER}-$SUFFIX"
           fi
           #check if the version is correct
-          if [[ "$VER" != *"-"* ]] || [[ "$EZS_VER" != *"-"* ]]; then
-            echo "Please input correct format Publish version and Easysearch version, like X.Y.Z-W"
-            exit 1
+          if [[ "$VER" == *"-"* ]] && [[ "$COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
+          fi
+          if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            COCO_VER="${COCO_VER}-$SUFFIX"
           fi
           fname=".latest"
           echo "Products publish version: $VER, Easysearch version: $EZS_VER"
@@ -203,7 +205,7 @@ jobs:
             echo "Files are different, uploading..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
             # Reset cache
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$VER"
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER"
             # check if the cache is reset
             sleep 120
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
@@ -211,6 +213,8 @@ jobs:
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
+            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
           fi
 
           # coco website publish

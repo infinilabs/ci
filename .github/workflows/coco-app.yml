@@ -12,7 +12,6 @@ env:
   OSS_BK: ${{ secrets.OSS_BK }}
   OSS_MODE: ${{ secrets.OSS_MODE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -41,6 +40,8 @@ on:
         default: true
 jobs:
   build-app:
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
       fail-fast: false
       matrix:
@@ -79,7 +80,7 @@ jobs:
         run: |
           $PackageJsonPath = ".\package.json"
           $Package = Get-Content -Raw $PackageJsonPath | ConvertFrom-Json
-          $CurrentVersion = $Package.version
+          $CurrentVersion = $env:PUBLISH_VERSION
           echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
@@ -88,6 +89,7 @@ jobs:
           $Package.version = $NewVersion
           $Package | ConvertTo-Json -Depth 10 | Set-Content -NoNewline -Encoding UTF8 $PackageJsonPath
           Write-Host "Version updated to: $NewVersion"
+          echo "VERSION=$new_version" >> $GITHUB_ENV
 
       - name: Set Version with macos-latest and ubuntu-22.04
         if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform != 'windows-latest' }}
@@ -95,7 +97,8 @@ jobs:
         shell: bash
         run: |
           package_json="package.json"
-          current_version=$(grep -o '"version": *"[^"]*"' "$package_json" | sed 's/.*"\(.*\)"/\1/')
+          current_version=$PUBLISH_VERSION
+          echo "Current version: $current_version"
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
@@ -105,6 +108,7 @@ jobs:
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
           fi
           echo "Version updated to: $new_version"
+          echo "VERSION=$new_version" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -163,19 +167,7 @@ jobs:
                   -name "*.json" \
               \)
 
-      - name: Upload assets to OSS with {{ matrix.target }}
-        uses: infinilabs/oss-upload@v0
-        with:
-          region: oss-cn-shanghai
-          access-key-id: ${{ secrets.OSS_AK }}
-          access-key-secret: ${{ secrets.OSS_SK }}
-          bucket: ${{ secrets.OSS_BK }}
-          secure: true
-          local-folder: src-tauri/target/${{ matrix.target }}/release/bundle
-          file-pattern: '{*.dmg,*.rpm,*.deb,*.exe}'
-          remote-dir: ${{ env.OSS_PATH }}
-
-      - name: Upload upgrade assets to OSS with {{ matrix.target }}
+      - name: Upload upgrade assets to OSS with ${{ matrix.target }}
         if: ${{ inputs.PUBLISH_RELEASE }}
         uses: infinilabs/oss-upload@v0
         with:
@@ -184,18 +176,19 @@ jobs:
           access-key-secret: ${{ secrets.OSS_SK }}
           bucket: ${{ secrets.OSS_BK }}
           secure: false
-          local-folder: src-tauri/target/${{ matrix.target }}/release/bundle
+          local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '{*.sig,*.AppImage,*.exe,*.gz}'
-          remote-dir: ${{ env.OSS_PATH }}    
+          remote-dir: ${{ env.OSS_PATH }}
 
-      - name: Update Release version variable
-        if: ${{ inputs.PUBLISH_RELEASE && matrix.platform == 'ubuntu-22.04' && matrix.target == 'x86_64-unknown-linux-gnu' }}
-        env:
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: |
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-            COCO_VER=${{ inputs.PUBLISH_VERSION }}
-            # set actions variables
-            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_VER"
-          fi
+      - name: Upload assets to OSS with ${{ matrix.target }}
+        uses: infinilabs/oss-upload@v0
+        with:
+          region: oss-cn-shanghai
+          access-key-id: ${{ secrets.OSS_AK }}
+          access-key-secret: ${{ secrets.OSS_SK }}
+          bucket: ${{ secrets.OSS_BK }}
+          secure: true
+          local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
+          file-pattern: '{*.dmg,*.rpm,*.deb,*.exe}'
+          repack-version: ${{ env.VERSION }}
+          remote-dir: ${{ env.OSS_PATH }}

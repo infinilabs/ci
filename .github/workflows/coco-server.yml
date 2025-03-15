@@ -292,29 +292,3 @@ jobs:
           else
             echo "No $PNAME binary found"
           fi
-
-      - name: Update Release version variable
-        if: ${{ inputs.PUBLISH_RELEASE}}
-        env:
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: |
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-            VER=${{ vars.COCO_PUBLISH_VERSION }}
-            COCO_VER=${{ inputs.PUBLISH_VERSION }}
-            if [[ -z "$VER" ]] || [[ -z "$COCO_VER" ]]; then
-              echo "Please input the publish version and easysearch version"
-              exit 1
-            fi
-            SUFFIX=${VER#*-}
-            if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              COCO_VER="${COCO_VER}-$SUFFIX"
-            fi
-            #check if the version is correct
-            if [[ "$VER" != *"-"* ]] || [[ "$COCO_VER" != *"-"* ]]; then
-              echo "Please input correct format Publish version and Coco-Server version, like X.Y.Z-W"
-              exit 1
-            fi
-            # set actions variables
-            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
-          fi
