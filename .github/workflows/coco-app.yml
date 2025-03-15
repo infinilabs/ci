@@ -79,9 +79,9 @@ jobs:
         run: |
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
-          $VersionLine = $Content | Select-String -Pattern '(?m)^version\s*=\s*"(.*?)"'
-          echo "Current version: $VersionLine"
-          $CurrentVersion = ($VersionLine -split '"')[1]
+          $Match = [regex]::Match($Content, '(?m)^version\s*=\s*"(.*?)"')
+          $CurrentVersion = $Match.Groups[1].Value
+          echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
           $DateStr = Get-Date -Format yyyyMMdd
@@ -146,7 +146,7 @@ jobs:
       - name: Build app
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm tauri build --target ${{ matrix.target }}
-        
+
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
