@@ -26,6 +26,8 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
 
 on:
+  schedule:
+    - cron: '45 16 * * *'
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
@@ -70,7 +72,7 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
-      - name: Set Version
+      - name: Set Version with ${{ matrix.platform}}
         if: matrix.platform == 'windows-latest'
         working-directory: ${{ env.REPO-NAME }}
         shell: pwsh
@@ -86,7 +88,7 @@ jobs:
           $NewContent = $Content -replace ('(?m)^version\s*=\s*".*"', "version = `"$NewVersion`"")
           Set-Content -NoNewline $CargoTomlPath $NewContent
 
-      - name: Set Version
+      - name: Set Version with ${{ matrix.platform}}
         if: matrix.platform != 'windows-latest'
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
