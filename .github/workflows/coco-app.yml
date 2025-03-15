@@ -189,7 +189,7 @@ jobs:
                   -name "*.exe" -o \
                   -name "*.gz" -o \
                   -name "*.sig" -o \
-                  -name "*.AppImage" -o \
+                  -name "*.AppImage"
               \)
 
       - name: Upload upgrade assets to OSS with ${{ matrix.target }}
