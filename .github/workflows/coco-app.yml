@@ -79,7 +79,7 @@ jobs:
         run: |
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
-          $VersionLine = $Content | Select-String -Pattern '^version\s*=\s*".*"'
+          $VersionLine = $Content | Select-String -Pattern '(?m)^\s*version\s*=\s*".*?"'
           $CurrentVersion = ($VersionLine -split '"')[1]
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           cargo_toml="src-tauri/Cargo.toml"
-          current_version=$(grep -oP '^version = "\K\d+\.\d+\.\d+(?=")' "$cargo_toml")
+          current_version=$(sed -n 's/^ *version *= *"\(.*\)"/\1/p' "$cargo_toml")
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))_NIGHTLY-${date_str}"
