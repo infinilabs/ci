@@ -73,40 +73,8 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
-      - name: Set Version with windows-latest
-        if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform == 'windows-latest' }}
-        working-directory: ${{ env.REPO-NAME }}
-        shell: pwsh
-        run: |
-          $PackageJsonPath = ".\package.json"
-          $Package = Get-Content -Raw $PackageJsonPath | ConvertFrom-Json
-          $CurrentVersion = $env:PUBLISH_VERSION
-          # Check if PUBLISH_VERSION is set and not empty
-          if ([string]::IsNullOrEmpty($CurrentVersion)) {
-            Write-Error "PUBLISH_VERSION is not set or is empty."
-            exit 1
-          }
-
-          # Extract x.y.z using a regular expression
-          $match = [regex]::Match($CurrentVersion, '^(\d+\.\d+\.\d+)')
-          if ($match.Success) {
-              $CurrentVersion = $match.Groups[1].Value
-          } else {
-              Write-Error "Invalid PUBLISH_VERSION format: '$CurrentVersion'. Expected x.y.z or x.y.z-suffix."
-              exit 1
-          }
-          echo "Current version: $CurrentVersion"
-          $VersionParts = $CurrentVersion.Split('.')
-          $VersionParts[2] = [int]$VersionParts[2] + 1
-          $DateStr = Get-Date -Format yyyyMMdd
-          $NewVersion = "$($VersionParts[0]).$($VersionParts[1]).$($VersionParts[2])-NIGHTLY-$DateStr"
-          $Package.version = $NewVersion
-          $Package | ConvertTo-Json -Depth 10 | Set-Content -NoNewline -Encoding UTF8 $PackageJsonPath
-          Write-Host "Version updated to: $NewVersion"
-          echo "VERSION=$new_version" >> $GITHUB_ENV
-
-      - name: Set Version with macos-latest and ubuntu-22.04
-        if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform != 'windows-latest' }}
+      - name: Set Version with ${{ matrix.platform }}
+        if: ${{ !inputs.PUBLISH_RELEASE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
