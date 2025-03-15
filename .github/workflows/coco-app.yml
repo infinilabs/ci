@@ -146,6 +146,22 @@ jobs:
       - name: Build app
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm tauri build --target ${{ matrix.target }}
+        
+      - name: Check files
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          find "$target" -type f \( \
+                  -name "*.dmg" -o \
+                  -name "*.deb" -o \
+                  -name "*.rpm" -o \
+                  -name "*.exe" -o \
+                  -name "*.AppImage" -o \
+                  -name "*.gz" -o \
+                  -name "*.sig" -o \
+                  -name "*.json" \
+              \)
 
       - name: Upload assets to OSS with {{ matrix.target }}
         uses: infinilabs/oss-upload@v0
