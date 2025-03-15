@@ -72,7 +72,7 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
-      - name: Set Version with ${{ matrix.platform}}
+      - name: Set Version with windows-latest
         if: matrix.platform == 'windows-latest'
         working-directory: ${{ env.REPO-NAME }}
         shell: pwsh
@@ -80,6 +80,7 @@ jobs:
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
           $VersionLine = $Content | Select-String -Pattern '(?m)^\s*\[package\]\s*[\r\n]+(?:.*\s+)*?version\s*=\s*"(.*?)"'
+          echo "Current version: $($VersionLine -split '"')[1]"
           $CurrentVersion = ($VersionLine -split '"')[1]
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
@@ -88,7 +89,7 @@ jobs:
           $NewContent = $Content -replace ('(?m)^version\s*=\s*".*"', "version = `"$NewVersion`"")
           Set-Content -NoNewline $CargoTomlPath $NewContent
 
-      - name: Set Version with ${{ matrix.platform}}
+      - name: Set Version with macos-latest and ubuntu-22.04
         if: matrix.platform != 'windows-latest'
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
@@ -98,7 +99,8 @@ jobs:
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
-          sed -i "s/^version = \".*\"/version = \"$new_version\"/" "$cargo_toml"
+          sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
+          echo "Cargo.toml version updated to: $new_version"
 
       - name: Setup node
         uses: actions/setup-node@v4
