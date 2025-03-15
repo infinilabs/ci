@@ -81,6 +81,9 @@ jobs:
           $PackageJsonPath = ".\package.json"
           $Package = Get-Content -Raw $PackageJsonPath | ConvertFrom-Json
           $CurrentVersion = $env:PUBLISH_VERSION
+          if ($CurrentVersion -match '-') {
+            $CurrentVersion = $CurrentVersion.Substring($CurrentVersion.IndexOf('-') + 1)
+          }
           echo "Current version: $CurrentVersion"
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
@@ -97,7 +100,7 @@ jobs:
         shell: bash
         run: |
           package_json="package.json"
-          current_version=$PUBLISH_VERSION
+          current_version=${PUBLISH_VERSION#*-}
           echo "Current version: $current_version"
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
@@ -161,10 +164,9 @@ jobs:
                   -name "*.deb" -o \
                   -name "*.rpm" -o \
                   -name "*.exe" -o \
-                  -name "*.AppImage" -o \
                   -name "*.gz" -o \
                   -name "*.sig" -o \
-                  -name "*.json" \
+                  -name "*.AppImage" -o \
               \)
 
       - name: Upload upgrade assets to OSS with ${{ matrix.target }}
