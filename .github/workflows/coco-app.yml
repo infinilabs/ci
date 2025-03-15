@@ -79,12 +79,12 @@ jobs:
         run: |
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
-          $VersionLine = $Content | Select-String -Pattern '(?m)^\s*version\s*=\s*".*?"'
+          $VersionLine = $Content | Select-String -Pattern '(?m)^\s*\[package\]\s*[\r\n]+(?:.*\s+)*?version\s*=\s*"(.*?)"'
           $CurrentVersion = ($VersionLine -split '"')[1]
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
           $DateStr = Get-Date -Format yyyyMMdd
-          $NewVersion = "$($VersionParts[0]).$($VersionParts[1]).$($VersionParts[2])_NIGHTLY-$DateStr"
+          $NewVersion = "$($VersionParts[0]).$($VersionParts[1]).$($VersionParts[2])-NIGHTLY-$DateStr"
           $NewContent = $Content -replace ('(?m)^version\s*=\s*".*"', "version = `"$NewVersion`"")
           Set-Content -NoNewline $CargoTomlPath $NewContent
 
@@ -97,8 +97,8 @@ jobs:
           current_version=$(sed -n 's/^ *version *= *"\(.*\)"/\1/p' "$cargo_toml")
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
-          new_version="$major.$minor.$((patch + 1))_NIGHTLY-${date_str}"
-          sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml" 
+          new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
+          sed -i "s/^version = \".*\"/version = \"$new_version\"/" "$cargo_toml"
 
       - name: Setup node
         uses: actions/setup-node@v4
