@@ -73,7 +73,7 @@ jobs:
           path: ${{ env.REPO-NAME }}
 
       - name: Set Version with windows-latest
-        if: matrix.platform == 'windows-latest'
+        if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform == 'windows-latest' }}
         working-directory: ${{ env.REPO-NAME }}
         shell: pwsh
         run: |
@@ -90,16 +90,20 @@ jobs:
           Write-Host "package.json version updated to: $NewVersion"
 
       - name: Set Version with macos-latest and ubuntu-22.04
-        if: matrix.platform != 'windows-latest'
+        if: ${{ !inputs.PUBLISH_RELEASE && matrix.platform != 'windows-latest' }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
           package_json="package.json"
-          current_version=$(jq -r '.version' "$package_json")
+          current_version=$(grep -o '"version": *"[^"]*"' "$package_json" | sed 's/.*"\(.*\)"/\1/')
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
-          jq --arg new_version "$new_version" '.version = $new_version' "$package_json" | sponge "$package_json"
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
+          else
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
+          fi
           echo "Cargo.toml version updated to: $new_version"
 
       - name: Setup node
