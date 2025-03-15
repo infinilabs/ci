@@ -80,7 +80,7 @@ jobs:
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
           $VersionLine = [regex]::Match($Content, '^version\s*=\s*"(.*?)"([\r\n]|$)')
-          if (-not $match.Success) {
+          if (-not $VersionLine.Success) {
               Write-Error "Could not find version line in Cargo.toml"
               exit 1
           }
