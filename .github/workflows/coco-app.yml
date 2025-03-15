@@ -79,8 +79,8 @@ jobs:
         run: |
           $CargoTomlPath = ".\src-tauri\Cargo.toml"
           $Content = Get-Content -Raw $CargoTomlPath
-          $VersionLine = $Content | Select-String -Pattern '(?m)^\s*\[package\]\s*[\r\n]+(?:.*\s+)*?version\s*=\s*"(.*?)"'
-          echo "Current version: $($VersionLine -split '"')[1]"
+          $VersionLine = $Content | Select-String -Pattern '(?m)^version\s*=\s*"(.*?)"'
+          echo "Current version: $VersionLine"
           $CurrentVersion = ($VersionLine -split '"')[1]
           $VersionParts = $CurrentVersion.Split('.')
           $VersionParts[2] = [int]$VersionParts[2] + 1
@@ -99,7 +99,11 @@ jobs:
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
-          sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
+          else
+            sed -i "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml"
+          fi
           echo "Cargo.toml version updated to: $new_version"
 
       - name: Setup node
