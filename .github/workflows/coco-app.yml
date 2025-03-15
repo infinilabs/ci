@@ -98,7 +98,7 @@ jobs:
           date_str=$(date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))_NIGHTLY-${date_str}"
-          sed -i "s/^version = \".*\"/version = \"$new_version\"/" "$cargo_toml"
+          sed -i '' "s/^ *version *= *\".*\"/version = \"$new_version\"/" "$cargo_toml" 
 
       - name: Setup node
         uses: actions/setup-node@v4
