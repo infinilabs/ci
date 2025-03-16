@@ -73,6 +73,27 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
+      - name: Set Tag with ${{ matrix.platform }}
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          current_version=$PUBLISH_VERSION
+          if [ -z "$current_version" ]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          # Extract x.y.z using a regular expression
+          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            current_version="${BASH_REMATCH[1]}"
+          else
+            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
+            exit 1
+          fi
+          tag=".v${current_version}"
+          echo "UPGRADE=$tag" >> $GITHUB_ENV
+
       - name: Set Version with ${{ matrix.platform }}
         if: ${{ !inputs.PUBLISH_RELEASE }}
         working-directory: ${{ env.REPO-NAME }}
@@ -171,7 +192,7 @@ jobs:
           secure: false
           local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '**/*.{AppImage,sig,exe,gz}'
-          remote-dir: ${{ env.OSS_PATH }}
+          remote-dir: "${{ env.OSS_PATH }}/${{ env.UPGRADE }}"
           debug: true
 
       - name: Upload assets to OSS with ${{ matrix.target }}
