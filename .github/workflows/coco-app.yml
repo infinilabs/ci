@@ -114,7 +114,7 @@ jobs:
             exit 1
           fi
           echo "Current version: $current_version"
-          date_str=$(date +%Y%m%d)
+          date_str=$(TZ='Asia/Shanghai' date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-${date_str}"
           if ${{ matrix.platform == 'macos-latest' }}; then

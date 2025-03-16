@@ -145,7 +145,7 @@ jobs:
               DYNAMIC_VERSION="$PUBLISH_VERSION"
             fi
           else
-            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_BUILD_NUMBER=$(TZ='Asia/Shanghai' date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
           fi
           echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
