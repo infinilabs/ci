@@ -6,6 +6,7 @@ defaults:
 
 env:
   PNAME: easysearch
+  TZ: Asia/Shanghai
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
@@ -141,7 +142,7 @@ jobs:
             if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
-              DYNAMIC_BUILD_NUMBER="$(TZ='Asia/Shanghai' date +%Y%m%d)-SNAPSHOT"
+              DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
               DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3}')
             fi
           else
@@ -181,7 +182,7 @@ jobs:
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           else
-            EZS_TAG="$VERSION-$BUILD_NUMBER" BUILD_NUMBER="$(TZ='Asia/Shanghai' date +%Y%m%d)" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+            EZS_TAG="$VERSION-$BUILD_NUMBER" BUILD_NUMBER="$BUILD_NUMBER" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           fi
 
       - name: Set up qemu
