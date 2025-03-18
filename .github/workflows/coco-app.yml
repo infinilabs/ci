@@ -193,7 +193,6 @@ jobs:
           local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '**/*.{AppImage,sig,exe,gz}'
           remote-dir: "${{ env.OSS_PATH }}/${{ env.UPGRADE }}"
-          debug: true
 
       - name: Upload assets to OSS with ${{ matrix.target }}
         uses: infinilabs/oss-upload@v0
@@ -207,4 +206,3 @@ jobs:
           file-pattern: '**/*.{exe,dmg,deb,rpm}'
           repack-version: ${{ env.VERSION }}
           remote-dir: ${{ env.OSS_PATH }}
-          debug: true
