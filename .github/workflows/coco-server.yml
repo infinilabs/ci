@@ -149,12 +149,12 @@ jobs:
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
           fi
-          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date +%Y%m%d %H:%M:%S)"
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date '+%Y-%m-%d %H:%M:%S')"
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
-          echo BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S") >> $GITHUB_ENV
+          echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Preper coco server dependencies
         run: |

@@ -26,7 +26,7 @@ env:
 
 on:
   schedule:
-    - cron: '45 16 * * *'
+    - cron: '45 18 * * *'
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
@@ -114,7 +114,7 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
-          echo "Get current version: $current_version at $(date +%Y%m%d %H:%M:%S)"
+          echo "Get current version: $current_version at $(date '+%Y-%m-%d %H:%M:%S')"
           IFS=. read -r major minor patch <<< "$current_version"
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
           if ${{ matrix.platform == 'macos-latest' }}; then

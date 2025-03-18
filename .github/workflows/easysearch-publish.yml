@@ -152,7 +152,7 @@ jobs:
             DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
           fi
           
-          DYNAMIC_BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S")
+          DYNAMIC_BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
           export VERSION=$DYNAMIC_VERSION
           export BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER
