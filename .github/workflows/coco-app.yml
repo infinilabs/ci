@@ -113,8 +113,10 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
-          build_number=$(TZ=Asia/Shanghai date -d '+8 hours' '+%Y%m%d')
-          echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -d '+8 hours' '+%Y%m%d %H:%M:%S')"
+          utc=$(date -u +%s)
+          cst=$((utc + 8 * 60 * 60))
+          build_number=$(TZ=Asia/Shanghai date -r "$cst" +%Y%m%d)
+          echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -r "$cst" '+%Y-%m-%d %H:%M:%S')"
           IFS=. read -r major minor patch <<< "$current_version"
           version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
           if ${{ matrix.platform == 'macos-latest' }}; then
