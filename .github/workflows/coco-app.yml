@@ -41,6 +41,7 @@ on:
 jobs:
   build-app:
     env:
+      TZ: Asia/Shanghai
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
       fail-fast: false
@@ -113,12 +114,16 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
-          echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -d @`date +%s` '+%Y-%m-%d %H:%M:%S')"
+          echo "Get current version: $current_version at $(date '+%Y-%m-%d %H:%M:%S')"
           IFS=. read -r major minor patch <<< "$current_version"
-          build_number=$(TZ=Asia/Shanghai date -d @`date +%s` "+%Y%m%d")
-          version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
+          version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
           if ${{ matrix.platform == 'macos-latest' }}; then
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            build_number=$(TZ=Asia/Shanghai date -d '+8 hours' "+%Y%m%d")
+            echo "Timezone: `date -R`,Build number: $build_number"
+            version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           else
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           fi
