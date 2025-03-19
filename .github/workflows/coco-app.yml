@@ -41,7 +41,6 @@ on:
 jobs:
   build-app:
     env:
-      TZ: Asia/Shanghai
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
       fail-fast: false
@@ -114,21 +113,17 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
-          echo "Get current version: $current_version at $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -d @`date +%s` '+%Y-%m-%d %H:%M:%S')"
           IFS=. read -r major minor patch <<< "$current_version"
-          new_version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
+          build_number=$(TZ=Asia/Shanghai date -d @`date +%s` "+%Y%m%d")
+          version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
-            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
-          elif ${{ matrix.platform == 'windows-latest' }}; then
-            build_number=$(TZ=Asia/Shanghai date -d @`date +%s` "+%Y%m%d")
-            echo "Timezone: `date -R`,Build number: $build_number"
-            new_version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
-            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           else
-            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           fi
-          echo "Version updated to: $new_version"
-          echo "VERSION=$new_version" >> $GITHUB_ENV
+          echo "Version updated to: $version"
+          echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
