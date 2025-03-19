@@ -182,7 +182,7 @@ jobs:
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           else
-            EZS_TAG="$VERSION-$BUILD_NUMBER" BUILD_NUMBER="$BUILD_NUMBER" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+            EZS_TAG="$VERSION-$BUILD_NUMBER" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           fi
 
       - name: Set up qemu

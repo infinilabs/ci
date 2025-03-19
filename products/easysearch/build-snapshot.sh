@@ -54,7 +54,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
   fi
 
   # 本地备份
-  mv $WORKDIR/$PNAME-$VERSION-SNAPSHOT/$DNAME $DEST/$TNAME
+  mv $WORKDIR/$PNAME-$VERSION-SNAPSHOT/$DNAME $DEST/$DNAME
   cd $WORKDIR && rm -rvf $WORKDIR/$FNAME && rm -rf $WORKDIR/$PNAME-$VERSION-SNAPSHOT
 done
 

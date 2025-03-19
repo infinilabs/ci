@@ -4,7 +4,12 @@ WORK=$GITHUB_WORKSPACE/products/$PNAME
 DEST=$GITHUB_WORKSPACE/dest
 
 echo "Prepar build docker files"
-mkdir -p $DEST
+if [[ -d $DEST ]]; then
+  ls -lrt $DEST/*.tar.gz
+  ls -lrt $DEST/plugins
+else
+  mkdir -p $DEST
+fi
 
 cd $WORK
 
