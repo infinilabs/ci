@@ -118,7 +118,7 @@ jobs:
           build_number=$(TZ=Asia/Shanghai date -r "$cst" +%Y%m%d)
           echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -r "$cst" '+%Y-%m-%d %H:%M:%S')"
           IFS=. read -r major minor patch <<< "$current_version"
-          version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
+          version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           else
