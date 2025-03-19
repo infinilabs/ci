@@ -113,18 +113,21 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
-          utc=$(date -u +%s)
-          cst=$((utc + 8 * 60 * 60))
-          build_number=$(TZ=Asia/Shanghai date -r "$cst" +%Y%m%d)
-          echo "Get current version: $current_version at $(TZ=Asia/Shanghai date -r "$cst" '+%Y-%m-%d %H:%M:%S')"
+          build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
+            version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
+            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           else
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
           fi
-          echo "Version updated to: $version"
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup node
