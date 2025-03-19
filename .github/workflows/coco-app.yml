@@ -119,6 +119,11 @@ jobs:
           new_version="$major.$minor.$((patch + 1))-NIGHTLY-$(date +%Y%m%d)"
           if ${{ matrix.platform == 'macos-latest' }}; then
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            build_number=$(TZ=Asia/Shanghai date -d @`date +%s` "+%Y%m%d")
+            echo "Timezone: `date -R`,Build number: $build_number"
+            new_version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
           else
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$package_json"
           fi
