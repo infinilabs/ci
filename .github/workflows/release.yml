@@ -324,7 +324,7 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
         uses: infinilabs/gitea-pr@v0
         env:
-          https_proxy: http://127.0.0.1:${{ vars.LOCAL_PORT }}
+          https_proxy: http://${{ vars.LOCAL_HOST }}:${{ vars.LOCAL_PORT }}
         with:
           url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}

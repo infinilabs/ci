@@ -4,10 +4,6 @@ defaults:
     shell: bash
 
 env:
-    LOCAL_PORT: ${{ vars.LOCAL_PORT }}
-    SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
-    SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-    SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
     CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
     CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
     CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
@@ -30,6 +26,16 @@ jobs:
         steps:
         - name: Checkout code
           uses: actions/checkout@v4
+
+        - name: Set up and check env
+          run: |
+            $GITHUB_WORKSPACE/scripts/env-init.sh
+            echo ${{ secrets.DOCKER_CA }} > $GITHUB_WORKSPACE/certs/ca.crt
+            PROXY=http://${{ vars.LOCAL_HOST }}:${{ vars.LOCAL_PORT }} $GITHUB_WORKSPACE/certs/init.sh
+        
+        - name: Run connect in background
+          run: |
+            connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
 
         - name: Login to local docker registry
           uses: docker/login-action@v3
