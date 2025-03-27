@@ -40,7 +40,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "1.11.1-2000"
+        default: "1.12.0-2008"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: true

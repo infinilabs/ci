@@ -17,11 +17,11 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "0.2.2-2000"
+        default: "0.2.3-2008"
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "1.11.1-2000"
+        default: "1.12.0-2008"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false

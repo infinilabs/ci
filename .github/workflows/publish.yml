@@ -1,0 +1,64 @@
+name: Products Publish Version Setup
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_dispatch:
+    inputs:
+      BUILD_NUMBER:
+        description: 'Build Number'
+        required: true
+        default: "2008"
+      COCO_APP_PUBLISH_VERSION:
+        description: 'Coco App Publish Version'
+        required: true
+        default: "0.2.2"
+      COCO_SERVER_PUBLISH_VERSION:
+        description: 'Coco Server Publish Version'
+        required: true
+        default: "0.2.3"
+      FRAMEWORK_PUBLISH_VERSION:
+        description: 'Framework Publish Version'
+        required: true
+        default: "1.1.4"
+      EASSEARCH_PUBLISH_VERSION:
+        description: 'EASSearch Publish Version'
+        required: true
+        default: "1.12.0"
+      PRODUCTS_PUBLISH_VERSION:
+        description: 'Products Publish Version'
+        required: true
+        default: "1.29.2"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup env
+        run: |
+          # Setup environment
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+
+          # Set up the version and build number
+          echo "COCO_APP_PUBLISH_VERSION=${{ inputs.COCO_APP_PUBLISH_VERSION }}-${{ inputs.BUILD_NUMBER }}" >> $GITHUB_ENV
+          echo "COCO_SERVER_PUBLISH_VERSION=${{ inputs.COCO_SERVER_PUBLISH_VERSION }}-${{ inputs.BUILD_NUMBER }}" >> $GITHUB_ENV
+          echo "FRAMEWORK_PUBLISH_VERSION=${{ inputs.FRAMEWORK_PUBLISH_VERSION }}-${{ inputs.BUILD_NUMBER }}" >> $GITHUB_ENV
+          echo "EASSEARCH_PUBLISH_VERSION=${{ inputs.EASSEARCH_PUBLISH_VERSION }}-${{ inputs.BUILD_NUMBER }}" >> $GITHUB_ENV
+          echo "PRODUCTS_PUBLISH_VERSION=${{ inputs.PRODUCTS_PUBLISH_VERSION }}-${{ inputs.BUILD_NUMBER }}" >> $GITHUB_ENV
+          
+      - name: Update default version
+        run: |
+           # Update default version
+           sed -i $GITHUB_WORKSPACE/.github/workflows/coco-app.yml -e "s/\d\.\d\.\d-\d\+/${COCO_APP_PUBLISH_VERSION}/g"
+           sed -i $GITHUB_WORKSPACE/.github/workflows/coco-app-repack.yml -e "s/\d\.\d\.\d-\d\+/${COCO_APP_PUBLISH_VERSION}/g"
+
+           sed -i $GITHUB_WORKSPACE/.github/workflows/coco-server.yml -e "s/\d\.\d\.\d-\d\+/${COCO_SERVER_PUBLISH_VERSION}/g"
+
+           sed -i $GITHUB_WORKSPACE/.github/workflows/docker-image.yml -e "s/\d\.\d\.\d-\d\+/${EASSEARCH_PUBLISH_VERSION}/g"
+           sed -i $GITHUB_WORKSPACE/.github/workflows/easysearch-publish.yml -e "s/\d\.\d\.\d-\d\+/${EASSEARCH_PUBLISH_VERSION}/g"
+           
+           sed -i $GITHUB_WORKSPACE/.github/workflows/products.yml -e "s/\d\.\d\.\d-\d\+/${PRODUCTS_PUBLISH_VERSION}/g"

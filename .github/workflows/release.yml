@@ -33,23 +33,23 @@ on:
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.1.4" 
+          default: "1.1.5" 
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "1.29.1-2000"
+        default: "1.29.2-2008"
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "1.11.1-2000"
+        default: "1.12.0-2008"
       PUBLISH_COCO_APP_VERSION:
         description: 'Publish Coco App Version'
         required: false
-        default: "0.2.1-2000"
+        default: "0.2.2-2008"
       PUBLISH_COCO_VERSION:
         description: 'Publish Coco Version'
         required: false
-        default: "0.2.2-2000"
+        default: "0.2.3-2008"
       PRODUCTS_PUBLISH:
         description: 'Products with agent/console...'
         required: false

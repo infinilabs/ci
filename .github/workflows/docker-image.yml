@@ -17,7 +17,7 @@ on:
           IMAGE_TAG:
             description: 'Image Tag'
             required: true
-            default: 'easysearch:1.11.1-2000'
+            default: 'easysearch:1.12.0-2008'
 
 jobs:
     push_docker_image:
