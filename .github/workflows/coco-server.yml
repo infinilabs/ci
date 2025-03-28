@@ -195,16 +195,17 @@ jobs:
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web && pnpm install --quiet && pnpm build
+          cd $WORK/$PNAME/web && sed -i '/"prepare": "simple-git-hooks"/d' package.json
+          pnpm install --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup
+          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
           # check build files
-          ls -lrt $WORK/$PNAME/.public/widgets/searchbox
+          ls -lrht $WORK/$PNAME/.public/widgets/searchbox
 
           # build all targets
           for tag in $TARGETS; do
