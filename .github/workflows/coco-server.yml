@@ -199,7 +199,7 @@ jobs:
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && pnpm tsup
+          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && tsup
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/* $WORK/$PNAME/.public/widgets/searchbox
 
