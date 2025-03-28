@@ -195,6 +195,8 @@ jobs:
         run: |
           # build web
           cd $WORK/$PNAME/web && pnpm install --quiet && pnpm build
+          # build widgets
+          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && pnpm build
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
