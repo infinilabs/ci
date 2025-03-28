@@ -293,7 +293,7 @@ jobs:
           done
 
       - name: Deploy files to staging
-        timeout-minutes: 3
+        timeout-minutes: 10
         run: |
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"

@@ -218,7 +218,7 @@ jobs:
           #no-cache: true
 
       - name: Deploy easysearch to staging k8s
-        timeout-minutes: 3
+        timeout-minutes: 10
         run: |
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
