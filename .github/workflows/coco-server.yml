@@ -194,9 +194,15 @@ jobs:
       - name: Build coco server
         run: |
           # build web
+          echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && pnpm install --quiet && pnpm build
+
           # build widgets
-          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && pnpm build:server
+          echo "Build $PNAME widgets start..."
+          cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && pnpm run tsup
+          mkdir -p $WORK/$PNAME/.public/widgets/searchbox
+          cp index.html dist/index.* $WORK/$PNAME/.public/widgets/searchbox
+
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
