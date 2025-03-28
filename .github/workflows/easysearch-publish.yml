@@ -7,6 +7,7 @@ defaults:
 env:
   PNAME: easysearch
   TZ: Asia/Shanghai
+  TOKEN: ${{ secrets.X_TOKEN }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}

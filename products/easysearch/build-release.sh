@@ -56,6 +56,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
+onceclean=true
 plugins=(sql jieba analysis-hanlp analysis-icu analysis-ik analysis-pinyin analysis-stconvert index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn)
 for p in ${plugins[@]}; do
   f=$DEST/plugins/$p/$p-$VERSION.zip
@@ -79,6 +80,14 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+    echo Check if $f exists
+    URL=$RELEASE_URL/$PNAME/stable/plugins/$p/$f.sha512
+    if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+      if [ "$onceclean" == "true" ]; then
+        curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION"
+        onceclean=false
+      fi
+    fi
     echo Upload $f to oss
     oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
     oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
