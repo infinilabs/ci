@@ -195,7 +195,7 @@ jobs:
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web && sed -i '/"prepare": "simple-git-hooks"/d' package.json
+          cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
           pnpm install --quiet && pnpm build -- --silent
 
           # build widgets
