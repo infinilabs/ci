@@ -11,7 +11,12 @@ cd $WORK
 for t in amd64 arm64; do
   mkdir -p $WORK/{$PNAME-$t,$DNAME-$t}
   EZS_FILE=$DNAME-$EZS_VER-linux-$t.tar.gz
-  wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$DNAME/stable/$EZS_FILE -O $DEST/$EZS_FILE
+  for f in stable snapshot; do
+    if curl -I -m 10 -o /dev/null -s -w %{http_code} $RELEASE_URL/$DNAME/$f/$EZS_FILE | grep -q 200; then
+      wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$DNAME/$f/$EZS_FILE -O $DEST/$EZS_FILE
+    fi
+  done
+  # Check if the file exists and is not empty
   if [ $? -eq 0 ]; then
     file_size=$(stat -c%s "$DEST/$EZS_FILE")
     if [ "$file_size" -gt 0 ]; then
