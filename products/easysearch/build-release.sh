@@ -84,7 +84,7 @@ for p in ${plugins[@]}; do
     URL=$RELEASE_URL/$PNAME/stable/plugins/$p/$f.sha512
     if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
       if [ "$onceclean" == "true" ]; then
-        curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION"
+        curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
         onceclean=false
       fi
     fi
