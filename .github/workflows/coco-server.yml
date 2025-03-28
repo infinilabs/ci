@@ -202,7 +202,9 @@ jobs:
           cd $WORK/$PNAME/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm build
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf dist/* $WORK/$PNAME/.public/widgets/searchbox
-
+          
+          # check build files
+          ls -lrt dist && ls -lrt $WORK/$PNAME/.public/widgets/searchbox && ls -lrt $WORK/$PNAME/.public
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
