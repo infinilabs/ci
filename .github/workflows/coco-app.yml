@@ -91,8 +91,22 @@ jobs:
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
+
+          version=$current_version
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
+          else
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" "$package_json"
+          fi
+          
           tag=".v${current_version}"
           echo "UPGRADE=$tag" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
         if: ${{ !inputs.PUBLISH_RELEASE }}
