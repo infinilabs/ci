@@ -184,6 +184,22 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm tauri build --target ${{ matrix.target }}
 
+      - name: Rename upgrade asserts
+        if: ${{ matrix.platform == 'macos-latest' }};
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          base_dir="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          version=${{ env.VERSION }}
+
+          # Rename files based on architecture
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz"
+          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
+          fi
+          
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
