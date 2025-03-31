@@ -17,7 +17,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "0.2.3-2008"
+        default: "0.3.0-2008"
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
