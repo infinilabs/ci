@@ -263,15 +263,17 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
             current_version="${BASH_REMATCH[1]}"
+            build_number="${BASH_REMATCH[2]}"
           else
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
           fi
 
-          version=$current_version
+          version="$current_version-$build_number"
           tag=".v${current_version}"
+          echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
@@ -297,7 +299,7 @@ jobs:
           # Create the base JSON structure
           cat > update.json <<EOF
           {
-            "version": "${VERSION}",
+            "version": "${PURE_VERSION}",
             "notes": "",
             "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')",
             "platforms": {
