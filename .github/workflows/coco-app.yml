@@ -338,7 +338,12 @@ jobs:
             }
           }
           EOF
-
+          cat update.json
+          # Check if jq is installed
+          if ! command -v jq &> /dev/null; then
+            echo "jq could not be found. Please install jq."
+            exit 1
+          fi
           # Initialize jq statements
           jq_statements=""
 
