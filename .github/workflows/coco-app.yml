@@ -198,7 +198,7 @@ jobs:
           elif [[ "${{ matrix.target }}" == *"linux-gnu"* ]]; then
             target_dir+="/appimage"
           elif [[ "${{ matrix.target }}" == *"windows-msvc"* ]]; then
-            target_dir+="/msi"
+            target_dir+="/nsis"
           fi
 
           puer_version="$(echo "$VERSION" | sed 's/-.*//')"
@@ -209,6 +209,14 @@ jobs:
             echo "Renaming '$file' to '$new_file'"
             mv "$file" "$new_file"
           done
+          # Rename the darwin
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz"
+          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
+          fi
           
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
