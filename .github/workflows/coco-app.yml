@@ -277,97 +277,15 @@ jobs:
             exit 1
           fi
 
-          version="$current_version-$build_number"
           tag=".v${current_version}"
           echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
-          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "VERSION=$current_version-$build_numbe" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
+          echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
+          echo "RELEASE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
           cat $GITHUB_ENV
 
       - name: Generate .latest.json
         shell: bash
         if: ${{ inputs.PUBLISH_RELEASE }}
-        run: |
-          PRE_UPGRADE_PATH="$PNAME/snapshot/$UPGRADE"
-          RELEASE_UPGRADE_PATH="$PNAME/stable/$UPGRADE"
-
-          echo "PRE_UPGRADE_PATH: $PRE_UPGRADE_PATH"
-          echo "RELEASE_UPGRADE_PATH: $RELEASE_UPGRADE_PATH"
-          echo "$VERSION"
-
-          # Function to fetch signatures
-          get_signature() {
-            url="$1"
-            # Check if the URL is valid
-            if ! curl -sI "$url" | grep "HTTP/1.[01] 200" >/dev/null; then
-              echo "Invalid URL: $url"
-              exit 1
-            fi
-            if curl -s -f "$url" > signature.txt; then
-              cat signature.txt
-            else
-              echo "Failed to download signature from $url"
-              exit 1
-            fi
-          }
-
-          # Create the base JSON structure
-          cat > update.json <<EOF
-          {
-            "version": "${PURE_VERSION}",
-            "notes": "",
-            "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')",
-            "platforms": {
-              "darwin-aarch64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz"
-              },
-              "darwin-x86_64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz"
-              },
-              "linux-x86_64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage"
-              },
-              "linux-aarch64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.AppImage"
-              },
-              "windows-x86_64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe"
-              },
-              "windows-aarch64": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe"
-              },
-              "windows-i686": {
-                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe"
-              }
-            }
-          }
-          EOF
-
-          # Initialize jq statements
-          jq_statements=""
-
-          # Add signature for macOS -  adjust for download artifact directory structure
-          upgrade_url="${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz.sig"
-          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature ${upgrade_url})\" |"
-          echo "$jq_statements"
-          
-          jq_statements+=" .platforms.\"darwin-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz.sig)\" |"
-
-          # Add signature for Linux - different URLs for each architecture
-          jq_statements+=" .platforms.\"linux-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
-          jq_statements+=" .platforms.\"linux-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
-
-          # Add signature for Windows, adjust for artifact structure
-          jq_statements+=" .platforms.\"windows-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe.sig)\" |"
-          jq_statements+=" .platforms.\"windows-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe.sig)\" |"
-          jq_statements+=" .platforms.\"windows-i686\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe.sig)\" "
-
-          # Apply jq statements
-          cat update.json 
-          echo $jq_statements
-
-          cat update.json | jq "${jq_statements}" > .latest.json
-          cat .latest.json
-
-          # Upload the JSON file to OSS
-          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$PRE_UPGRADE_PATH" -f $GITHUB_WORKSPACE/.latest.json
+        run: ${GITHUB_WORKSPACE}/products/coco-app/generate-latest-json.sh
