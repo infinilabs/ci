@@ -67,9 +67,6 @@ cat > .latest.json <<EOF
 }
 EOF
 
-# Output the resulting JSON for debugging
-cat .latest.json
-
 # Upload the JSON file to OSS
 echo "Uploading .latest.json to OSS"
 oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$PRE_UPGRADE_PATH" -f .latest.json
