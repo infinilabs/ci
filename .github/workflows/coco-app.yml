@@ -276,7 +276,7 @@ jobs:
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
-    #needs: build-app
+    needs: "build-app"
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
@@ -311,7 +311,7 @@ jobs:
           echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
           echo "VERSION=$current_version-$build_number" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
-          echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
+          echo "PRE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
           echo "RELEASE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
           cat $GITHUB_ENV
 
