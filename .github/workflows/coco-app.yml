@@ -277,6 +277,7 @@ jobs:
           echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
+          cat $GITHUB_ENV
 
       - name: Generate .latest.json
         shell: bash
@@ -284,9 +285,9 @@ jobs:
         run: |
           PRE_UPGRADE_PATH="$PNAME/snapshot/$UPGRADE"
           RELEASE_UPGRADE_PATH="$PNAME/stable/$UPGRADE"
-          
-          echo "$PRE_UPGRADE_PATH"
-          echo "$RELEASE_UPGRADE_PATH"
+
+          echo "PRE_UPGRADE_PATH: $PRE_UPGRADE_PATH"
+          echo "RELEASE_UPGRADE_PATH: $RELEASE_UPGRADE_PATH"
           echo "$VERSION"
 
           # Function to fetch signatures
