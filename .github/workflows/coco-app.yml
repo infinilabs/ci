@@ -284,6 +284,11 @@ jobs:
         run: |
           PRE_UPGRADE_PATH="$PNAME/snapshot/$UPGRADE"
           RELEASE_UPGRADE_PATH="$PNAME/stable/$UPGRADE"
+          
+          echo "$PRE_UPGRADE_PATH"
+          echo "$RELEASE_UPGRADE_PATH"
+          echo "$VERSION"
+
           # Function to fetch signatures
           get_signature() {
             url="$1"
