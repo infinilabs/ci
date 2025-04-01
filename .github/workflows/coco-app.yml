@@ -39,14 +39,8 @@ on:
         required: false
         type: boolean
         default: true
-      JUST_RELEASE:
-        description: 'Just Release'
-        required: false
-        type: boolean
-        default: false
 jobs:
   build-app:
-    if: ${{ !inputs.JUST_RELEASE }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
@@ -276,7 +270,7 @@ jobs:
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
-    #needs: "build-app"
+    needs: "build-app"
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
