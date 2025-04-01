@@ -11,13 +11,11 @@ echo "PURE_VERSION: $PURE_VERSION"
 # Function to fetch signatures with error handling
 get_signature() {
   url="$1"
-  echo "Fetching signature from: $url"
   signature=$(curl -s "$url")
   if [ $? -ne 0 ]; then
     echo "Error: Failed to download signature from $url"
-    return 1  # Return a non-zero exit code to indicate failure
+    return 1
   fi
-  echo "Successfully fetched signature from $url"
   echo "$signature"
 }
 
@@ -25,7 +23,7 @@ get_signature() {
 signature_darwin_aarch64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
 signature_darwin_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
 signature_linux_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.AppImage.sig")
-signature_linux_aarch64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_arm64.AppImage.sig")
+signature_linux_aarch64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.AppImage.sig")
 signature_windows_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_x64-setup.exe.sig")
 signature_windows_arm64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_arm64-setup.exe.sig")
 signature_windows_i686=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_x86-setup.exe.sig")
