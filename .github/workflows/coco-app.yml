@@ -6,12 +6,12 @@ env:
   REPO-NAME: "coco-app"
   PNAME: "coco/app"
   OSS_PATH: /Release/coco/app/snapshot
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
   OSS_SK: ${{ secrets.OSS_SK }}
   OSS_BK: ${{ secrets.OSS_BK }}
   OSS_MODE: ${{ secrets.OSS_MODE }}
-  RELEASE_URL: ${{ vars.RELEASE_URL }}
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -60,6 +60,8 @@ jobs:
 
           - platform: "ubuntu-22.04"
             target: "x86_64-unknown-linux-gnu"
+          - platform: "ubuntu-22.04"
+            target: "aarch64-unknown-linux-gnu"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -240,3 +242,100 @@ jobs:
           file-pattern: '**/*.{exe,dmg,deb,rpm}'
           repack-version: ${{ env.VERSION }}
           remote-dir: ${{ env.OSS_PATH }}
+
+  release:
+    needs: build-app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Init Env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          # Setup environment
+          current_version=$PUBLISH_VERSION
+          if [ -z "$current_version" ]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          # Extract x.y.z using a regular expression
+          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            current_version="${BASH_REMATCH[1]}"
+          else
+            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
+            exit 1
+          fi
+
+          version=$current_version
+          tag=".v${current_version}"
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "UPGRADE=$tag" >> $GITHUB_ENV
+
+      - name: Generate .latest.json
+        shell: bash
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        run: |
+          # Function to fetch signatures
+          get_signature() {
+            url="$1"
+            if curl -s -f "$url" > signature.txt; then
+              cat signature.txt
+            else
+              echo "Failed to download signature from $url"
+              exit 1
+            fi
+          }
+
+          # Create the base JSON structure
+          cat > update.json <<EOF
+          {
+            "version": "${VERSION}",
+            "notes": "",
+            "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')",
+            "platforms": {
+              "darwin-aarch64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_arm64.app.tar.gz"
+              },
+              "darwin-x86_64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_amd64.app.tar.gz"
+              },
+              "linux-x86_64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_amd64.AppImage"
+              },
+              "linux-aarch64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_arm64.AppImage"
+              },
+              "windows-x86_64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_x64-setup.exe"
+              },
+              "windows-aarch64": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_arm64-setup.exe"
+              },
+              "windows-i686": {
+                "url": "${RELEASE_URL}/.v${VERSION}/Coco-AI_${VERSION}_x86-setup.exe"
+              }
+            }
+          }
+          EOF
+
+          # Initialize jq statements
+          jq_statements=""
+
+          # Add signature for macOS -  adjust for download artifact directory structure
+          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature Coco-AI-aarch64-apple-darwin/Coco-AI_${VERSION}_arm64.app.tar.gz.sig)\" |"
+          jq_statements+=" .platforms.\"darwin-x86_64\".signature = \"$(get_signature Coco-AI-x86_64-apple-darwin/Coco-AI_${VERSION}_amd64.app.tar.gz.sig)\" |"
+
+          # Add signature for Linux - different URLs for each architecture
+          jq_statements+=" .platforms.\"linux-x86_64\".signature = \"$(get_signature Coco-AI-x86_64-unknown-linux-gnu/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
+          jq_statements+=" .platforms.\"linux-aarch64\".signature = \"$(get_signature Coco-AI-aarch64-unknown-linux-gnu/Coco-AI_${VERSION}_arm64.AppImage.sig)\" |"
+
+          # Add signature for Windows, adjust for artifact structure
+          jq_statements+=" .platforms.\"windows-x86_64\".signature = \"$(get_signature Coco-AI-windows-latest/Coco-AI_${VERSION}_x64-setup.exe.sig)\" |"
+          jq_statements+=" .platforms.\"windows-aarch64\".signature = \"$(get_signature Coco-AI-windows-latest/Coco-AI_${VERSION}_arm64-setup.exe.sig)\" |"
+          jq_statements+=" .platforms.\"windows-i686\".signature = \"$(get_signature Coco-AI-windows-latest/Coco-AI_${VERSION}_x86-setup.exe.sig)\" "
+
+          # Apply jq statements
+          jq "${jq_statements}" update.json > .latest.json
+
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$PNAME/snapshot/$UPGRADE" -f $GITHUB_WORKSPACE/.latest.json
