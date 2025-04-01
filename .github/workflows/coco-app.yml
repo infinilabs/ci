@@ -293,6 +293,12 @@ jobs:
           # Function to fetch signatures
           get_signature() {
             url="$1"
+            echo $url
+            # Check if the URL is valid
+            if ! curl -sI "$url" | grep "HTTP/1.[01] 200" >/dev/null; then
+              echo "Invalid URL: $url"
+              exit 1
+            fi
             if curl -s -f "$url" > signature.txt; then
               cat signature.txt
             else
