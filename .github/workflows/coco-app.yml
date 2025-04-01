@@ -41,7 +41,6 @@ on:
         default: true
 jobs:
   build-app:
-    if: ${{ !inputs.PUBLISH_RELEASE }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
