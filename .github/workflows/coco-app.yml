@@ -88,6 +88,7 @@ jobs:
           # Extract x.y.z using a regular expression
           if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             current_version="${BASH_REMATCH[1]}"
+            build_number="${BASH_REMATCH[2]}"
           else
             echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
             exit 1
@@ -108,6 +109,7 @@ jobs:
           tag=".v${current_version}"
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
         if: ${{ !inputs.PUBLISH_RELEASE }}
@@ -239,7 +241,7 @@ jobs:
           secure: true
           local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '**/*.{exe,dmg,deb,rpm}'
-          repack-version: ${{ env.VERSION }}
+          repack-version: "${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
@@ -278,7 +280,9 @@ jobs:
         if: ${{ inputs.PUBLISH_RELEASE }}
         run: |
           PRE_PATH="$PNAME/snapshot"
-          UPGRADE_PATH="$PRE_PATH/$UPGRADE"
+          RELEASE_PATH="$PNAME/stable"
+          PRE_UPGRADE_PATH="$PRE_PATH/$UPGRADE"
+          RELEASE_UPGRADE_PATH="$RELEASE_PATH/$UPGRADE"
           # Function to fetch signatures
           get_signature() {
             url="$1"
@@ -298,25 +302,25 @@ jobs:
             "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')",
             "platforms": {
               "darwin-aarch64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz"
               },
               "darwin-x86_64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz"
               },
               "linux-x86_64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage"
               },
               "linux-aarch64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.AppImage"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.AppImage"
               },
               "windows-x86_64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe"
               },
               "windows-aarch64": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe"
               },
               "windows-i686": {
-                "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe"
+                "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe"
               }
             }
           }
@@ -326,17 +330,17 @@ jobs:
           jq_statements=""
 
           # Add signature for macOS -  adjust for download artifact directory structure
-          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz.sig)\" |"
-          jq_statements+=" .platforms.\"darwin-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz.sig)\" |"
+          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz.sig)\" |"
+          jq_statements+=" .platforms.\"darwin-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz.sig)\" |"
 
           # Add signature for Linux - different URLs for each architecture
-          jq_statements+=" .platforms.\"linux-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
-          jq_statements+=" .platforms.\"linux-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
+          jq_statements+=" .platforms.\"linux-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
+          jq_statements+=" .platforms.\"linux-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.AppImage.sig)\" |"
 
           # Add signature for Windows, adjust for artifact structure
-          jq_statements+=" .platforms.\"windows-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe.sig)\" |"
-          jq_statements+=" .platforms.\"windows-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe.sig)\" |"
-          jq_statements+=" .platforms.\"windows-i686\".signature = \"$(get_signature ${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe.sig)\" "
+          jq_statements+=" .platforms.\"windows-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe.sig)\" |"
+          jq_statements+=" .platforms.\"windows-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64-setup.exe.sig)\" |"
+          jq_statements+=" .platforms.\"windows-i686\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe.sig)\" "
 
           # Apply jq statements
           jq "${jq_statements}" update.json > .latest.json
