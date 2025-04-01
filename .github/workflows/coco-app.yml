@@ -271,20 +271,23 @@ jobs:
 
   release:
     needs: "build-app"
+    if: ${{ inputs.PUBLISH_RELEASE }}
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Reset cache
+        run: |
+          # reset the cache
+          curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PURE_VERSION" > /dev/null
+          sleep 30
+
       - name: Init Env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          # Check if jq is installed
-          if ! command -v jq &> /dev/null; then
-            echo "jq could not be found. Please install jq."
-            exit 1
-          fi
           # Setup environment
           current_version=$PUBLISH_VERSION
           if [ -z "$current_version" ]; then
@@ -302,14 +305,12 @@ jobs:
           fi
 
           tag=".v${current_version}"
+          echo "UPGRADE=$tag" >> $GITHUB_ENVs
           echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
           echo "VERSION=$current_version-$build_number" >> $GITHUB_ENV
-          echo "UPGRADE=$tag" >> $GITHUB_ENV
-          echo "PRE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
+          echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
           echo "RELEASE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
-          cat $GITHUB_ENV
 
       - name: Generate .latest.json
         shell: bash
-        if: ${{ inputs.PUBLISH_RELEASE }}
         run: ${GITHUB_WORKSPACE}/products/coco-app/generate-latest-json.sh
