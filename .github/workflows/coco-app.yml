@@ -288,4 +288,4 @@ jobs:
       - name: Generate .latest.json
         shell: bash
         if: ${{ inputs.PUBLISH_RELEASE }}
-        run: ${GITHUB_WORKSPACE}/products/coco-app/gen_latest_json.sh
+        run: ${GITHUB_WORKSPACE}/products/coco-app/generate-latest-json.sh
