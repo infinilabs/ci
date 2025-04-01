@@ -189,20 +189,27 @@ jobs:
         run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Rename upgrade asserts
-        if: ${{ matrix.platform == 'macos-latest' }}
         working-directory: ${{ env.REPO-NAME }}
         run: |
-          base_dir="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          version=${{ env.VERSION }}
+          target_dir="src-tauri/target/${{ matrix.target }}/release/bundle"
 
-          # Rename files based on architecture
-          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
-            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz.sig"
-            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz"
-          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
-            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz.sig"
-            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
+          # 如果是 macOS，则指定 macOS 的子目录
+          if [[ "${{ matrix.target }}" == *"apple-darwin"* ]]; then
+            target_dir+="/macos"
+          elif [[ "${{ matrix.target }}" == *"linux-gnu"* ]]; then
+            target_dir+="/appimage"
+          elif [[ "${{ matrix.target }}" == *"windows-msvc"* ]]; then
+            target_dir+="/msi"
           fi
+
+          puer_version="$(echo "$VERSION" | sed 's/-.*//')"
+          version="$VERSION"
+
+          find "$target_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+            new_file="${file/$puer_version/${version}}"
+            echo "Renaming '$file' to '$new_file'"
+            mv "$file" "$new_file"
+          done
           
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}

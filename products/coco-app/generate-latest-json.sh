@@ -20,13 +20,13 @@ get_signature() {
 }
 
 # Get the signature for each platform
-signature_darwin_aarch64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
-signature_darwin_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
-signature_linux_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.AppImage.sig")
-signature_linux_aarch64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_amd64.AppImage.sig")
-signature_windows_x86_64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_x64-setup.exe.sig")
-signature_windows_arm64=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_arm64-setup.exe.sig")
-signature_windows_i686=$(get_signature "${RELEASE_URL}/coco/app/snapshot/$UPGRADE/Coco-AI_${VERSION}_x86-setup.exe.sig")
+signature_darwin_aarch64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
+signature_darwin_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
+signature_linux_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_amd64.AppImage.sig")
+signature_linux_aarch64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_amd64.AppImage.sig")
+signature_windows_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_x64-setup.exe.sig")
+signature_windows_arm64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_arm64-setup.exe.sig")
+signature_windows_i686=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_x86-setup.exe.sig")
 
 # Create the base JSON structure
 cat > .latest.json <<EOF
