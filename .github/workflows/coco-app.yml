@@ -39,8 +39,14 @@ on:
         required: false
         type: boolean
         default: true
+      JUST_RELEASE:
+        description: 'Just Release'
+        required: false
+        type: boolean
+        default: false
 jobs:
   build-app:
+    if: ${{ !inputs.JUST_RELEASE }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
@@ -193,7 +199,6 @@ jobs:
           bundle_dir="src-tauri/target/${{ matrix.target }}/release/bundle"
           base_dir="${bundle_dir}"
 
-          # 如果是 macOS，则指定 macOS 的子目录
           if [[ "${{ matrix.target }}" == *"apple-darwin"* ]]; then
             base_dir+="/macos"
           elif [[ "${{ matrix.target }}" == *"linux-gnu"* ]]; then
