@@ -109,7 +109,6 @@ jobs:
           tag=".v${current_version}"
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
-          echo "BUILD_NUMBER=$build_number" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
         if: ${{ !inputs.PUBLISH_RELEASE }}
@@ -131,7 +130,6 @@ jobs:
           fi
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
-          build_version="$major.$minor.$((patch + 1))"
           version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
@@ -146,8 +144,7 @@ jobs:
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           fi
           
-          echo "VERSION=$build_version" >> $GITHUB_ENV
-          echo "BUILD_NUMBER=NIGHTLY-$build_number" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -244,7 +241,7 @@ jobs:
           secure: true
           local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
           file-pattern: '**/*.{exe,dmg,deb,rpm}'
-          repack-version: "${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          repack-version: "${{ env.VERSION }}"
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
