@@ -188,7 +188,7 @@ jobs:
         run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Rename upgrade asserts
-        if: ${{ matrix.platform == 'macos-latest' }};
+        if: ${{ matrix.platform == 'macos-latest' }}
         working-directory: ${{ env.REPO-NAME }}
         run: |
           base_dir="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
