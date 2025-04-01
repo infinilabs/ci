@@ -3,6 +3,7 @@ defaults:
   run:
     shell: bash
 env:
+  CI: false
   REPO-NAME: "coco-app"
   PNAME: "coco/app"
   OSS_PATH: /Release/coco/app/snapshot
@@ -40,7 +41,6 @@ on:
         default: true
 jobs:
   build-app:
-    if: ${{ ! inputs.PUBLISH_RELEASE }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     strategy:
@@ -245,7 +245,7 @@ jobs:
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
-    #needs: build-app
+    needs: build-app
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
