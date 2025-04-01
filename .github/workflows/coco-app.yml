@@ -363,6 +363,9 @@ jobs:
           jq_statements+=" .platforms.\"windows-i686\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_x86-setup.exe.sig)\" "
 
           # Apply jq statements
+          cat update.json 
+          echo $jq_statements
+
           cat update.json | jq "${jq_statements}" > .latest.json
           cat .latest.json
 
