@@ -74,7 +74,7 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
-      - name: Set Tag with ${{ matrix.platform }}
+      - name: Set version & tag with ${{ matrix.platform }}
         if: ${{ inputs.PUBLISH_RELEASE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
@@ -96,13 +96,13 @@ jobs:
 
           version=$current_version
           if ${{ matrix.platform == 'macos-latest' }}; then
-            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            echo "Build version: $version-$build_number at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           elif ${{ matrix.platform == 'windows-latest' }}; then
-            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            echo "Build version: $version-$build_number at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           else
-            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            echo "Build version: $version-$build_number at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           fi
           
