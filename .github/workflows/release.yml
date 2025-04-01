@@ -283,7 +283,7 @@ jobs:
             if [ ! -d docs/content.$f ]; then
               continue
             fi
-            if ! grep -wq "$VERSION" docs/content.$f/docs/release-notes/_index.md; then
+            if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
               sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### Breaking changes  \\n### Features  \\n### Bug fix  \\n### Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
               git add docs/content.$f/docs/release-notes/_index.md
