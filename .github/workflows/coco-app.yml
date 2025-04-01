@@ -282,10 +282,8 @@ jobs:
         shell: bash
         if: ${{ inputs.PUBLISH_RELEASE }}
         run: |
-          PRE_PATH="$PNAME/snapshot"
-          RELEASE_PATH="$PNAME/stable"
-          PRE_UPGRADE_PATH="$PRE_PATH/$UPGRADE"
-          RELEASE_UPGRADE_PATH="$RELEASE_PATH/$UPGRADE"
+          PRE_UPGRADE_PATH="$PNAME/snapshot/$UPGRADE"
+          RELEASE_UPGRADE_PATH="$PNAME/stable/$UPGRADE"
           # Function to fetch signatures
           get_signature() {
             url="$1"
