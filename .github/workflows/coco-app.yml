@@ -94,7 +94,7 @@ jobs:
             exit 1
           fi
 
-          version=$current_version
+          version="$current_version-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version-$build_number at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
