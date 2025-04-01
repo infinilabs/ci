@@ -348,7 +348,10 @@ jobs:
           jq_statements=""
 
           # Add signature for macOS -  adjust for download artifact directory structure
-          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz.sig)\" |"
+          upgrade_url="${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.app.tar.gz.sig"
+          jq_statements+=" .platforms.\"darwin-aarch64\".signature = \"$(get_signature ${upgrade_url})\" |"
+          echo "$jq_statements"
+          
           jq_statements+=" .platforms.\"darwin-x86_64\".signature = \"$(get_signature ${RELEASE_URL}/${PRE_UPGRADE_PATH}/Coco-AI_${VERSION}_amd64.app.tar.gz.sig)\" |"
 
           # Add signature for Linux - different URLs for each architecture
