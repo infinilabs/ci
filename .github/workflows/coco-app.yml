@@ -86,7 +86,7 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
             current_version="${BASH_REMATCH[1]}"
             build_number="${BASH_REMATCH[2]}"
           else
@@ -131,6 +131,7 @@ jobs:
           fi
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
+          build_version="$major.$minor.$((patch + 1))"
           version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
@@ -144,7 +145,9 @@ jobs:
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           fi
-          echo "VERSION=$version" >> $GITHUB_ENV
+          
+          echo "VERSION=$build_version" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=NIGHTLY-$build_number" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
