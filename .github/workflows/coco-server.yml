@@ -157,8 +157,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            $HOME/go/src
-            !$HOME/go/src/infini.sh
+            /home/runner/go/src
+            !/home/runner/go/src/infini.sh
           key: ${{ runner.os }}-go-src-${{ hashFiles('**/*.mod', '**/*.sum') }}
 
       - name: Preper coco server dependencies
