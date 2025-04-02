@@ -291,13 +291,11 @@ jobs:
           done
 
       - name: Run connect in background
-        if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           sleep 15
 
       - name: Deploy files to staging
-        if: ${{ inputs.ONLY_DOCKER != true }}
         timeout-minutes: 10
         run: |
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
