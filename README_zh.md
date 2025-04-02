@@ -6,6 +6,8 @@
 <b><i>构建、发布和测试</i>自动化管理的 GitHub Actions</b>
 </p>
 
+[![Coco App Files Publish](https://github.com/infinilabs/ci/actions/workflows/coco-app.yml/badge.svg)](https://github.com/infinilabs/ci/actions/workflows/coco-app.yml)&nbsp;[![Coco Server Files & Docker Publish](https://github.com/infinilabs/ci/actions/workflows/coco-server.yml/badge.svg)](https://github.com/infinilabs/ci/actions/workflows/coco-server.yml)&nbsp;[![Easysearch Files & Docker Publish](https://github.com/infinilabs/ci/actions/workflows/easysearch-publish.yml/badge.svg)](https://github.com/infinilabs/ci/actions/workflows/easysearch-publish.yml)&nbsp;[![Products Files & Docker Publish](https://github.com/infinilabs/ci/actions/workflows/publish-docker.yml/badge.svg)](https://github.com/infinilabs/ci/actions/workflows/publish-docker.yml)&nbsp;[![Products Integration Test](https://github.com/infinilabs/ci/actions/workflows/integration-test.yml/badge.svg)](https://github.com/infinilabs/ci/actions/workflows/integration-test.yml)
+
 ## 这个仓库能做什么
 
 > [English](README.md) | 中文
