@@ -152,6 +152,15 @@ jobs:
           echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
+      - name: Sync go cache
+        id: cache-go
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/go/src
+            !$HOME/go/src/infini.sh
+          key: ${{ runner.os }}-go-src-${{ hashFiles('**/*.mod', '**/*.sum') }}
+
       - name: Preper coco server dependencies
         run: |
           # download mod
