@@ -203,6 +203,9 @@ jobs:
 
       - name: Build coco server check
         run: |
+          if [ ${{ inputs.ONLY_DOCKER }} == true ]; then
+            TARGETS="linux-amd64 linux-arm64"            
+          fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
