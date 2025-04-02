@@ -22,6 +22,11 @@ on:
         description: 'Publish Easysearch Version'
         required: false
         default: "1.12.0-2008"
+      ONLY_DOCKER:
+        description: 'Only Publsh Docker'
+        required: false
+        type: boolean
+        default: true
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -211,7 +216,10 @@ jobs:
           
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
-
+          # Only build docker
+          if [ ${{ inputs.ONLY_DOCKER }} == true ]; then
+            TARGETS="linux-amd64 linux-arm64"            
+          fi
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
@@ -270,6 +278,7 @@ jobs:
           push: true
 
       - name: Archive coco server files
+        if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
@@ -288,6 +297,7 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload coco server files
+        if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
           for tag in $TARGETS; do
@@ -300,12 +310,15 @@ jobs:
                 [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
           done
+
       - name: Run connect in background
+        if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           sleep 15
 
       - name: Deploy files to staging
+        if: ${{ inputs.ONLY_DOCKER != true }}
         timeout-minutes: 10
         run: |
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
