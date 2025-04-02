@@ -26,7 +26,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   publish:
@@ -102,10 +102,6 @@ jobs:
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
-
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
 
       - name: Setup coco server go toolchain
         uses: actions/setup-go@v5
@@ -295,6 +291,10 @@ jobs:
                 [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
           done
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          sleep 15
 
       - name: Deploy files to staging
         timeout-minutes: 10

@@ -51,6 +51,7 @@ jobs:
             password: ${{ secrets.DOCKER_PASSWORD }}
                       
         - name: Deploy images to staging
+          timeout-minutes: 10
           run: |
             docker pull infinilabs/${{ inputs.IMAGE_TAG }}
             docker tag infinilabs/${{ inputs.IMAGE_TAG }} ${{ secrets.DOCKER_REGISTRY }}/infinilabs/${{ inputs.IMAGE_TAG }}
