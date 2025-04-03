@@ -21,7 +21,7 @@ on:
 jobs:
   build-deploy-docs:
     runs-on: ubuntu-latest
-
+    if: github.event.schedule
     steps:
       - name: Checkout Product Repo
         uses: actions/checkout@v4
@@ -150,8 +150,8 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [build-deploy-docs]
-    if: failure()
+    #needs: [build-deploy-docs]
+    #if: success()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
