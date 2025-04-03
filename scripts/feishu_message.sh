@@ -22,12 +22,7 @@ BRANCH_NAME="${BRANCH_NAME:-unknown branch}"
 # --- Customize Markdown Content ---
 # Remember to include any keywords your Feishu bot requires! e.g., "Failure Alert"
 # Using printf for better handling of potential special characters in variables
-MESSAGE_MARKDOWN=$(printf "**Repository:** %s  **Workflow:** \`%s\`  **Branch:** \`%s\`  **Commit:** [\`%s\`](%s)  **Triggered by:** %s    Please investigate the failed job(s)." \
-  "${REPO_NAME}" \
-  "${WORKFLOW_NAME}" \
-  "${BRANCH_NAME}" \
-  "${COMMIT_SHA_SHORT}" \
-  "${COMMIT_URL}" \
+MESSAGE_MARKDOWN=$(printf "**Triggered by:** %s\\nPlease investigate the failed job(s)." \
   "${ACTOR}")
 
 # --- Create a temporary file for the JSON payload ---
