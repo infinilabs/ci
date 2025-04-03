@@ -22,7 +22,7 @@ BRANCH_NAME="${BRANCH_NAME:-unknown branch}"
 # --- Customize Markdown Content ---
 # Remember to include any keywords your Feishu bot requires! e.g., "Failure Alert"
 # Using printf for better handling of potential special characters in variables
-MESSAGE_MARKDOWN=$(printf "**🚨 Workflow Failure Alert**\\n\\n**Repository:** %s\\n**Workflow:** \\`%s\\`\\n**Branch:** \\`%s\\`\\n**Commit:** [\\`%s\\`](%s)\\n**Triggered by:** %s\\n\\nPlease investigate the failed job(s)." \
+MESSAGE_MARKDOWN=$(printf "**Repository:** %s\\n**Workflow:** \\`%s\\`\\n**Branch:** \\`%s\\`\\n**Commit:** [\\`%s\\`](%s)\\n**Triggered by:** %s\\n\\nPlease investigate the failed job(s)." \
   "${REPO_NAME}" \
   "${WORKFLOW_NAME}" \
   "${BRANCH_NAME}" \
