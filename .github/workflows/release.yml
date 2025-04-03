@@ -309,20 +309,16 @@ jobs:
           fi
 
       - name: Create Github Pull Request for ${{ matrix.product }}
-        id: create_pr
         if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }} 
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          PR_NUMBER=$(gh pr create --title "$PR_MESSAGE" \
+          gh pr create --title "$PR_MESSAGE" \
                   --body "This PR create by `github action` to updates the release notes." \
                   --base main \
                   --head "$PR_BRANCH" \
-                  --label "auto-merge, automated" \
-                  --json number \
-                  --jq '.number')
-          echo "::set-output name=pr_number::$PR_NUMBER"
+                  --label "auto-merge, automated"
 
       - name: Create Pull Request for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
