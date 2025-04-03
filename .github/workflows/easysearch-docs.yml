@@ -153,25 +153,17 @@ jobs:
     needs: [build-deploy-docs]
     if: success()
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Send Feishu Notification on Failure
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
-        run: |
-          # Customize the message content as needed
-          # Ensure your message includes any keywords required by your Feishu bot security settings (e.g., "Failure")
-          MESSAGE_TEXT="🚨 Workflow Failure! \nRepository: ${{ github.repository }} \nWorkflow: ${{ github.workflow }} \nRun ID: ${{ github.run_id }} \nCommit: ${{ github.sha }} \nTriggered by: ${{ github.actor }} \n\nCheck the run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-          # Construct the JSON payload for Feishu (text message type)
-          JSON_PAYLOAD=$(printf '{"msg_type": "text", "content": {"text": "%s"}}' "$MESSAGE_TEXT")
-
-          # Send the notification using curl
-          curl -X POST -H 'Content-Type: application/json' \
-               --data "${JSON_PAYLOAD}" \
-               "${FEISHU_BOT_URL}"
-
-          # Check if curl command was successful (optional)
-          if [ $? -ne 0 ]; then
-            echo "Error sending Feishu notification!"
-            exit 1
-          fi
-          echo "Feishu notification sent successfully."          
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          SERVER_URL: ${{ github.server_url }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh    

@@ -47,9 +47,9 @@ on:
         required: false
         default: "0.3.0-2008"
       PUBLISH_COCO_VERSION:
-        description: 'Publish Coco Version'
+        description: 'Publish Coco Server Version'
         required: false
-        default: "0.3.0-2008"
+        default: "0.3.1-2009"
       PRODUCTS_PUBLISH:
         description: 'Products with agent/console...'
         required: false
