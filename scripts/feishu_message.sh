@@ -12,17 +12,13 @@ fi
 REPO_NAME="${REPO_NAME:-unknown repo}"
 WORKFLOW_NAME="${WORKFLOW_NAME:-unknown workflow}"
 RUN_ID="${RUN_ID:-unknown run}"
-COMMIT_SHA="${COMMIT_SHA:-unknown commit}"
-COMMIT_SHA_SHORT=$(echo "${COMMIT_SHA}" | cut -c1-7)
-COMMIT_URL="${SERVER_URL:-https://github.com}/${REPO_NAME}/commit/${COMMIT_SHA}"
 ACTOR="${ACTOR:-unknown actor}"
 RUN_URL="${SERVER_URL:-https://github.com}/${REPO_NAME}/actions/runs/${RUN_ID}"
-BRANCH_NAME="${BRANCH_NAME:-unknown branch}"
 
 # --- Customize Markdown Content ---
 # Remember to include any keywords your Feishu bot requires! e.g., "Failure Alert"
 # Using printf for better handling of potential special characters in variables
-MESSAGE_MARKDOWN=$(printf "**Triggered by:** %s\\nPlease investigate the failed job(s)." \
+MESSAGE_MARKDOWN=$(printf "**Triggered by:** `%s`, Please investigate the failed job(s)." \
   "${ACTOR}")
 
 # --- Create a temporary file for the JSON payload ---
