@@ -18,8 +18,7 @@ RUN_URL="${SERVER_URL:-https://github.com}/${REPO_NAME}/actions/runs/${RUN_ID}"
 # --- Customize Markdown Content ---
 # Remember to include any keywords your Feishu bot requires! e.g., "Failure Alert"
 # Using printf for better handling of potential special characters in variables
-MESSAGE_MARKDOWN=$(printf "**Triggered by:** `%s`, Please investigate the failed job(s)." \
-  "${ACTOR}")
+MESSAGE_MARKDOWN=$(printf "**Triggered by:** \`%s\`, Please investigate the failed job(s)." "${ACTOR}")
 
 # --- Create a temporary file for the JSON payload ---
 # Using mktemp for safer temporary file handling
