@@ -13,11 +13,11 @@
 > English | [中文](README_zh.md)
 
 
-- `Analysis Plugins Publish`: Automatically publishes the `analysis-ik`, `analysis-pinyin`, and `analysis-stconvert` plugins.
-- `Coco App Release Repackage` Manually triggered repackage of `Release` files
-- `Coco Server Files & Docker Publish`: Automatically publishes `Coco-Server` snapshot builds and Docker images.  Can be manually triggered to publish `Release` versions.
-- `Easysearch Files & Docker Publish`: Automatically publishes `Easysearch` snapshot builds (including bundle packages) and Docker images. Can be manually triggered to publish `Release` versions.
-- `Products Files & Docker Publish`: Automatically publishes `Agent/Console/Gateway/Loadgen` snapshot builds and Docker images. Can be manually triggered to publish `Release` versions.
-- `Products Files Publish`: Manually triggered publication of `Agent/Console/Gateway/Loadgen` files.
-- `Products Integration Test`: Automatically compiles and tests the source code for `Agent/Console/Gateway/Loadgen`. Can be manually triggered to download and install a specific version for testing.
-- `Products Release Notes and Tag`: Used for releasing versions, updating `Release Notes`, `Tag`, and `.latest` configuration.
+*   **`Analysis Plugins Publish`**: Automatically publishes the `analysis-ik`, `analysis-pinyin`, and `analysis-stconvert` plugins.
+*   **`Coco App Files Publish`**: Automatically publishes `Coco-AI` snapshot versions; used for manual publishing of release versions.
+*   **`Coco Server Files & Docker Publish`**: Automatically publishes `Coco-Server` snapshot version files and Docker images; used for manual publishing of release versions.
+*   **`Easysearch Files & Docker Publish`**: Automatically publishes `Easysearch` snapshot version files (including bundle package) and Docker images; used for manual publishing of release versions.
+*   **`Products Files & Docker Publish`**: Automatically publishes snapshot version files and Docker images for `Agent`, `Console`, `Gateway`, and `Loadgen`; used for manual publishing of release versions.
+*   **`Products Files Publish`**: Manually publishes files for `Agent`, `Console`, `Gateway`, and `Loadgen`.
+*   **`Products Integration Test`**: Automatically compiles and tests source code for `Agent`, `Console`, `Gateway`, and `Loadgen`; allows manual triggering of tests against specific downloaded/installed versions.
+*   **`Products Release Notes and Tag`**: Used for releases; updates Release Notes, creates Git tags, and updates the `.latest` configuration.
