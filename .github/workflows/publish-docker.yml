@@ -126,12 +126,7 @@ jobs:
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
-          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV   
-
-      - name: Run connect in background for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v5
@@ -288,6 +283,13 @@ jobs:
             fi
           done
 
+      - name: Run connect in background for ${{ matrix.product }}
+        if: ${{ matrix.product == 'console' }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
+
       - name: Deploy ${{ matrix.product }} files & staging k8s
         if: ${{ matrix.product == 'console' }}
         timeout-minutes: 10
@@ -295,13 +297,16 @@ jobs:
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
+            echo "Upload $PNAME to staging"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"
           fi
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
+          echo "Deploying $PNAME to staging k8s"
           ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "Finished deploying $PNAME to staging"
 
   notify_on_failure:
     runs-on: ubuntu-latest

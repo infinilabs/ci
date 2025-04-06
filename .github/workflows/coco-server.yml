@@ -293,6 +293,7 @@ jobs:
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
           sleep 15
 
       - name: Deploy files to staging
@@ -301,10 +302,12 @@ jobs:
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            echo "Upload $PNAME to staging"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"
           fi
+          echo "Finished deploying $PNAME to staging"
 
   notify_on_failure:
     runs-on: ubuntu-latest

@@ -65,6 +65,8 @@ jobs:
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
 
       - name: Set up java toolchain
         uses: actions/setup-java@v4
@@ -222,7 +224,9 @@ jobs:
         run: |
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
+          echo "Deploy $PNAME to staging k8s"
           ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "Finished deploying $PNAME to staging"
 
   notify_on_failure:
     runs-on: ubuntu-latest
