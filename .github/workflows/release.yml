@@ -162,7 +162,8 @@ jobs:
         if: ${{ matrix.product == 'easysearch' && inputs.OPERATION != 'RELEASE' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          sleep 10
+          echo "Connect started with pid $!"
+          sleep 15
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
