@@ -27,7 +27,7 @@ env:
 
 on:
   schedule:
-    - cron: '45 18 * * *'
+    - cron: '15 4/16 * * *'
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:

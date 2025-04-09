@@ -22,7 +22,7 @@ env:
 
 on:
   schedule:
-    - cron: '20 17 * * *'
+    - cron: '15 4/16 * * *'
   workflow_dispatch:
 
 jobs:
