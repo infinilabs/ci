@@ -33,7 +33,7 @@ on:
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.1.5" 
+          default: "1.1.6" 
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
