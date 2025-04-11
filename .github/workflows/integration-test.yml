@@ -35,7 +35,7 @@ on:
         description: 'Products Version'
         required: false
         type: string
-        default: '1.29.2-2008'
+        default: '1.29.3-2016'
 
 jobs:
     compile-test:

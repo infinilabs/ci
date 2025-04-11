@@ -37,7 +37,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "1.29.2-2008"
+        default: "1.29.3-2016"
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
@@ -45,11 +45,11 @@ on:
       PUBLISH_COCO_APP_VERSION:
         description: 'Publish Coco App Version'
         required: false
-        default: "0.3.0-2008"
+        default: "0.4.0-2016"
       PUBLISH_COCO_VERSION:
         description: 'Publish Coco Server Version'
         required: false
-        default: "0.3.1-2009"
+        default: "0.4.0-2016"
       PRODUCTS_PUBLISH:
         description: 'Products with agent/console...'
         required: false

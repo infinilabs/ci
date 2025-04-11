@@ -36,7 +36,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "0.3.0-2008"
+        default: "0.4.0-2016"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false

@@ -21,7 +21,7 @@ on:
       FRAMEWORK_PUBLISH_VERSION:
         description: 'Framework Publish Version'
         required: true
-        default: "1.1.4"
+        default: "1.1.5"
       EASSEARCH_PUBLISH_VERSION:
         description: 'EASSearch Publish Version'
         required: true

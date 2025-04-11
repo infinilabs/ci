@@ -18,7 +18,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "1.29.2-2008"
+        default: "1.29.3-2016"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
