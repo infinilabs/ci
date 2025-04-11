@@ -24,7 +24,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "1.12.0-2008"
+        default: "1.12.1-2016"
       ONLY_DOCKER:
         description: 'Only Publish Docker'
         required: false
