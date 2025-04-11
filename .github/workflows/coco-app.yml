@@ -308,7 +308,7 @@ jobs:
           fi
 
           tag=".v${current_version}"
-          echo "UPGRADE=$tag" >> $GITHUB_ENVs
+          echo "UPGRADE=$tag" >> $GITHUB_ENV
           echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
           echo "VERSION=$current_version-$build_number" >> $GITHUB_ENV
           echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
