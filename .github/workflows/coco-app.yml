@@ -26,6 +26,9 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
 
 on:
+  push:
+    tags:
+      - 'release*'
   schedule:
     - cron: '30 19 * * *'
   workflow_dispatch:

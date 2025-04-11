@@ -10,6 +10,9 @@ env:
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   
 on:
+  push:
+    tags:
+      - 'release*'  
   schedule:
     - cron: '30 19 * * *'    
   workflow_dispatch:
