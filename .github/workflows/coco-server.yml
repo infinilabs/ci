@@ -305,7 +305,7 @@ jobs:
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
-            echo "Upload $PNAME to staging"
+            echo "Uploaded $PNAME to staging"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"
