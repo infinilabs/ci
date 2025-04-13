@@ -150,7 +150,7 @@ jobs:
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
-          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV      
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV  
 
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v5
@@ -262,7 +262,7 @@ jobs:
             [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
           fi
 
-      - name: Run connect in background for ${{ matrix.product }}
+      - name: Run connect in background for ${{ matrix.product }} with ${{ matrix.target }}
         if: ${{ matrix.product == 'console' && matrix.target == 'linux-amd64' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
@@ -271,7 +271,7 @@ jobs:
 
       - name: Deploy ${{ matrix.product }} with ${{ matrix.target }} files
         if: ${{ matrix.product == 'console' && matrix.target == 'linux-amd64' }}
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
             echo "Deploying $PNAME to staging"
