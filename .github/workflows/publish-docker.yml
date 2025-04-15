@@ -296,6 +296,7 @@ jobs:
       - name: Deploy ${{ matrix.product }} files & staging k8s
         if: ${{ matrix.product == 'console' }}
         timeout-minutes: 30
+        continue-on-error: true
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"

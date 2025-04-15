@@ -52,6 +52,7 @@ jobs:
                       
         - name: Deploy images to staging
           timeout-minutes: 30
+          continue-on-error: true
           run: |
             docker pull infinilabs/${{ inputs.IMAGE_TAG }}
             docker tag infinilabs/${{ inputs.IMAGE_TAG }} ${{ secrets.DOCKER_REGISTRY }}/infinilabs/${{ inputs.IMAGE_TAG }}

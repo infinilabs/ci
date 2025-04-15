@@ -44,6 +44,7 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo
         timeout-minutes: 30
+        continue-on-error: true
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME

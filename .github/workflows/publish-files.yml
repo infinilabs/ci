@@ -272,6 +272,7 @@ jobs:
       - name: Deploy ${{ matrix.product }} with ${{ matrix.target }} files
         if: ${{ matrix.product == 'console' && matrix.target == 'linux-amd64' }}
         timeout-minutes: 30
+        continue-on-error: true
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
