@@ -81,7 +81,7 @@ jobs:
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
-          path: ${{ env.PNAME }}
+          path: ${{ env.PNAME }}      
 
       - name: Setup coco server env
         run: |
@@ -97,6 +97,12 @@ jobs:
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           $GITHUB_WORKSPACE/scripts/env-init.sh
+
+          # init license and enterprise plugins
+          git clone git@github.com:infinilabs/license.git $WORK/license
+          git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
+          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
