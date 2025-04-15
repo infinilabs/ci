@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           current_version=$PUBLISH_VERSION
-          if [ -z "$current_version" ]; then
+          if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
             exit 1
           fi
@@ -119,7 +119,7 @@ jobs:
         shell: bash
         run: |
           current_version=$PUBLISH_VERSION
-          if [ -z "$current_version" ]; then
+          if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
             exit 1
           fi
@@ -293,7 +293,7 @@ jobs:
           $GITHUB_WORKSPACE/scripts/env-init.sh
           # Setup environment
           current_version=$PUBLISH_VERSION
-          if [ -z "$current_version" ]; then
+          if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
             exit 1
           fi

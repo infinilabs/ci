@@ -19,9 +19,9 @@ for t in amd64 arm64; do
     fi
   done
   # Check if the file exists and is not empty
-  if [ -e $DEST/$EZS_FILE ]; then
+  if [[ -e $DEST/$EZS_FILE ]]; then
     file_size=$(stat -c%s "$DEST/$EZS_FILE")
-    if [ "$file_size" -gt 0 ]; then
+    if [[ "$file_size" -gt 0 ]]; then
       echo -e "Extract file \nfrom $DEST/$EZS_FILE \nto $WORK/$DNAME-$t"
       tar -zxf $DEST/$EZS_FILE -C $WORK/$DNAME-$t
     else

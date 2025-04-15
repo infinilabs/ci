@@ -113,7 +113,7 @@ jobs:
               fi
             done
 
-            if [ "$matched" = false ]; then
+            if [[ "$matched" == false ]]; then
                 echo "Warning: No mapping found for $old_name.  Skipping." >&2
             fi
           done < <(find . -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.deb" \) | sort) 

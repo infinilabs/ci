@@ -184,7 +184,7 @@ jobs:
                 echo Prepare $PRODUCT config at $PWD ...
                 mkdir -p $WORK/$PRODUCT/bin/config
                 PERMJSON=$WORK/$PRODUCT/modules/security/realm/authc/native/permission.json
-                if [ -e $PERMJSON ]; then
+                if [[ -e $PERMJSON ]]; then
                   cp -rf $PERMJSON $WORK/$PRODUCT/bin/config
                 fi
                 cp -rf $WORK/$PRODUCT/config/*.tpl $WORK/$PRODUCT/bin/config

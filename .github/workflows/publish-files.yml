@@ -203,7 +203,7 @@ jobs:
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
+          echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Build ${{ matrix.product }} with ${{ matrix.target }}
@@ -227,7 +227,7 @@ jobs:
           find $WORK/$PNAME/bin -name "*.go" -delete
           if [[ "${{ matrix.product }}" == "console" ]]; then
             PERMJSON=$WORK/$PNAME/modules/security/realm/authc/native/permission.json
-            if [ -e $PERMJSON ]; then
+            if [[ -e $PERMJSON ]]; then
               cp -rf $PERMJSON $WORK/$PNAME/bin/config
             fi
           fi
@@ -273,7 +273,7 @@ jobs:
         if: ${{ matrix.product == 'console' && matrix.target == 'linux-amd64' }}
         timeout-minutes: 30
         run: |
-          if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
             echo "Uploaded $PNAME to staging"

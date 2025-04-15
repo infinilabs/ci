@@ -226,7 +226,7 @@ jobs:
           echo "Check tag and create tag for coco-website"
           PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
           tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
-          if [ "$tag_exists" == "false" ]; then
+          if [[ "$tag_exists" == "false" ]]; then
             git tag -a $PVER -m "Release $PVER"
             git push origin $PVER
             echo "Tag $PVER created for coco-website"
@@ -263,7 +263,7 @@ jobs:
           echo "Check tag and create tag for ${{ matrix.product }}"
           PVER=$(echo "v$VERSION" | sed 's/-.*//')
           tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
-          if [ "$tag_exists" == "false" ]; then
+          if [[ "$tag_exists" == "false" ]]; then
             git tag -a $PVER -m "Release $PVER"
             git push origin $PVER
             echo "Tag $PVER created for ${{ matrix.product }}"
@@ -281,7 +281,7 @@ jobs:
           #update release notes
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
           for f in en zh; do
-            if [ ! -d docs/content.$f ]; then
+            if [[ ! -d docs/content.$f ]]; then
               continue
             fi
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then

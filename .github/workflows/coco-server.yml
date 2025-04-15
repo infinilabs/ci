@@ -171,7 +171,11 @@ jobs:
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          echo EOL=${{ vars.EOL }} >> $GITHUB_ENV
+          if [[ ${{ inputs.PUBLISH_ENTERPRISE }} == true ]]; then
+            echo EOL=$(date -u -d "3 years" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
+          else
+            echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
+          fi
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Sync go cache
@@ -210,7 +214,7 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # Only build docker
-          if [ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.PUBLISH_ENTERPRISE }} == true ]; then
+          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # build all targets
@@ -220,7 +224,7 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.PUBLISH_ENTERPRISE }} == true ]; then
+          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -277,12 +281,12 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
-          if [ ${{ inputs.PUBLISH_ENTERPRISE }} == true ]; then
+          if [[ ${{ inputs.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
-            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
             EXT=$TAG
             [[ "$p1" == "win" ]] && EXT="$TAG.exe"
 
@@ -290,7 +294,7 @@ jobs:
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
                 zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             else
-                tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+                tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             fi
           done
           ls -lrt $WORK/$PNAME-$VERSION-*.*
@@ -299,6 +303,9 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
+          if [[ ${{ inputs.PUBLISH_ENTERPRISE }} == true ]]; then
+            TARGETS="linux-amd64 linux-arm64"            
+          fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
@@ -306,7 +313,7 @@ jobs:
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
                 [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
             else
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}.tar.gz
             fi
           done
 
@@ -319,7 +326,7 @@ jobs:
       - name: Deploy files to staging
         timeout-minutes: 10
         run: |
-          if [ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]; then
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
             echo "Uploaded $PNAME to staging"
