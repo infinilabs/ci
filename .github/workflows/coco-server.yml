@@ -270,7 +270,7 @@ jobs:
             linux/amd64
             linux/arm64
           tags: |
-            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}
           push: true
 
       - name: Archive coco server files
@@ -282,7 +282,7 @@ jobs:
           fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
-            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2${{ inputs.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}"
             EXT=$TAG
             [[ "$p1" == "win" ]] && EXT="$TAG.exe"
 
