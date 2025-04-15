@@ -295,7 +295,7 @@ jobs:
                 tar zcf $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             fi
           done
-          ls -lrt $WORK/$PNAME-$VERSION-*.*
+          ls -lrt $WORK/$PNAME$ENT-$VERSION-*.*
                       
       - name: Upload coco server files
         if: ${{ inputs.ONLY_DOCKER != true }}
