@@ -290,7 +290,7 @@ jobs:
 
             echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-                zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+                zip -qr $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             else
                 tar zcf $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
             fi
@@ -309,7 +309,7 @@ jobs:
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
             echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+                [ -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
             else
                 [ -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
