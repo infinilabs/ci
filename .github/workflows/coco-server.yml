@@ -25,6 +25,11 @@ on:
         description: 'Publish Easysearch Version'
         required: false
         default: "1.12.1-2016"
+      PUBLISH_ENTERPRISE:
+        description: 'Publish Enterprise'
+        required: false
+        type: boolean
+        default: false
       ONLY_DOCKER:
         description: 'Only Publish Docker'
         required: false
@@ -98,10 +103,13 @@ jobs:
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           $GITHUB_WORKSPACE/scripts/env-init.sh
 
-          # init license and enterprise plugins
-          git clone git@github.com:infinilabs/license.git $WORK/license
-          git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
-          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+          if [[ "${{ inputs.PUBLISH_ENTERPRISE }}" == "true" ]]; then
+            echo "Publish enterprise version"
+            # init license and enterprise plugins
+            git clone git@github.com:infinilabs/license.git $WORK/license
+            git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
+            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+          fi
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
@@ -202,7 +210,7 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # Only build docker
-          if [ ${{ inputs.ONLY_DOCKER }} == true ]; then
+          if [ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.PUBLISH_ENTERPRISE }} == true ]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # build all targets
@@ -262,16 +270,19 @@ jobs:
             linux/amd64
             linux/arm64
           tags: |
-            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}
           push: true
 
       - name: Archive coco server files
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
+          if [ ${{ inputs.PUBLISH_ENTERPRISE }} == true ]; then
+            TARGETS="linux-amd64 linux-arm64"            
+          fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
-            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }}"
             EXT=$TAG
             [[ "$p1" == "win" ]] && EXT="$TAG.exe"
 
