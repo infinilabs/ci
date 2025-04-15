@@ -295,12 +295,12 @@ jobs:
 
       - name: Deploy ${{ matrix.product }} files & staging k8s
         if: ${{ matrix.product == 'console' }}
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            echo "Deploying $PNAME to staging"
+            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
-            echo "Uploaded $PNAME to staging"
+            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"
@@ -309,7 +309,7 @@ jobs:
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
           echo "Deploying $PNAME to staging k8s"
           ssh staging 'bash -s' < /tmp/update_image.sh
-          echo "Finished deploying $PNAME to staging"
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
   notify_on_failure:
     runs-on: ubuntu-latest

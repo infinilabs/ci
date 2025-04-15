@@ -237,7 +237,7 @@ jobs:
           
       - name: Checkout code for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR'}}
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
             git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}

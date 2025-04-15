@@ -223,13 +223,13 @@ jobs:
           #no-cache: true
 
       - name: Deploy easysearch to staging k8s
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           #Deploy docker
           echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          echo "Deploy $PNAME to staging k8s"
+          echo "Deploy $PNAME to k8s staging at $(date +'%m-%d %H:%M:%S')"
           ssh staging 'bash -s' < /tmp/update_image.sh
-          echo "Finished deploying $PNAME to staging"
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
   notify_on_failure:
     runs-on: ubuntu-latest

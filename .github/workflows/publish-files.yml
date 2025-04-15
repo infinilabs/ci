@@ -274,14 +274,14 @@ jobs:
         timeout-minutes: 30
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            echo "Deploying $PNAME to staging"
+            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
-            echo "Uploaded $PNAME to staging"
+            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
             echo "No $PNAME binary found"
           fi
-          echo "Finished deploying $PNAME to staging"
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
   notify_on_failure:
     runs-on: ubuntu-latest

@@ -43,7 +43,7 @@ jobs:
           sleep 15          
 
       - name: Checkout ${{ env.PNAME }} repo
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME
