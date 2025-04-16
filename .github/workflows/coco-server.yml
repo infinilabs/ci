@@ -451,9 +451,11 @@ jobs:
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          EOL_DATE=$(date -u -d "${{ env.PUBLISH_ENTERPRISE == true && '3 years' || '1 year' }}" +"%Y-12-31T10:10:10Z")
+          EOL_DATE=$(if [ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]; then date -u -d "3 years" +"%Y-12-31T10:10:10Z"; else date -u -d "1 year" +"%Y-12-31T10:10:10Z"; fi)
           echo EOL=$EOL_DATE >> $GITHUB_ENV
-          echo ENT=${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }} >> $GITHUB_ENV
+          ENT=$(if [ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]; then echo "-enterprise"; else echo ""; fi)
+          echo ENT=$ENT >> $GITHUB_ENV
+
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Sync go cache
