@@ -204,7 +204,7 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # Only build docker
-          if [[ ${{ inputs.ONLY_DOCKER }} == true ]]; then
+          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # build all targets
@@ -214,7 +214,7 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [[ ${{ inputs.ONLY_DOCKER }} == true ]]; then
+          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -492,7 +492,7 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # Only build docker
-          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
+          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # build all targets
@@ -502,7 +502,7 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
+          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -559,7 +559,7 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
-          if [[ ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
+          if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -581,7 +581,7 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
-          if [[ ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
+          if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
