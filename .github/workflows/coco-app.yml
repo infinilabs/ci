@@ -145,11 +145,11 @@ jobs:
             version="$tauri_version-NIGHTLY-$build_number"
             echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
-            sed -i -e "s/version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           else
             echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
-            sed -i -e "s/version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           fi
           
           echo "VERSION=$version" >> $GITHUB_ENV
