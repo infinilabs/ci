@@ -450,7 +450,7 @@ jobs:
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          EOL_DATE=$(date -u -d "$([[ ${{ inputs.ONLY_ENTERPRISE }} == true ]] && echo '3 years' || echo '1 year')" +"%Y-12-31T10:10:10Z")
+          EOL_DATE=$(date -u -d "${{ inputs.ONLY_ENTERPRISE == true && '3 years' || '1 year' }}" +"%Y-12-31T10:10:10Z")
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo ENT=${{ inputs.ONLY_ENTERPRISE == true && '-enterprise' || '' }} >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
