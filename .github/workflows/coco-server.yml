@@ -327,6 +327,7 @@ jobs:
     env:
         DNAME: easysearch
         TZ: Asia/Shanghai
+        PUBLISH_ENTERPRISE: true
         OSS_EP: ${{ secrets.OSS_EP }}
         OSS_AK: ${{ secrets.OSS_AK }}
         OSS_SK: ${{ secrets.OSS_SK }}
@@ -382,7 +383,7 @@ jobs:
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           $GITHUB_WORKSPACE/scripts/env-init.sh
 
-          if [[ "${{ inputs.ONLY_ENTERPRISE }}" == "true" ]]; then
+          if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             echo "Publish enterprise version"
             # init license and enterprise plugins
             git clone git@github.com:infinilabs/license.git $WORK/license
@@ -450,9 +451,9 @@ jobs:
 
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          EOL_DATE=$(date -u -d "${{ inputs.ONLY_ENTERPRISE == true && '3 years' || '1 year' }}" +"%Y-12-31T10:10:10Z")
+          EOL_DATE=$(date -u -d "${{ env.PUBLISH_ENTERPRISE == true && '3 years' || '1 year' }}" +"%Y-12-31T10:10:10Z")
           echo EOL=$EOL_DATE >> $GITHUB_ENV
-          echo ENT=${{ inputs.ONLY_ENTERPRISE == true && '-enterprise' || '' }} >> $GITHUB_ENV
+          echo ENT=${{ env.PUBLISH_ENTERPRISE == true && '-enterprise' || '' }} >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Sync go cache
@@ -491,7 +492,7 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # Only build docker
-          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.ONLY_ENTERPRISE }} == true ]]; then
+          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # build all targets
@@ -501,7 +502,7 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ inputs.ONLY_ENTERPRISE }} == true ]]; then
+          if [[ ${{ inputs.ONLY_DOCKER }} == true || ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -558,7 +559,7 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
-          if [[ ${{ inputs.ONLY_ENTERPRISE }} == true ]]; then
+          if [[ ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -580,7 +581,7 @@ jobs:
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
-          if [[ ${{ inputs.ONLY_ENTERPRISE }} == true ]]; then
+          if [[ ${{ env.PUBLISH_ENTERPRISE }} == true ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
