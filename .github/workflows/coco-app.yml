@@ -104,9 +104,11 @@ jobs:
           elif ${{ matrix.platform == 'windows-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
           else
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
           fi
           
           tag=".v${current_version}"
@@ -133,18 +135,21 @@ jobs:
           fi
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
-          version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
+          tauri_version="$major.$minor.$((patch + 1))"
+          version="$tauri_version-NIGHTLY-$build_number"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           elif ${{ matrix.platform == 'windows-latest' }}; then
             build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
-            version="$major.$minor.$((patch + 1))-NIGHTLY-$build_number"
-            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            version="$tauri_version-NIGHTLY-$build_number"
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           else
-            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           fi
           
           echo "VERSION=$version" >> $GITHUB_ENV
