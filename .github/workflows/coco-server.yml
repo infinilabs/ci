@@ -301,26 +301,6 @@ jobs:
             fi
           done
 
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 15
-
-      - name: Deploy files to staging
-        timeout-minutes: 30
-        continue-on-error: true
-        run: |
-          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
-            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
-          else
-            echo "No $PNAME binary found"
-          fi
-          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-
   publish-enterprise:
     name: Publish coco server enterprise files and docker
     runs-on: ubuntu-latest
@@ -589,7 +569,7 @@ jobs:
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
-            echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
+            echo "Upload $PNAME$ENT with $VERSION-$BUILD_NUMBER at $PWD"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
                 [ -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
             else
