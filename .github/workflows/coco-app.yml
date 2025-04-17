@@ -191,7 +191,7 @@ jobs:
 
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build app
         working-directory: ${{ env.REPO-NAME }}
