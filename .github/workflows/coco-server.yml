@@ -35,7 +35,7 @@ on:
         required: false
         type: boolean
         default: false
-      ONLY_PUBLISH_STAGING:
+      ONLY_STAGING:
         description: 'Only Publish Debug to Staging'
         required: false
         type: boolean
@@ -49,7 +49,7 @@ on:
 jobs:
   publish-staging:
     name: Publish coco server files and docker
-    if: ${{ inputs.ONLY_PUBLISH_STAGING == true }}
+    if: ${{ inputs.ONLY_STAGING == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -248,7 +248,7 @@ jobs:
 
   publish:
     name: Publish coco server files and docker
-    if: ${{ inputs.ONLY_ENTERPRISE != true }}
+    if: ${{ inputs.ONLY_ENTERPRISE != true && inputs.ONLY_STAGING != true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -507,6 +507,7 @@ jobs:
 
   publish-enterprise:
     name: Publish coco server enterprise files and docker
+    if: ${{ inputs.ONLY_STAGING == false || inputs.ONLY_ENTERPRISE == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
