@@ -35,6 +35,11 @@ on:
         required: false
         type: boolean
         default: false
+      ONLY_PUBLISH_STAGING:
+        description: 'Only Publish Debug to Staging'
+        required: false
+        type: boolean
+        default: true
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -42,6 +47,205 @@ on:
         default: false
 
 jobs:
+  publish-staging:
+    name: Publish coco server files and docker
+    if: ${{ inputs.ONLY_PUBLISH_STAGING == true }}
+    runs-on: ubuntu-latest
+    env:
+        DNAME: easysearch
+        TZ: Asia/Shanghai
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+        CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+        CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+        CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+        CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+        CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+        CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+        TARGETS: linux-amd64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout framework code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework
+          ref: main
+          path: framework
+
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
+      - name: Checkout coco server code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/coco-server
+          ref: main
+          path: ${{ env.PNAME }}      
+
+      - name: Setup coco server env
+        run: |
+          if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+              version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[2]}"
+              echo "Build $PNAME with $version-$build_number"
+            else
+              echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
+              exit 1
+            fi
+          fi
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          # download easysearch
+          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
+            EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
+          fi
+          echo "Coco server build with Easysearch $EZS_VER"
+          echo EZS_VER=$EZS_VER >> $GITHUB_ENV
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Setup coco server go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: false
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Check coco server go toolchain
+        run: go version
+
+      - name: Set up  with coco server nodejs toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - name: Check with coco server nodejs toolchain
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+          node -v && npm -v && pnpm -v
+
+      - name: Preper coco server build code
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
+        run: |
+          cd $WORK/$PNAME
+          echo "Build $PNAME at $PWD"
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_VERSION="$PUBLISH_VERSION"
+            fi
+          else
+            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+          fi
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date '+%Y-%m-%d %H:%M:%S')"
+
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          EOL_DATE=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z")
+          echo EOL=$EOL_DATE >> $GITHUB_ENV
+          echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+
+      - name: Sync go cache
+        id: cache-go
+        uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/go/src
+            !/home/runner/go/src/infini.sh
+          key: ${{ runner.os }}-go-src-${{ hashFiles('**/*.mod', '**/*.sum') }}
+
+      - name: Preper coco server dependencies
+        run: |
+          $GITHUB_WORKSPACE/scripts/go-deps.sh
+
+      - name: Sync node cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Build coco server
+        run: |
+          # build web
+          echo "Build $PNAME web start..."
+          cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
+          pnpm install --quiet && pnpm build -- --silent
+
+          # build widgets
+          echo "Build $PNAME widgets start..."
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          mkdir -p $WORK/$PNAME/.public/widgets/searchbox
+          cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
+          
+          # check build files
+          ls -lrht $WORK/$PNAME/.public/widgets/searchbox
+          # build all targets
+          for tag in $TARGETS; do
+            cd $WORK/$PNAME && make build-$tag
+          done
+
+      - name: Build coco server check
+        run: |
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            [[ "$p1" == "win" ]] && TAG="$TAG.exe"
+            [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
+          done
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
+          cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
+          ls -lrt $WORK/$PNAME/bin
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
+
+      - name: Deploy files to staging
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
+          else
+            echo "No $PNAME binary found"
+          fi
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"          
+
   publish:
     name: Publish coco server files and docker
     if: ${{ inputs.ONLY_ENTERPRISE != true }}
