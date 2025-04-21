@@ -192,7 +192,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build ${{ matrix.product }} check

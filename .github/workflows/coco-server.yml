@@ -184,7 +184,8 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          $GITHUB_WORKSPACE/scripts/go-deps.sh
+          #$GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME && go mod tidy
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -383,7 +384,8 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          $GITHUB_WORKSPACE/scripts/go-deps.sh
+          #$GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME && go mod tidy
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -654,7 +656,8 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          $GITHUB_WORKSPACE/scripts/go-deps.sh
+          #$GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
 
       - name: Sync node cache
         uses: actions/setup-node@v4

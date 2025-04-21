@@ -211,7 +211,7 @@ jobs:
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
           fi
-          cd $WORK/$PNAME && make build-${{ matrix.target }}
+          cd $WORK/$PNAME && GOMODULE=false make build-${{ matrix.target }}
 
       - name: Build ${{ matrix.product }} with ${{ matrix.target }} check
         run: |
