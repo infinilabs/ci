@@ -185,8 +185,6 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME
-          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -212,7 +210,7 @@ jobs:
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
@@ -386,8 +384,6 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME
-          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -417,7 +413,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
@@ -659,9 +655,6 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME
-          sed -i '/gomail.v2$/i replace=infini.sh/license=../license+incompatible' go.mod
-          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -691,7 +684,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
