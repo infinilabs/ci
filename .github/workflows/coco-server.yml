@@ -185,6 +185,8 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME
+          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -384,6 +386,8 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME
+          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -655,7 +659,9 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license
+          cd $WORK/$PNAME
+          sed -i '/gomail.v2$/i replace=infini.sh/license=../license+incompatible' go.mod
+          sed -i '/gomail.v2$/s|$|+incompatible|' go.mod
 
       - name: Sync node cache
         uses: actions/setup-node@v4
