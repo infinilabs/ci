@@ -804,7 +804,7 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish, publish-enterprise]
+    needs: [publish, publish-enterprise, publish-staging]
     if: failure()
     steps:
       - name: Checkout code
