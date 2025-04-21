@@ -80,13 +80,6 @@ jobs:
           ref: main
           path: framework
 
-      - name: Checkout framework vendor code
-        uses: actions/checkout@v4
-        with: 
-          repository: ${{ vars.GIT_REPO }}/framework-vendor
-          ref: main
-          path: vendor
-
       - name: Checkout coco server code
         uses: actions/checkout@v4
         with: 
@@ -279,13 +272,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
           path: framework
-
-      - name: Checkout framework vendor code
-        uses: actions/checkout@v4
-        with: 
-          repository: ${{ vars.GIT_REPO }}/framework-vendor
-          ref: main
-          path: vendor
 
       - name: Checkout coco server code
         uses: actions/checkout@v4
@@ -540,13 +526,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
           path: framework
-
-      - name: Checkout framework vendor code
-        uses: actions/checkout@v4
-        with: 
-          repository: ${{ vars.GIT_REPO }}/framework-vendor
-          ref: main
-          path: vendor
 
       - name: Checkout coco server code
         uses: actions/checkout@v4
