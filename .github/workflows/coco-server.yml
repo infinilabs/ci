@@ -80,6 +80,13 @@ jobs:
           ref: main
           path: framework
 
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
       - name: Checkout coco server code
         uses: actions/checkout@v4
         with: 
@@ -177,8 +184,7 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          #$GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME && go mod tidy
+          $GITHUB_WORKSPACE/scripts/go-deps.sh
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -273,6 +279,13 @@ jobs:
           ref: main
           path: framework
 
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
       - name: Checkout coco server code
         uses: actions/checkout@v4
         with: 
@@ -370,8 +383,7 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          #$GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME && go mod tidy
+          $GITHUB_WORKSPACE/scripts/go-deps.sh
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -527,6 +539,13 @@ jobs:
           ref: main
           path: framework
 
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
       - name: Checkout coco server code
         uses: actions/checkout@v4
         with: 
@@ -635,8 +654,8 @@ jobs:
 
       - name: Preper coco server dependencies
         run: |
-          #$GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          $GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license
 
       - name: Sync node cache
         uses: actions/setup-node@v4
