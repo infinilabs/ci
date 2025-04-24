@@ -632,7 +632,7 @@ jobs:
       - name: Preper coco server enterprise dependencies
         run: |
           # change dep for enterprise
-          cd $WORK/framework go mod edit -replace=infini.sh/license=../license
+          cd $WORK/framework && go mod edit -replace=infini.sh/license=../license
           cd $WORK/$PNAME && go mod tidy
 
       - name: Sync node cache
