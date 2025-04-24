@@ -655,8 +655,6 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
-          cd $WORK/$PNAME
-          go mod edit -replace=infini.sh/license=../license
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -684,6 +682,9 @@ jobs:
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
+          # change dep for enterprise
+          cd $WORK/$PNAME && sed -i '/gomail.v2$/i replace=infini.sh/license=../license' go.mod
+          
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
