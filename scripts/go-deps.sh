@@ -50,10 +50,24 @@ clone_repo "git@github.com:googleapis/gax-go.git"                          "gith
 clone_repo "git@github.com:go-logr/logr.git"                               "github.com/go-logr/logr"
 clone_repo "git@github.com:go-logr/stdr.git"                               "github.com/go-logr/stdr"
 
+# Mcp
+clone_repo "git@github.com:mark3labs/mcp-go.git"                            "github.com/mark3labs/mcp-go"
+clone_repo "git@github.com:i2y/langchaingo-mcp-adapter.git"                 "github.com/i2y/langchaingo-mcp-adapter"
+clone_repo "git@github.com:yosida95/uritemplate.git"                        "github.com/yosida95/uritemplate"
+clone_repo "git@github.com:gocolly/colly.git"                               "github.com/gocolly/colly"
+clone_repo "git@github.com:antchfx/htmlquery.git"                           "github.com/antchfx/htmlquery"
+clone_repo "git@github.com:antchfx/xmlquery.git"                            "github.com/antchfx/xmlquery"
+clone_repo "git@github.com:gobwas/glob.git"                                 "github.com/gobwas/glob"
+clone_repo "git@github.com:kennygrant/sanitize.git"                         "github.com/kennygrant/sanitize"
+clone_repo "git@github.com:nlnwa/whatwg-url.git"                            "github.com/nlnwa/whatwg-url"
+clone_repo "git@github.com:saintfish/chardet.git"                           "github.com/saintfish/chardet"
+clone_repo "git@github.com:temoto/robotstxt.git"                            "github.com/temoto/robotstxt"
+clone_repo "git@github.com:antchfx/xpath.git"                               "github.com/antchfx/xpath"
+
 # OpenCensus/OpenTelemetry (GitHub SSH)
-clone_repo "git@github.com:census-instrumentation/opencensus-go.git"         "go.opencensus.io"
-clone_repo "git@github.com:open-telemetry/opentelemetry-go-contrib.git"      "go.opentelemetry.io/contrib"
-clone_repo "git@github.com:open-telemetry/opentelemetry-go.git"              "go.opentelemetry.io/otel"
+clone_repo "git@github.com:census-instrumentation/opencensus-go.git"            "go.opencensus.io"
+clone_repo "git@github.com:open-telemetry/opentelemetry-go-contrib.git"         "go.opentelemetry.io/contrib"
+clone_repo "git@github.com:open-telemetry/opentelemetry-go.git"                 "go.opentelemetry.io/otel"
 clone_repo "git@github.com:open-telemetry/opentelemetry-go-instrumentation.git" "go.opentelemetry.io/auto"
 
 # Google APIs & gRPC (GitHub SSH)
@@ -61,6 +75,7 @@ clone_repo "git@github.com:googleapis/google-api-go-client.git"            "goog
 clone_repo "git@github.com:googleapis/go-genproto.git"                     "google.golang.org/genproto"
 clone_repo "git@github.com:grpc/grpc-go.git"                               "google.golang.org/grpc"
 clone_repo "git@github.com:protocolbuffers/protobuf-go.git"                "google.golang.org/protobuf"
+clone_repo "git@github.com:golang/appengine.git"                           "google.golang.org/appengine"
 
 # Golang Sub-repositories (Googlesource HTTPS)
 clone_repo "https://go.googlesource.com/sys.git"                            "golang.org/x/sys"

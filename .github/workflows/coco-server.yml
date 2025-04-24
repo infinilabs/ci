@@ -210,7 +210,7 @@ jobs:
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
@@ -413,7 +413,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
@@ -574,7 +574,6 @@ jobs:
             git clone git@github.com:infinilabs/license.git $WORK/license
             git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
-            ls -lrt $WORK/license
           fi
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
@@ -684,12 +683,11 @@ jobs:
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # change dep for enterprise
-          sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod
-          go mod tidy
+          # sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod && go mod tidy
 
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
 
       - name: Build coco server check
