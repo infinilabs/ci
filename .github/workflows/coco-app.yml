@@ -137,19 +137,7 @@ jobs:
             echo "PUBLISH_VERSION is not set or is empty." >&2
             exit 1
           fi
-
-          # Extract x.y.z using a regular expression
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
-              current_version="${BASH_REMATCH[1]}"
-              build_number="${BASH_REMATCH[3]}"
-              
-              if [[ -z "$build_number" ]]; then
-                build_number=${{ github.run_number }}
-              fi
-              echo "Build $PNAME with $version-$build_number"
-            fi
-          fi
+          
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           tauri_version="$major.$minor.$((patch + 1))"

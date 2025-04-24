@@ -194,7 +194,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - name: Build coco server
+      - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
           # build web
           echo "Build $PNAME web start..."
