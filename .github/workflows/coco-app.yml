@@ -137,7 +137,7 @@ jobs:
             echo "PUBLISH_VERSION is not set or is empty." >&2
             exit 1
           fi
-          
+
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           tauri_version="$major.$minor.$((patch + 1))"
@@ -387,8 +387,9 @@ jobs:
     needs: [build-app, release]
     if: success()
     steps:
-      - name: Refresh on Success
+      - name: Refresh download page on success
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
             sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/snapshot/"
+          fi

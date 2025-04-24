@@ -315,8 +315,9 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - name: Refresh on Success ${{ matrix.product }}
+      - name: Refresh download page on success ${{ matrix.product }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
-            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/${{ matrix.product }}/snapshot/"           
+            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/${{ matrix.product }}/snapshot/"
+          fi

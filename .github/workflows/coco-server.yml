@@ -833,8 +833,9 @@ jobs:
     needs: [publish, publish-enterprise, publish-staging]
     if: success()
     steps:
-      - name: Refresh on Success
+      - name: Refresh download page on success
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
-            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"        
+            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"  
+          fi      
