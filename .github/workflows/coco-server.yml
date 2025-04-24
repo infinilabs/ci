@@ -121,7 +121,7 @@ jobs:
           # download easysearch
           EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
-            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+            if [[ "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" == *-* ]]; then
               EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
             fi
           fi
@@ -235,7 +235,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 15
 
-      - name: Deploy files to staging
+      - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         timeout-minutes: 30
         continue-on-error: true
         run: |
@@ -297,8 +297,12 @@ jobs:
 
       - name: Setup coco server env
         run: |
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            PUBLISH_VERSION=$${{ vars.PUBLISH_VERSION }}
+            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+          fi
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
               build_number="${BASH_REMATCH[3]}"
               
@@ -386,7 +390,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - name: Build coco server
+      - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -452,7 +456,7 @@ jobs:
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Docker build and push with coco server
+      - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
@@ -549,8 +553,12 @@ jobs:
 
       - name: Setup coco server env
         run: |
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            PUBLISH_VERSION=$${{ vars.PUBLISH_VERSION }}
+            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+          fi
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
               build_number="${BASH_REMATCH[3]}"
               
@@ -680,7 +688,7 @@ jobs:
           cd $WORK/$PNAME && OFFLINE_BUILD=true make config
           echo "Config $PNAME with license finished at $PWD"
 
-      - name: Build coco server
+      - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         continue-on-error: true
         run: |
           # Only build docker
