@@ -663,7 +663,7 @@ jobs:
 
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build coco server check
