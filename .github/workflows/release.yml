@@ -35,7 +35,7 @@ on:
           required: false
           default: "1.1.6" 
       PUBLISH_VERSION:
-        description: 'Publish Version'
+        description: 'Publish Release Version'
         required: false
         default: "1.29.3-2016"
       PUBLISH_EZS_VERSION:

@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Version'
+        description: 'Publish Release Version'
         required: true
         default: "0.4.0-2016"
       PUBLISH_RELEASE:

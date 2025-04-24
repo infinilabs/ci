@@ -35,7 +35,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Version'
+        description: 'Publish Release Version'
         required: false
         default: "0.4.0-2016"
       PUBLISH_RELEASE:
@@ -131,6 +131,7 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
+          PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
           current_version=$PUBLISH_VERSION
           if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
@@ -177,6 +178,7 @@ jobs:
             sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           fi
           
+          echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup node
