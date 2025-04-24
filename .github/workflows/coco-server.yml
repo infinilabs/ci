@@ -574,6 +574,7 @@ jobs:
             git clone git@github.com:infinilabs/license.git $WORK/license
             git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+            ls -lrt $WORK/license
           fi
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
@@ -684,7 +685,7 @@ jobs:
           fi
           # change dep for enterprise
           sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod
-          head -n 10 $WORK/$PNAME/go.mod
+          go mod tidy
 
           # build all targets
           for tag in $TARGETS; do
