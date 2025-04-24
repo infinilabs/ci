@@ -98,8 +98,8 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-            PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
-            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+            IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
+            echo PUBLISH_VERSION=$PUBLISH_VERSION-$BUILD_NUMBER >> $GITHUB_ENV
           fi
           if [[ -n "$PUBLISH_VERSION" ]]; then
             if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
@@ -298,8 +298,8 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-            PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
-            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+            IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
+            echo PUBLISH_VERSION=$PUBLISH_VERSION-$BUILD_NUMBER >> $GITHUB_ENV
           fi
           if [[ -n "$PUBLISH_VERSION" ]]; then
             if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
@@ -554,7 +554,7 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-            IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ inputs.PUBLISH_VERSION }}"
+            IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
             echo PUBLISH_VERSION=$PUBLISH_VERSION-$BUILD_NUMBER >> $GITHUB_ENV
           fi
           if [[ -n "$PUBLISH_VERSION" ]]; then
