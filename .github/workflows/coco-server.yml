@@ -239,7 +239,6 @@ jobs:
 
   publish:
     name: Publish coco server files and docker
-    if: ${{ inputs.ONLY_ENTERPRISE != true && inputs.ONLY_STAGING != true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
