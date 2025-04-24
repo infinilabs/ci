@@ -696,9 +696,10 @@ jobs:
           fi
 
           # change dep for enterprise
-          sed -i '/libdns$/i replace infini.sh/license => ../license'$'\n' $WORK/framework/go.mod
-          cd $WORK/$PNAME && go mod tidy
-          
+          cd $WORK/$PNAME
+          go mod edit -replace=infini.sh/license=../license
+          go mod tidy
+
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
