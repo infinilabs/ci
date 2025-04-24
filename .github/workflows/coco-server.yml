@@ -638,11 +638,6 @@ jobs:
 
       - name: Build coco server
         run: |
-          # change dep for enterprise
-          sed -i '/gomail.v2$/i replace infini.sh/license => ../license'$'\n' $WORK/$PNAME/go.mod
-          sed -i '/gomail.v2$/i replace infini.sh/license => ../license'$'\n' $WORK/framework/go.mod
-          cd $WORK/$PNAME && go mod tidy && OFFLINE_BUILD=true make config
-          
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
@@ -656,6 +651,10 @@ jobs:
           
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
+
+          # change dep for enterprise
+          cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
 
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
