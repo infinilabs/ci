@@ -654,6 +654,8 @@ jobs:
 
           # change dep for enterprise
           cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make build > /dev/null 2>&1
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
 
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
