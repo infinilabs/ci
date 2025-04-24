@@ -661,6 +661,7 @@ jobs:
           cd $WORK/$PNAME && OFFLINE_BUILD=true make build
 
       - name: Build coco server
+        continue-on-error: true
         run: |
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
@@ -668,8 +669,10 @@ jobs:
           fi
 
           # build all targets
+          cd $WORK/$PNAME
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
+            go mod tidy
+            OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build coco server check
