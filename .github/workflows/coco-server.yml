@@ -164,6 +164,10 @@ jobs:
           else
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
+            fi
           fi
           echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date '+%Y-%m-%d %H:%M:%S')"
 
@@ -210,7 +214,7 @@ jobs:
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
@@ -363,6 +367,10 @@ jobs:
           else
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
+            fi
           fi
           echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date '+%Y-%m-%d %H:%M:%S')"
 
@@ -631,6 +639,10 @@ jobs:
           else
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
+            fi
           fi
           echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER at $(date '+%Y-%m-%d %H:%M:%S')"
 
@@ -683,11 +695,11 @@ jobs:
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # change dep for enterprise
-          # sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod && go mod tidy
+          sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod && go mod tidy
 
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
