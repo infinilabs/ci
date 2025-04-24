@@ -138,6 +138,15 @@ jobs:
             exit 1
           fi
 
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number=${{ github.run_number }}
+              echo "Build $PNAME with $version-$build_number"
+            fi
+          fi
+
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
           tauri_version="$major.$minor.$((patch + 1))"
