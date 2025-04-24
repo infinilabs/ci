@@ -165,7 +165,7 @@ jobs:
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_SNAPSHOT" }')
               DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
             fi
           fi
@@ -368,7 +368,7 @@ jobs:
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_SNAPSHOT" }')
               DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
             fi
           fi
@@ -421,7 +421,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
@@ -640,7 +640,7 @@ jobs:
             DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "" }')
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_SNAPSHOT" }')
               DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
             fi
           fi
@@ -694,8 +694,10 @@ jobs:
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
+
           # change dep for enterprise
-          sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod && go mod tidy
+          sed -i '/framework$/i replace infini.sh/license => ../license'$'\n' $WORK/$PNAME/go.mod
+          head -n 10 $WORK/$PNAME/go.mod
 
           # build all targets
           for tag in $TARGETS; do
