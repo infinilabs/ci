@@ -95,8 +95,8 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               current_version="${BASH_REMATCH[1]}"
               build_number="${BASH_REMATCH[3]}"
               
@@ -131,7 +131,9 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
-          PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
+          fi
           current_version=$PUBLISH_VERSION
           if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
@@ -393,7 +395,7 @@ jobs:
 
   refresh_on_success:
     runs-on: ubuntu-latest
-    needs: [build-app, release]
+    needs: [build-app]
     if: success()
     steps:
       - name: Refresh download page on success
