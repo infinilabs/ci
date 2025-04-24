@@ -95,12 +95,16 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
-            current_version="${BASH_REMATCH[1]}"
-            build_number="${BASH_REMATCH[2]}"
-          else
-            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
-            exit 1
+          if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
+              echo "Build $PNAME with $version-$build_number"
+            fi
           fi
 
           version="$current_version"
@@ -134,11 +138,16 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            current_version="${BASH_REMATCH[1]}"
-          else
-            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
-            exit 1
+          if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
+              echo "Build $PNAME with $version-$build_number"
+            fi
           fi
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
@@ -342,12 +351,16 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ "$current_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
-            current_version="${BASH_REMATCH[1]}"
-            build_number="${BASH_REMATCH[2]}"
-          else
-            echo "Invalid PUBLISH_VERSION format: '$current_version'. Expected x.y.z or x.y.z-suffix." >&2
-            exit 1
+          if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
+              echo "Build $PNAME with $version-$build_number"
+            fi
           fi
 
           tag=".v${current_version}"
