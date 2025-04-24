@@ -653,7 +653,7 @@ jobs:
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
 
           # change dep for enterprise
-          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
 
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
