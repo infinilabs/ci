@@ -636,7 +636,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - name: Build coco server
+      - name: Build coco web server
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -652,11 +652,16 @@ jobs:
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
 
+      - name: Preper coco server go mod
+        continue-on-error: true
+        run: |
           # change dep for enterprise
           cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
-          cd $WORK/$PNAME && OFFLINE_BUILD=true make build > /dev/null 2>&1
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make build
           cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
 
+      - name: Build coco server
+        run: |
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
