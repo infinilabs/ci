@@ -657,8 +657,8 @@ jobs:
         run: |
           # change dep for enterprise
           cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
-          cd $WORK/$PNAME && OFFLINE_BUILD=true make build
           cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make build
 
       - name: Build coco server
         run: |
