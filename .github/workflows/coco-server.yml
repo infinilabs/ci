@@ -633,6 +633,8 @@ jobs:
         run: |
           # change dep for enterprise
           cd $WORK/framework && go mod edit -replace=infini.sh/license=../license
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license
+          go mod tidy
 
       - name: Sync node cache
         uses: actions/setup-node@v4
