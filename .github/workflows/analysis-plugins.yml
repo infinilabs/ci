@@ -1,4 +1,4 @@
-name: Analysis Plubins Publish
+name: Analysis Plugins Publish
 defaults:
   run:
     shell: bash

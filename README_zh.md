@@ -12,7 +12,7 @@
 
 > [English](README.md) | 中文
 
-- `Analysis Plubins Publish` 自动发布 `analysis-ik` `analysis-pinyin` `analysis-stconvert` 插件
+- `Analysis Publish Publish` 自动发布 `analysis-ik` `analysis-pinyin` `analysis-stconvert` 插件
 - `Coco App Files Publish` 自动发布 `Coco-AI` 快照版本, 手动发布 `Release` 版本
 - `Coco Server Files & Docker Publish` 自动发布 `Coco-Server` 快照版本文件及 Docker 镜像, 手动发布 `Release` 版本
 - `Easysearch Files & Docker Publish` 自动发布 `Easysearch` 快照版本文件 (含 bundle 包) 及 Docker 镜像, 手动发布 `Release` 版本
