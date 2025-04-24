@@ -657,9 +657,14 @@ jobs:
         run: |
           # change dep for enterprise
           cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          echo "Go mod edit and tidy framework with license finished at $PWD"
           cd $WORK/framework && OFFLINE_BUILD=true make config
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make update-plugins
+          echo "Config framework with license at $PWD"
           cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          echo "Go mod edit and tidy $PNAME with license finished at $PWD"
           cd $WORK/$PNAME && OFFLINE_BUILD=true make config
+          echo "Config $PNAME with license at $PWD"
 
       - name: Build coco server
         continue-on-error: true
