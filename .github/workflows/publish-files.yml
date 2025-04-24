@@ -210,7 +210,7 @@ jobs:
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Build ${{ matrix.product }} with ${{ matrix.target }}
+      - name: Build ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
@@ -254,7 +254,7 @@ jobs:
           fi
           ls -lrt $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.*
                       
-      - name: Upload ${{ matrix.product }} with ${{ matrix.target }} files
+      - name: Upload ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} files
         run: | 
           cd $WORK
           IFS='-' read -r p1 p2 <<< "${{ matrix.target }}"
