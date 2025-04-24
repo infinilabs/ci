@@ -97,13 +97,14 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
-              build_number="${BASH_REMATCH[2]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
               echo "Build $PNAME with $version-$build_number"
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
-              exit 1
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
@@ -286,13 +287,14 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
-              build_number="${BASH_REMATCH[2]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
               echo "Build $PNAME with $version-$build_number"
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
-              exit 1
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
@@ -537,13 +539,14 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ -n "${{ inputs.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([1-9][0-9]*)$ ]]; then
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
-              build_number="${BASH_REMATCH[2]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ github.run_number }}
+              fi
               echo "Build $PNAME with $version-$build_number"
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z-BUILD_NUMBER." >&2
-              exit 1
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
