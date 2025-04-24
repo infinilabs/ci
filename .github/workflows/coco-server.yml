@@ -683,7 +683,8 @@ jobs:
             TARGETS="linux-amd64 linux-arm64"            
           fi
           # change dep for enterprise
-          cd $WORK/$PNAME && sed -i '/gomail.v2$/i replace=infini.sh/license => ../license' go.mod
+          sed -i '/framework$/i replace infini.sh/license => ../license' $WORK/$PNAME/go.mod
+          head -n 10 $WORK/$PNAME/go.mod
 
           # build all targets
           for tag in $TARGETS; do
