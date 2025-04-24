@@ -101,8 +101,8 @@ jobs:
             PUBLISH_VERSION=$${{ vars.PUBLISH_VERSION }}
             echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
           fi
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               version="${BASH_REMATCH[1]}"
               build_number="${BASH_REMATCH[3]}"
               
@@ -121,7 +121,9 @@ jobs:
           # download easysearch
           EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
-            EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
+            fi
           fi
           if [[ "${{ inputs.PUBLISH_RELEASE}}" == "true" ]]; then
             curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
