@@ -7,6 +7,7 @@ env:
   REPO-NAME: "coco-app"
   PNAME: "coco/app"
   OSS_PATH: /Release/coco/app/snapshot
+  TOKEN: ${{ secrets.X_TOKEN }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
