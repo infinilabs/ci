@@ -210,7 +210,7 @@ jobs:
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
@@ -413,7 +413,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
@@ -655,6 +655,8 @@ jobs:
       - name: Preper coco server dependencies
         run: |
           $GITHUB_WORKSPACE/scripts/go-deps.sh
+          cd $WORK/$PNAME
+          go mod edit -replace=infini.sh/license=../license
 
       - name: Sync node cache
         uses: actions/setup-node@v4
@@ -684,7 +686,7 @@ jobs:
           fi
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+            cd $WORK/$PNAME && make build-$tag
           done
 
       - name: Build coco server check
