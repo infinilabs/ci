@@ -629,13 +629,6 @@ jobs:
 
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Preper coco server enterprise dependencies
-        run: |
-          # change dep for enterprise
-          cd $WORK/framework && go mod edit -replace=infini.sh/license=../license
-          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license
-          OFFLINE_BUILD=true make config
-          
       - name: Sync node cache
         uses: actions/setup-node@v4
         with:
@@ -645,6 +638,11 @@ jobs:
 
       - name: Build coco server
         run: |
+          # change dep for enterprise
+          sed -i '/gomail.v2$/i replace infini.sh/license => ../license'$'\n' $WORK/$PNAME/go.mod
+          sed -i '/gomail.v2$/i replace infini.sh/license => ../license'$'\n' $WORK/framework/go.mod
+          cd $WORK/$PNAME && go mod tidy && OFFLINE_BUILD=true make config
+          
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
@@ -658,6 +656,7 @@ jobs:
           
           # check build files
           ls -lrht $WORK/$PNAME/.public/widgets/searchbox
+
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
