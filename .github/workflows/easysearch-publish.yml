@@ -138,7 +138,7 @@ jobs:
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
 
-      - name: Repackage and publish
+      - name: Repackage and bundle for publish
         run: |
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
@@ -207,7 +207,7 @@ jobs:
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Docker Build and push
+      - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}

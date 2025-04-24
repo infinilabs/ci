@@ -705,7 +705,7 @@ jobs:
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
 
-      - name: Preper for Easysearch Docker
+      - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
@@ -731,7 +731,7 @@ jobs:
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Docker build and push with coco server
+      - name: Docker build and push with coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
@@ -766,7 +766,7 @@ jobs:
           done
           ls -lrt $WORK/$PNAME$ENT-$VERSION-*.*
                       
-      - name: Upload coco server files
+      - name: Upload coco server files with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
@@ -790,7 +790,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 15
 
-      - name: Deploy files to staging
+      - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         timeout-minutes: 30
         continue-on-error: true
         run: |

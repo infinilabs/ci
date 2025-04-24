@@ -189,7 +189,7 @@ jobs:
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Build ${{ matrix.product }}
+      - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
@@ -241,7 +241,7 @@ jobs:
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ matrix.product }} >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Docker build and push with ${{ matrix.product }}
+      - name: Docker build and push for ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/${{ matrix.product }}/bin

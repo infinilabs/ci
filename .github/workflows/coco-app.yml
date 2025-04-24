@@ -238,7 +238,7 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build app
+      - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm tauri build --target ${{ matrix.target }}
 
@@ -370,7 +370,7 @@ jobs:
           echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
           echo "RELEASE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
 
-      - name: Generate .latest.json
+      - name: Generate .latest.json with ${{ env.VERSION }}
         shell: bash
         run: ${GITHUB_WORKSPACE}/products/coco-app/generate-latest-json.sh
 
