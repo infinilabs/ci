@@ -5,7 +5,6 @@ defaults:
 env:
     RELEASE_URL: ${{ vars.RELEASE_URL }}
     JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION}}
-    JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_EXT_VERSION }}
     MAVEN_VERSION: ${{ vars.MAVEN_VERSION }}
     MAVEN_DOWNLOAD_URL: ${{ vars.MAVEN_DOWNLOAD_URL }}
     OSS_EP: ${{ secrets.OSS_EP }}
@@ -23,14 +22,19 @@ on:
         description: 'Java Version (overrides repository variable)'
         required: false
         default: '17'
+      REPUBLISH_VERSION:
+        description: 'Republish version (overrides repository variable)'
+        required: false
+        default: '9.0.0'
 
 jobs:
-  publish:
+  publish_versions_less_9:
     name: Publish ${{ matrix.plugins }} for ${{ matrix.product }}
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
+      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_EXT_VERSION }}
     strategy:
       matrix:
         plugins:
@@ -77,11 +81,22 @@ jobs:
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
             LATEST_VERSION=$(curl -s $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
-            echo "$LATEST_VERSION" > /tmp/versions
+            echo "$LATEST_VERSION" > /tmp/all_versions
           else
             LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
-            echo "$LATEST_VERSION" > /tmp/versions
+            echo "$LATEST_VERSION" > /tmp/all_versions
           fi
+          if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+            echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+          fi
+
+          > /tmp/versions
+          while IFS= read -r ver; do
+              MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+              if [[ "$MAJOR_VERSION" -lt 9 ]]; then
+                echo "$ver" >> /tmp/versions
+              fi
+          done < /tmp/all_versions
           cat /tmp/versions
 
       - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
@@ -92,10 +107,136 @@ jobs:
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
             if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
-              break
+              if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+                echo "Version $ver already published, overwrite..."
+              else
+                echo "Version $ver already published, skipping..."
+                break
+              fi
             fi
             # Build when not publish
-            if [[ "${ver%%.*}" -lt 8 ]]; then
+            if [[ "${ver%%.*}" -lt 9 ]]; then
+              if [[ "$TNAME" == "elasticsearch" ]]; then
+                git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+              else
+                git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
+              fi
+            fi
+
+            echo "Current build for $TNAME version [ $ver ] with branch $(git rev-parse --abbrev-ref HEAD)"
+            if [[ "${ver%%.*}" -lt 8 ]] && [[ "$TNAME" == "elasticsearch" ]]; then
+              echo mvn package -DskipTests -D$TNAME.version=$ver
+              mvn package -DskipTests -D$TNAME.version=$ver
+            else
+              echo mvn package -pl $TNAME -am -DskipTests -D$TNAME.version=$ver
+              mvn package -pl $TNAME -am -DskipTests -D$TNAME.version=$ver
+            fi
+          done < "/tmp/versions"
+
+      - name: Upload ${{ matrix.plugins }} for ${{ matrix.product }} all verion files
+        run: |
+          target_dirs=$(find $GITHUB_WORKSPACE/$PNAME -maxdepth 3 -name "releases" -print)
+          [[ -z "$target_dirs" ]] && exit 0 || echo "Found target directories: $target_dirs"
+
+          # 遍历所有目标目录
+          while IFS= read -r target_dir; do
+            # 查找当前目录下所有zip文件
+            find "$target_dir" -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
+              found_zip_file=true
+              oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
+              #更新文件缓存
+              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+            done
+          done <<< "$target_dirs"
+
+  publish_versions_ge_9:
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }}
+    runs-on: ubuntu-latest
+    env:
+      PNAME: ${{ matrix.plugins }}
+      TNAME: ${{ matrix.product }}
+      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_ES9_VERSION }}
+    strategy:
+      matrix:
+        plugins:
+          - analysis-ik
+          - analysis-pinyin
+          - analysis-stconvert
+        product:
+          - elasticsearch
+          - opensearch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout ${{ matrix.plugins }} code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
+          ref: master
+          path: ${{ env.PNAME }}
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Set up maven
+        run: |
+          if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
+            cd $HOME
+            wget -q -nc --show-progress --progress=bar:force:noscroll $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
+            unzip -q apache-maven-$MAVEN_VERSION-bin.zip && rm -rf apache-maven-$MAVEN_VERSION-bin.zip
+          fi
+          echo Maven path is $HOME/apache-maven-$MAVEN_VERSION
+
+      - name: Preper build code
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          echo "Build $PNAME start..."
+          echo "PATH=$HOME/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        run: |
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            LATEST_VERSION=$(curl -s $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          else
+            LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          fi
+          if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+            echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+          fi
+
+          > /tmp/versions
+          while IFS= read -r ver; do
+              MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+              if [[ "$MAJOR_VERSION" -ge 9 ]]; then
+                echo "$ver" >> /tmp/versions
+              fi
+          done < /tmp/all_versions
+          cat /tmp/versions
+
+      - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          echo Check not published version at $PWD with branch $(git branch --show-current)
+          while IFS= read -r ver; do
+            # Check published history
+            URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
+            if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+              if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+                echo "Version $ver already published, overwrite..."
+              else
+                echo "Version $ver already published, skipping..."
+                break
+              fi
+            fi
+            # Build when not publish
+            if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
                 git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
               else
@@ -131,7 +272,7 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish]
+    needs: [publish_versions_less_9, publish_versions_ge_9]
     if: failure()
     steps:
       - name: Checkout code
