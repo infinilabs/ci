@@ -11,8 +11,6 @@ env:
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
   
 on:
-  schedule:
-    - cron: '15 4 * * *' 
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
