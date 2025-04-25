@@ -22,6 +22,14 @@ on:
         description: 'Overrides Java Version '
         required: false
         default: '17'
+      REPUBLISH_TNAME:
+        description: 'Overrides Republish Product'
+        required: false
+        type: choice
+        options:
+          - elasticsearch
+          - opensearch
+        default: 'elasticsearch'
       REPUBLISH_VERSION:
         description: 'Overrides Republish version'
         required: false
@@ -55,14 +63,14 @@ jobs:
           ref: master
           path: ${{ env.PNAME }}
 
-      - name: Set up java toolchain
+      - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      - name: Set up maven
+      - name: Set up maven with ${{ env.MAVEN_VERSION }}
         run: |
           if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
             cd $HOME
@@ -86,10 +94,12 @@ jobs:
             LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
-          if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
-            echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+          if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" ]]; then
+            if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+              echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+            fi
           fi
-
+          
           > /tmp/versions
           while IFS= read -r ver; do
               MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
@@ -176,14 +186,14 @@ jobs:
           ref: master
           path: ${{ env.PNAME }}
 
-      - name: Set up java toolchain
+      - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      - name: Set up maven
+      - name: Set up maven with ${{ env.MAVEN_VERSION }}
         run: |
           if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
             cd $HOME
@@ -207,8 +217,10 @@ jobs:
             LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
-          if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
-            echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+          if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" ]]; then
+            if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+              echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+            fi
           fi
 
           > /tmp/versions
