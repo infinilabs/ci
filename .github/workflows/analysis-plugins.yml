@@ -19,11 +19,11 @@ on:
   workflow_dispatch:
     inputs:
       JAVA_VERSION:
-        description: 'Java Version (overrides repository variable)'
+        description: 'Overrides Java Version '
         required: false
         default: '17'
       REPUBLISH_VERSION:
-        description: 'Republish version (overrides repository variable)'
+        description: 'Overrides Republish version'
         required: false
         default: '9.0.0'
 
