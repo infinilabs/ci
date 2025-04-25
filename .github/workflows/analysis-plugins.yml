@@ -33,16 +33,16 @@ on:
       REPUBLISH_VERSION:
         description: 'Overrides Republish version'
         required: false
-        default: '9.0.0'
+        default: ''
 
 jobs:
   publish_versions_less_9:
-    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }}
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version lt 9
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
-      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_EXT_VERSION }}
+      JAVA_VERSION: ${{ vars.JAVA_EXT_VERSION }}
     strategy:
       matrix:
         plugins:
@@ -94,11 +94,8 @@ jobs:
             LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
-          if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" ]]; then
-            if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
-              echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
-            fi
-          fi
+          [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+
           
           > /tmp/versions
           while IFS= read -r ver; do
@@ -117,7 +114,7 @@ jobs:
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
             if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
-              if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+              if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
                 echo "Version $ver already published, skipping..."
@@ -160,7 +157,7 @@ jobs:
           done <<< "$target_dirs"
 
   publish_versions_ge_9:
-    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }}
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version ge 9
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
@@ -217,11 +214,8 @@ jobs:
             LATEST_VERSION=$(curl -s https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
-          if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" ]]; then
-            if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
-              echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
-            fi
-          fi
+          
+          [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
 
           > /tmp/versions
           while IFS= read -r ver; do
@@ -240,7 +234,7 @@ jobs:
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
             if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
-              if [[ -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+              if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
                 echo "Version $ver already published, skipping..."
