@@ -164,6 +164,11 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
+            fi
+          fi
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then

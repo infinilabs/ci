@@ -90,6 +90,12 @@ jobs:
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
           # for build init
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+              echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+            fi
+          fi
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
             echo "Publish release version"
@@ -145,6 +151,9 @@ jobs:
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
               DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
+              if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+                DYNAMIC_BUILD_NUMBER="${{ github.run_number }}-SNAPSHOT"
+              fi
               DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3}')
             fi
           else
