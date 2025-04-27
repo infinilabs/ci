@@ -303,6 +303,12 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' }}
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          # Check if the branch already exists
+          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
+            echo "Branch $PR_BRANCH found. Deleting remote branch..."
+            git push origin --delete "$PR_BRANCH"
+            echo "Branch $BRANCH_NAME deleted."
+          fi
           git commit -m "$PR_MESSAGE"     
           git push origin "$PR_BRANCH"
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
@@ -315,12 +321,6 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PAT }} 
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          # Check if the branch already exists
-          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
-            echo "Branch $PR_BRANCH found. Deleting remote branch..."
-            git push origin --delete "$PR_BRANCH"
-            echo "Branch $BRANCH_NAME deleted."
-          fi
           gh pr create --title "$PR_MESSAGE" \
                   --body "This PR create by `github action` to updates the release notes." \
                   --base main \
