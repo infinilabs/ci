@@ -183,6 +183,9 @@ jobs:
             DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_SNAPSHOT" }')
+              if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+                DYNAMIC_VERSION="${BASH_REMATCH[1]}"
+              fi
               DYNAMIC_BUILD_NUMBER=${{ github.run_number }}
             fi
           fi
