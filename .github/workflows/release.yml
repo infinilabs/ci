@@ -319,7 +319,8 @@ jobs:
                   --body "This PR create by `github action` to updates the release notes." \
                   --base main \
                   --head "$PR_BRANCH" \
-                  --label "auto-merge, automated"
+                  --label "auto-merge" \
+                  --label "automated"
 
       - name: Create Pull Request for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
