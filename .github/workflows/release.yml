@@ -323,11 +323,11 @@ jobs:
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "auto-merge"; then
             echo "Label auto-merge does not exist. Creating it..."
-            gh label create "auto-merge" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}"
+            gh label create "auto-merge" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automatically merge this PR" --color 34d058 --force
           fi
           if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "automated"; then
             echo "Label automated does not exist. Creating it..."
-            gh label create "automated" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}"
+            gh label create "automated" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automated create this PR" --color 34d058 --force
           fi
           gh pr create --title "$PR_MESSAGE" \
                   --body "This PR create by `github action` to updates the release notes." \
