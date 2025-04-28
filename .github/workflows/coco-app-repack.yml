@@ -20,7 +20,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: true
-        default: "0.4.0-2018"
+        default: "0.4.0"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: true

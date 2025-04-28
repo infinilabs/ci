@@ -30,12 +30,12 @@ on:
         description: 'Easysearch Version'
         required: false
         type: string
-        default: '1.12.1-2018'
+        default: '1.12.1'
       PRODUCT_VERSION:
         description: 'Products Version'
         required: false
         type: string
-        default: '1.29.3-2018'
+        default: '1.29.3'
 
 jobs:
     compile-test:
