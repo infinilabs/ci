@@ -207,17 +207,17 @@ jobs:
             echo "Files are different, uploading..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
             
-            # reset cache
-            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
-            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
-
             # set actions variables
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
             gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
             gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+
+            # reset cache
+            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
           fi
         
       - name: Publish coco website
