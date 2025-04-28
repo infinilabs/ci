@@ -217,6 +217,7 @@ jobs:
 
       - name: reset cache
         if: ${{ inputs.OPERATION == 'RELEASE' }}
+        continue-on-error: true
         run: |
             # Reset cache
             curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
