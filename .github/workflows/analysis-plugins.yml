@@ -152,7 +152,7 @@ jobs:
               found_zip_file=true
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'Cache-Purge: true' -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 
@@ -272,7 +272,7 @@ jobs:
               found_zip_file=true
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'Cache-Purge: true' -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 

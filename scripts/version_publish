@@ -52,12 +52,12 @@ if ! oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -o -f "$GITHUB_WORKSPACE/$fname"
 fi
 
 # Reset cache
-if ! curl -s -H 'x-reset-cache: true' "$RELEASE_URL/${fname}"; then
+if ! curl -s -H 'Cache-Purge: true' -H 'x-reset-cache: true' "$RELEASE_URL/${fname}"; then
     echo "Error: Failed to reset cache for $fname."
     exit 1
 fi
 
-if ! curl -s -H 'x-reset-cache: true' "$RELEASE_URL/${product}/stable/" -o /dev/null; then
+if ! curl -s -H 'Cache-Purge: true' -H 'x-reset-cache: true' "$RELEASE_URL/${product}/stable/" -o /dev/null; then
     echo "Error: Failed to reset cache for $product/stable/."
     exit 1
 fi

@@ -189,7 +189,7 @@ jobs:
             $GITHUB_WORKSPACE/products/$PNAME/build-snapshot.sh
           fi
 
-      - name: Build for docker
+      - name: Build for docker version ${{ env.BUILD_NUMBER }}-${{ env.VERSION }} with agent version ${{ env.AGENT_VERSION }}
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
@@ -272,5 +272,5 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
-            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/snapshot/"
+            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'Cache-Purge: true' -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/snapshot/"
           fi      
