@@ -342,13 +342,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Reset cache
-        continue-on-error: true
-        run: |
-          # reset the cache
-          curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PURE_VERSION" > /dev/null
-          sleep 30
-
       - name: Init Env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
@@ -378,6 +371,13 @@ jobs:
           echo "VERSION=$current_version-$build_number" >> $GITHUB_ENV
           echo "PRE_UPGRADE_PATH=$PNAME/snapshot/$tag" >> $GITHUB_ENV
           echo "RELEASE_UPGRADE_PATH=$PNAME/stable/$tag" >> $GITHUB_ENV
+      
+      - name: Reset cache
+        continue-on-error: true
+        run: |
+          # reset the cache
+          curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PURE_VERSION" > /dev/null
+          sleep 60
 
       - name: Generate .latest.json with ${{ env.VERSION }}
         shell: bash
