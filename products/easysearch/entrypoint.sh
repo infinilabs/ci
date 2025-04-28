@@ -122,7 +122,7 @@ if [ "$(id -u)" = '0' ]; then
   fi
   
   # Conditionally start the agent
-  if [ "${METRICS_WITH_AGENT}" == "true"  ] && [ -n "${METRICS_RECEIVER_SERVER}" ]; then
+  if [ "${METRICS_WITH_AGENT}" == "true"  ] && [ -n "${METRICS_CONFIG_SERVER}" ]; then
     log "Configuring agent for supervisord..."
     start_agent # Now we *only* configure for supervisord
     if [ $? -eq 0 ]; then
