@@ -210,6 +210,7 @@ jobs:
             # check if the cache is reset
             sleep 120
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
             # set actions variables
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
