@@ -134,6 +134,9 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
           fi
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            PUBLISH_VERSION="${BASH_REMATCH[1]}"
+          fi
           current_version=$PUBLISH_VERSION
           if [[ -z "$current_version" ]]; then
             echo "PUBLISH_VERSION is not set or is empty." >&2
@@ -151,7 +154,11 @@ jobs:
 
           build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
           IFS=. read -r major minor patch <<< "$current_version"
-          tauri_version="$major.$minor.$((patch + 1))"
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            tauri_version="$current_version"
+          else
+            tauri_version="$major.$minor.$((patch + 1))"
+          fi
           version="$tauri_version-NIGHTLY-$build_number"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             build_number=${{ github.run_number }}
