@@ -343,6 +343,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Reset cache
+        continue-on-error: true
         run: |
           # reset the cache
           curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PURE_VERSION" > /dev/null

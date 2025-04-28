@@ -96,6 +96,7 @@ jobs:
           path: ${{ env.PNAME }}      
 
       - name: Setup coco server env
+        continue-on-error: true
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
