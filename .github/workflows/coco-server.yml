@@ -123,7 +123,7 @@ jobs:
             curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
           fi
 
-          echo "Coco server build with Easysearch $EZS_VER"
+          echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
@@ -172,8 +172,8 @@ jobs:
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-                DYNAMIC_BUILD_NUMBER="${BASH_REMATCH[1]}"
-                DYNAMIC_VERSION=${{ github.run_number}}
+                DYNAMIC_VERSION="${BASH_REMATCH[1]}"
+                DYNAMIC_BUILD_NUMBER=${{ github.run_number}}
               fi
             fi
           fi
@@ -313,7 +313,7 @@ jobs:
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
             EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
           fi
-          echo "Coco server build with Easysearch $EZS_VER"
+          echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
@@ -363,8 +363,8 @@ jobs:
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-                DYNAMIC_BUILD_NUMBER="${BASH_REMATCH[1]}"
-                DYNAMIC_VERSION=${{ github.run_number}}
+                DYNAMIC_VERSION="${BASH_REMATCH[1]}"
+                DYNAMIC_BUILD_NUMBER=${{ github.run_number}}
               fi
             fi
           fi
@@ -574,7 +574,7 @@ jobs:
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
             EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
           fi
-          echo "Coco server build with Easysearch $EZS_VER"
+          echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
@@ -624,8 +624,8 @@ jobs:
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-                DYNAMIC_BUILD_NUMBER="${BASH_REMATCH[1]}"
-                DYNAMIC_VERSION=${{ github.run_number}}
+                DYNAMIC_VERSION="${BASH_REMATCH[1]}"
+                DYNAMIC_BUILD_NUMBER=${{ github.run_number}}
               fi
             fi
           fi
