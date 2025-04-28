@@ -23,22 +23,18 @@ start_agent() {
 
   cd "$AGENT_DIR"
 
-  if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
-    log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
-  fi
-
-  # 处理 METRICS_RECEIVER_SERVER 变量
-  IFS=',' read -r -a servers <<< "$METRICS_RECEIVER_SERVER"
+  # 处理 METRICS_CONFIG_SERVER 变量
+  IFS=',' read -r -a servers <<< "$METRICS_CONFIG_SERVER"
 
   # Initialize servers_yaml and valid_server flag.
   servers_yaml=""
   valid_servers=true
 
   # Iterate over the servers and validate them.
-  IFS=',' read -r -a servers <<< "$METRICS_RECEIVER_SERVER"
+  IFS=',' read -r -a servers <<< "$METRICS_CONFIG_SERVER"
   for server in "${servers[@]}"; do
     if ! [[ "$server" =~ ^(http|https):// ]]; then
-      log "ERROR: Invalid METRICS_RECEIVER_SERVER '$server'. Must start with http:// or https://."
+      log "ERROR: Invalid METRICS_CONFIG_SERVER '$server'. Must start with http:// or https://."
       valid_servers=false
       break
     fi
@@ -61,6 +57,10 @@ start_agent() {
 
   # 多租户模式
   if [ -n "${TENANT_ID}" ] && [ -n "${CLUSTER_ID}" ]; then
+    if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
+      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password"
+    fi
     # 在多租户模式下，添加 node 配置
     if ! grep -q "node:" $AGENT_DIR/agent.yml; then
       echo "" >> $AGENT_DIR/agent.yml
@@ -116,10 +116,13 @@ trap "exit 0" SIGINT SIGTERM
 
 if [ "$(id -u)" = '0' ]; then
   # init certs/password/plugins
-  gosu ezs bash bin/initialize.sh -s
+  if [ ! -f logs/initialize.log ]; then
+    log "Initializing EasySearch..."
+    gosu ezs bash bin/initialize.sh -s
+  fi
   
   # Conditionally start the agent
-  if [ -n "${METRICS_WITH_AGENT}" ] && [ -n "${METRICS_RECEIVER_SERVER}" ]; then
+  if [ "${METRICS_WITH_AGENT}" == "true"  ] && [ -n "${METRICS_RECEIVER_SERVER}" ]; then
     log "Configuring agent for supervisord..."
     start_agent # Now we *only* configure for supervisord
     if [ $? -eq 0 ]; then
@@ -128,7 +131,7 @@ if [ "$(id -u)" = '0' ]; then
       log "Agent configuration failed. Check logs for errors."
     fi
   else
-    log "METRICS_WITH_AGENT or METRICS_RECEIVER_SERVER is not set. Agent process will not be started as it is not required in agentless mode."
+    log "METRICS_WITH_AGENT is false or METRICS_CONFIG_SERVER is not set. The agent process will not start as it is unnecessary in agentless mode."
   fi
 
   log "Startinging main process ..."
