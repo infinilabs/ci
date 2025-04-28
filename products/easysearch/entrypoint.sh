@@ -116,7 +116,7 @@ trap "exit 0" SIGINT SIGTERM
 
 if [ "$(id -u)" = '0' ]; then
   # init certs/password/plugins
-  if [ -z "$(ls -A logs)" ]; then
+  if [ -z "$(ls -A data)" ]; then
     log "Initializing EasySearch..."
     gosu ezs bash bin/initialize.sh -s
   fi
