@@ -205,10 +205,6 @@ jobs:
           else
             echo "Files are different, uploading..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
-            # Reset cache
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
-            # check if the cache is reset
-            sleep 120
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
             # set actions variables
@@ -235,7 +231,15 @@ jobs:
           else
             echo "Tag $PVER already exists for coco-website"
           fi
-          
+
+      - name: reset cache
+        if: ${{ inputs.OPERATION == 'RELEASE' }}
+        run: |
+            # Reset cache
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+            # check if the cache is reset
+            sleep 120
+
       - name: Checkout code for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR'}}
         timeout-minutes: 30
