@@ -5,6 +5,7 @@ defaults:
     shell: bash
 
 env:
+  DNAME: agent
   PNAME: easysearch
   TZ: Asia/Shanghai
   TOKEN: ${{ secrets.X_TOKEN }}
@@ -63,6 +64,10 @@ jobs:
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
           mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
+          if [[ "${{ env.AGENT_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            AGENT_VERSION=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+            echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
+          fi
 
       - name: Run connect in background
         run: |
