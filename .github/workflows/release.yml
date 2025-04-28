@@ -167,6 +167,7 @@ jobs:
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
@@ -205,8 +206,12 @@ jobs:
           else
             echo "Files are different, uploading..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
+            
+            # reset cache
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
             curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+
             # set actions variables
             echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
             gh variable set PUBLISH_VERSION --body "$VER"
@@ -214,15 +219,6 @@ jobs:
             gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
             gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
           fi
-
-      - name: reset cache
-        if: ${{ inputs.OPERATION == 'RELEASE' }}
-        continue-on-error: true
-        run: |
-            # Reset cache
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
-            # check if the cache is reset
-            sleep 120
         
       - name: Publish coco website
         if: ${{ inputs.OPERATION == 'RELEASE' }}
