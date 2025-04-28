@@ -228,9 +228,9 @@ jobs:
         if: ${{ inputs.OPERATION == 'RELEASE' }}
         run: |
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          
+
           # Publish coco website
-          if [[ "${{ matrix.product }}" == "coco-app" ]] || [[ "${{ matrix.product }}" == "coco-server" ]]; then
+          if [[ "${{ matrix.product }}" == "coco-server" ]]; then
             echo "Publish coco website"
             
             # coco website publish
