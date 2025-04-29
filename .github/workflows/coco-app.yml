@@ -101,7 +101,9 @@ jobs:
               build_number="${BASH_REMATCH[3]}"
               
               if [[ -z "$build_number" ]]; then
-                build_number=${{ github.run_number }}
+                run_number=${{ github.run_number }}
+                offset=${{ vars.OFFSET }}
+                build_number=$((run_number + offset))
               fi
               echo "Build $PNAME with $version-$build_number"
             fi
@@ -147,7 +149,13 @@ jobs:
           if [[ -n "$PUBLISH_VERSION" ]]; then
             if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               current_version="${BASH_REMATCH[1]}"
-              build_number=${{ github.run_number }}
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                run_number=${{ github.run_number }}
+                offset=${{ vars.OFFSET }}
+                build_number=$((run_number + offset))
+              fi
               echo "Build $PNAME with $version-$build_number"
             fi
           fi
@@ -161,7 +169,9 @@ jobs:
           fi
           version="$tauri_version-NIGHTLY-$build_number"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            build_number=${{ github.run_number }}
+            run_number=${{ github.run_number }}
+            offset=${{ vars.OFFSET }}
+            build_number=$((run_number + offset))
             version="$tauri_version-SNAPSHOT-$build_number"
           fi
           if ${{ matrix.platform == 'macos-latest' }}; then
@@ -172,7 +182,9 @@ jobs:
             build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
             version="$tauri_version-NIGHTLY-$build_number"
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              build_number=${{ github.run_number }}
+              run_number=${{ github.run_number }}
+              offset=${{ vars.OFFSET }}
+              build_number=$((run_number + offset))
               version="$tauri_version-SNAPSHOT-$build_number"
             fi
             echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
@@ -353,13 +365,15 @@ jobs:
           fi
 
           # Extract x.y.z using a regular expression
-          if [[ -n "${{ env.PUBLISH_VERSION }}" ]]; then
-            if [[ "${{ env.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
               current_version="${BASH_REMATCH[1]}"
               build_number="${BASH_REMATCH[3]}"
               
               if [[ -z "$build_number" ]]; then
-                build_number=${{ github.run_number }}
+                run_number=${{ github.run_number }}
+                offset=${{ vars.OFFSET }}
+                build_number=$((run_number + offset))
               fi
               echo "Build $PNAME with $version-$build_number"
             fi

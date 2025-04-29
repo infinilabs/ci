@@ -162,7 +162,7 @@ jobs:
               DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3}')
             fi
           else
-            PUBLISH_VERSION=$PUBLISH_VERSION
+            DYNAMIC_PUBLISH_VERSION=$PUBLISH_VERSION
             RUN_NUMBER=${{ github.run_number }}
             OFFSET=${{ vars.OFFSET }}
             DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
