@@ -157,6 +157,7 @@ jobs:
             else
               DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
               if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+                DYNAMIC_VERSION=$PUBLISH_VERSION
                 RUN_NUMBER=${{ github.run_number }}
                 OFFSET=${{ vars.OFFSET }}
                 DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
@@ -170,7 +171,7 @@ jobs:
               DYNAMIC_VERSION=$PUBLISH_VERSION
               RUN_NUMBER=${{ github.run_number }}
               OFFSET=${{ vars.OFFSET }}
-              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
             fi
           fi
           
