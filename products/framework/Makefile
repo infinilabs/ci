@@ -135,7 +135,7 @@ build-linux-amd64-dev: config
 build-linux-arm64-dev: config
 	GOOS=linux GOARCH=arm64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64-dev
 	@$(MAKE) restore-generated-file
-	
+
 build-cmd:
 	for f in $(shell ls ${CMD_DIR}); do (cd $(CMD_DIR)/$${f} && $(GOBUILD) -o $(OUTPUT_DIR)/$${f}); done
 	$(MAKE) restore-generated-file
