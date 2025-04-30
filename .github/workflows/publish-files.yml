@@ -257,7 +257,7 @@ jobs:
           else
             tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
           fi
-          ls -lrt $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.*
+          ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} files
         run: | 
