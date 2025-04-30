@@ -53,7 +53,7 @@ jobs:
         id: set-matrix
         run: |
           matrix_includes=()
-          targets=(win-amd64 win-386 linux-amd64 linux-386 linux-mips64 linux-mips64le linux-armv6 linux-armv7 linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64)
+          targets=(win-amd64 win-386 linux-amd64 linux-amd64-dev linux-386 linux-mips64 linux-mips64le linux-armv6 linux-armv7 linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64)
           products=(agent console gateway loadgen)
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
