@@ -112,18 +112,26 @@ build: config
 	$(GOBUILD) -o $(OUTPUT_DIR)/$(APP_NAME)
 	@$(MAKE) restore-generated-file
 
-build-dev: config
+build-debug: config
 	$(GOBUILDDEV) -tags codes -ldflags -v -gcflags "all=-N -l" -o $(OUTPUT_DIR)/$(APP_NAME)
 	@$(MAKE) restore-generated-file
 
-build-linux-amd64-dev: config
+build-linux-amd64-debug: config
 	GOOS=linux GOARCH=amd64 $(GOBUILDDEV) -tags codes -ldflags -v -gcflags "all=-N -l" -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64
 	@$(MAKE) restore-generated-file
 
-build-linux-arm64-dev: config
+build-linux-arm64-debug: config
 	GOOS=linux GOARCH=arm64 $(GOBUILDDEV) -tags codes -ldflags -v -gcflags "all=-N -l" -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64
 	@$(MAKE) restore-generated-file
 
+build-linux-amd64-dev: config
+	GOOS=linux  GOARCH=amd64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64-dev
+	@$(MAKE) restore-generated-file
+
+build-linux-arm64-dev: config
+	GOOS=linux  GOARCH=arm64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64-dev
+	@$(MAKE) restore-generated-file
+	
 build-cmd:
 	for f in $(shell ls ${CMD_DIR}); do (cd $(CMD_DIR)/$${f} && $(GOBUILD) -o $(OUTPUT_DIR)/$${f}); done
 	$(MAKE) restore-generated-file
