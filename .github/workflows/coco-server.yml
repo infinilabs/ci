@@ -270,7 +270,7 @@ jobs:
         CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
         CONNECT_MODE: ${{ vars.CONNECT_MODE }}
         CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
-        TARGETS: win-amd64 linux-amd64 linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
+        TARGETS: win-amd64 linux-amd64 linux-amd64-dev linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -527,7 +527,7 @@ jobs:
         CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
         CONNECT_MODE: ${{ vars.CONNECT_MODE }}
         CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
-        TARGETS: win-amd64 linux-amd64 linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
+        TARGETS: win-amd64 linux-amd64 linux-amd64-dev linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
