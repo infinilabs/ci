@@ -129,11 +129,11 @@ build-linux-arm64-debug: config
 	@$(MAKE) restore-generated-file
 
 build-linux-amd64-dev: config
-	GOOS=linux  GOARCH=amd64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64-dev
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64-dev
 	@$(MAKE) restore-generated-file
 
 build-linux-arm64-dev: config
-	GOOS=linux  GOARCH=arm64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64-dev
+	GOOS=linux GOARCH=arm64 $(GOBUILD) -tags dev -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64-dev
 	@$(MAKE) restore-generated-file
 	
 build-cmd:
@@ -197,7 +197,7 @@ build-linux-armv6: config
 build-linux-armv7: config
 	GOOS=linux  GOARCH=arm   GOARM=7    $(GOBUILD) -o $(OUTPUT_DIR)/$(APP_NAME)-linux-armv7
 	@$(MAKE) restore-generated-file
-	
+
 build-linux-arm64: config
 	GOOS=linux  GOARCH=arm64    $(GOBUILD) -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64
 	@$(MAKE) restore-generated-file
