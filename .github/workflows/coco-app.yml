@@ -222,6 +222,8 @@ jobs:
               echo "configure PKG_CONFIG_PATH and PKG_CONFIG_SYSROOT_DIR for ${{ matrix.target }} of tauri"
               export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
               export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/
+              echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+              echo "PKG_CONFIG_SYSROOT_DIR=$PKG_CONFIG_SYSROOT_DIR" >> $GITHUB_ENV
           else
               echo "Unknown target: $TARGET_PLATFORM" && exit 1
           fi
@@ -247,6 +249,8 @@ jobs:
 
       - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
         run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Rename upgrade asserts
