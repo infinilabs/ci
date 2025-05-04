@@ -215,14 +215,16 @@ jobs:
         run: |
           TARGET_PLATFORM="${{ matrix.target }}"
           if [ "$TARGET_PLATFORM" = "x86_64-unknown-linux-gnu" ]; then
-              sudo apt-get update
+              sudo apt-get update && sudo apt-get upgrade
               sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           elif [ "$TARGET_PLATFORM" = "aarch64-unknown-linux-gnu" ]; then
               mkdir -p .cargo && cp -r $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/config.toml .cargo/config.toml
               sudo dpkg --add-architecture arm64
-              sudo apt-get update
-              sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev
+              sudo apt-get update && sudo apt-get upgrade
+              sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev
               echo "configure PKG_CONFIG_PATH and PKG_CONFIG_SYSROOT_DIR for ${{ matrix.target }} of tauri"
+              # Create a symbolic link for the aarch64-linux-gnu-gcc
+              sudo ln -s /usr/bin/aarch64-linux-gnu-gcc /usr/lib/gcc-cross/aarch64-linux-gnu/11/
               export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
               export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/
               echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
