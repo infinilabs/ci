@@ -154,7 +154,7 @@ jobs:
                 offset=${{ vars.OFFSET }}
                 build_number=$((run_number + offset))
               fi
-              echo "Build $PNAME with $version-$build_number"
+              echo "Build $PNAME with $current_version-$build_number"
             fi
           fi
 
