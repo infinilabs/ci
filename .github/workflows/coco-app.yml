@@ -221,7 +221,7 @@ jobs:
               mkdir -p .cargo && cp -r $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/config.toml .cargo/config.toml
               sudo dpkg --add-architecture arm64
               sudo apt-get update
-              sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev
+              sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev xdg-utils --fix-missing
           else
               echo "Unknown target: $TARGET_PLATFORM" && exit 1
           fi
