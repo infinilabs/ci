@@ -222,11 +222,6 @@ jobs:
               sudo dpkg --add-architecture arm64
               sudo apt-get update
               sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev
-              echo "configure PKG_CONFIG_PATH and PKG_CONFIG_SYSROOT_DIR for ${{ matrix.target }} of tauri"
-              export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
-              export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/
-              echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
-              echo "PKG_CONFIG_SYSROOT_DIR=$PKG_CONFIG_SYSROOT_DIR" >> $GITHUB_ENV
           else
               echo "Unknown target: $TARGET_PLATFORM" && exit 1
           fi
