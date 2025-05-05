@@ -97,7 +97,12 @@ jobs:
           # for build init
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+              if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+                PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
+              fi
+              if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+                PUBLISH_VERSION="${BASH_REMATCH[1]}"
+              fi
               echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
             fi
           fi
@@ -196,7 +201,7 @@ jobs:
             $GITHUB_WORKSPACE/products/$PNAME/build-snapshot.sh
           fi
 
-      - name: Build for docker version ${{ env.BUILD_NUMBER }}-${{ env.VERSION }} with agent version ${{ env.AGENT_VERSION }}
+      - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
