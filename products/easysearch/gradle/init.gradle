@@ -21,19 +21,19 @@ allprojects{
             if(repo instanceof MavenArtifactRepository){
                 def url = repo.url.toString()
                 if (url.startsWith('https://repo1.maven.org/maven2/')) {
-                    //project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_REPOSITORY_URL."
+                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_REPOSITORY_URL."
                     remove repo
                 }
                 if (url.startsWith('https://jcenter.bintray.com/')) {
-                    //project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_JCENTER_URL."
+                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_JCENTER_URL."
                     remove repo
                 }
                 if (url.startsWith('https://dl.google.com/dl/android/maven2/')) {
-                   // project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GOOGLE_URL."
+                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GOOGLE_URL."
                     remove repo
                 }
                 if (url.startsWith('https://plugins.gradle.org/m2/')) {
-                    //project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GRADLE_PLUGIN_URL."
+                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GRADLE_PLUGIN_URL."
                     remove repo
                 }
             }
