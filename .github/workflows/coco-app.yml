@@ -43,14 +43,8 @@ on:
         required: false
         type: boolean
         default: false
-      PUBLISH_SNAPSHOT:
-        description: 'Publish Snapshot'
-        required: false
-        type: boolean
-        default: false
 jobs:
   build-app:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_SNAPSHOT == 'false' }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
       VITE_LOG_LEVEL: 'warn'
@@ -336,7 +330,7 @@ jobs:
           remote-dir: ${{ env.OSS_PATH }}
 
   release:
-    #needs: "build-app"
+    needs: "build-app"
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}

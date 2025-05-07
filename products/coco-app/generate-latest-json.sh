@@ -9,23 +9,20 @@ echo "PURE_VERSION: $PURE_VERSION"
 
 # Function to fetch signatures with error handling
 get_signature() {
-  url="$1"
-  signature=$(curl -s "$url")
-  if [ $? -ne 0 ]; then
-    echo "Error: Failed to download signature from $url"
-    return 1
-  fi
+  file="$1"
+  oss download -c $GITHUB_WORKSPACE/.oss.yml -k $PRE_UPGRADE_PATH -f $file
+  signature=$(cat $file)
   echo "$signature"
 }
 
 # Get the signature for each platform
-signature_darwin_aarch64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
-signature_darwin_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
-signature_linux_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_amd64.AppImage.sig")
-signature_linux_aarch64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_aarch64.AppImage.sig")
-signature_windows_x86_64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_x64-setup.exe.sig")
-signature_windows_arm64=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_arm64-setup.exe.sig")
-signature_windows_i686=$(get_signature "${RELEASE_URL}/$PRE_UPGRADE_PATH/Coco-AI_${VERSION}_x86-setup.exe.sig")
+signature_darwin_aarch64=$(get_signature "Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
+signature_darwin_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
+signature_linux_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
+signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_aarch64.AppImage.sig")
+signature_windows_x86_64=$(get_signature "Coco-AI_${VERSION}_x64-setup.exe.sig")
+signature_windows_arm64=$(get_signature "Coco-AI_${VERSION}_arm64-setup.exe.sig")
+signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
 
 # Create the base JSON structure
 cat > .latest.json <<EOF
