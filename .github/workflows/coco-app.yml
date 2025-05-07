@@ -216,12 +216,13 @@ jobs:
           TARGET_PLATFORM="${{ matrix.target }}"
           if [ "$TARGET_PLATFORM" = "x86_64-unknown-linux-gnu" ]; then
               sudo apt-get update
-              sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+              sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           elif [ "$TARGET_PLATFORM" = "aarch64-unknown-linux-gnu" ]; then
-              mkdir -p .cargo && cp -r $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/config.toml .cargo/config.toml
-              sudo dpkg --add-architecture arm64
+              #mkdir -p .cargo && cp -r $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/config.toml .cargo/config.toml
+              #sudo dpkg --add-architecture arm64
               sudo apt-get update
-              sudo apt install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev xdg-utils --fix-missing
+              sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+              #sudo apt install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev xdg-utils --fix-missing
           else
               echo "Unknown target: $TARGET_PLATFORM" && exit 1
           fi
@@ -335,7 +336,6 @@ jobs:
 
   release:
     needs: "build-app"
-    if: ${{ inputs.PUBLISH_RELEASE }}
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
