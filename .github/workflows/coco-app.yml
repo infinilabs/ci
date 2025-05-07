@@ -196,7 +196,7 @@ jobs:
           
           echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
-          echo "UPGRADE=.v${tauri_version}" >> $GITHUB_ENV
+          echo "UPGRADE=.v${tauri_version}-SNAPSHOT" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -269,7 +269,7 @@ jobs:
             mv "$file" "$new_file"
           done
           # Delete the ubuntu files
-          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+          if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
             find "$bundle_dir" \
               \( \
                 -name "*amd64.deb.sig" -o \

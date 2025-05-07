@@ -23,7 +23,7 @@ get_signature() {
 signature_darwin_aarch64=$(get_signature "Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
 signature_darwin_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
 signature_linux_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
-signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
+signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_aarch64.AppImage.sig")
 signature_windows_x86_64=$(get_signature "Coco-AI_${VERSION}_x64-setup.exe.sig")
 signature_windows_arm64=$(get_signature "Coco-AI_${VERSION}_arm64-setup.exe.sig")
 signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
@@ -49,7 +49,7 @@ cat > .latest.json <<EOF
     },
     "linux-aarch64": {
       "signature": "${signature_linux_aarch64}",
-      "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_arm64.AppImage"
+      "url": "${RELEASE_URL}/${RELEASE_UPGRADE_PATH}/Coco-AI_${VERSION}_aarch64.AppImage"
     },
     "windows-x86_64": {
       "signature": "${signature_windows_x64}",
