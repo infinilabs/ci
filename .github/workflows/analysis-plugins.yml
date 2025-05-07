@@ -36,7 +36,7 @@ on:
         default: ''
 
 jobs:
-  publish_versions_less_9:
+  publish_versions_with_jdk_17:
     name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version lt 9
     runs-on: ubuntu-latest
     env:
@@ -96,14 +96,23 @@ jobs:
           fi
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
 
-          
+          # filter versions
           > /tmp/versions
-          while IFS= read -r ver; do
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            while IFS= read -r ver; do
+                MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+                if [[ "$MAJOR_VERSION" -lt 9 ]]; then
+                  echo "$ver" >> /tmp/versions
+                fi
+            done < /tmp/all_versions
+          else
+            while IFS= read -r ver; do
               MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
-              if [[ "$MAJOR_VERSION" -lt 9 ]]; then
+              if [[ "$MAJOR_VERSION" -lt 3 ]]; then
                 echo "$ver" >> /tmp/versions
               fi
-          done < /tmp/all_versions
+            done < /tmp/all_versions
+          fi
           cat /tmp/versions
 
       - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
@@ -156,7 +165,7 @@ jobs:
             done
           done <<< "$target_dirs"
 
-  publish_versions_ge_9:
+  publish_versions_with_jdk_21:
     name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version ge 9
     runs-on: ubuntu-latest
     env:
@@ -217,13 +226,23 @@ jobs:
           
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
 
+          # filter versions
           > /tmp/versions
-          while IFS= read -r ver; do
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            while IFS= read -r ver; do
+                MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+                if [[ "$MAJOR_VERSION" -ge 9 ]]; then
+                  echo "$ver" >> /tmp/versions
+                fi
+            done < /tmp/all_versions
+          else
+            while IFS= read -r ver; do
               MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
-              if [[ "$MAJOR_VERSION" -ge 9 ]]; then
+              if [[ "$MAJOR_VERSION" -ge 3 ]]; then
                 echo "$ver" >> /tmp/versions
               fi
-          done < /tmp/all_versions
+            done < /tmp/all_versions
+          fi
           cat /tmp/versions
 
       - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
