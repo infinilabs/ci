@@ -4,8 +4,14 @@ set -e
 cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成快照版本号
+
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
-SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
+if [ -n "$BUILD_BYWORFLOW" ]; then 
+  SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 }')
+else
+  SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
+fi
+
 echo "Snapshot version: $SNAPSHOT_VERSION"
 
 # 2. 转换为 Java 变量名 (V_x_y_z)

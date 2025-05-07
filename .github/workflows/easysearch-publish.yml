@@ -98,8 +98,7 @@ jobs:
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
-            else
-              PUBLISH_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3}')
+              BUILD_BYWORFLOW="${{ github.event_name }}"
             fi
             if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
               PUBLISH_VERSION="${BASH_REMATCH[1]}"
