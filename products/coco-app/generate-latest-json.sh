@@ -11,7 +11,7 @@ echo "PURE_VERSION: $PURE_VERSION"
 get_signature() {
   file="$1"
   oss download -c $GITHUB_WORKSPACE/.oss.yml -k $PRE_UPGRADE_PATH -f $file
-  signature=$(cat $file)
+  signature=$(cat $file | awk 'END {print}')
   echo "$signature"
 }
 
