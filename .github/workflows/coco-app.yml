@@ -196,6 +196,7 @@ jobs:
           
           echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
           echo "VERSION=$version" >> $GITHUB_ENV
+          echo "UPGRADE=.v${tauri_version}" >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -259,6 +260,10 @@ jobs:
           version="$VERSION"
 
           find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+            if [[ "$file" == *"$version"* ]]; then
+              echo "Skipping '$file', already contains the full version"
+              continue
+            fi
             new_file="${file/$puer_version/${version}}"
             echo "Renaming '$file' to '$new_file'"
             mv "$file" "$new_file"
@@ -268,10 +273,12 @@ jobs:
             find "$bundle_dir" \
               \( \
                 -name "*amd64.deb.sig" -o \
+                -name "*aarch64.deb.sig" -o \
                 -name "*x86_64.rpm.sig" -o \
+                -name "*aarch64.rpm.sig" -o \
                 -name "control.tar.gz" -o \
                 -name "data.tar.gz" \
-              \) -print0 | xargs -0 rm -f
+              \) -print0 | xargs -0 rm -vf
           fi
           # Rename the darwin
           if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
