@@ -388,7 +388,7 @@ jobs:
         run: |
           # reset the cache
           curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PURE_VERSION" > /dev/null
-          sleep 60
+          sleep 10
 
       - name: Generate .latest.json with ${{ env.VERSION }}
         shell: bash

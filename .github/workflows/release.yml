@@ -241,7 +241,7 @@ jobs:
               git tag -a $PVER -m "Release $PVER"
               git push origin $PVER
               echo "Tag $PVER created for coco-website"
-              sleep 60 #wait for 1 minute to make sure the tag is created
+              sleep 10 #wait for 10 secs to make sure the tag is created
             else
               echo "Tag $PVER already exists for coco-website"
             fi
@@ -279,7 +279,7 @@ jobs:
             git tag -a $PVER -m "Release $PVER"
             git push origin $PVER
             echo "Tag $PVER created for ${{ matrix.product }}"
-            sleep 60 #wait for 1 minute to make sure the tag is created
+            sleep 10 #wait for 10 secs to make sure the tag is created
           else
             echo "Tag $PVER already exists for ${{ matrix.product }}"
           fi
