@@ -213,20 +213,9 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu-22.04') 
         working-directory: ${{ env.REPO-NAME }}
         run: |
-          TARGET_PLATFORM="${{ matrix.target }}"
-          if [ "$TARGET_PLATFORM" = "x86_64-unknown-linux-gnu" ]; then
-              sudo apt-get update
-              sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-          elif [ "$TARGET_PLATFORM" = "aarch64-unknown-linux-gnu" ]; then
-              #mkdir -p .cargo && cp -r $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/config.toml .cargo/config.toml
-              #sudo dpkg --add-architecture arm64
-              sudo apt-get update
-              sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
-              #sudo apt install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config libssl-dev xdg-utils --fix-missing
-          else
-              echo "Unknown target: $TARGET_PLATFORM" && exit 1
-          fi
-
+            sudo apt-get update
+            sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          
       - name: Install Rust stable
         run: rustup toolchain install stable --no-self-update
 
@@ -309,7 +298,6 @@ jobs:
               \)
 
       - name: Upload upgrade assets to OSS with ${{ matrix.target }}
-        if: ${{ inputs.PUBLISH_RELEASE }}
         uses: infinilabs/oss-upload@v0
         with:
           region: oss-cn-shanghai
