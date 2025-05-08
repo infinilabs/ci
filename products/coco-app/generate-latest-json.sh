@@ -10,7 +10,7 @@ echo "PURE_VERSION: $PURE_VERSION"
 # Function to fetch signatures with error handling
 get_signature() {
   file="$1"
-  oss download -c $GITHUB_WORKSPACE/.oss.yml -k $PRE_UPGRADE_PATH -f $file
+  oss download -c $GITHUB_WORKSPACE/.oss.yml -k $PRE_UPGRADE_PATH -f $file > /dev/null 2>&1
   signature=$(sed -n '/dW50cnVz/,$p' $file)
   echo "$signature"
 }
