@@ -55,7 +55,7 @@ cat > .latest.json <<EOF
       "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_aarch64.AppImage"
     },
     "windows-x86_64": {
-      "signature": "${signature_windows_x64}",
+      "signature": "${signature_windows_x86_64}",
       "url": "${RELEASE_URL}/${UPGRADE_PATH}/Coco-AI_${VERSION}_x64-setup.exe"
     },
     "windows-aarch64": {
