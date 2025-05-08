@@ -17,12 +17,19 @@ get_signature() {
 
 # Get the signature for each platform
 signature_darwin_aarch64=$(get_signature "Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
+echo "signature_darwin_aarch64: $signature_darwin_aarch64"
 signature_darwin_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
+echo "signature_darwin_x86_64: $signature_darwin_x86_64"
 signature_linux_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
+echo "signature_linux_x86_64: $signature_linux_x86_64"
 signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_aarch64.AppImage.sig")
+echo "signature_linux_aarch64: $signature_linux_aarch64"
 signature_windows_x86_64=$(get_signature "Coco-AI_${VERSION}_x64-setup.exe.sig")
+echo "signature_windows_x86_64: $signature_windows_x86_64"
 signature_windows_arm64=$(get_signature "Coco-AI_${VERSION}_arm64-setup.exe.sig")
+echo "signature_windows_arm64: $signature_windows_arm64"
 signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
+echo "signature_windows_i686: $signature_windows_i686"
 
 # Create the base JSON structure
 cat > .latest.json <<EOF
@@ -63,6 +70,9 @@ cat > .latest.json <<EOF
 }
 EOF
 
+if [[ "$PRE_UPGRADE_PATH" == *"SNAPSHOT"* ]]; then
+  PRE_UPGRADE_PATH="${PRE_UPGRADE_PATH%/*}"
+fi
 # Upload the JSON file to OSS
-echo "Uploading .latest.json to OSS"
+echo "Uploading .latest.json to OSS $PRE_UPGRADE_PATH"
 oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$PRE_UPGRADE_PATH" -f .latest.json
