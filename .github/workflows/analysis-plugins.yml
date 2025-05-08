@@ -37,7 +37,7 @@ on:
 
 jobs:
   publish_versions_with_jdk_17:
-    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version lt 9
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 17
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
@@ -115,10 +115,10 @@ jobs:
           fi
           cat /tmp/versions
 
-      - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
+      - name: Build need publish ${{ matrix.plugins }} for ${{ matrix.product }} versions
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          echo Check not published version at $PWD with branch $(git branch --show-current)
+          echo Check need publish version at $PWD with branch $(git branch --show-current)
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
@@ -166,7 +166,7 @@ jobs:
           done <<< "$target_dirs"
 
   publish_versions_with_jdk_21:
-    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} version ge 9
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 21
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
@@ -245,10 +245,10 @@ jobs:
           fi
           cat /tmp/versions
 
-      - name: Build not published ${{ matrix.plugins }} for ${{ matrix.product }} versions
+      - name: Build need publish ${{ matrix.plugins }} for ${{ matrix.product }} versions
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          echo Check not published version at $PWD with branch $(git branch --show-current)
+          echo Check need publish version at $PWD with branch $(git branch --show-current)
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
