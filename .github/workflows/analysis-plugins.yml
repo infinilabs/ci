@@ -297,7 +297,7 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish_versions_less_9, publish_versions_ge_9]
+    needs: [publish_versions_with_jdk_17, publish_versions_with_jdk_21]
     if: failure()
     steps:
       - name: Checkout code
