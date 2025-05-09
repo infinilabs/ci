@@ -62,8 +62,8 @@ jobs:
 
           - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
-          # - platform: "windows-latest"
-          #   target: "i686-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "i686-pc-windows-msvc"
           - platform: "windows-latest"
             target: "aarch64-pc-windows-msvc"
 
@@ -247,7 +247,11 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            pnpm tauri build --target ${{ matrix.target }}
+          else
+            pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+          fi
 
       - name: Rename upgrade asserts
         working-directory: ${{ env.REPO-NAME }}
