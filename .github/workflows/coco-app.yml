@@ -247,7 +247,7 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          sed 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
+          sed  -i 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
           pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
 
       - name: Rename upgrade asserts
