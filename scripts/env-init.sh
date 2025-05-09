@@ -3,7 +3,9 @@
 LOCAL_ADDRE="127.0.0.1"
 
 # for tools
-sudo cp -rf $GITHUB_WORKSPACE/tools/* /usr/bin && echo "Tools setting done."
+if [[ "$SHELL" == "/bin/bash" ]]; then
+  sudo cp -rf $GITHUB_WORKSPACE/tools/* /usr/bin && echo "Tools setting done."
+fi
 
 # for ssh
 if [[ ! -z "$SSH_PRIVATE_KEY" ]]; then
