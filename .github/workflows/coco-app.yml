@@ -208,6 +208,7 @@ jobs:
           version: latest
 
       - name: Install rust target
+        working-directory: ${{ env.REPO-NAME }}/src-tauri
         run: rustup target add ${{ matrix.target }}
 
       - name: Install dependencies (ubuntu only)
@@ -217,8 +218,8 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
           
-      - name: Install Rust stable
-        run: rustup toolchain install stable --no-self-update
+      #- name: Install Rust stable
+      #  run: rustup toolchain install stable --no-self-update
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
