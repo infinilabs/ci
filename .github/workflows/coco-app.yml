@@ -9,6 +9,9 @@ env:
   OSS_PATH: /Release/coco/app/snapshot
   TOKEN: ${{ secrets.X_TOKEN }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
   OSS_SK: ${{ secrets.OSS_SK }}
@@ -242,7 +245,11 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
           CARGO_NET_GIT_FETCH_WITH_CLI: true
-        run: pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=1" >> $GITHUB_ENV
+          git config url."https://${{ secrets.REPO_PAT }}@github.com".insteadOf "https://github.com"
+          pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
 
       - name: Rename upgrade asserts
         working-directory: ${{ env.REPO-NAME }}
