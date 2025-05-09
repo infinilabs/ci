@@ -179,6 +179,7 @@ jobs:
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i '' "s/^version = *\"[^\"]*\"/tauri_version = \"$version\"/" src-tauri/Cargo.toml
+            sed -i '' 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
           elif ${{ matrix.platform == 'windows-latest' }}; then
             build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
             version="$tauri_version-NIGHTLY-$build_number"
@@ -191,10 +192,12 @@ jobs:
             echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+            sed -i -e 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
           else
             echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+            sed -i -e 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
           fi
           
           echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
@@ -247,7 +250,6 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          sed  -i 's|https://github.com/infinilabs/pizza|git@github.com:infinilabs/pizza|' src-tauri/Cargo.toml
           pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
 
       - name: Rename upgrade asserts
