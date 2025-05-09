@@ -240,7 +240,8 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
-        run: pnpm tauri build --target ${{ matrix.target }}
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+        run: pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
 
       - name: Rename upgrade asserts
         working-directory: ${{ env.REPO-NAME }}
