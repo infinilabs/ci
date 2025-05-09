@@ -248,7 +248,8 @@ jobs:
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=1" >> $GITHUB_ENV
-          git config url."https://${{ secrets.REPO_PAT }}@github.com".insteadOf "https://github.com"
+          git config url."git@github.com:".insteadOf "https://github.com/"
+          git config url."https://github".insteadOf "git://github"
           pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
 
       - name: Rename upgrade asserts
