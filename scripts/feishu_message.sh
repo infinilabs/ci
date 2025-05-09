@@ -68,7 +68,7 @@ EOF
 
 # --- Send the notification ---
 echo "Sending Feishu notification..."
-curl -s -X POST -H 'Content-Type: application/json' \
+curl -sL -X POST -H 'Content-Type: application/json' \
      --data "@${TMP_JSON_FILE}" \
      "${FEISHU_BOT_URL}"
 
