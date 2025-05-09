@@ -365,7 +365,7 @@ jobs:
                 else
                   build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
                   IFS=. read -r major minor patch <<< "$current_version"
-                  current_version="$major.$minor.$((patch + 1))-NIGHTLY"
+                  current_version="$major.$minor.$((patch + 1))-SNAPSHOT"
                 fi
                 echo "UPGRADE_PATH=$PNAME/snapshot/.v${current_version}" >> $GITHUB_ENV
               else
