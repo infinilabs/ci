@@ -122,7 +122,7 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -161,7 +161,7 @@ jobs:
               found_zip_file=true
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 
@@ -252,7 +252,7 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -291,7 +291,7 @@ jobs:
               found_zip_file=true
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 

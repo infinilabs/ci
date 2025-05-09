@@ -27,7 +27,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   JARK=$(echo "$x" | sed -e 's/-amd64/_x64/;s/-arm64/_aarch64/;s/mac/macosx/;s/windows/win/')
   JNAME=`find $BUILD_JDKS -name "zulu*-$JARK*" |head -n 1`
   URL="$RELEASE_URL/$PNAME/stable/bundle/$DNAME"
-  if curl -sI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+  if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
     echo "Exists release file $DNAME will overwrite it"
   fi
   echo -e "From $FNAME \nTo $DNAME \nJark $JARK \nJre $JNAME"

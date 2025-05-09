@@ -67,7 +67,7 @@ update() {
             DOWNLOAD_URL="$BASE_URL/stable/$PACKAGE_NAME"
         fi
         # 下载更新包
-        wget "$DOWNLOAD_URL" -O "$PACKAGE_NAME" || { echo "Error: Failed to download package"; exit 1; }
+        wget -q -nc --show-progress --progress=bar:force:noscroll "$DOWNLOAD_URL" -O "$PACKAGE_NAME" || { echo "Error: Failed to download package"; exit 1; }
 
         # 解压更新包到临时目录
         mkdir -p "$UPDATE_DIR" || { echo "Error: Failed to create update directory"; exit 1; }

@@ -143,7 +143,7 @@ jobs:
               shell: bash
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   VER=$EZS_VERSION
                 fi
@@ -196,7 +196,7 @@ jobs:
               run: |
                 echo Running integration test at $PWD ...
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sku $ES_USERNAME:$ES_PASSWORD $ES_ENDPOINT
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD $ES_ENDPOINT
                 fi
 
             - name: Run console test
@@ -253,7 +253,7 @@ jobs:
                   $WORK/$PRODUCT/bin/$PRODUCT -d 10
                   # Check indices created
                   if command -v curl >/dev/null 2>&1; then
-                    curl -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   fi
 
             - name: Run loadgen api test for runtime registry
@@ -278,8 +278,8 @@ jobs:
                 echo "Check metrics count and search metrics"
                 # Check metrics count
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
-                  curl -H 'Content-Type: application/json' -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
                 fi
 
             - name: Check console logs
@@ -358,7 +358,7 @@ jobs:
               shell: bash
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   VER=$EZS_VERSION
                 fi
@@ -378,7 +378,7 @@ jobs:
                 # for products
                 for p in console gateway agent loadgen; do
                   [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
-                  VER=$(curl -m30 -sk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
+                  VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
                   if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
                     VER=$PRODUCT_VERSION
                   fi
@@ -392,7 +392,7 @@ jobs:
               run: |
                 echo Running integration test at $PWD ...
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sku $ES_USERNAME:$ES_PASSWORD $ES_ENDPOINT
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD $ES_ENDPOINT
                 fi
 
             - name: Run console test
@@ -449,7 +449,7 @@ jobs:
                   $WORK/$PRODUCT/bin/$PRODUCT -d 10
                   # Check indices created
                   if command -v curl >/dev/null 2>&1; then
-                    curl -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   fi
 
             - name: Run loadgen api test for runtime registry
@@ -474,8 +474,8 @@ jobs:
                 echo "Check metrics count and search metrics"
                 # Check metrics count
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
-                  curl -H 'Content-Type: application/json' -sku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
                 fi
 
             - name: Check console logs

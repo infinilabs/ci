@@ -321,16 +321,16 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
             if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/agent/snapshot/"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/agent/snapshot/"
             fi
             if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/console/snapshot/"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/console/snapshot/"
             fi
             if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/gateway/snapshot/"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/gateway/snapshot/"
             fi
 
             if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
-              sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/loadgen/snapshot/"
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/loadgen/snapshot/"
             fi
           fi

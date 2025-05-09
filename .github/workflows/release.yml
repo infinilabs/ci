@@ -215,9 +215,9 @@ jobs:
             gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
 
             # reset cache
-            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
-            curl -s -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+            curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+            curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
+            curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
           fi
         
       - name: Publish coco website

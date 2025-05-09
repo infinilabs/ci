@@ -62,7 +62,7 @@ jobs:
 
       - name: Get Release Asset Names
         run: |
-          ASSET_NAMES=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+          ASSET_NAMES=$(curl -sL -H "Accept: application/vnd.github.v3+json" \
             "$GITHUB_API_RELEASES_URL/tags/$TAG" | \
             jq -r '.assets[].name')
           echo "$ASSET_NAMES" > asset_names.txt

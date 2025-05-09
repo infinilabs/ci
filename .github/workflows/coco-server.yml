@@ -123,7 +123,7 @@ jobs:
             fi
           fi
           if [[ "${{ inputs.PUBLISH_RELEASE}}" == "true" ]]; then
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
+            curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
           fi
 
           echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
@@ -848,5 +848,5 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
-            sleep 5 && curl -s -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"  
+            sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"  
           fi      
