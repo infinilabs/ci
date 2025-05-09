@@ -31,7 +31,7 @@ for t in amd64 arm64; do
   #下载对应架构的 agent 并解压
   AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
   for f in stable snapshot; do
-    if curl -I -m 10 -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
+    if curl -IL -m 10 -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
       wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/agent/$f/$AGENT_FILENAME
     fi
   done
