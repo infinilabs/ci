@@ -34,7 +34,7 @@ on:
     tags:
       - 'release*'
   schedule:
-    - cron: '30 4/16 * * *'
+    - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
