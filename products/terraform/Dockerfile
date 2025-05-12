@@ -19,7 +19,7 @@ RUN cd /terraform && ls -lrt /terraform/app && ls -lrt /bin/init.sh \
 FROM scratch AS prod
 
 LABEL description="INFINILabs Terraform base image."
-LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
+LABEL maintainer="Medcl、Hardy、Liukj@INFINILabs <luohf@infinilabs.com>"
 
 # 从构建阶段拷贝文件到最终镜像
 COPY --from=builder / /
