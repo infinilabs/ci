@@ -1,0 +1,76 @@
+name: Publish Busybox Release
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Busybox Version'
+        required: true
+        default: "1.37.0"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      PNAME: busybox
+      VERSION: ${{ inputs.PUBLISH_VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up qemu with ${{ env.PNAME }}
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up docker buildx with ${{ env.PNAME }}
+        uses: docker/setup-buildx-action@v3
+        #with:
+        #  buildkitd-flags: --debug
+
+      - name: Login to dockerhub with ${{ env.PNAME }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker build meta with ${{ env.PNAME }}
+        run: |
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }} >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+      - name: Docker build and push for ${{ env.PNAME }} with ${{ env.VERSION }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          build-args: |
+            BUSYBOX_VERSION=${{ env.VERSION }}
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}
+          push: true
+
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Send Feishu Notification on Failure
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
