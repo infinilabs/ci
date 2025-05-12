@@ -1,6 +1,6 @@
 ARG BUSYBOX_VERSION=1.37.0
 
-FROM ${BUSYBOX_VERSION}-glibc AS builder
+FROM busybox:${BUSYBOX_VERSION}-glibc AS builder
 
 # 指定工作目录
 WORKDIR /
