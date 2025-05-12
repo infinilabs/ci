@@ -144,13 +144,16 @@ jobs:
               run: |
                 # Install easysearch
                 VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                echo "The latest easysearch version is $VER"
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   VER=$EZS_VERSION
                 fi
                 curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
                 [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
                 # Initialize easysearch
+                echo "Initialize easysearch at $HOME/easysearch ..."
                 cd $HOME/easysearch && bin/initialize.sh -s
+                echo "Start easysearch at $HOME/easysearch ..."
                 # Run easysearch
                 bin/easysearch -d
 
