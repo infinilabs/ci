@@ -31,6 +31,11 @@ echo "signature_windows_arm64: $signature_windows_arm64"
 signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
 echo "signature_windows_i686: $signature_windows_i686"
 
+if [[ -z "$signature_darwin_aarch64" || -z "$signature_darwin_x86_64" || -z "$signature_linux_x86_64" || -z "$signature_linux_aarch64" || -z "$signature_windows_x86_64" || -z "$signature_windows_arm64" || -z "$signature_windows_i686" ]]; then
+  echo "Error: One or more signatures are empty. Exiting."
+  exit 1
+fi
+
 # Create the base JSON structure
 cat > .latest.json <<EOF
 {
