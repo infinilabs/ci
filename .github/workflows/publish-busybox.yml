@@ -12,6 +12,10 @@ on:
         description: 'Publish Busybox Version'
         required: true
         default: "1.37.0"
+      BUSYBOX_VERSION:
+        description: 'From Busybox Version'
+        required: true
+        default: "1.37.0"
 
 jobs:
   publish:
@@ -19,6 +23,7 @@ jobs:
     env:
       PNAME: busybox
       VERSION: ${{ inputs.PUBLISH_VERSION }}
+      INPUT_VERSION: ${{ inputs.BUSYBOX_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,10 +45,10 @@ jobs:
       - name: Docker build meta with ${{ env.PNAME }}
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }} >> $GITHUB_ENV
-          if [[ "${{ env.VERSION }}" == "latest" ]]; then
+          if [[ "${{ env.INPUT_VERSION }}" == "latest" ]]; then
             echo BUSYBOX_VERSION=stable >> $GITHUB_ENV
           else
-            echo BUSYBOX_VERSION=${{ env.VERSION }} >> $GITHUB_ENV
+            echo BUSYBOX_VERSION=${{ env.INPUT_VERSION }} >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
 
