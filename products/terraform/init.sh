@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Initialize Terraform for a given directory
@@ -6,7 +6,7 @@ terraform_init() {
   local dir=$1
   if [ -f "${dir}/main.tf" ]; then
     until [ -d "${dir}/.terraform" ]; do
-      terraform -chdir="${dir}" init
+      ./terraform -chdir="${dir}" init
     done
   else
     for subdir in "${dir}"/*/; do

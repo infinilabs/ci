@@ -10,7 +10,7 @@ COPY ["init.sh", "/bin"]
 COPY ["app/gateway", "terraform/gateway"]
 COPY ["app/runtime", "terraform/runtime"]
 
-RUN cd /terraform && ls -lrt /terraform/gateway && ls -lrt /terraform/runtime && ls -lrt /bin/init.sh \
+RUN cd /terraform \
     && wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_${TARGETARCH}.zip \
     && unzip terraform_1.9.8_linux_${TARGETARCH}.zip \
     && /bin/init.sh \
