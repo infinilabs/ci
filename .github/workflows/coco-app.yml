@@ -375,11 +375,13 @@ jobs:
               if [[ "${{ inputs.PUBLISH_RELEASE }}" != "true" ]]; then
                 if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
                   current_version="$current_version-SNAPSHOT"
+                  pure_version="$current_version-$build_number"
                 else
-                  build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
                   IFS=. read -r major minor patch <<< "$current_version"
                   current_version="$major.$minor.$((patch + 1))-SNAPSHOT"
                   nightly_version="$major.$minor.$((patch + 1))-NIGHTLY"
+                  pure_version="$current_version-$build_number"
+                  build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
                 fi
                 echo "UPGRADE_PATH=$PNAME/snapshot/.v${current_version}" >> $GITHUB_ENV
               else
@@ -391,7 +393,7 @@ jobs:
 
           tag=".v${current_version}"
           echo "UPGRADE=$tag" >> $GITHUB_ENV
-          echo "PURE_VERSION=$current_version" >> $GITHUB_ENV
+          echo "PURE_VERSION=$pure_version" >> $GITHUB_ENV
           if [[ ! -z "$nightly_version" ]]; then
             echo "VERSION=$nightly_version-$build_number" >> $GITHUB_ENV
           else
