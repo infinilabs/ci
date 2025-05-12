@@ -40,6 +40,11 @@ jobs:
       - name: Docker build meta with ${{ env.PNAME }}
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }} >> $GITHUB_ENV
+          if [[ "${{ env.VERSION }}" == "latest" ]]; then
+            echo BUSYBOX_VERSION=stable >> $GITHUB_ENV
+          else
+            echo BUSYBOX_VERSION=${{ env.VERSION }} >> $GITHUB_ENV
+          fi
           cat $GITHUB_ENV
 
       - name: Docker build and push for ${{ env.PNAME }} with ${{ env.VERSION }}
@@ -52,7 +57,7 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            BUSYBOX_VERSION=${{ env.VERSION }}
+            BUSYBOX_VERSION=${{ env.BUSYBOX_VERSION }}
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}
           push: true
