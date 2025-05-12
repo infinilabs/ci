@@ -10,7 +10,7 @@ COPY ["init.sh", "/bin/init.sh"]
 COPY ["app/gateway", "terraform/gateway"]
 COPY ["app/runtime", "terraform/runtime"]
 
-RUN wget -N https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_${TARGETARCH}.zip \
+RUN wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_${TARGETARCH}.zip \
     && unzip terraform_1.9.8_linux_${TARGETARCH}.zip \
     && mv terraform /terraform/terraform \
     && chmod +x /bin/init.sh \
