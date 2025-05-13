@@ -158,7 +158,7 @@ jobs:
           while IFS= read -r target_dir; do
             # 查找当前目录下所有zip文件
             find "$target_dir" -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
-              found_zip_file=true
+              echo "Uploading ${zip_file##*/} with path $zip_file..."
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
               sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
@@ -288,7 +288,7 @@ jobs:
           while IFS= read -r target_dir; do
             # 查找当前目录下所有zip文件
             find "$target_dir" -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
-              found_zip_file=true
+              echo "Uploading ${zip_file##*/} with path $zip_file..."
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
               sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
