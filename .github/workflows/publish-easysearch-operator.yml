@@ -71,7 +71,7 @@ jobs:
         working-directory: ${{ github.workspace }}/${{ env.PNAME }}
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
-        run: make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME"
+        run: make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
 
   notify_on_failure:
     runs-on: ubuntu-latest
