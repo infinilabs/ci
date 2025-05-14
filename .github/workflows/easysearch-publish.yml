@@ -175,7 +175,11 @@ jobs:
               DYNAMIC_VERSION=$PUBLISH_VERSION
               RUN_NUMBER=${{ github.run_number }}
               OFFSET=${{ vars.OFFSET }}
-              DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
+              if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+                DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
+              else
+                DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))"
+              fi
             fi
           fi
           
