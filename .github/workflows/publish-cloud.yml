@@ -180,7 +180,7 @@ jobs:
             exit 1
           fi
           # build all targets
-          OFFLINE_BUILD=true make init-enterprise-plugin config update-vfs update-plugins
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make init-enterprise-plugin config update-vfs update-plugins
           for tag in $TARGETS; do
             cd $WORK/$PNAME && GOMODULE=false make build-$tag
           done
