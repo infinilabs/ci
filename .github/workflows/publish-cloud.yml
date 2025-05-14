@@ -82,7 +82,7 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          
+
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
@@ -175,7 +175,7 @@ jobs:
         run: |
           # build web
           cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
-          if [[ ! -d .public ]]; then
+          if [[ ! -d $WORK/$PNAME/.public ]]; then
             echo "Build $PNAME web failed"
             exit 1
           fi
