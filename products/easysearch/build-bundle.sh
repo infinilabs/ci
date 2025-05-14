@@ -3,17 +3,38 @@
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
+USER_GRAALVM=true
 
 echo "Prepar build bundle files"
 mkdir -p $DEST
 
 #初始化 JDK
 mkdir -p $BUILD_JDKS && echo Build directory $BUILD_JDKS
-for x in linux_x64 linux_aarch64 macosx_x64 macosx_aarch64 win_x64; do
-  if [ ! -e $BUILD_JDKS/$ZULU_JAVA_VERSION-$x.tar.gz ]; then
-    wget -q -nc --show-progress --progress=bar:force:noscroll https://cdn.azul.com/zulu/bin/$ZULU_JAVA_VERSION-$x.tar.gz -P $BUILD_JDKS
-  fi
-done
+if [[ "$USER_GRAALVM" == "true" ]]; then
+  for x in linux-x64 linux-aarch64 macos-x64 macos-aarch64 windows-x64; do
+    if [[ $x == win-* ]]; then
+      EXT=zip
+    else
+      EXT=tar.gz
+    fi
+
+    FILE=graalvm-jdk-$GRAALVM_JAVA_VERSION-${x}_bin.$EXT
+
+    if [ ! -e "$BUILD_JDKS/$FILE" ]; then
+      wget -q -nc --show-progress --progress=bar:force:noscroll \
+        https://download.oracle.com/graalvm/$GRAALVM_JAVA_VERSION/archive/$FILE \
+        -P "$BUILD_JDKS"
+    fi
+  done
+else
+  for x in linux_x64 linux_aarch64 macosx_x64 macosx_aarch64 win_x64; do
+    if [ ! -e $BUILD_JDKS/$ZULU_JAVA_VERSION-$x.tar.gz ]; then
+      wget -q -nc --show-progress --progress=bar:force:noscroll \
+        https://cdn.azul.com/zulu/bin/$ZULU_JAVA_VERSION-$x.tar.gz \
+        -P $BUILD_JDKS
+    fi
+  done
+fi
 ls -lrt $BUILD_JDKS
 
 #初始化操作目录
@@ -24,8 +45,13 @@ cp -rf $DEST/$PNAME-$VERSION-$BUILD_NUMBER-* $WORK
 for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   FNAME=`ls -lrt $WORK |grep $PNAME |head -n 1 |awk '{print $NF}'`
   DNAME=`echo $FNAME |sed 's/.zip/-bundle.zip/;s/.tar.gz/-bundle.tar.gz/'`
-  JARK=$(echo "$x" | sed -e 's/-amd64/_x64/;s/-arm64/_aarch64/;s/mac/macosx/;s/windows/win/')
-  JNAME=`find $BUILD_JDKS -name "zulu*-$JARK*" |head -n 1`
+  if [[ "$USER_GRAALVM" == "true" ]]; then
+    JARK=$(echo "$x" | sed -e 's/-amd64/-x64/;s/-arm64/-aarch64/;s/mac/macos/')
+    JNAME=`find $BUILD_JDKS -name "graalvm*-$JARK*" |head -n 1`
+  else
+    JARK=$(echo "$x" | sed -e 's/-amd64/_x64/;s/-arm64/_aarch64/;s/mac/macosx/;s/windows/win/')
+    JNAME=`find $BUILD_JDKS -name "$ZULU_JAVA_VERSION-$JARK*" |head -n 1`
+  fi
   URL="$RELEASE_URL/$PNAME/stable/bundle/$DNAME"
   if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
     echo "Exists release file $DNAME will overwrite it"
@@ -45,7 +71,11 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   else
     unzip -q $JNAME
   fi
-  mv zulu* jdk
+  if [[ "$USER_GRAALVM" == "true" ]]; then
+    mv graalvm* $WORK/jdk
+  else
+    mv zulu* $WORK/jdk
+  fi
 
   #plugin install
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
