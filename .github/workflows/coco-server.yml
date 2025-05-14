@@ -576,7 +576,7 @@ jobs:
           if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             echo "Publish enterprise version"
             # init license and enterprise plugins
-            git clone git@github.com:infinilabs/license.git $WORK/license
+            git clone git@github.com:infinilabs/license $WORK/license
             git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
           fi
