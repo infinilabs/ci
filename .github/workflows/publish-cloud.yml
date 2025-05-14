@@ -1,4 +1,4 @@
-name: Products Files & Docker Publish 
+name: Publish Cloud Docker Image
 defaults:
   run:
     shell: bash
@@ -32,7 +32,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Docker Version'
+        description: 'Publish cloud docker version'
         required: false
         default: "0.1.1"
       PUBLISH_RELEASE:
