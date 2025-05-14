@@ -9,7 +9,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_CLOUD_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
@@ -82,6 +82,7 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
+          
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
