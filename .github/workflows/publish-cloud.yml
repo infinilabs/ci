@@ -1,0 +1,251 @@
+name: Products Files & Docker Publish 
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  PNAME: cloud
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  
+on:
+  schedule:
+    - cron: '30 16 * * *'  
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Docker Version'
+        required: false
+        default: "0.1.1"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    name: Publish cloud docker image
+    runs-on: ubuntu-latest
+    env:
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+        LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+        SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+        CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+        CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+        CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+        CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+        CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+        TARGETS: linux-amd64 linux-arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout framework code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework
+          ref: main
+          path: framework
+
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
+          git clone $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          
+      - name: Setup ${{ env.PNAME }} env
+        run: |
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Setup ${{ env.PNAME }} go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: false
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Check ${{ env.PNAME }} go toolchain
+        run: go version
+
+      - name: Set up  with ${{ env.PNAME }} nodejs toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: "**/package.json"
+
+      - name: Check  with ${{ env.PNAME }} nodejs toolchain
+        run: |
+          if ! command -v cnpm >/dev/null 2>&1; then
+            npm install -g rimraf
+            npm install -g cnpm@9.2.0
+          fi
+          node -v && npm -v && cnpm -v
+
+      - name: Preper ${{ env.PNAME }} build code
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
+        run: |
+          cd $WORK/$PNAME
+          echo "Build $PNAME at $PWD"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
+            fi
+          fi
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_VERSION="$PUBLISH_VERSION"
+            fi
+          else
+            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_SNAPSHOT" }')
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+            fi
+          fi
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
+          echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+
+      - name: Build ${{ env.PNAME }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        run: |
+          # build web
+          cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
+          if [[ ! -d .public ]]; then
+            echo "Build $PNAME web failed"
+            exit 1
+          fi
+          # build all targets
+          OFFLINE_BUILD=true make init-enterprise-plugin config update-vfs update-plugins
+          for tag in $TARGETS; do
+            cd $WORK/$PNAME && GOMODULE=false make build-$tag
+          done
+
+      - name: Build ${{ env.PNAME }} check
+        run: |
+          ls -lrt $WORK/$PNAME/bin
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            [[ "$p1" == "win" ]] && TAG="$TAG.exe"
+            [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
+          done
+
+      - name: Build ${{ env.PNAME }} License and notice process
+        run: |
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
+          cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
+          ls -lrt $WORK/$PNAME/bin
+
+      - name: Set up qemu with ${{ env.PNAME }}
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up docker buildx with ${{ env.PNAME }}
+        uses: docker/setup-buildx-action@v3
+        #with:
+        #  buildkitd-flags: --debug
+
+      - name: Login to dockerhub with ${{ env.PNAME }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker build meta with ${{ env.PNAME }}
+        run: |
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }} >> $GITHUB_ENV
+          cat $GITHUB_ENV
+
+      - name: Docker build and push for ${{ env.PNAME }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/${{ env.PNAME }}/bin
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          push: true
+
+
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Send Feishu Notification on Failure
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh

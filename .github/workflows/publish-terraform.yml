@@ -1,4 +1,4 @@
-name: Publish Cloud Terraform Release
+name: Publish Cloud Terraform Docker Image
 defaults:
   run:
     shell: bash
@@ -11,7 +11,7 @@ on:
       PUBLISH_TAG:
         description: 'Publish cloud terraform app tag'
         required: true
-        default: "1.0.1-31"
+        default: "1.0.2"
 
 jobs:
   publish:
