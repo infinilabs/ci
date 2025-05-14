@@ -79,7 +79,9 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/framework-vendor
           ref: main
           path: vendor
-
+      - name: Set up and check env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
