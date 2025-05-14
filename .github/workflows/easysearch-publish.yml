@@ -31,7 +31,7 @@ env:
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
-  AGENT_VERSION: ${{ vars.PUBLISH_VERSION }}
+  AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   
 on:
@@ -46,6 +46,10 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "1.12.1"
+      PUBLISH_AGENT_VERSION:
+        description: 'Publish Release Version'
+        required: false
+        default: "1.29.4"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -66,8 +70,8 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
           if [[ "${{ env.AGENT_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             AGENT_VERSION=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
-            echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
           fi
+          echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
 
       - name: Run connect in background
         run: |
