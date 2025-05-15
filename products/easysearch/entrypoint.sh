@@ -86,7 +86,7 @@ EOF
         INGEST_CONFIG="$AGENT_DIR/config/system_ingest_config.yml"
         sed -i "s/ingest/infini_ingest/;s/passwd/$EASYSEARCH_INITIAL_INGEST_PASSWORD/"  $INGEST_CONFIG
         sed -i "s/https/$SCHEMA/;s/127.0.0.1:9200/$ADDRESS/" $INGEST_CONFIG
-        sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
+        sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' $INGEST_CONFIG
       fi
     fi
   fi
