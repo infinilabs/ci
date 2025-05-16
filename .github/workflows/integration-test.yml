@@ -435,7 +435,17 @@ jobs:
               run: |
                 echo Running integration test at $PWD ...
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sLku $ES_USERNAME:$ES_PASSWORD $ES_ENDPOINT
+                  for i in {1..5}; do
+                    echo "Attempt $i to reach $ES_ENDPOINT..."
+                    if curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT" >/dev/null; then
+                      echo "Successfully connected to $ES_ENDPOINT"
+                      break
+                    else
+                      echo "Connection failed. Retrying in 5 seconds..."
+                      sleep 5
+                    fi
+                  done
+                  curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
                 fi
 
             - name: Run console test
