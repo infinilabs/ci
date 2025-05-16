@@ -60,7 +60,7 @@ on:
         description: 'Publish Docker <Only>'
         required: false
         type: boolean
-        default: false      
+        default: true      
 
 jobs:
   publish:

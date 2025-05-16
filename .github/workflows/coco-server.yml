@@ -26,8 +26,13 @@ on:
         description: 'Publish Release Easysearch Version'
         required: false
         default: "1.12.2"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: false      
       ONLY_ENTERPRISE:
-        description: 'Only Publish Enterprise'
+        description: 'Publish Enterprise <Only>'
         required: false
         type: boolean
         default: false
@@ -37,15 +42,10 @@ on:
         type: boolean
         default: false
       ONLY_STAGING:
-        description: 'Only Publish Debug to Staging'
+        description: 'Publish Staging <Only>'
         required: false
         type: boolean
         default: true
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   publish-staging:
