@@ -342,7 +342,7 @@ jobs:
             gh label create "automated" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automated create this PR" --color 34d058 --force
           fi
           gh pr create --title "$PR_MESSAGE" \
-                  --body "This PR create by `github action` to updates the release notes." \
+                  --body "This PR create by github actions to updates the release notes." \
                   --base main \
                   --head "$PR_BRANCH" \
                   --label "auto-merge" \
