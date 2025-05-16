@@ -39,7 +39,7 @@ on:
 
 jobs:
     compile-test:
-        if: ${{ (github.event.inputs && inputs.RUN_COMPILE_TEST == 'true') || (github.event_name == 'schedule' && github.event.schedule) }}
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event.inputs && inputs.RUN_COMPILE_TEST) }}
         runs-on: ubuntu-latest
         steps:
             - name: Init env
