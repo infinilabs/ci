@@ -146,7 +146,11 @@ jobs:
                 VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  VER=$EZS_VERSION
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
                 fi
                 curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
                 [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
