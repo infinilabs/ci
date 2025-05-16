@@ -47,11 +47,6 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "1.12.2"
-      ONLY_DOCKER:
-        description: 'Only Publish Docker'
-        required: false
-        type: boolean
-        default: false
       PUBLISH_AGENT_VERSION:
         description: 'Publish Release Version'
         required: false
@@ -61,6 +56,11 @@ on:
         required: false
         type: boolean
         default: false
+      ONLY_DOCKER:
+        description: 'Only Publish Docker'
+        required: false
+        type: boolean
+        default: false      
 
 jobs:
   publish:
