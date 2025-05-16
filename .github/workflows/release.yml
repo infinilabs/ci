@@ -50,6 +50,11 @@ on:
         description: 'Publish Coco Server Version'
         required: false
         default: "0.4.0"
+      EASYSEARCH_PUBLISH:
+          description: 'Easysearch'
+          required: false
+          type: boolean
+          default: true
       PRODUCTS_PUBLISH:
         description: 'Products with agent/console...'
         required: false
@@ -57,11 +62,6 @@ on:
         default: true
       COCO_PUBLISH:
         description: 'Products with coco app/server...'
-        required: false
-        type: boolean
-        default: true
-      EASYSEARCH_PUBLISH:
-        description: 'Easysearch'
         required: false
         type: boolean
         default: true

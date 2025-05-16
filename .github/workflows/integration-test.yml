@@ -16,16 +16,6 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      RUN_COMPILE_TEST:
-        description: 'Run Products Compile Test?'
-        required: false
-        type: boolean
-        default: true
-      RUN_INSTALL_TEST:
-        description: 'Run Products Install Test?'
-        required: false
-        type: boolean
-        default: false
       EZS_VERSION:
         description: 'Easysearch Version'
         required: false
@@ -36,6 +26,16 @@ on:
         required: false
         type: string
         default: '1.29.4'
+      RUN_INSTALL_TEST:
+        description: 'Run Products Install Test?'
+        required: false
+        type: boolean
+        default: false             
+      RUN_COMPILE_TEST:
+        description: 'Run Products Compile Test?'
+        required: false
+        type: boolean
+        default: true   
 
 jobs:
     compile-test:
