@@ -22,6 +22,11 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "1.29.4"
+      ONLY_DOCKER:
+        description: 'Only Publish Docker'
+        required: false
+        type: boolean
+        default: false
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -244,9 +249,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker build meta with ${{ matrix.product }}
+        id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ matrix.product }} >> $GITHUB_ENV
-          cat $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ matrix.product }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker build and push for ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
@@ -263,9 +271,11 @@ jobs:
             linux/riscv64
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
 
       - name: Archive ${{ matrix.product }} files
+        if: ${{ ! inputs.ONLY_DOCKER }}
         run: |
           cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
@@ -284,6 +294,7 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload ${{ matrix.product }} files
+        if: ${{ ! inputs.ONLY_DOCKER }}
         run: | 
           cd $WORK
           for tag in $TARGETS; do

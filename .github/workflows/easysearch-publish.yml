@@ -47,6 +47,11 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "1.12.2"
+      ONLY_DOCKER:
+        description: 'Only Publish Docker'
+        required: false
+        type: boolean
+        default: false
       PUBLISH_AGENT_VERSION:
         description: 'Publish Release Version'
         required: false
@@ -194,6 +199,7 @@ jobs:
           export VERSION=$DYNAMIC_VERSION
           export BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER
           export BUILD_DATE=$DYNAMIC_BUILD_DATE
+          export ONLY_DOCKER="${{ inputs.ONLY_DOCKER || 'FALSE' }}"
           
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
@@ -237,9 +243,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker build meta
+        id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          cat $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
@@ -252,6 +261,7 @@ jobs:
             linux/arm64
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
           provenance: false
           #no-cache: true
