@@ -48,7 +48,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
       grep -wq "pre" /tmp/.oss.yml || echo "pre: true" >> /tmp/.oss.yml
     fi
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-      echo "only publish docker image no need to upload with $DNAME"
+      echo "Publish Docker <Only> image no need to upload with $DNAME"
     else
       oss upload -c /tmp/.oss.yml -o -p $PNAME -f $WORKDIR/$PNAME-$VERSION/$DNAME
     fi
@@ -74,7 +74,7 @@ for p in ${plugins[@]}; do
     if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo Upload $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar to oss
       if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-        echo "only publish docker image no need to upload with $p"
+        echo "Publish Docker <Only> image no need to upload with $p"
       else
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar -k $PNAME/archive/plugins
       fi
@@ -97,7 +97,7 @@ for p in ${plugins[@]}; do
       fi
     fi
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-      echo "only publish docker image no need to upload with $p"
+      echo "Publish Docker <Only> image no need to upload with $p"
     else
       echo Upload $f to oss
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p

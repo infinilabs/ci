@@ -23,7 +23,7 @@ on:
         required: false
         default: "1.29.4"
       ONLY_DOCKER:
-        description: 'Only Publish Docker'
+        description: 'Publish Docker <Only>'
         required: false
         type: boolean
         default: false

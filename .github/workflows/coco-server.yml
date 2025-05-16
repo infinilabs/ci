@@ -32,7 +32,7 @@ on:
         type: boolean
         default: false
       ONLY_DOCKER:
-        description: 'Only Publish Docker'
+        description: 'Publish Docker <Only>'
         required: false
         type: boolean
         default: false
