@@ -30,16 +30,16 @@ on:
         description: 'Run Products Install Test?'
         required: false
         type: boolean
-        default: false             
+        default: false
       RUN_COMPILE_TEST:
         description: 'Run Products Compile Test?'
         required: false
         type: boolean
-        default: true   
+        default: true
 
 jobs:
     compile-test:
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.RUN_COMPILE_TEST == 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event.inputs && inputs.RUN_COMPILE_TEST == 'true') }}
         runs-on: ubuntu-latest
         steps:
             - name: Init env
@@ -353,7 +353,28 @@ jobs:
                 echo EOF=$(date -d "$(date +%Y)-12-31 +1 day -1 day" +%Y-%m-%d) >> $GITHUB_ENV
                 echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
                 cat $GITHUB_ENV
-            
+
+            - name: Validate version formats
+              run: |
+                EZS_VERSION="${{ inputs.EZS_VERSION }}"
+                PRODUCT_VERSION="${{ inputs.PRODUCT_VERSION }}"
+
+                echo "Checking EZS_VERSION: $EZS_VERSION"
+                echo "Checking PRODUCT_VERSION: $PRODUCT_VERSION"
+
+                version_regex='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$'
+
+                for VAR_NAME in EZS_VERSION PRODUCT_VERSION; do
+                  VERSION=${!VAR_NAME}
+                  if [[ ! "$VERSION" =~ $version_regex ]]; then
+                    echo "❌ Invalid format for $VAR_NAME: $VERSION"
+                    echo "Expected format: x.y.z or x.y.z-build_number (e.g. 1.2.3 or 1.2.3-45)"
+                    exit 1
+                  else
+                    echo "✅ $VAR_NAME format is valid: $VERSION"
+                  fi
+                done
+
             - name: Checkout current repository
               uses: actions/checkout@v4
               with:
@@ -374,7 +395,11 @@ jobs:
                 # Install easysearch
                 VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  VER=$EZS_VERSION
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
                 fi
                 curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
                 [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
@@ -394,7 +419,11 @@ jobs:
                   [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
                   VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
                   if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
-                    VER=$PRODUCT_VERSION
+                    if [[ "$PRODUCT_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                      VER=$PRODUCT_VERSION
+                    else
+                      echo "PRODUCT_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                    fi
                   fi
                   curl -sSL http://get.infini.cloud | bash -s -- -p $p -d $WORK/$p/bin -v $VER
                   # change binary name
