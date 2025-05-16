@@ -33,11 +33,11 @@ on:
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.1.6" 
+          default: "1.1.7" 
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.29.3"
+        default: "1.29.4"
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
