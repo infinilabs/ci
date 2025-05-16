@@ -18,11 +18,11 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
       EXT=tar.gz
     fi
 
-    FILE=graalvm-jdk-$GRAALVM_JAVA_VERSION-${x}_bin.$EXT
+    FILE=graalvm-jdk-$JAVA_VERSION_21-${x}_bin.$EXT
 
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
       wget -q -nc --show-progress --progress=bar:force:noscroll \
-        https://download.oracle.com/graalvm/$GRAALVM_JAVA_VERSION/archive/$FILE \
+        https://download.oracle.com/graalvm/$JAVA_VERSION_21/archive/$FILE \
         -P "$BUILD_JDKS"
     fi
   done
