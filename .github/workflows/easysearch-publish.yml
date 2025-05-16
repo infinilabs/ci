@@ -46,7 +46,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.12.1"
+        default: "1.12.2"
       PUBLISH_AGENT_VERSION:
         description: 'Publish Release Version'
         required: false
