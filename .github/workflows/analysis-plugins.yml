@@ -224,7 +224,10 @@ jobs:
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
           
-          [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+          if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] ; then
+            echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+            echo "Republishing ${{ inputs.REPUBLISH_VERSION }}"
+          fi
 
           # filter versions
           > /tmp/versions
