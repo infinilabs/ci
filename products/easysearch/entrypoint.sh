@@ -11,9 +11,9 @@ log() {
 APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
 # Define marker file path
-INITIALIZED_MARKER="$APP_DIR/.initialized"
+INITIALIZED_MARKER="$DATA_DIR/.initialized"
 # Ensure $APP_DIR directory exists, even if mount is empty
-mkdir -p "$APP_DIR"
+mkdir -p "$DATA_DIR"
 
 # --- Function to perform initial setup (runs only once) ---
 # This function is called only when the initialization marker is not found.
@@ -136,7 +136,7 @@ EOF
     fi
   
     # Initialize agent keystore and adjust yml/tpl files (runs only once based on marker)
-    AGENT_KEYSTORE_MARKER="$AGENT_DIR/.keystore_initialized"
+    AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
 
     log "Checking agent keystore initialization marker '$AGENT_KEYSTORE_MARKER'."
     if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
@@ -203,10 +203,10 @@ EOF
   # This should also ideally happen only once or when the agent is intended to be managed.
   # Place it after all agent file/keystore setup.
   # Add a marker here if you want to control when this step runs (e.g., only if agent is enabled and setup succeeds)
-  AGENT_SUPERVISOR_CONFIG_MARKER="$AGENT_DIR/.agent_supervisor_configured"
+  AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_initialized"
 
-  log "Checking agent supervisor config marker '$AGENT_SUPERVISOR_CONFIG_MARKER'."
-  if [ ! -f "$AGENT_SUPERVISOR_CONFIG_MARKER" ]; then
+  log "Checking agent supervisor config marker '$AGENT_SUPERVISOR_MARKER'."
+  if [ ! -f "$AGENT_SUPERVISOR_MARKER" ]; then
      log "Agent supervisor config marker not found. Starting supervisor configuration."
      AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 
@@ -233,10 +233,10 @@ EOF
      log "Agent supervisor config created at $AGENT_SUPERVISOR_CONFIG."
 
      # Create the supervisor config marker
-     touch "$AGENT_SUPERVISOR_CONFIG_MARKER"
+     touch "$AGENT_SUPERVISOR_MARKER"
      log "Agent supervisor configuration marked complete."
   else
-    log "Agent supervisor config marker '$AGENT_SUPERVISOR_CONFIG_MARKER' found. Skipping supervisor configuration."
+    log "Agent supervisor config marker '$AGENT_SUPERVISOR_MARKER' found. Skipping supervisor configuration."
   fi # End supervisor config marker check
 
   log "Agent setup and configuration process complete."
@@ -287,11 +287,43 @@ trap "exit 0" SIGINT SIGTERM
 
 # --- Initial Setup (runs only once based on marker file) ---
 log "Checking for initial setup marker."
-if [ ! -f "$INITIALIZED_MARKER" ]; then
-  perform_initial_setup # Call the initial setup function
+if [ ! -f "$INITIALIZED_MARKER" ||  ]; then
+  if [ -z "$(ls -A $DATA_DIR)" ]; then
+    log "$DATA_DIR directory is empty. Proceeding with initial setup."
+    perform_initial_setup # Call the initial setup function
   if [ $? -ne 0 ]; then
     log "Initial setup function failed. Entrypoint will exit."
     exit 1 # Exit if initial setup failed
+  fi
+else
+  log "Initialization marker '$INITIALIZED_MARKER' found. Skipping initial setup."
+fi
+
+if [ ! -f "$INITIALIZED_MARKER" ]; then
+  # If marker not found, check if data is empty AND perform initial setup
+  if [ -z "$(ls -A $DATA_DIR)" ]; then
+    log "$DATA_DIR directory is empty. Proceeding with initial setup."
+    perform_initial_setup # Call the initial setup function
+    if [ $? -ne 0 ]; then
+      log "Initial setup function failed. Entrypoint will exit."
+      exit 1 # Exit if initial setup failed
+    fi
+  else
+    # --- Markfile not found, but data directory is not empty ---
+    # This is a non-clean start situation
+    log "$DATA_DIR directory is NOT empty, but initialization marker '$INITIALIZED_MARKER' was NOT found."
+    # Assume /data is not empty means initialization was done, create marker and skip core script.
+    log "WARN: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
+    touch "$INITIALIZED_MARKER"
+    if [ $? -eq 0 ]; then
+      log "Initialization marker '$INITIALIZED_MARKER' created."
+      # Return 0 to indicate assumed successful setup, and continue with the rest of the script
+      # No need to exit 1 here, as we are assuming it's a valid state.
+    else
+       # If creating marker fails when /data is not empty
+       log "ERROR: Failed to create initialization marker when /data was not empty! Entrypoint will exit."
+       exit 1
+    fi
   fi
 else
   log "Initialization marker '$INITIALIZED_MARKER' found. Skipping initial setup."
