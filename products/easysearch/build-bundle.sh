@@ -55,9 +55,10 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
     echo "Exists release file $DNAME will overwrite it"
   fi
-  echo -e "From $FNAME \nTo $DNAME \nJark $JARK \nJre $JNAME"
+  echo -e "From: $FNAME \nTo:   $DNAME \nJark: $JARK \nJdk:  $JNAME"
   # 解压并删除原文件
   mkdir -p $WORK/$PNAME && cd $WORK/$PNAME
+  echo "Current work directory: $(pwd)"
   if [ "${FNAME##*.}" == "gz" ]; then
     tar -zxf $WORK/$FNAME
   else
@@ -70,11 +71,15 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   else
     unzip -q $JNAME
   fi
+ 
   if [[ "$USER_GRAALVM" == "true" ]]; then
-    mv graalvm* $WORK/jdk
+    mv graalvm* $WORK/$PNAME/jdk
   else
-    mv zulu* $WORK/jdk
+    mv zulu* $WORK/$PNAME/jdk
   fi
+
+  echo "Check current files"
+  ls -lrt  $WORK/$PNAME
 
   #plugin install
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
@@ -95,10 +100,14 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   if [ -f $WORK/$PNAME/$DNAME ]; then
     echo "Repackaged file at $WORK/$PNAME/$DNAME"
     # 文件上传
-    if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
+    if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+      echo "Publish Docker <Only> image no need to upload with $DNAME"
     else
-      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/stable/bundle
+      if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
+      else
+        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/stable/bundle
+      fi
     fi
   fi
   cd $WORK && rm -rf $WORK/$FNAME && rm -rf $WORK/$PNAME
