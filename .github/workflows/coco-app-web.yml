@@ -1,4 +1,4 @@
-name: Coco App search-chat Publish 
+name: Publish Coco App Search Chat to NPM 
 defaults:
   run:
     shell: bash
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish NPM Version'
         required: true
         default: "1.2.3"
         
