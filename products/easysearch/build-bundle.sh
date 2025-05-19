@@ -13,17 +13,13 @@ mkdir -p $BUILD_JDKS && echo Build directory $BUILD_JDKS
 if [[ "$USER_GRAALVM" == "true" ]]; then
   for x in linux-x64 linux-aarch64 macos-x64 macos-aarch64 windows-x64; do
     
-    if [[ $x == win-* ]]; then
-      EXT=zip
-    else
-      EXT=tar.gz
-    fi
-
-    FILE=graalvm-jdk-$JAVA_VERSION_21-${x}_bin.$EXT
+    EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
+    FILE=graalvm-jdk-${JAVA_VERSION_21}_${x}_bin.$EXT
     echo "Download GraalVM JDK with https://download.oracle.com/graalvm/$JAVA_VERSION_21/archive/$FILE"
+
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
       wget -q -nc --show-progress --progress=bar:force:noscroll \
-        https://download.oracle.com/graalvm/$JAVA_VERSION_21/archive/$FILE \
+        https://download.oracle.com/graalvm/${JAVA_VERSION_21}/archive/$FILE \
         -P "$BUILD_JDKS"
     fi
   done

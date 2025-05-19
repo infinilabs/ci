@@ -6,7 +6,7 @@ env:
   CI: false
   REPO-NAME: "coco-app"
   NODEJS_VERSION: 20
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 on:
   workflow_dispatch:
@@ -58,7 +58,7 @@ jobs:
           # Extract the build number from the version string
           grep -oP "version: *\"[^\"]*\"" tsup.config.ts
           
-          echo "VERSION=$version-$build_number" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
       
       - name: Enable Web Adapter
         working-directory: ${{ env.REPO-NAME }}
