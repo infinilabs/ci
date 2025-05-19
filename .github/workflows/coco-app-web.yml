@@ -93,7 +93,7 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
-          pnpm run build:web && pnpm run build:publish
+          pnpm run build:web && pnpm run publish:web
 
   notify_on_failure:
     runs-on: ubuntu-latest
