@@ -46,7 +46,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   DNAME=`echo $FNAME |sed 's/.zip/-bundle.zip/;s/.tar.gz/-bundle.tar.gz/'`
   if [[ "$USER_GRAALVM" == "true" ]]; then
     JARK=$(echo "$x" | sed -e 's/-amd64/-x64/;s/-arm64/-aarch64/;s/mac/macos/')
-    JNAME=`find $BUILD_JDKS -name "graalvm*-$JARK*" |head -n 1`
+    JNAME=`find $BUILD_JDKS -name "graalvm*_$JARK*" |head -n 1`
   else
     JARK=$(echo "$x" | sed -e 's/-amd64/_x64/;s/-arm64/_aarch64/;s/mac/macosx/;s/windows/win/')
     JNAME=`find $BUILD_JDKS -name "$ZULU_JAVA_VERSION-$JARK*" |head -n 1`
