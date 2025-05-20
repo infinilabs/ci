@@ -36,8 +36,13 @@ jobs:
       - name: Set components for build
         id: set-components
         run: |
+          # check inputs must easysearch or runtime or both
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             COMPONENTS="${{ inputs.PUBLISH_COMPONENTS }}"
+            if [[ ! "$COMPONENTS" =~ ^(easysearch|runtime)(,(easysearch|runtime))*$ ]]; then
+              echo "Invalid components specified. Only 'easysearch' and 'runtime' are allowed." >&2
+              exit 1
+            fi
           else
             COMPONENTS="easysearch,runtime"
           fi
@@ -49,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: ${{ needs.setup.outputs.components }}
+        component: ${{ fromJson(needs.setup.outputs.components) }}
 
     env:
       LOCAL_PORT: ${{ vars.LOCAL_PORT }}
