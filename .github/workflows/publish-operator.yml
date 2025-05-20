@@ -80,10 +80,15 @@ jobs:
             RUN_NUMBER=${{ github.run_number }}
             OFFSET=${{ vars.OFFSET }}
             BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
-            echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-$BUILD_NUMBER" >> $GITHUB_ENV
-          else
+            if [[ "${{ inputs.PUBLISH_RELEASE }}" == 'true' ]]; then
+              echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-$BUILD_NUMBER" >> $GITHUB_ENV
+            else
+            echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
+            fi
+            else
             BUILD_NUMBER="NIGHTLY-$(date +%Y%m%d)"
-            echo TAG="${{ vars.PUBLISH_OPERATOR_VERSION }}_$BUILD_NUMBER" >> $GITHUB_ENV
+            DYNAMIC_VERSION=$(echo "${{ vars.PUBLISH_OPERATOR_VERSION }}" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            echo TAG="$DYNAMIC_VERSION_$BUILD_NUMBER" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
 
