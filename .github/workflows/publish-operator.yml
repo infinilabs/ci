@@ -41,10 +41,10 @@ jobs:
       - name: Set up env
         run: |
           if [[ "${{ inputs.PUBLISH_COMPONENT }}" == "easysearch" ]]; then
-            echo PNAME="k8s-operator" >> $GITHUB_ENV
+            echo PNAME=k8s-operator >> $GITHUB_ENV
             echo TNAME=easysearch-operator >> $GITHUB_ENV
           elif [[ "${{ inputs.PUBLISH_COMPONENT }}" == "runtime" ]]; then
-            echo PNAME="runtime-operator" >> $GITHUB_ENV
+            echo PNAME=runtime-operator >> $GITHUB_ENV
             echo TNAME=runtime-operator >> $GITHUB_ENV
           else
             echo "Invalid component specified
