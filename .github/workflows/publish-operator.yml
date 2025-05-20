@@ -46,7 +46,7 @@ jobs:
           else
             COMPONENTS="easysearch,runtime"
           fi
-          echo "components=$(echo $COMPONENTS | jq -R 'split(",")')" >> $GITHUB_OUTPUT
+          echo "components=$(echo $COMPONENTS | jq -Rc 'split(",")')" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   publish:
