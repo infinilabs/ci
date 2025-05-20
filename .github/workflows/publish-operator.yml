@@ -8,15 +8,16 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      PUBLISH_TAG:
-        description: 'Publish easysearch operator tag'
-        required: true
-        default: "1.0.25"
       PUBLISH_COMPONENT:
         description: 'Publish component'
         required: true
         type: choice
         options: [easysearch, runtime]
+      PUBLISH_TAG:
+        description: 'Publish easysearch operator tag'
+        required: true
+        default: "1.0.25"
+
 
 jobs:
   publish:
@@ -57,7 +58,6 @@ jobs:
           cat $GITHUB_ENV
 
       - name: Set up and check env
-        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
 
