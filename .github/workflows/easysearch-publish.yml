@@ -107,7 +107,7 @@ jobs:
           # for build init
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              PUBLISH_VERSION=${{ vars.COCO_APP_PUBLISH_VERSION }}
+              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
               BUILD_BYWORFLOW="${{ github.event_name }}"
             fi
             if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
