@@ -12,32 +12,57 @@ APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
-# Ensure $APP_DIR directory exists, even if mount is empty
+
+# Ensure data directory exists, even if mount is empty
+log "Ensuring data directory exists: $DATA_DIR"
 mkdir -p "$DATA_DIR"
+if [ $? -ne 0 ]; then log "ERROR: Failed to create data directory."; exit 1; fi
 
-# --- Function to perform initial setup (runs only once) ---
-# This function is called only when the initialization marker is not found.
+# --- Function to perform the core initialization script execution ---
+# This is the part that runs bin/initialize.sh -s
+execute_core_initial_script() {
+    log "Executing core initialization script: bin/initialize.sh -s"
+    # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
+    gosu ezs bash bin/initialize.sh -s
+    return $? # Return the exit status of the gosu command
+}
+
+
+# --- Function to perform initial setup (runs only once based on marker file) ---
+# This function now incorporates the check for /app/easysearch/data being empty.
+# This function is called only when the *primary* initialization marker is not found.
 perform_initial_setup() {
-  log "Initialization marker '$INITIALIZED_MARKER' not found. Starting initial setup process..."
+  log "Initialization marker '$INITIALIZED_MARKER' not found. Determining setup action..."
 
-  # Execute initialization script
-  # Use gosu to switch user and execute the script
-  # Use && to ensure marker is created only if setup succeeds
-  log "Executing initial setup script: bin/initialize.sh -s"
-  # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
-  gosu ezs bash bin/initialize.sh -s
-
-  # Check the exit status of the initialization script
-  if [ $? -eq 0 ]; then
-    log "Initial setup script completed successfully."
-    # Create initialization marker file
-    touch "$INITIALIZED_MARKER"
-    log "Initialization marker '$INITIALIZED_MARKER' created."
-    return 0 # Indicate successful initial setup
+  # --- Check if the data directory is empty or not ---
+  if [ -z "$(ls -A "$DATA_DIR")" ]; then # Use $DATA_DIR and quotes for safety
+    log "$DATA_DIR directory is empty. Proceeding with core initialization script."
+    execute_core_initial_script # Call the function to execute the script
+    if [ $? -eq 0 ]; then
+      log "Core initialization script completed successfully."
+      # --- Create the initialization marker file after successful execution ---
+      touch "$INITIALIZED_MARKER"
+      log "Initialization marker '$INITIALIZED_MARKER' created."
+      return 0
+    else
+      # If core script fails when /data is empty
+      log "ERROR: Core initialization script failed when $DATA_DIR was empty!"
+      return 1
+    fi
   else
-    # If setup script fails, log error and indicate failure
-    log "ERROR: Initial setup script failed!"
-    return 1 # Indicate failed initial setup
+    # The case where $DATA_DIR is not empty but the marker file is not found
+    log "$DATA_DIR directory is NOT empty, but initialization marker '$INITIALIZED_MARKER' was NOT found."
+    log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
+    touch "$INITIALIZED_MARKER"
+    if [ $? -eq 0 ]; then
+      log "Initialization marker '$INITIALIZED_MARKER' created."
+      return 0 # Indicate setup assumed complete, continue with the rest of the script
+      # No need to exit 1 here, as we are assuming it's a valid state.
+    else
+       # If creating marker fails when /data is not empty
+       log "ERROR: Failed to create initialization marker when $DATA_DIR was not empty! Entrypoint will exit."
+       return 1
+    fi
   fi
 }
 
@@ -78,7 +103,8 @@ setup_agent() {
   # Change to agent directory for subsequent commands that rely on relative paths
   log "Changing current directory to $AGENT_DIR."
   cd "$AGENT_DIR"
-  if [ $? -ne 0 ]; then log "ERROR: Failed to change directory to $AGENT_DIR."; return 1; endif
+  if [ $? -ne 0 ]; then log "ERROR: Failed to change directory to $AGENT_DIR."; return 1; fi
+
 
   # Process METRICS_CONFIG_SERVER variable and update agent.yml
   log "Configuring agent based on METRICS_CONFIG_SERVER variable..."
@@ -161,15 +187,13 @@ EOF
         if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ]; then
           log "Updating system ingest config based on endpoint."
           INGEST_CONFIG="$AGENT_DIR/config/system_ingest_config.yml"
-          # Use sed to update the config file with schema and address
-          # Ensure the file exists before attempting to modify it
-          if [ ! -f "$INGEST_CONFIG" ]; then log "ERROR: Ingest config file '$INGEST_CONFIG' not found."; return 1; fi
-          
-          sed -i "s/ingest/infini_ingest/;s/passwd/$EASYSEARCH_INITIAL_INGEST_PASSWORD/" "$INGEST_CONFIG"
-          if [ $? -ne 0 ]; then log "ERROR: Failed to update ingest user/password in ingest config."; return 1; fi
-
+          # Use sed carefully, ensure patterns match and replacements are correct
+          # Using regex anchors ^ and $ to match the whole line for replacement is safer
           sed -i "s/^  schema: https$/  schema: $SCHEMA/;s/^  address: 127.0.0.1:9200$/  address: $ADDRESS/" "$INGEST_CONFIG"
-          if [ $? -ne 0 ]; then log "ERROR: Failed to update schema/address in ingest config."; return 1; fi
+          if [ $? -ne 0 ]; then log "ERROR: Failed to update ingest config schema/address."; return 1; fi
+
+          sed -i "s/ingest/infini_ingest/;s/passwd/$EASYSEARCH_INITIAL_INGEST_PASSWORD/" "$INGEST_CONFIG"
+          if [ $? -ne 0 ]; then log "ERROR: Failed to update ingest user/password."; return 1; fi
 
           sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
           if [ $? -ne 0 ]; then log "ERROR: Failed to update metrics queue in ingest config."; return 1; fi
@@ -181,19 +205,16 @@ EOF
         touch "$AGENT_KEYSTORE_MARKER"
         log "Agent keystore initialization complete."
       else
-         log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore setup."
+         log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
       fi
     else
       log "Agent keystore initialization marker found. Skipping keystore setup."
     fi
 
-  fi # End multi-tenant mode check
+  fi
 
   # Ensure agent directory is owned by ezs after all root operations
   log "Ensuring final agent directory ownership is ezs:ezs."
-  # Need to return to original directory before chown if cd "$AGENT_DIR" was used and subsequent path is absolute
-  # Or use absolute path for chown command
-  # Let's assume the chown command should operate on $AGENT_DIR even after changing directory.
   # Use absolute path for robustness.
   chown -R ezs:ezs "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to set final ownership for agent directory."; return 1; fi
@@ -203,7 +224,7 @@ EOF
   # This should also ideally happen only once or when the agent is intended to be managed.
   # Place it after all agent file/keystore setup.
   # Add a marker here if you want to control when this step runs (e.g., only if agent is enabled and setup succeeds)
-  AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_initialized"
+  AGENT_SUPERVISOR_MARKER="/etc/supervisor/conf.d/.agent_supervisor_configured" # New marker
 
   log "Checking agent supervisor config marker '$AGENT_SUPERVISOR_MARKER'."
   if [ ! -f "$AGENT_SUPERVISOR_MARKER" ]; then
@@ -237,9 +258,9 @@ EOF
      log "Agent supervisor configuration marked complete."
   else
     log "Agent supervisor config marker '$AGENT_SUPERVISOR_MARKER' found. Skipping supervisor configuration."
-  fi # End supervisor config marker check
+  fi
 
-  log "Agent setup and configuration process complete."
+  log "Agent setup function complete."
   return 0 # Indicate agent setup function completed (not necessarily that agent process is running yet)
 }
 
@@ -248,26 +269,26 @@ EOF
 # This function is called in the ezs user block if Agent was configured.
 # It starts supervisord as the current user (ezs).
 start_supervisor_if_agent_enabled() {
-  log "Checking if Supervisor is required based on Agent configuration."
+  log "Checking if Supervisor should be started based on Agent configuration."
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
-      log "Agent supervisor config '$AGENT_SUPERVISOR_CONFIG' found. Starting Supervisor to manage the agent process."
+      log "Agent supervisor config '$AGENT_SUPERVISOR_CONFIG' found. Supervisor is enabled to manage the agent."
       # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
-        log "Supervisord not running. Starting supervisord..."
-        # Need to start supervisord as the current user (ezs). Its config /etc/supervisor/supervisord.conf must be readable by ezs.
+        log "Supervisord process not running. Starting supervisord..."
+        # Need to start supervisord as ezs user. Its config /etc/supervisor/supervisord.conf must be readable by ezs.
         # The agent.conf should be readable by ezs.
         # The logs dir for supervisord should be writable by ezs.
         # Assuming necessary permissions are set by the Dockerfile or the root setup_agent phase.
-        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf & # Start in background
+        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
         # Wait a moment for supervisord to start and read configs
         # log "Waiting 1 second for supervisord to start..." # Uncomment if needed
-        sleep 1 # Adjust sleep time if needed
-        log "Supervisord started (managing agent)."
+        sleep 1
+        log "Supervisord process started (managing agent)."
       else
-        log "Supervisord appears to be running."
+        log "Supervisord process appears to be running."
       fi
   else
     # Supervisor not enabled because agent setup did not complete successfully (config file not found)
@@ -285,71 +306,61 @@ trap "exit 0" SIGINT SIGTERM
 
 # --- Main execution flow ---
 
-# --- Initial Setup (runs only once based on marker file) ---
+# --- Initial Setup (runs only once based on marker file and data empty check) ---
+# This block combines the marker check and the data empty check.
 log "Checking for initial setup marker."
-if [ ! -f "$INITIALIZED_MARKER" ||  ]; then
-  if [ -z "$(ls -A $DATA_DIR)" ]; then
-    log "$DATA_DIR directory is empty. Proceeding with initial setup."
-    perform_initial_setup # Call the initial setup function
-  if [ $? -ne 0 ]; then
-    log "Initial setup function failed. Entrypoint will exit."
-    exit 1 # Exit if initial setup failed
-  fi
-else
-  log "Initialization marker '$INITIALIZED_MARKER' found. Skipping initial setup."
-fi
-
 if [ ! -f "$INITIALIZED_MARKER" ]; then
-  # If marker not found, check if data is empty AND perform initial setup
-  if [ -z "$(ls -A $DATA_DIR)" ]; then
-    log "$DATA_DIR directory is empty. Proceeding with initial setup."
-    perform_initial_setup # Call the initial setup function
+  # If marker not found, determine if it's a clean start or non-clean start
+  log "Initialization marker '$INITIALIZED_MARKER' not found."
+  
+  if [ -z "$(ls -A "$DATA_DIR")" ]; then
+    log "$DATA_DIR directory is empty. Proceeding with initial setup process."
+    perform_initial_setup # Call the initial setup function which executes core script and creates marker
     if [ $? -ne 0 ]; then
       log "Initial setup function failed. Entrypoint will exit."
-      exit 1 # Exit if initial setup failed
+      exit 1
     fi
   else
-    # --- Markfile not found, but data directory is not empty ---
-    # This is a non-clean start situation
     log "$DATA_DIR directory is NOT empty, but initialization marker '$INITIALIZED_MARKER' was NOT found."
-    # Assume /data is not empty means initialization was done, create marker and skip core script.
-    log "WARN: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
+    # In this non-clean start scenario, assume initialization was done previously and create the marker.
+    # This prevents re-running the core script if data already exists.
+    log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
     touch "$INITIALIZED_MARKER"
     if [ $? -eq 0 ]; then
       log "Initialization marker '$INITIALIZED_MARKER' created."
-      # Return 0 to indicate assumed successful setup, and continue with the rest of the script
-      # No need to exit 1 here, as we are assuming it's a valid state.
+      # Continue with the rest of the script, assuming setup is complete.
     else
-       # If creating marker fails when /data is not empty
-       log "ERROR: Failed to create initialization marker when /data was not empty! Entrypoint will exit."
+       log "ERROR: Failed to create initialization marker when $DATA_DIR was not empty! Entrypoint will exit."
        exit 1
     fi
   fi
 else
+  # If marker is found, skip the entire initial setup process.
   log "Initialization marker '$INITIALIZED_MARKER' found. Skipping initial setup."
 fi
 
-# --- Before switching user (ezs) if agent is enabled ---
+
+# --- Switch to non-root user if running as root ---
 # This block remains as is, it ensures the rest of the script runs as 'ezs' user
 if [ "$(id -u)" = '0' ]; then
   # Ensure the data directory has the correct ownership before switching user
   log "Running as root. Checking $DATA_DIR directory ownership."
   # Check if ownership needs changing before attempting
-  if [ "$(stat -c %U $DATA_DIR)" != "ezs" ] || [ "$(stat -c %G $DATA_DIR)" != "ezs" ]; then # Check both user and group
-     log "Changing ownership of $DATA_DIR to ezs:ezs."
-     chown -R ezs:ezs $DATA_DIR
-      if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $DATA_DIR."; exit 1; fi
+  if [ "$(stat -c %U "$DATA_DIR")" != "ezs" ] || [ "$(stat -c %G "$DATA_DIR")" != "ezs" ]; then # Check both user and group
+    log "Changing ownership of $DATA_DIR to ezs:ezs."
+    chown -R ezs:ezs "$DATA_DIR"
+    if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $DATA_DIR."; exit 1; fi
   fi
   
   # Conditionally setup the agent *before* switching user (as it needs root for supervisor config)
   if [ "${METRICS_WITH_AGENT}" == "true"  ] && [ -n "${METRICS_CONFIG_SERVER}" ]; then
     log "Agent setup requested based on environment variables."
-    setup_agent # Call the agent setup function (executed as root)
+    setup_agent
     if [ $? -eq 0 ]; then
       log "Agent setup function completed successfully."
     else
       log "Agent setup function failed. Entrypoint will exit."
-      exit 1 # Exit if agent setup failed
+      exit 1
     fi
   else
     log "METRICS_WITH_AGENT is not set to 'true' or METRICS_CONFIG_SERVER is not set. Agent setup will be skipped."
@@ -359,7 +370,8 @@ if [ "$(id -u)" = '0' ]; then
   # This is done after the agent setup to ensure the config files are in place
   # and the agent process can be managed by supervisord.
   # This should be called after the agent setup and before switching to the 'ezs' user.
-  start_supervisor_if_agent_enabled 
+  # Supervisor startup requires root permissions.
+  start_supervisor_if_agent_enabled
 
   log "Switching user to 'ezs' and executing the rest of the entrypoint..."
   # Re-execute the entrypoint script as the 'ezs' user
