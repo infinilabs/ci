@@ -1,4 +1,4 @@
-name: Publish Easysearch Operator Docker Image
+name: Publish Operator Docker Image
 defaults:
   run:
     shell: bash
@@ -12,16 +12,19 @@ on:
         description: 'Publish easysearch operator tag'
         required: true
         default: "1.0.25"
+      PUBLISH_COMPONENT:
+        description: 'Publish component'
+        required: true
+        type: choice
+        options: [easysearch, runtime]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      PNAME: k8s-operator
-      TNAME: operator
-      TAG: ${{ inputs.PUBLISH_TAG }}
       LOCAL_PORT: ${{ vars.LOCAL_PORT }}
       SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+      SSH_GITHUB_REPO: ${{ secrets.SSH_GITHUB_REPO }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
       CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
@@ -34,19 +37,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up env
+        run: |
+          if [[ "${{ inputs.PUBLISH_COMPONENT }}" == "easysearch" ]]; then
+            echo PNAME="k8s-operator" >> $GITHUB_ENV
+            echo TNAME=easysearch-operator >> $GITHUB_ENV
+            echo TAG=${{ inputs.PUBLISH_TAG }} >> $GITHUB_ENV
+          elif [[ "${{ inputs.PUBLISH_COMPONENT }}" == "runtime" ]]; then
+            echo PNAME="runtime-operator" >> $GITHUB_ENV
+            echo TNAME=runtime-operator >> $GITHUB_ENV
+            echo TAG=${{ inputs.PUBLISH_TAG }} >> $GITHUB_ENV
+          else
+            echo "Invalid component specified
+          fi
+          cat $GITHUB_ENV
+
       - name: Set up and check env
+        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
 
       - name: Run connect in background
+        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 15
 
       - name: Checkout ${{ env.PNAME }} repo
+        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+
+      - name: Checkout ${{ env.TNAME }} repo
+        if: ${{ inputs.PUBLISH_COMPONENT == 'runtime' }}
+        run: |
+          git clone $SSH_GITHUB_REPO/$TNAME $GITHUB_WORKSPACE/$TNAME
 
       - name: Set up qemu with ${{ env.PNAME }}
         uses: docker/setup-qemu-action@v3
