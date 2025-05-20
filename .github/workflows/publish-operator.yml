@@ -12,12 +12,18 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      PUBLISH_COMPONENTS:
-        description: 'Comma-separated list of components to publish (e.g. easysearch,runtime)'
-        required: true
-        default: 'easysearch,runtime'
+      PUBLISH_EASYSEARCH:
+        description: 'Publish easysearch'
+        required: false
+        type: boolean
+        default: false
+      PUBLISH_RUNTIME:
+        description: 'Publish runtime'
+        required: false
+        type: boolean
+        default: false
       PUBLISH_VERSIOIN:
-        description: 'Publish docker image tag'
+        description: 'Publish version'
         required: true
         default: "1.0.25"
       PUBLISH_RELEASE:
@@ -38,9 +44,15 @@ jobs:
         run: |
           # check inputs must easysearch or runtime or both
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            COMPONENTS="${{ inputs.PUBLISH_COMPONENTS }}"
-            if [[ ! "$COMPONENTS" =~ ^(easysearch|runtime)(,(easysearch|runtime))*$ ]]; then
-              echo "Invalid components specified. Only 'easysearch' and 'runtime' are allowed." >&2
+            # check if the inputs are set
+            if [[ "${{ inputs.PUBLISH_EASYSEARCH }}" == 'true' ]] && [[ "${{ inputs.PUBLISH_RUNTIME }}" == 'true' ]]; then
+              COMPONENTS="easysearch,runtime"
+            elif [[ "${{ inputs.PUBLISH_EASYSEARCH }}" == 'true' ]]; then
+              COMPONENTS="easysearch"
+            elif [[ "${{ inputs.PUBLISH_RUNTIME }}" == 'true' ]]; then
+              COMPONENTS="runtime"
+            else
+              echo "No components to build"
               exit 1
             fi
           else
@@ -58,6 +70,7 @@ jobs:
         component: ${{ fromJson(needs.setup.outputs.components) }}
 
     env:
+      IMAGE_TYPE: operator
       LOCAL_PORT: ${{ vars.LOCAL_PORT }}
       SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
       SSH_GITHUB_REPO: ${{ secrets.SSH_GITHUB_REPO }}
@@ -73,17 +86,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up and check env
+      - name: Set up and check env for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         run: |
           echo "setting up env with ${{ matrix.component }}"
           $GITHUB_WORKSPACE/scripts/env-init.sh
           # check if the env is set
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
-            echo PNAME=k8s-operator >> $GITHUB_ENV
-            echo TNAME=easysearch-operator >> $GITHUB_ENV
+            echo PNAME=k8s-$IMAGE_TYPE >> $GITHUB_ENV
+            echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
-            echo PNAME=runtime-operator >> $GITHUB_ENV
-            echo TNAME=runtime-operator >> $GITHUB_ENV
+            echo PNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
+            echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
           fi
           # setting build number
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -96,9 +109,9 @@ jobs:
             echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
             fi
             else
-            BUILD_NUMBER="NIGHTLY-$(date +%Y%m%d)"
+            BUILD_NUMBER="$(date +%Y%m%d)"
             DYNAMIC_VERSION=$(echo "${{ vars.PUBLISH_OPERATOR_VERSION }}" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
-            echo TAG="$DYNAMIC_VERSION_$BUILD_NUMBER" >> $GITHUB_ENV
+            echo TAG="${DYNAMIC_VERSION}-$BUILD_NUMBER" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
 
@@ -109,7 +122,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 15
 
-      - name: Checkout component repo
+      - name: Checkout ${{ matrix.component }}-${{env.IMAGE_TYPE}} repo
         run: |
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
             git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
@@ -117,19 +130,19 @@ jobs:
             git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
 
-      - name: Set up qemu
+      - name: Set up qemu for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up docker buildx
+      - name: Set up docker buildx for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to dockerhub
+      - name: Login to dockerhub for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set REPO_NAME
+      - name: Set repo name for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
           cat $GITHUB_ENV
