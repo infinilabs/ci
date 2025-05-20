@@ -51,6 +51,7 @@ jobs:
 
   publish:
     needs: setup
+    name: Publish ${{ matrix.component }} Docker Image
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -74,6 +75,9 @@ jobs:
 
       - name: Set up and check env
         run: |
+          echo "setting up env with ${{ matrix.component }}"
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          # check if the env is set
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
             echo PNAME=k8s-operator >> $GITHUB_ENV
             echo TNAME=easysearch-operator >> $GITHUB_ENV
@@ -81,7 +85,7 @@ jobs:
             echo PNAME=runtime-operator >> $GITHUB_ENV
             echo TNAME=runtime-operator >> $GITHUB_ENV
           fi
-
+          # setting build number
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             RUN_NUMBER=${{ github.run_number }}
             OFFSET=${{ vars.OFFSET }}
