@@ -119,6 +119,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           echo Check need publish version at $PWD with branch $(git branch --show-current)
+          branch_exists() {
+            git ls-remote --exit-code --heads origin "$1" &>/dev/null
+          }
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
@@ -133,7 +136,12 @@ jobs:
             # Build when not publish
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
-                git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+                minor="$(echo "$ver" | cut -d. -f2)"
+                if [[ "$(branch_exists "${ver%%.*}.${minor}")" ]]; then
+                  git fetch origin "${ver%%.*}.${minor}" && git checkout "${ver%%.*}.${minor}"
+                else
+                  git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+                fi
               else
                 git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
               fi
