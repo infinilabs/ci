@@ -239,7 +239,10 @@ jobs:
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
           push: true
-
+      - name: Update GitHub release version
+        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        run: |
+          gh variable set PUBLISH_CLOUD_VERSION --body "${{ env.VERSION }}"
 
   notify_on_failure:
     runs-on: ubuntu-latest

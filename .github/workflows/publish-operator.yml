@@ -1,27 +1,55 @@
 name: Publish Operator Docker Image
+
 defaults:
   run:
     shell: bash
+
 env:
   TZ: Asia/Shanghai
-  
+
 on:
+  schedule:
+    - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      PUBLISH_COMPONENT:
-        description: 'Publish component'
+      PUBLISH_COMPONENTS:
+        description: 'Comma-separated list of components to publish (e.g. easysearch,runtime)'
         required: true
-        type: choice
-        options: [easysearch, runtime]
-      PUBLISH_TAG:
-        description: 'Publish easysearch operator tag'
+        default: 'easysearch,runtime'
+      PUBLISH_VERSIOIN:
+        description: 'Publish docker image tag'
         required: true
         default: "1.0.25"
-
+      PUBLISH_RELEASE:
+        description: 'Publish release'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
-  publish:
+
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      components: ${{ steps.set-components.outputs.components }}
+    steps:
+      - name: Set components for build
+        id: set-components
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            COMPONENTS="${{ inputs.PUBLISH_COMPONENTS }}"
+          else
+            COMPONENTS="easysearch,runtime"
+          fi
+          echo "components=$(echo $COMPONENTS | jq -R 'split(",")')" >> $GITHUB_OUTPUT
+
+  publish:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: ${{ fromJson(needs.setup.outputs.components) }}
+
     env:
       LOCAL_PORT: ${{ vars.LOCAL_PORT }}
       SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
@@ -38,61 +66,55 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up env
-        run: |
-          if [[ "${{ inputs.PUBLISH_COMPONENT }}" == "easysearch" ]]; then
-            echo PNAME=k8s-operator >> $GITHUB_ENV
-            echo TNAME=easysearch-operator >> $GITHUB_ENV
-          elif [[ "${{ inputs.PUBLISH_COMPONENT }}" == "runtime" ]]; then
-            echo PNAME=runtime-operator >> $GITHUB_ENV
-            echo TNAME=runtime-operator >> $GITHUB_ENV
-          else
-            echo "Invalid component specified"
-          fi
-          RUN_NUMBER=${{ github.run_number }}
-          OFFSET=${{ vars.OFFSET }}
-          BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
-
-          echo TAG="${{ inputs.PUBLISH_TAG }}-$BUILD_NUMBER" >> $GITHUB_ENV
-
-          cat $GITHUB_ENV
-
       - name: Set up and check env
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "${{ matrix.component }}" == "easysearch" ]]; then
+            echo PNAME=k8s-operator >> $GITHUB_ENV
+            echo TNAME=easysearch-operator >> $GITHUB_ENV
+          elif [[ "${{ matrix.component }}" == "runtime" ]]; then
+            echo PNAME=runtime-operator >> $GITHUB_ENV
+            echo TNAME=runtime-operator >> $GITHUB_ENV
+          fi
 
-      - name: Run connect in background
-        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RUN_NUMBER=${{ github.run_number }}
+            OFFSET=${{ vars.OFFSET }}
+            BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+            echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-$BUILD_NUMBER" >> $GITHUB_ENV
+          else
+            BUILD_NUMBER="NIGHTLY-$(date +%Y%m%d)"
+            echo TAG="${{ vars.PUBLISH_OPERATOR_VERSION }}_$BUILD_NUMBER" >> $GITHUB_ENV
+          fi
+          cat $GITHUB_ENV
+
+      - name: Run connect in background (easysearch only)
+        if: matrix.component == 'easysearch'
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 15
 
-      - name: Checkout ${{ env.PNAME }} repo
-        if: ${{ inputs.PUBLISH_COMPONENT == 'easysearch' }}
+      - name: Checkout component repo
         run: |
-          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          if [[ "${{ matrix.component }}" == "easysearch" ]]; then
+            git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          elif [[ "${{ matrix.component }}" == "runtime" ]]; then
+            git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          fi
 
-      - name: Checkout ${{ env.TNAME }} repo
-        if: ${{ inputs.PUBLISH_COMPONENT == 'runtime' }}
-        run: |
-          git clone $SSH_GITHUB_REPO/$TNAME $GITHUB_WORKSPACE/$TNAME
-
-      - name: Set up qemu with ${{ env.PNAME }}
+      - name: Set up qemu
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up docker buildx with ${{ env.PNAME }}
+      - name: Set up docker buildx
         uses: docker/setup-buildx-action@v3
-        #with:
-        #  buildkitd-flags: --debug
 
-      - name: Login to dockerhub with ${{ env.PNAME }}
+      - name: Login to dockerhub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker build meta with ${{ env.PNAME }}
+      - name: Set REPO_NAME
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
           cat $GITHUB_ENV
@@ -103,14 +125,19 @@ jobs:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         run: make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
 
+      - name: Update GitHub release version
+        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        run: |
+          gh variable set PUBLISH_OPERATOR_VERSION --body "${{ inputs.PUBLISH_VERSIOIN }}"
+
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish]
+    needs: [setup, publish]
     if: failure()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Send Feishu Notification on Failure
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
