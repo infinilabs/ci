@@ -5,7 +5,9 @@ set -e
 
 # Function to log messages with timestamp and context, without container-specific terms
 log() {
-  echo "$(date -Iseconds) [$(basename "$0")] $@"
+  local timestamp
+  timestamp=$(date +"%Y-%m-%dT%H:%M:%S,%3N")
+  echo "[$timestamp][INFO ][$(basename "$0")] $*"
 }
 # Define data directory
 APP_DIR="/app/easysearch"
