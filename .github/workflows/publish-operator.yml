@@ -25,7 +25,7 @@ on:
       PUBLISH_VERSIOIN:
         description: 'Publish version'
         required: true
-        default: "1.0.25"
+        default: "0.2.0"
       PUBLISH_RELEASE:
         description: 'Publish release'
         type: boolean
