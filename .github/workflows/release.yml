@@ -179,46 +179,19 @@ jobs:
             echo "Please input the publish version, easysearch version, coco app version and coco version"
             exit 1
           fi
-          SUFFIX=${VER#*-}
-          if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            EZS_VER="${EZS_VER}-$SUFFIX"
-          fi
-          #check if the version is correct
-          if [[ "$VER" == *"-"* ]] && [[ "$COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
-          fi
-          if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            COCO_VER="${COCO_VER}-$SUFFIX"
-          fi
-          fname=".latest"
-          echo "Products publish version: $VER, Easysearch version: $EZS_VER"
-          wget -q -nc $RELEASE_URL/$fname -P /tmp
-          jq --arg publish_version "$VER" \
-            --arg easysearch_version "$EZS_VER" \
-            --arg coco_app_version "$COCO_APP_VER" \
-            --arg coco_version "$COCO_VER" \
-            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
-            "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+          
+          # set actions variables
+          echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
+          gh variable set PUBLISH_VERSION --body "$VER"
+          gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+          gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
+          gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
 
-          # check if the file is the same
-          if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
-            echo "Files are the same, no need to upload."
-          else
-            echo "Files are different, uploading..."
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
-            
-            # set actions variables
-            echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
-            gh variable set PUBLISH_VERSION --body "$VER"
-            gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
-            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
-            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
-
-            # reset cache
-            curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
-            curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
-            curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
-          fi
+          # reset cache
+          curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/$fname"
+          curl -sL -H 'x-reset-cache: true' "$RELEASE_URL/coco/app/$fname"
+          curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+          
         
       - name: Publish coco website
         if: ${{ inputs.OPERATION == 'RELEASE' }}
