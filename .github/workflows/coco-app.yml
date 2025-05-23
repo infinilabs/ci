@@ -385,6 +385,7 @@ jobs:
                 fi
                 echo "UPGRADE_PATH=$PNAME/snapshot/.v${current_version}" >> $GITHUB_ENV
               else
+                pure_version="$current_version-$build_number"
                 echo "UPGRADE_PATH=$PNAME/stable/.v${current_version}" >> $GITHUB_ENV
               fi
               echo "Build $PNAME with $current_version-$build_number"
