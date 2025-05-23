@@ -192,7 +192,7 @@ jobs:
           fi
           fname=".latest"
           echo "Products publish version: $VER, Easysearch version: $EZS_VER"
-          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+          wget -q -nc $RELEASE_URL/$fname -P /tmp
           jq --arg publish_version "$VER" \
             --arg easysearch_version "$EZS_VER" \
             --arg coco_app_version "$COCO_APP_VER" \

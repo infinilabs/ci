@@ -74,7 +74,7 @@ jobs:
         run: |
           if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
             cd $HOME
-            wget -q -nc --show-progress --progress=bar:force:noscroll $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
+            wget -q -nc $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
             unzip -q apache-maven-$MAVEN_VERSION-bin.zip && rm -rf apache-maven-$MAVEN_VERSION-bin.zip
           fi
           echo Maven path is $HOME/apache-maven-$MAVEN_VERSION
@@ -211,7 +211,7 @@ jobs:
         run: |
           if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
             cd $HOME
-            wget -q -nc --show-progress --progress=bar:force:noscroll $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
+            wget -q -nc $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
             unzip -q apache-maven-$MAVEN_VERSION-bin.zip && rm -rf apache-maven-$MAVEN_VERSION-bin.zip
           fi
           echo Maven path is $HOME/apache-maven-$MAVEN_VERSION

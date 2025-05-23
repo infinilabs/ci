@@ -587,7 +587,9 @@ jobs:
           # download easysearch
           EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
-            EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
+            if [[ "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" == *-* ]]; then
+              EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
+            fi
           fi
           echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV

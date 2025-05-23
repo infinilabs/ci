@@ -94,7 +94,7 @@ jobs:
       - name: Set up gradle
         run: |
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
-            wget -q -nc --show-progress --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            wget -q -nc https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
           fi
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
