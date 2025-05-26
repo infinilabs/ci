@@ -42,6 +42,11 @@ jobs:
       - name: Set components for build
         id: set-components
         run: |
+          # check publish version x.y.z
+          if [[ ! "${{ inputs.PUBLISH_VERSIOIN }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Expected x.y.z"
+            exit 1
+          fi
           # check inputs must easysearch or runtime or both
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             # check if the inputs are set
@@ -106,7 +111,7 @@ jobs:
             if [[ "${{ inputs.PUBLISH_RELEASE }}" == 'true' ]]; then
               echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-$BUILD_NUMBER" >> $GITHUB_ENV
             else
-            echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
+              echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
             fi
             else
             BUILD_NUMBER="$(date +%Y%m%d)"
@@ -142,16 +147,29 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set repo name for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
-        run: |
-          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
-          cat $GITHUB_ENV
-
-      - name: Run Make ${{ matrix.component }} Build and Push for ${{env.REPO_NAME}}:${{env.TAG}}
+      - name: Docker build meta with ${{ matrix.component }}
+        id: tags
         working-directory: ${{ github.workspace }}/${{ env.PNAME }}
-        env:
-          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
-        run: make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
+        run: |
+          # make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.TNAME }}:${{ inputs.PUBLISH_VERSIOIN }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Docker build and push ${{ matrix.component }}-${{env.IMAGE_TYPE}} with ${{env.REPO_NAME}}:${{env.TAG}}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/${{ env.PNAME }}
+          file: ${{ github.workspace }}/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{env.TAG}}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
+          push: true
 
       - name: Update GitHub release version
         if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
@@ -164,14 +182,8 @@ jobs:
         continue-on-error: true
         run: |
           #Deploy docker
-          BINNAME=manager
-          if [[ "${{ matrix.component }}" == "easysearch" ]]; then
-            DNAME=infini-controller-$BINNAME
-            CNAME=$BINNAME
-          elif [[ "${{ matrix.component }}" == "runtime" ]]; then
-            DNAME=${{ matrix.component }}-operator-controller-$BINNAME
-            CNAME=$BINNAME
-          fi
+          CNAME=manager
+          DNAME=${{ matrix.component }}-operator-controller-$CNAME
           echo "kubectl -n infini-system set image deployments.apps/$DNAME $CNAME=${{env.REPO_NAME}}:${{ env.TAG }}" >> /tmp/update_image.sh
           echo "Deploy ${{ matrix.component }} to k8s staging at $(date +'%m-%d %H:%M:%S')"
           ssh staging 'bash -s' < /tmp/update_image.sh
