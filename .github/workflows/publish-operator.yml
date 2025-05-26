@@ -162,7 +162,6 @@ jobs:
         with:
           context: ${{ github.workspace }}/${{ env.PNAME }}
           file: ${{ github.workspace }}/${{ env.PNAME }}/Dockerfile
-          target: prod
           platforms: |
             linux/amd64
             linux/arm64
