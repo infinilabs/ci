@@ -18,10 +18,6 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      JAVA_VERSION:
-        description: 'Overrides Java Version '
-        required: true
-        default: '17'
       REPUBLISH_TNAME:
         description: 'Overrides Republish Product'
         required: false
@@ -43,6 +39,10 @@ on:
         description: 'Overrides Republish version'
         required: false
         default: '7.10.2'
+      JAVA_VERSION:
+        description: 'Overrides Java Version '
+        required: true
+        default: '11'
 
 jobs:
   publish_versions_with_jdk_input:
@@ -126,9 +126,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           echo Check need publish version at $PWD with branch $(git branch --show-current)
-          branch_exists() {
-            git ls-remote --exit-code --heads origin "$1" &>/dev/null
-          }
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
@@ -143,8 +140,9 @@ jobs:
             # Build when not publish
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
-                minor="$(echo "$ver" | cut -d. -f2)"
-                if [[ "$(branch_exists "${ver%%.*}.${minor}")" ]]; then
+                branch_exists=$(git ls-remote --exit-code --heads origin "${ver%%.*}.${minor}" &>/dev/null)
+                echo "check branch_exists: $branch_exists for ${ver%%.*}.${minor}"
+                if [[ "$branch_exists" -eq 0 ]]; then
                   git fetch origin "${ver%%.*}.${minor}" && git checkout "${ver%%.*}.${minor}"
                 else
                   git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
@@ -264,9 +262,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           echo Check need publish version at $PWD with branch $(git branch --show-current)
-          branch_exists() {
-            git ls-remote --exit-code --heads origin "$1" &>/dev/null
-          }
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
@@ -282,7 +277,9 @@ jobs:
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
                 minor="$(echo "$ver" | cut -d. -f2)"
-                if [[ "$(branch_exists "${ver%%.*}.${minor}")" ]]; then
+                branch_exists=$(git ls-remote --exit-code --heads origin "${ver%%.*}.${minor}" &>/dev/null)
+                echo "check branch_exists: $branch_exists for ${ver%%.*}.${minor}"
+                if [[ "$branch_exists" -eq 0 ]]; then
                   git fetch origin "${ver%%.*}.${minor}" && git checkout "${ver%%.*}.${minor}"
                 else
                   git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
