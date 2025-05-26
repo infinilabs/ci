@@ -242,7 +242,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker build meta
+      - name: Docker build meta with ${{ env.PNAME }}
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV

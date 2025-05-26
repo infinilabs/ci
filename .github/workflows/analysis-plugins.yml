@@ -42,7 +42,7 @@ jobs:
     env:
       PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
-      JAVA_VERSION: ${{ vars.JAVA_VERSION_17 }}
+      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_VERSION_17 }}
     strategy:
       matrix:
         plugins:
@@ -179,7 +179,7 @@ jobs:
     env:
       PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
-      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_VERSION_21 }}
+      JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
     strategy:
       matrix:
         plugins:
