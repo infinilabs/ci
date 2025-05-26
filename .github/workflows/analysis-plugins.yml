@@ -140,6 +140,7 @@ jobs:
             # Build when not publish
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
+                minor="$(echo "$ver" | cut -d. -f2)"
                 branch_exists=$(git ls-remote --exit-code --heads origin "${ver%%.*}.${minor}" &>/dev/null)
                 echo "check branch_exists: $branch_exists for ${ver%%.*}.${minor}"
                 if [[ "$branch_exists" -eq 0 ]]; then
