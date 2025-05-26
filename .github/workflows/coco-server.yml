@@ -457,11 +457,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker build meta with coco server
+      - name: Docker build meta with ${{ env.PNAME }}
+        id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          cat $GITHUB_ENV
-
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
@@ -473,6 +475,7 @@ jobs:
             linux/arm64
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
 
       - name: Archive coco server files
@@ -749,10 +752,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker build meta with coco server
+      - name: Docker build meta with ${{ env.PNAME }}
+        id: tags
         run: |
-          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          cat $GITHUB_ENV
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }}${{ env.ENT }} >> $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.PNAME }}${{ env.ENT }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker build and push with coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
@@ -764,7 +770,8 @@ jobs:
             linux/amd64
             linux/arm64
           tags: |
-            ${{ env.REPO_NAME }}${{ env.ENT }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
 
       - name: Archive coco server files

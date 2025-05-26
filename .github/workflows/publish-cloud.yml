@@ -223,9 +223,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker build meta with ${{ env.PNAME }}
+        id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }} >> $GITHUB_ENV
-          cat $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.PNAME }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker build and push for ${{ env.PNAME }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
@@ -238,6 +241,7 @@ jobs:
             linux/arm64
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
       - name: Update GitHub release version
         if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
