@@ -147,7 +147,7 @@ jobs:
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Run Make to Build and Push
+      - name: Run Make ${{ matrix.component }} Build and Push for ${{env.REPO_NAME}}:${{env.TAG}}
         working-directory: ${{ github.workspace }}/${{ env.PNAME }}
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
