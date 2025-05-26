@@ -20,7 +20,7 @@ on:
     inputs:
       JAVA_VERSION:
         description: 'Overrides Java Version '
-        required: false
+        required: true
         default: '17'
       REPUBLISH_TNAME:
         description: 'Overrides Republish Product'
@@ -30,19 +30,164 @@ on:
           - elasticsearch
           - opensearch
         default: 'elasticsearch'
+      REPUBLISH_PRODUCT:
+        description: 'Overrides Republish Product'
+        required: false
+        type: choice
+        options:
+          - analysis-ik
+          - analysis-pinyin
+          - analysis-stconvert
+        default: 'analysis-ik'
       REPUBLISH_VERSION:
         description: 'Overrides Republish version'
         required: false
-        default: ''
+        default: '7.10.2'
 
 jobs:
-  publish_versions_with_jdk_17:
+  publish_versions_with_jdk_input:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 17
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
-      JAVA_VERSION: ${{ inputs.JAVA_VERSION || vars.JAVA_VERSION_17 }}
+      JAVA_VERSION: ${{ inputs.JAVA_VERSION }}
+    strategy:
+      matrix:
+        plugins:
+          - ${{ inputs.REPUBLISH_PRODUCT }}
+        product:
+          - ${{ inputs.REPUBLISH_TNAME }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout ${{ matrix.plugins }} code
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
+          ref: master
+          path: ${{ env.PNAME }}
+
+      - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Set up maven with ${{ env.MAVEN_VERSION }}
+        run: |
+          if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
+            cd $HOME
+            wget -q -nc $MAVEN_DOWNLOAD_URL//$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
+            unzip -q apache-maven-$MAVEN_VERSION-bin.zip && rm -rf apache-maven-$MAVEN_VERSION-bin.zip
+          fi
+          echo Maven path is $HOME/apache-maven-$MAVEN_VERSION
+
+      - name: Preper build code
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          echo "Build $PNAME start..."
+          echo "PATH=$HOME/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        run: |
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          else
+            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          fi
+          [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+
+          # filter versions
+          > /tmp/versions
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            while IFS= read -r ver; do
+                MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+                if [[ "$MAJOR_VERSION" -lt 9 ]]; then
+                  echo "$ver" >> /tmp/versions
+                fi
+            done < /tmp/all_versions
+          else
+            while IFS= read -r ver; do
+              MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+              if [[ "$MAJOR_VERSION" -lt 3 ]]; then
+                echo "$ver" >> /tmp/versions
+              fi
+            done < /tmp/all_versions
+          fi
+          cat /tmp/versions
+
+      - name: Build need publish ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          echo Check need publish version at $PWD with branch $(git branch --show-current)
+          branch_exists() {
+            git ls-remote --exit-code --heads origin "$1" &>/dev/null
+          }
+          while IFS= read -r ver; do
+            # Check published history
+            URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
+            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+              if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
+                echo "Version $ver already published, overwrite..."
+              else
+                echo "Version $ver already published, skipping..."
+                break
+              fi
+            fi
+            # Build when not publish
+            if [[ "${ver%%.*}" -lt 9 ]]; then
+              if [[ "$TNAME" == "elasticsearch" ]]; then
+                minor="$(echo "$ver" | cut -d. -f2)"
+                if [[ "$(branch_exists "${ver%%.*}.${minor}")" ]]; then
+                  git fetch origin "${ver%%.*}.${minor}" && git checkout "${ver%%.*}.${minor}"
+                else
+                  git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+                fi
+              else
+                git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
+              fi
+            fi
+
+            echo "Current build for $TNAME version [ $ver ] with branch $(git rev-parse --abbrev-ref HEAD)"
+            if [[ "${ver%%.*}" -lt 8 ]] && [[ "$TNAME" == "elasticsearch" ]]; then
+              echo mvn package -DskipTests -D$TNAME.version=$ver
+              mvn package -DskipTests -D$TNAME.version=$ver
+            else
+              echo mvn package -pl $TNAME -am -DskipTests -D$TNAME.version=$ver
+              mvn package -pl $TNAME -am -DskipTests -D$TNAME.version=$ver
+            fi
+          done < "/tmp/versions"
+
+      - name: Upload ${{ matrix.plugins }} for ${{ matrix.product }} all verion files
+        run: |
+          target_dirs=$(find $GITHUB_WORKSPACE/$PNAME -maxdepth 3 -name "releases" -print)
+          [[ -z "$target_dirs" ]] && exit 0 || echo "Found target directories: $target_dirs"
+
+          # 遍历所有目标目录
+          while IFS= read -r target_dir; do
+            # 查找当前目录下所有zip文件
+            find "$target_dir" -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
+              echo "Uploading ${zip_file##*/} with path $zip_file..."
+              oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
+              #更新文件缓存
+              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+            done
+          done <<< "$target_dirs"
+
+  publish_versions_with_jdk_17:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 17
+    runs-on: ubuntu-latest
+    env:
+      PNAME: ${{ matrix.plugins }}
+      TNAME: ${{ matrix.product }}
+      JAVA_VERSION: ${{ vars.JAVA_VERSION_17 }}
     strategy:
       matrix:
         plugins:
@@ -174,6 +319,7 @@ jobs:
           done <<< "$target_dirs"
 
   publish_versions_with_jdk_21:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 21
     runs-on: ubuntu-latest
     env:
@@ -308,7 +454,7 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish_versions_with_jdk_17, publish_versions_with_jdk_21]
+    needs: [publish_versions_with_jdk_17, publish_versions_with_jdk_21, publish_versions_with_jdk_input]
     if: failure()
     steps:
       - name: Checkout code
