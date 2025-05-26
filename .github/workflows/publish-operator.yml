@@ -158,6 +158,25 @@ jobs:
         run: |
           gh variable set PUBLISH_OPERATOR_VERSION --body "${{ inputs.PUBLISH_VERSIOIN }}"
 
+      - name: Deploy operator to staging k8s
+        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          #Deploy docker
+          BINNAME=manager
+          if [[ "${{ matrix.component }}" == "easysearch" ]]; then
+            DNAME=infini-controller-$BINNAME
+            CNAME=$BINNAME
+          elif [[ "${{ matrix.component }}" == "runtime" ]]; then
+            DNAME=${{ matrix.component }}-operator-controller-$BINNAME
+            CNAME=$BINNAME
+          fi
+          echo "kubectl -n infini-system set image deployments.apps/$DNAME $CNAME=${{env.REPO_NAME}}:${{ env.TAG }}" >> /tmp/update_image.sh
+          echo "Deploy ${{ matrix.component }} to k8s staging at $(date +'%m-%d %H:%M:%S')"
+          ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+
   notify_on_failure:
     runs-on: ubuntu-latest
     needs: [setup, publish]
