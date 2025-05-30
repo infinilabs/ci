@@ -99,7 +99,7 @@ jobs:
             fi
           fi
           echo "Current version to publish: $current_version"
-          version="$current_version"
+          exit 1
 
           version="$current_version"
           sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
