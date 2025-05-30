@@ -62,21 +62,6 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: Sync node version and setup cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
-
-      - name: Install app dependencies and build web
-        working-directory: ${{ env.REPO-NAME }}
-        run: pnpm install
-
       
       - name: Set version for search-chat
         working-directory: ${{ env.REPO-NAME }}
@@ -95,24 +80,26 @@ jobs:
             fi
           else
             if [[ -n "$latest" ]]; then
+              major=$(echo "$latest" | cut -d '.' -f 1)
+              minor=$(echo "$latest" | cut -d '.' -f 2)
+              patch=$(echo "$latest" | cut -d '.' -f 3)
+              echo "Latest version found: $latest"
+
               # Increment the version based on the inputs
               if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
-                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$1++;  print $1"."$2"."$3}')
-              elif [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
-                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$2++;  print $1"."$2"."$3}')
-              elif [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
-                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $1"."$2"."$3}')
-              else
-                echo "No version increment specified. Using latest version: $latest"
-                current_version="$latest"
+                major=$(echo "$latest" | awk -F. -v OFS=. '{$1++; print $1}')
               fi
-            else
-              echo "No latest version found, using default version: 1.0.0"
-              current_version="1.0.0"
+              if [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
+                minor=$(echo "$latest" | awk -F. -v OFS=. '{$2++; print $2}')
+              fi
+              if [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
+                patch=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $3}')
+              fi
+              current_version="$major.$minor.$patch"
             fi
           fi
           echo "Current version to publish: $current_version"
-          exit 1
+          version="$current_version"
 
           version="$current_version"
           sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
@@ -120,6 +107,21 @@ jobs:
           grep -oP "version: *\"[^\"]*\"" tsup.config.ts
           
           echo "VERSION=$version" >> $GITHUB_ENV
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install app dependencies and build web
+        working-directory: ${{ env.REPO-NAME }}
+        run: pnpm install
           
       - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
