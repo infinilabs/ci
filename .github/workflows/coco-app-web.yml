@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Version (Format: X.Y.Z) Leave empty to auto-increment'
+        description: 'Publish Version (Format: X.Y.Z)   Leave empty to auto-increment'
         required: false
         default: ""
       MAJOR_VERSION:
