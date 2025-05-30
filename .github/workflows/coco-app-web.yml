@@ -14,7 +14,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish NPM Version'
         required: true
-        default: "1.2.5"
+        default: "1.2.10"
         
 jobs:
   build-web:
