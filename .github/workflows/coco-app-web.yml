@@ -68,9 +68,7 @@ jobs:
             if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
               current_version="${BASH_REMATCH[1]}"
               # compare with latest version, must be greater than latest version
-              if version_greater "$current_version" "$latest"; then
-                echo "Current version $current_version is greater than latest version $latest"
-              else
+              if ! version_greater "$current_version" "$latest"; then
                 echo "Error: Current version $current_version is not greater than latest version $latest" >&2
                 exit 1
               fi
@@ -97,13 +95,11 @@ jobs:
               current_version="$major.$minor.$patch"
             fi
           fi
-          echo "Current version to publish: $current_version"
-          exit 1
           version="$current_version"
           sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
           # Extract the build number from the version string
           grep -oP "version: *\"[^\"]*\"" tsup.config.ts
-          
+          echo "Current version to publish: $version"
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Enable web adapter
@@ -136,20 +132,20 @@ jobs:
         run: |
           pnpm run build:web && cd out/search-chat && npm publish --access public
 
-  # notify_on_failure:
-  #   runs-on: ubuntu-latest
-  #   needs: [build-web]
-  #   if: failure()
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [build-web]
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         
-  #     - name: Send Feishu Notification on Failure
-  #       env:
-  #         FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
-  #         REPO_NAME: ${{ github.repository }}
-  #         WORKFLOW_NAME: ${{ github.workflow }}
-  #         RUN_ID: ${{ github.run_id }}
-  #         ACTOR: ${{ github.triggering_actor }}
-  #         SERVER_URL: ${{ github.server_url }}
-  #       run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
+      - name: Send Feishu Notification on Failure
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
