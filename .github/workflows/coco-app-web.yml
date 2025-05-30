@@ -12,21 +12,21 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish NPM Version'
+        description: 'Publish NPM Version (Format: X.Y.Z) or leave empty for auto-increment'
         required: false
         default: ""
       MAJOR_VERSION:
-        description: 'Update Major Version'
+        description: 'Update Major Version (Increment X in X.Y.Z)'
         type: boolean
         required: false
         default: false
       MINOR_VERSION:
-        description: 'Update Minor Version'
+        description: 'Update Minor Version (Increment Y in X.Y.Z)'
         type: boolean
         required: false
         default: false
       PATCH_VERSION:
-        description: 'Update Patch Version'
+        description: 'Update Patch Version (Increment Z in X.Y.Z)'
         type: boolean
         required: false
         default: true
