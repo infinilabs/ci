@@ -1,4 +1,4 @@
-name: Publish Coco App Search Chat to NPM 
+name: Publish Coco App Search Chat 
 defaults:
   run:
     shell: bash
@@ -12,21 +12,21 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish NPM Version (Format: X.Y.Z) or leave empty for auto-increment'
+        description: 'Publish Version (Format: X.Y.Z) or leave empty to auto-increment'
         required: false
         default: ""
       MAJOR_VERSION:
-        description: 'Update Major Version (Increment X in X.Y.Z)'
+        description: 'Update Major (Increment X in X.Y.Z)'
         type: boolean
         required: false
         default: false
       MINOR_VERSION:
-        description: 'Update Minor Version (Increment Y in X.Y.Z)'
+        description: 'Update Minor (Increment Y in X.Y.Z)'
         type: boolean
         required: false
         default: false
       PATCH_VERSION:
-        description: 'Update Patch Version (Increment Z in X.Y.Z)'
+        description: 'Update Patch (Increment Z in X.Y.Z)'
         type: boolean
         required: false
         default: true
