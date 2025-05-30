@@ -60,13 +60,20 @@ jobs:
         env: 
           NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
+          source $GITHUB_WORKSPACE/scripts/version_greater.sh
           latest=$(npm view @infinilabs/search-chat version)
-          echo "latest_npm_version=$latest" >> $GITHUB_ENV
 
           # Extract x.y.z using a regular expression
           if [[ -n "$PUBLISH_VERSION" ]]; then
             if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
               current_version="${BASH_REMATCH[1]}"
+              # compare with latest version, must be greater than latest version
+              if version_greater "$current_version" "$latest"; then
+                echo "Current version $current_version is greater than latest version $latest"
+              else
+                echo "Error: Current version $current_version is not greater than latest version $latest" >&2
+                exit 1
+              fi
             else
               echo "Error: Invalid version string format. Expected X.Y.Z." >&2
               exit 1
@@ -91,7 +98,7 @@ jobs:
             fi
           fi
           echo "Current version to publish: $current_version"
-
+          exit 1
           version="$current_version"
           sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
           # Extract the build number from the version string
