@@ -1,4 +1,4 @@
-name: Easysearch Files & Docker Publish 
+name: Publish Easysearch Files & Docker 
 
 defaults:
   run:

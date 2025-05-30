@@ -1,4 +1,4 @@
-name: Products Files & Docker Publish 
+name: Publish Products Files & Docker 
 defaults:
   run:
     shell: bash

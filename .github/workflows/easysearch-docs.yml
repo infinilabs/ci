@@ -1,5 +1,4 @@
-name: Easysearch Docs Build and Deploy
-
+name: Publish Easysearch Docs
 defaults:
   run:
     shell: bash

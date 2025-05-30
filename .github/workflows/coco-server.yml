@@ -1,4 +1,4 @@
-name: Coco Server Files & Docker Publish 
+name: Publish Coco Server Files & Docker 
 defaults:
   run:
     shell: bash

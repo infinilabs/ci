@@ -1,4 +1,4 @@
-name: Coco App Files Publish 
+name: Publish Coco App Files 
 defaults:
   run:
     shell: bash

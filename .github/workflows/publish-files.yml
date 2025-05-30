@@ -1,4 +1,4 @@
-name: Products Files Publish
+name: Publish Products Files (Only)
 defaults:
   run:
     shell: bash
