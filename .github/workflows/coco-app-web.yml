@@ -47,14 +47,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
           ref: main
           path: ${{ env.REPO-NAME }}
-      
-      - name: Enable Web Adapter
-        working-directory: ${{ env.REPO-NAME }}
-        run: |
-          TARGET_FILE="src/utils/platformAdapter.ts"
-          # Enable Web Adapter and disable Tauri Adapter
-          sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET_FILE"
-          cat "$TARGET_FILE"
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -99,7 +91,6 @@ jobs:
             fi
           fi
           echo "Current version to publish: $current_version"
-          exit 1
 
           version="$current_version"
           sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
@@ -107,6 +98,14 @@ jobs:
           grep -oP "version: *\"[^\"]*\"" tsup.config.ts
           
           echo "VERSION=$version" >> $GITHUB_ENV
+
+      - name: Enable web adapter
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          TARGET_FILE="src/utils/platformAdapter.ts"
+          # Enable Web Adapter and disable Tauri Adapter
+          sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET_FILE"
+          cat "$TARGET_FILE"
 
       - uses: pnpm/action-setup@v4
         with:
