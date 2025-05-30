@@ -13,7 +13,7 @@ on:
     inputs:
       PUBLISH_VERSION:
         description: 'Publish NPM Version'
-        required: true
+        required: false
         default: ""
       MAJOR_VERSION:
         description: 'Update Major Version'
