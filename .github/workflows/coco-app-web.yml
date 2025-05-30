@@ -65,7 +65,8 @@ jobs:
       
       - name: Set version for search-chat
         working-directory: ${{ env.REPO-NAME }}
-        shell: bash
+        env: 
+          NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
           latest=$(npm view @infinilabs/search-chat version)
           echo "latest_npm_version=$latest" >> $GITHUB_ENV
@@ -83,7 +84,6 @@ jobs:
               major=$(echo "$latest" | cut -d '.' -f 1)
               minor=$(echo "$latest" | cut -d '.' -f 2)
               patch=$(echo "$latest" | cut -d '.' -f 3)
-              echo "Latest version found: $latest"
 
               # Increment the version based on the inputs
               if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
