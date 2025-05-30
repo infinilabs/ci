@@ -14,8 +14,23 @@ on:
       PUBLISH_VERSION:
         description: 'Publish NPM Version'
         required: true
-        default: "1.2.10"
-        
+        default: ""
+      MAJOR_VERSION:
+        description: 'Update Major Version'
+        type: boolean
+        required: false
+        default: false
+      MINOR_VERSION:
+        description: 'Update Minor Version'
+        type: boolean
+        required: false
+        default: false
+      PATCH_VERSION:
+        description: 'Update Patch Version'
+        type: boolean
+        required: false
+        default: true
+
 jobs:
   build-web:
     env:
@@ -32,33 +47,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
           ref: main
           path: ${{ env.REPO-NAME }}
-
-      - name: Set version for search-chat
-        working-directory: ${{ env.REPO-NAME }}
-        shell: bash
-        run: |
-          current_version=$PUBLISH_VERSION
-          if [[ -z "$current_version" ]]; then
-            echo "PUBLISH_VERSION is not set or is empty." >&2
-            exit 1
-          fi
-
-          # Extract x.y.z using a regular expression
-          if [[ -n "$PUBLISH_VERSION" ]]; then
-            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
-              current_version="${BASH_REMATCH[1]}"
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z." >&2
-              exit 1
-            fi
-          fi
-
-          version="$current_version"
-          sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
-          # Extract the build number from the version string
-          grep -oP "version: *\"[^\"]*\"" tsup.config.ts
-          
-          echo "VERSION=$version" >> $GITHUB_ENV
       
       - name: Enable Web Adapter
         working-directory: ${{ env.REPO-NAME }}
@@ -89,6 +77,56 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
 
+      
+      - name: Set version for search-chat
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          current_version=$PUBLISH_VERSION
+          if [[ -z "$current_version" ]]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          latest=$(npm view @infinilabs/search-chat version)
+          echo "latest_npm_version=$latest" >> $GITHUB_ENV
+
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
+              current_version="${BASH_REMATCH[1]}"
+            else
+              echo "Error: Invalid version string format. Expected X.Y.Z." >&2
+              exit 1
+            fi
+          else
+            if [[ -n "$latest" ]]; then
+              # Increment the version based on the inputs
+              if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
+                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$1++;  print $1"."$2"."$3}')
+              elif [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
+                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$2++;  print $1"."$2"."$3}')
+              elif [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
+                current_version=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $1"."$2"."$3}')
+              else
+                echo "No version increment specified. Using latest version: $latest"
+                current_version="$latest"
+              fi
+            else
+              echo "No latest version found, using default version: 1.0.0"
+              current_version="1.0.0"
+            fi
+          fi
+          echo "Current version to publish: $current_version"
+          exit 1
+
+          version="$current_version"
+          sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
+          # Extract the build number from the version string
+          grep -oP "version: *\"[^\"]*\"" tsup.config.ts
+          
+          echo "VERSION=$version" >> $GITHUB_ENV
+          
       - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
         env:
