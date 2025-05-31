@@ -464,6 +464,7 @@ jobs:
           if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
+          
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
         with:
