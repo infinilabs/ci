@@ -106,11 +106,11 @@ jobs:
                 offset=${{ vars.OFFSET }}
                 build_number=$((run_number + offset))
               fi
-              echo "Build $PNAME with $version-$build_number"
             fi
           fi
 
-          version="$current_version"
+          version="$current_version-$build_number"
+          echo "Build $PNAME with $version"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
@@ -126,7 +126,7 @@ jobs:
           fi
           
           tag=".v${current_version}"
-          echo "VERSION=$version-$build_number" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
@@ -285,6 +285,7 @@ jobs:
           if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
             find "$bundle_dir" \
               \( \
+                -name "*arm64.deb.sig" -o \
                 -name "*amd64.deb.sig" -o \
                 -name "*aarch64.deb.sig" -o \
                 -name "*x86_64.rpm.sig" -o \
