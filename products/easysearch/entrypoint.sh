@@ -12,6 +12,8 @@ log() {
 # Define data directory
 APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
+LOGS_DIR="$APP_DIR/logs"
+CFG_DIR="$APP_DIR/config"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
 
@@ -350,7 +352,7 @@ if [ "$(id -u)" = '0' ]; then
   # Check if ownership needs changing before attempting
   if [ "$(stat -c %U "$DATA_DIR")" != "ezs" ] || [ "$(stat -c %G "$DATA_DIR")" != "ezs" ]; then # Check both user and group
     log "Changing ownership of $DATA_DIR to ezs:ezs."
-    chown -R ezs:ezs "$DATA_DIR"
+    chown -R ezs:ezs "$DATA_DIR" "$LOGS_DIR" "$CFG_DIR"
     if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $DATA_DIR."; exit 1; fi
   fi
   
@@ -365,7 +367,7 @@ if [ "$(id -u)" = '0' ]; then
       exit 1
     fi
   else
-    log "METRICS_WITH_AGENT is not set to 'true' or METRICS_CONFIG_SERVER is not set. Agent setup will be skipped."
+    log "METRICS_WITH_AGENT is 'false' or METRICS_CONFIG_SERVER is empty. Agent setup skipped."
   fi
 
   # After initial setup and agent setup, we can start the supervisor if needed
