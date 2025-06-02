@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Strict mode
-set -euo pipefail # -e: exit on error, -u: treat unset variables as error, -o pipefail: exit if any command in a pipe fails
+set -euo pipefail
 
 # --- Script Configuration (expected as environment variables from GitHub Actions) ---
 SCENARIO_TO_RUN="${SCENARIO_TO_RUN_ARG:-default-run}"
@@ -129,9 +129,9 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
       
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -v --trace-ascii - --fail --connect-timeout 15 --retry 1 --retry-delay 5 \
+      http_code=$(curl --fail --connect-timeout 15 --retry 1 --retry-delay 5 \
                    -s -w "%{http_code}" \
-                   -u "admin:${DEFAULT_PASSWORD}" \
+                   -ku "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
                    -o "${body_file}")
       curl_exit_code=$?
@@ -190,7 +190,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
       
       health_http_code=$(curl --fail --connect-timeout 10 --retry 2 --retry-delay 3 \
                              -s -w "%{http_code}" \
-                             -u "admin:${CUSTOM_PASSWORD}" \
+                             -ku "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}")
       health_curl_exit_code=$?
@@ -202,7 +202,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
           
           nodes_http_code=$(curl --fail --connect-timeout 10 --retry 2 --retry-delay 3 \
                                  -s -w "%{http_code}" \
-                                 -u "admin:${CUSTOM_PASSWORD}" \
+                                 -ku "admin:${CUSTOM_PASSWORD}" \
                                  "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
                                  -o "${nodes_body_file}")
           nodes_curl_exit_code=$?
