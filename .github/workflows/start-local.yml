@@ -39,6 +39,7 @@ jobs:
       NUM_NODES_EXPECTED_ARG: 3
       TEST_WORK_DIR: ${{ github.workspace }}/ezs_run_data
       TEST_SCRIPT_NAME: test_start_local.sh
+      CHECK_TIMEOUT_ARG: 120
 
     steps:
     - name: Checkout code (includes ${{ env.TEST_SCRIPT_NAME }})
@@ -98,7 +99,7 @@ jobs:
           # This part is highly dependent on how Docker Desktop behaves in a CI environment.
           # It's often simpler if the runner image *already* has Docker setup.
 
-          max_wait=300
+          max_wait=${CHECK_TIMEOUT_ARG:-300} # Default to 5 minutes if not set
           interval=10
           elapsed=0
           docker_ready=false
