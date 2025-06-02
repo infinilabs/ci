@@ -1,0 +1,110 @@
+name: Test start-local.sh Script on Multiple Platforms
+
+on:
+  schedule:
+    - cron: '30 16 * * *' 
+  workflow_dispatch:
+
+jobs:
+  test-script:
+    strategy:
+      fail-fast: false
+      matrix:
+        os_config:
+          - name: Ubuntu
+            runner: ubuntu-latest
+            is_container_test: false
+          - name: macOS
+            runner: macos-latest
+            is_container_test: false
+          - name: Windows
+            runner: windows-latest
+            is_container_test: false
+          - name: CentOS (via Docker)
+            runner: ubuntu-latest
+            is_container_test: true
+            container_image: centos:7
+        scenario: [default-run, custom-run]
+
+    runs-on: ${{ matrix.os_config.runner }}
+
+    env:
+      SCRIPT_URL_ARG: "https://get.infini.cloud/start-local" # Note suffix _ARG
+      DEFAULT_PASSWORD_ARG: "ShouldChangeme123!"
+      CUSTOM_PASSWORD_ARG: "MySecurePassword123"
+      NUM_NODES_EXPECTED_ARG: 3
+      TEST_WORK_DIR: ${{ github.workspace }}/ezs_run_data
+      TEST_SCRIPT_NAME: test_start_local.sh
+
+    steps:
+    - name: Checkout code (includes ${{ env.TEST_SCRIPT_NAME }})
+      uses: actions/checkout@v4
+
+    - name: Set up Docker (Host)
+      uses: docker-practice/actions-setup-docker@v1
+      with:
+        docker_version: '20.10.17'
+
+    # jq is usually pre-installed. This is just a verification.
+    - name: Verify jq availability
+      shell: bash
+      run: |
+        echo "Checking for jq on ${{ matrix.os_config.name }}..."
+        jq --version || (echo "::warning::jq not found or not executable on host/container base. test_runner.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if jq is not on host but will be in container.
+        # test_runner.sh itself verifies jq and will fail if it's missing and needed.
+
+    # ----------------------------------------------------------------------
+    # MAIN TEST EXECUTION BLOCK
+    # ----------------------------------------------------------------------
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }}
+      shell: bash
+      run: |
+        # Prepare the working directory on the host
+        # This directory will be mounted into the CentOS container if needed
+        # and will contain the test_runner.sh script after checkout.
+        mkdir -p ${{ env.TEST_WORK_DIR }}
+        cp ${{ github.workspace }}/scripts/${{ env.TEST_SCRIPT_NAME }} ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        chmod +x ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        cd ${{ env.TEST_WORK_DIR }}
+
+        # Environment variables for the test_runner.sh script
+        export SCENARIO_TO_RUN_ARG="${{ matrix.scenario }}"
+        # SCRIPT_URL_ARG, DEFAULT_PASSWORD_ARG, etc., are already in the job's env,
+        # so they will be inherited by this script execution directly on host,
+        # and need to be passed explicitly to the docker container.
+
+        if [[ "${{ matrix.os_config.is_container_test }}" == "true" ]]; then
+          echo "Running test inside ${{ matrix.os_config.container_image }} container..."
+          # For DooD, mount host's Docker socket and the shared workspace (which now contains test_runner.sh)
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v ${{ env.TEST_WORK_DIR }}:${{ env.TEST_WORK_DIR }}:rw \
+            -w ${{ env.TEST_WORK_DIR }} \
+            --env SCENARIO_TO_RUN_ARG \
+            --env SCRIPT_URL_ARG \
+            --env DEFAULT_PASSWORD_ARG \
+            --env CUSTOM_PASSWORD_ARG \
+            --env NUM_NODES_EXPECTED_ARG \
+            ${{ matrix.os_config.container_image }} \
+            bash -ec '
+              echo "Inside CentOS container..."
+              echo "Installing prerequisites (curl, and jq if needed by test_runner.sh)..."
+              # Assuming test_runner.sh will use jq, ensure it is available.
+              # Docker client should be present if start-local.sh uses `docker` cmd, but it uses `docker compose`.
+              # `docker compose` needs to be handled by the host via the socket.
+              # The container only needs `curl` for start-local.sh and `jq` for test_runner.sh.
+              yum install -y curl gettext # gettext for envsubst if needed
+              if ! command -v jq &> /dev/null; then
+                yum install -y epel-release || yum install -y oracle-epel-release-el7 || true
+                yum install -y jq
+              fi
+              echo "Prerequisites checked/installed."
+              echo "jq version in container: $(jq --version || echo "jq not found in container")"
+              echo "Executing ./${{ env.TEST_SCRIPT_NAME }} in container..."
+              ./${{ env.TEST_SCRIPT_NAME }} # Execute the mounted script
+            '
+        else
+          echo "Running test directly on ${{ matrix.os_config.runner }}..."
+          ./${{ env.TEST_SCRIPT_NAME }} # Execute the script directly on the host
+        fi
