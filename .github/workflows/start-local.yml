@@ -11,19 +11,28 @@ jobs:
       fail-fast: false
       matrix:
         os_config:
-          - name: Ubuntu
+          - name: Ubuntu-x86_64
             runner: ubuntu-latest
             is_container_test: false
-          - name: macOS
-            runner: macos-latest
+            architecture: amd64
+          - name: macOS-x86_64
+            runner: macos-13
             is_container_test: false
-          - name: Windows
+            architecture: amd64
+          - name: macOS-arm64
+            runner: macos-14-arm64
+            is_container_test: false
+            architecture: arm64
+          - name: Windows-x86_64
             runner: windows-latest
             is_container_test: false
-          - name: CentOS (via Docker)
+            architecture: amd64
+          - name: CentOS-x86_64-on-UbuntuHost
             runner: ubuntu-latest
             is_container_test: true
             container_image: centos:7
+            architecture: amd64
+
         scenario: [default-run, custom-run]
 
     runs-on: ${{ matrix.os_config.runner }}
@@ -40,19 +49,29 @@ jobs:
     - name: Checkout code (includes ${{ env.TEST_SCRIPT_NAME }})
       uses: actions/checkout@v4
 
-    - name: Set up Docker (Host)
-      uses: docker-practice/actions-setup-docker@v1
-      with:
-        docker_version: '20.10.17'
+    - name: Verify Docker availability
+      shell: bash
+      run: |
+        echo "Checking for Docker on ${{ matrix.os_config.name }}..."
+        docker --version || (echo "::warning::Docker not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if Docker is not on host but will be in container.
+        # test_start_local.sh itself verifies Docker and will fail if it's missing and needed.
 
-    # jq is usually pre-installed. This is just a verification.
+    - name: Verify Docker Compose availability
+      shell: bash
+      run: |
+        echo "Checking for Docker Compose on ${{ matrix.os_config.name }}..."
+        docker compose version || (echo "::warning::Docker Compose not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if Docker Compose is not on host but will be in container.
+        # test_start_local.sh itself verifies Docker Compose and will fail if it's missing and needed.
+
     - name: Verify jq availability
       shell: bash
       run: |
         echo "Checking for jq on ${{ matrix.os_config.name }}..."
-        jq --version || (echo "::warning::jq not found or not executable on host/container base. test_runner.sh might fail if it needs it." && exit 0)
+        jq --version || (echo "::warning::jq not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
         # The exit 0 above prevents failure if jq is not on host but will be in container.
-        # test_runner.sh itself verifies jq and will fail if it's missing and needed.
+        # test_start_local.sh itself verifies jq and will fail if it's missing and needed.
 
     # ----------------------------------------------------------------------
     # MAIN TEST EXECUTION BLOCK
@@ -62,13 +81,13 @@ jobs:
       run: |
         # Prepare the working directory on the host
         # This directory will be mounted into the CentOS container if needed
-        # and will contain the test_runner.sh script after checkout.
+        # and will contain the test_start_local.sh script after checkout.
         mkdir -p ${{ env.TEST_WORK_DIR }}
         cp ${{ github.workspace }}/scripts/${{ env.TEST_SCRIPT_NAME }} ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
         chmod +x ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
         cd ${{ env.TEST_WORK_DIR }}
 
-        # Environment variables for the test_runner.sh script
+        # Environment variables for the test_start_local.sh script
         export SCENARIO_TO_RUN_ARG="${{ matrix.scenario }}"
         # SCRIPT_URL_ARG, DEFAULT_PASSWORD_ARG, etc., are already in the job's env,
         # so they will be inherited by this script execution directly on host,
@@ -76,7 +95,7 @@ jobs:
 
         if [[ "${{ matrix.os_config.is_container_test }}" == "true" ]]; then
           echo "Running test inside ${{ matrix.os_config.container_image }} container..."
-          # For DooD, mount host's Docker socket and the shared workspace (which now contains test_runner.sh)
+          # For DooD, mount host's Docker socket and the shared workspace (which now contains test_start_local.sh)
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v ${{ env.TEST_WORK_DIR }}:${{ env.TEST_WORK_DIR }}:rw \
@@ -89,11 +108,11 @@ jobs:
             ${{ matrix.os_config.container_image }} \
             bash -ec '
               echo "Inside CentOS container..."
-              echo "Installing prerequisites (curl, and jq if needed by test_runner.sh)..."
-              # Assuming test_runner.sh will use jq, ensure it is available.
+              echo "Installing prerequisites (curl, and jq if needed by test_start_local.sh)..."
+              # Assuming test_start_local.sh will use jq, ensure it is available.
               # Docker client should be present if start-local.sh uses `docker` cmd, but it uses `docker compose`.
               # `docker compose` needs to be handled by the host via the socket.
-              # The container only needs `curl` for start-local.sh and `jq` for test_runner.sh.
+              # The container only needs `curl` for start-local.sh and `jq` for test_start_local.sh.
               yum install -y curl gettext # gettext for envsubst if needed
               if ! command -v jq &> /dev/null; then
                 yum install -y epel-release || yum install -y oracle-epel-release-el7 || true
