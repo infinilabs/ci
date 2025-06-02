@@ -53,7 +53,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   log_info "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
   while [ $elapsed -lt $timeout_seconds ]; do
-    if curl --retry 3 --retry-delay 3 -s -u admin:"${DEFAULT_PASSWORD}" "http://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+    if curl --retry 3 --retry-delay 3 -s -u admin:"${DEFAULT_PASSWORD}" "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
       log_info "Default Easysearch is healthy."
       service_ready=true; break
     fi
@@ -76,12 +76,12 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
   curl -fsSL "${SCRIPT_URL}" | bash -s -- up --nodes "${NUM_NODES_EXPECTED}" --password "${CUSTOM_PASSWORD}"
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Custom UP failed"; fi
 
-  log_info "Waiting for custom Easysearch (${NUM_NODES_EXPECTED} nodes, max 180s)..."
-  timeout_seconds=180; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
+  log_info "Waiting for custom Easysearch (${NUM_NODES_EXPECTED} nodes, max ${NUM_NODES_EXPECTED}s)..."
+  timeout_seconds=${NUM_NODES_EXPECTED}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
   while [ $elapsed -lt $timeout_seconds ]; do
-    health_json=$(curl --retry 3 --retry-delay 3 -s -u admin:"${CUSTOM_PASSWORD}" "http://localhost:9200/_cluster/health?format=json")
+    health_json=$(curl --retry 3 --retry-delay 3 -s -u admin:"${CUSTOM_PASSWORD}" "https://localhost:9200/_cluster/health?format=json")
     if echo "${health_json}" | jq -e '.status == "green"' > /dev/null; then
-      nodes_json=$(curl --retry 3 --retry-delay 3 -s -u admin:"${CUSTOM_PASSWORD}" "http://localhost:9200/_cat/nodes?format=json")
+      nodes_json=$(curl --retry 3 --retry-delay 3 -s -u admin:"${CUSTOM_PASSWORD}" "https://localhost:9200/_cat/nodes?format=json")
       actual_nodes_in_cluster=$(echo "${nodes_json}" | jq 'length')
       if [ "${actual_nodes_in_cluster}" -eq "${NUM_NODES_EXPECTED}" ]; then
         log_info "Custom Easysearch is healthy with ${actual_nodes_in_cluster} nodes."

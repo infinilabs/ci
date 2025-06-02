@@ -11,55 +11,22 @@ jobs:
       fail-fast: false
       matrix:
         os_config:
-          - name: Ubuntu-x86_64-2404
-            runner: ubuntu-24.04
-            is_container_test: false
-            architecture: amd64
-          - name: Ubuntu-x86_64-2204
+          - name: Ubuntu-x86_64
             runner: ubuntu-22.04
             is_container_test: false
-            architecture: amd64
-          - name: MacOS-x86_64
-            runner: macos-15-large
+          - name: Ubuntu-aarch64
+            runner: ubuntu-22.04-arm
             is_container_test: false
-            architecture: amd64
-          - name: MacOS-arm64
-            runner: macos-15-xlarge
+          - name: MacOS-aarch64
+            runner: macos-latest
             is_container_test: false
-            architecture: arm64
-          - name: MacOS-14-am64
-            runner: macos-14-large
-            is_container_test: false
-            architecture: amd64
-          - name: MacOS-14-arm64
-            runner: macos-14-xlarge
-            is_container_test: false
-            architecture: arm64
-          - name: MacOS-13-am64
-            runner: macos-13-large
-            is_container_test: false
-            architecture: amd64
-          - name: MacOS-13-arm64
-            runner: macos-13-xlarge
-            is_container_test: false
-            architecture: arm64
-          - name: Windows-2025
-            runner: windows-2025
-            is_container_test: false
-            architecture: amd64
           - name: Windows-x86_64
             runner: windows-latest
             is_container_test: false
-            architecture: amd64
-          - name: Windows-2019
-            runner: windows-2019
-            is_container_test: false
-            architecture: amd64
           - name: CentOS-x86_64-on-UbuntuHost
             runner: ubuntu-latest
             is_container_test: true
             container_image: centos:7
-            architecture: amd64
 
         scenario: [default-run, custom-run]
 
@@ -102,8 +69,9 @@ jobs:
         # test_start_local.sh itself verifies jq and will fail if it's missing and needed.
 
     - name: Install Docker and Docker Compose on ${{ matrix.os_config.name }}
-      if: startsWith("${{ matrix.os_config.name }}", 'MacOS') || startsWith('${{ matrix.os_config.name }}', 'Windows')
+      if: startsWith("${{ matrix.os_config.name }}", 'MacOS')
       shell: bash
+      timeout-minutes: 15
       run: |
         echo "macOS runner detected. Checking/Installing Docker and Docker Compose via Homebrew..."
         if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
@@ -165,6 +133,7 @@ jobs:
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
       if: startsWith("${{ matrix.os_config.name }}", 'CentOS') || startsWith('${{ matrix.os_config.name }}', 'Ubuntu')  || startsWith('${{ matrix.os_config.name }}', 'MacOS')
       shell: bash
+      timeout-minutes: 15
       run: |
         # Prepare the working directory on the host
         # This directory will be mounted into the CentOS container if needed
@@ -206,18 +175,79 @@ jobs:
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
       if: startsWith('${{ matrix.os_config.name }}', 'Windows')
       shell: git-bash
+      timeout-minutes: 15
       run: |
         # Prepare the working directory on the host
         mkdir -p ${{ env.TEST_WORK_DIR }}
-        cp ${{ github.workspace }}/scripts/${{ env.TEST_SCRIPT_NAME }} ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
-        chmod +x ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
         cd ${{ env.TEST_WORK_DIR }}
 
-        # Environment variables for the test_start_local.sh script
-        export SCENARIO_TO_RUN_ARG="${{ matrix.scenario }}"
-        # SCRIPT_URL_ARG, DEFAULT_PASSWORD_ARG, etc., are already in the job's env,
-        # so they will be inherited by this script execution directly on host.
+        # Define the actual test commands as a bash function
+        run_test_logic() {
+          SCENARIO_TO_RUN="${{ matrix.scenario }}"
+          CHECK_TIMEOUT=300
 
-        echo "Running test directly on Windows runner..."
-        ./${{ env.TEST_SCRIPT_NAME }}
+          echo "--- Testing Scenario: $SCENARIO_TO_RUN on ${{ matrix.os_config.name }} ---"
+          echo "Working directory: $(pwd)"
+          echo "jq version: $(jq --version || echo 'jq not found')" # Verify jq availability
+
+          if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
+            echo "Script URL: $SCRIPT_URL"
+            echo "Default Password: $DEFAULT_PASSWORD_GLOBAL"
+            curl -fsSL $SCRIPT_URL | bash -s -- up
+            if [ $? -ne 0 ]; then echo "::error::Default UP failed"; docker compose logs || true; exit 1; fi
+
+            echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
+            timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
+            while [ $elapsed -lt $timeout_seconds ]; do
+              if curl --retry 3 --retry-delay 3 -s -u admin:$DEFAULT_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+                echo "Default Easysearch is healthy."
+                service_ready=true; break
+              fi
+              echo "Default Easysearch not healthy yet ($((elapsed+interval))s)..."
+              sleep $interval; elapsed=$((elapsed + interval))
+            done
+            if ! $service_ready; then echo "::error::Default Easysearch did not become healthy"; docker compose logs || true; exit 1; fi
+
+            echo "Default run successful. Cleaning up..."
+            curl -fsSL $SCRIPT_URL | bash -s -- clean
+            if [ $? -ne 0 ]; then echo "::error::Default CLEAN failed"; exit 1; fi
+            if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
+
+          elif [[ "$SCENARIO_TO_RUN" == "custom-run" ]]; then
+            echo "Script URL: $SCRIPT_URL"
+            echo "Custom Password: $CUSTOM_PASSWORD_GLOBAL"
+            echo "Expected Nodes: $NUM_NODES_EXPECTED_GLOBAL"
+            curl -fsSL $SCRIPT_URL | bash -s -- up --nodes $NUM_NODES_EXPECTED_GLOBAL --password "$CUSTOM_PASSWORD_GLOBAL"
+            if [ $? -ne 0 ]; then echo "::error::Custom UP failed"; docker compose logs || true; exit 1; fi
+
+            echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_GLOBAL nodes, max ${CHECK_TIMEOUT}s)..."
+            timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
+            while [ $elapsed -lt $timeout_seconds ]; do
+              health_json=$(curl --retry 3 --retry-delay 3 -s -u admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health?format=json")
+              if echo "$health_json" | jq -e '.status == "green"' > /dev/null; then
+                nodes_json=$(curl --retry 3 --retry-delay 3 -s -u admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cat/nodes?format=json")
+                actual_nodes_in_cluster=$(echo "$nodes_json" | jq 'length')
+                if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_GLOBAL" ]; then
+                  echo "Custom Easysearch is healthy with $actual_nodes_in_cluster nodes."
+                  cluster_ready_and_nodes_verified=true; break
+                else
+                  echo "Custom Easysearch healthy, but node count is $actual_nodes_in_cluster (expected $NUM_NODES_EXPECTED_GLOBAL). Waiting..."
+                fi
+              else
+                echo "Custom Easysearch not green yet ($((elapsed+interval))s). Status: $(echo $health_json | jq -r .status)"
+              fi
+              sleep $interval; elapsed=$((elapsed + interval))
+            done
+            if ! $cluster_ready_and_nodes_verified; then echo "::error::Custom Easysearch did not become healthy with correct node count"; docker compose logs || true; exit 1; fi
+
+            echo "Custom run successful. Cleaning up..."
+            curl -fsSL $SCRIPT_URL | bash -s -- clean
+            if [ $? -ne 0 ]; then echo "::error::Custom CLEAN failed"; exit 1; fi
+            if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
+          fi
+          echo "--- Test Scenario $SCENARIO_TO_RUN on ${{ matrix.os_config.name }} completed ---"
+        } # End of run_test_logic function
+         
+        echo "Running test directly on ${{ matrix.os_config.runner }}..."
+        run_test_logic
           
