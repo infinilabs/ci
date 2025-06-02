@@ -21,6 +21,9 @@ log_error() {
 
 cleanup_and_exit_failure() {
   log_error "$1"
+  # check the logs
+  curl -fsSL "${SCRIPT_URL}" | bash -s -- logs || log_info "Failed to fetch logs, continuing cleanup."
+  
   log_info "Attempting cleanup after failure..."
   # Assuming startlocal directory is in current working directory
   if [ -d "./startlocal" ]; then
