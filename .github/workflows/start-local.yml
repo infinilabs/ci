@@ -153,6 +153,7 @@ jobs:
           echo "Running test inside ${{ matrix.os_config.container_image }} container..."
           # For DooD, mount host's Docker socket and the shared workspace (which now contains test_start_local.sh)
           docker run --rm \
+            --dns 8.8.8.8 --dns 1.1.1.1 \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v ${{ env.TEST_WORK_DIR }}:${{ env.TEST_WORK_DIR }}:rw \
             -w ${{ env.TEST_WORK_DIR }} \
