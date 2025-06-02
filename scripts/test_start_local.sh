@@ -9,6 +9,7 @@ SCRIPT_URL="${SCRIPT_URL_ARG}"
 DEFAULT_PASSWORD="${DEFAULT_PASSWORD_ARG}"
 CUSTOM_PASSWORD="${CUSTOM_PASSWORD_ARG}"
 NUM_NODES_EXPECTED="${NUM_NODES_EXPECTED_ARG:-1}"
+CHECK_TIMEOUT=300
 
 # --- Helper Functions (optional, can be part of this script) ---
 log_info() {
@@ -21,9 +22,11 @@ log_error() {
 
 cleanup_and_exit_failure() {
   log_error "$1"
+
   # check the logs
+  log_info "Fetching logs for debugging..."
   curl -fsSL "${SCRIPT_URL}" | bash -s -- logs || log_info "Failed to fetch logs, continuing cleanup."
-  
+
   log_info "Attempting cleanup after failure..."
   # Assuming startlocal directory is in current working directory
   if [ -d "./startlocal" ]; then
@@ -47,8 +50,8 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   curl -fsSL "${SCRIPT_URL}" | bash -s -- up
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default UP failed"; fi
 
-  log_info "Waiting for default Easysearch (max 120s)..."
-  timeout_seconds=120; interval=10; elapsed=0; service_ready=false
+  log_info "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
+  timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
   while [ $elapsed -lt $timeout_seconds ]; do
     if curl --retry 3 --retry-delay 3 -s -u admin:"${DEFAULT_PASSWORD}" "http://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
       log_info "Default Easysearch is healthy."

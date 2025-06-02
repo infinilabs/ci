@@ -11,20 +11,48 @@ jobs:
       fail-fast: false
       matrix:
         os_config:
-          - name: Ubuntu-x86_64
-            runner: ubuntu-latest
+          - name: Ubuntu-x86_64-2404
+            runner: ubuntu-24.04
             is_container_test: false
             architecture: amd64
-          - name: macOS-x86_64
-            runner: macos-latest
+          - name: Ubuntu-x86_64-2204
+            runner: ubuntu-22.04
             is_container_test: false
             architecture: amd64
-          - name: macOS-arm64
-            runner: macos-latest
+          - name: MacOS-x86_64
+            runner: macos-15-large
+            is_container_test: false
+            architecture: amd64
+          - name: MacOS-arm64
+            runner: macos-15-xlarge
             is_container_test: false
             architecture: arm64
+          - name: MacOS-14-am64
+            runner: macos-14-large
+            is_container_test: false
+            architecture: amd64
+          - name: MacOS-14-arm64
+            runner: macos-14-xlarge
+            is_container_test: false
+            architecture: arm64
+          - name: MacOS-13-am64
+            runner: macos-13-large
+            is_container_test: false
+            architecture: amd64
+          - name: MacOS-13-arm64
+            runner: macos-13-xlarge
+            is_container_test: false
+            architecture: arm64
+          - name: Windows-2025
+            runner: windows-2025
+            is_container_test: false
+            architecture: amd64
           - name: Windows-x86_64
             runner: windows-latest
+            is_container_test: false
+            architecture: amd64
+          - name: Windows-2019
+            runner: windows-2019
             is_container_test: false
             architecture: amd64
           - name: CentOS-x86_64-on-UbuntuHost
@@ -73,11 +101,69 @@ jobs:
         # The exit 0 above prevents failure if jq is not on host but will be in container.
         # test_start_local.sh itself verifies jq and will fail if it's missing and needed.
 
-    # ----------------------------------------------------------------------
-    # MAIN TEST EXECUTION BLOCK
-    # ----------------------------------------------------------------------
-    - name: Execute Test Scenario on ${{ matrix.os_config.name }}
-      continue-on-error: true
+    - name: Install Docker and Docker Compose on ${{ matrix.os_config.name }}
+      if: startsWith("${{ matrix.os_config.name }}", 'MacOS') || startsWith('${{ matrix.os_config.name }}', 'Windows')
+      shell: bash
+      run: |
+        echo "macOS runner detected. Checking/Installing Docker and Docker Compose via Homebrew..."
+        if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
+          echo "Docker or Docker Compose not found or not fully functional. Attempting installation..."
+          # Ensure Homebrew is updated
+          brew update --quiet
+          # Install Docker (this usually includes docker, docker-compose or docker compose plugin)
+          # Using 'docker' formula often installs Docker Desktop or Colima, which can be heavy.
+          # Consider 'docker-slim' or just 'docker' and 'docker-compose' if available as separate CLI formulae.
+          # For a full environment similar to local dev, Docker Desktop via cask might be needed.
+          # However, for CI, a lighter CLI setup is often preferred if possible.
+
+          # Option 1: Install docker CLI and docker-compose separately (if available and sufficient)
+          # brew install docker docker-compose # Check if these formulae provide CLI without full Desktop app
+          # OR
+          # Option 2: Install Docker (might install Docker Desktop, which is heavier but more complete)
+          brew install --cask docker # This installs Docker Desktop
+          echo "Docker Desktop installation requested. It might take some time and require GUI interaction if not handled."
+          echo "INFO: Docker Desktop installation on CI might be tricky. Ensure it runs headlessly."
+          echo "INFO: After Docker Desktop install, CLI tools should be in PATH after shell sourcing or new terminal."
+          echo "Attempting to start Docker Desktop if it was installed..."
+          # Starting Docker Desktop from CLI can be complex and might require backgrounding.
+          # Example: open /Applications/Docker.app --background
+          # This part is highly dependent on how Docker Desktop behaves in a CI environment.
+          # It's often simpler if the runner image *already* has Docker setup.
+
+          # A more CI-friendly way for macOS if Docker Desktop isn't pre-configured:
+          # Using Colima (Lima-VM based, lighter than Docker Desktop for CLI)
+          # brew install colima docker docker-compose
+          # colima start
+          # docker context use colima # (or ensure it's the default)
+
+          # For this example, we'll assume 'brew install --cask docker' is what's needed
+          # if Docker isn't present. This is the most common way for macOS users.
+          # BUT IT IS HEAVY AND POTENTIALLY PROBLEMATIC IN CI.
+
+          # A more direct approach IF Docker CLI and Compose are just missing from PATH
+          # but Docker Engine (from a previous partial install or different setup) might exist:
+          # Try to find and add Docker paths. This is speculative.
+          # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+          # export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin" # Add Docker Desktop's CLI tools path
+
+          # Re-check after attempting installation/path fix
+          if ! command -v docker &> /dev/null; then
+            echo "::error::Docker CLI still not found after attempting Homebrew installation."
+            exit 1
+          fi
+          if ! (docker compose version &> /dev/null || docker-compose --version &> /dev/null) ; then
+            echo "::error::Docker Compose still not found after attempting Homebrew installation."
+            exit 1
+          fi
+          echo "Docker and Docker Compose should now be available."
+        else
+          echo "Docker and Docker Compose already found on macOS."
+        fi
+        docker --version
+        docker compose version || docker-compose --version
+
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
+      if: startsWith("${{ matrix.os_config.name }}", 'CentOS') || startsWith('${{ matrix.os_config.name }}', 'Ubuntu')  || startsWith('${{ matrix.os_config.name }}', 'MacOS')
       shell: bash
       run: |
         # Prepare the working directory on the host
@@ -109,22 +195,29 @@ jobs:
             ${{ matrix.os_config.container_image }} \
             bash -ec '
               echo "Inside CentOS container..."
-              echo "Installing prerequisites (curl, and jq if needed by test_start_local.sh)..."
-              # Assuming test_start_local.sh will use jq, ensure it is available.
-              # Docker client should be present if start-local.sh uses `docker` cmd, but it uses `docker compose`.
-              # `docker compose` needs to be handled by the host via the socket.
-              # The container only needs `curl` for start-local.sh and `jq` for test_start_local.sh.
-              yum install -y curl gettext # gettext for envsubst if needed
-              if ! command -v jq &> /dev/null; then
-                yum install -y epel-release || yum install -y oracle-epel-release-el7 || true
-                yum install -y jq
-              fi
-              echo "Prerequisites checked/installed."
-              echo "jq version in container: $(jq --version || echo "jq not found in container")"
               echo "Executing ./${{ env.TEST_SCRIPT_NAME }} in container..."
               ./${{ env.TEST_SCRIPT_NAME }} # Execute the mounted script
             '
         else
           echo "Running test directly on ${{ matrix.os_config.runner }}..."
-          ./${{ env.TEST_SCRIPT_NAME }} # Execute the script directly on the host
+          ./${{ env.TEST_SCRIPT_NAME }}
         fi
+
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
+      if: startsWith('${{ matrix.os_config.name }}', 'Windows')
+      shell: git-bash
+      run: |
+        # Prepare the working directory on the host
+        mkdir -p ${{ env.TEST_WORK_DIR }}
+        cp ${{ github.workspace }}/scripts/${{ env.TEST_SCRIPT_NAME }} ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        chmod +x ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        cd ${{ env.TEST_WORK_DIR }}
+
+        # Environment variables for the test_start_local.sh script
+        export SCENARIO_TO_RUN_ARG="${{ matrix.scenario }}"
+        # SCRIPT_URL_ARG, DEFAULT_PASSWORD_ARG, etc., are already in the job's env,
+        # so they will be inherited by this script execution directly on host.
+
+        echo "Running test directly on Windows runner..."
+        ./${{ env.TEST_SCRIPT_NAME }}
+          
