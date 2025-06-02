@@ -128,7 +128,7 @@ jobs:
           echo "Docker and Docker Compose already found on macOS."
         fi
         docker --version
-        docker compose version || docker-compose --version
+        docker compose version || docker-compose --version      q      
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
       if: startsWith("${{ matrix.os_config.name }}", 'CentOS') || startsWith('${{ matrix.os_config.name }}', 'Ubuntu')  || startsWith('${{ matrix.os_config.name }}', 'MacOS')
@@ -164,6 +164,41 @@ jobs:
             ${{ matrix.os_config.container_image }} \
             bash -ec '
               echo "Inside CentOS container..."
+              echo "Updating yum cache and installing prerequisites..."
+              yum update -y -q # Update cache first
+              yum install -y -q curl gettext yum-utils # Basic tools + yum-utils for repos
+              echo "Setting up Docker CE repo and installing docker-ce-cli..."
+              yum-config-manager --quiet --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+              # Install docker-ce-cli. This provides "docker" and the "docker compose" plugin.
+              # For CentOS 7, you might need a specific version or to handle dependencies like containerd.io if installing full docker-ce.
+              # However, for CLI only, docker-ce-cli should be sufficient and lighter.
+              yum install -y -q docker-ce-cli
+              if [ $? -ne 0 ]; then
+                echo "::error::Failed to install docker-ce-cli in CentOS container!"
+                # As a fallback, or if older compose is needed, try installing docker-compose (v1)
+                echo "Attempting to install docker-compose (v1) as a fallback..."
+                LATEST_COMPOSE_V1=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)
+                if [ -n "$LATEST_COMPOSE_V1" ]; then
+                  curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE_V1}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                  chmod +x /usr/local/bin/docker-compose
+                  echo "docker-compose (v1) installed: $(docker-compose --version || echo "v1 install check failed")"
+                else
+                  echo "Could not determine latest docker-compose v1 version."
+                fi
+              fi
+              echo "--- Prerequisites in CentOS Container Checked/Installed ---"
+
+              echo "--- Debugging Docker/Compose Availability IN CentOS CONTAINER ---"
+              echo "Current user: $(whoami)"
+              echo "Current PATH: $PATH"
+              echo "Attempting ''command -v docker'': $(command -v docker || echo ''NOT FOUND'')"
+              docker --version || echo "docker --version FAILED IN CONTAINER"
+              echo "Attempting ''docker compose version'' (v2 plugin):"
+              docker compose version || echo "docker compose version FAILED IN CONTAINER (v2 plugin)"
+              echo "Attempting ''docker-compose --version'' (v1 standalone):"
+              docker-compose --version || echo "docker-compose --version FAILED IN CONTAINER (v1)"
+              echo "--- End Debugging IN CentOS CONTAINER ---"
+
               echo "Executing ./${{ env.TEST_SCRIPT_NAME }} in container..."
               ./${{ env.TEST_SCRIPT_NAME }} # Execute the mounted script
             '
@@ -174,7 +209,7 @@ jobs:
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
       if: startsWith('${{ matrix.os_config.name }}', 'Windows')
-      shell: git-bash
+      shell: bash
       timeout-minutes: 15
       run: |
         # Prepare the working directory on the host
@@ -188,7 +223,7 @@ jobs:
 
           echo "--- Testing Scenario: $SCENARIO_TO_RUN on ${{ matrix.os_config.name }} ---"
           echo "Working directory: $(pwd)"
-          echo "jq version: $(jq --version || echo 'jq not found')" # Verify jq availability
+          echo "jq version: $(jq --version || echo 'jq not found')"
 
           if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
             echo "Script URL: $SCRIPT_URL"
