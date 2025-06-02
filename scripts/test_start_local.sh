@@ -36,17 +36,17 @@ try_fetch_app_logs() {
     LOGS_PID=$!
     # Wait for a bit, then kill if still running
     # This is a very basic timeout mechanism for the logs command
-    for _ in $(seq 1 6); do # Check every 5 seconds for 30 seconds
-        if ! kill -0 $LOGS_PID 2>/dev/null; then # Process finished
-            wait $LOGS_PID # Capture exit code
+    for _ in $(seq 1 6); do
+        if ! kill -0 $LOGS_PID 2>/dev/null; then
+            wait $LOGS_PID
             log_info "Logs command finished."
             return
         fi
         sleep 5
     done
     log_info "Logs command still running after 30s, attempting to kill."
-    kill $LOGS_PID 2>/dev/null || true # Kill the process
-    wait $LOGS_PID 2>/dev/null || true # Reap the process
+    kill $LOGS_PID 2>/dev/null || true
+    wait $LOGS_PID 2>/dev/null || true
     log_info "Logs command killed or finished."
   ) || log_info "There was an issue trying to fetch or timeout the logs command."
 }
@@ -54,7 +54,7 @@ try_fetch_app_logs() {
 
 cleanup_and_exit_failure() {
   log_error "$1"
-  try_fetch_app_logs # Attempt to get application logs for debugging
+  try_fetch_app_logs
 
   log_info "Attempting cleanup using 'start-local.sh clean' after failure..."
   if [ -d "./startlocal" ]; then # Check if the work directory exists
@@ -113,6 +113,9 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   # Execute the 'up' command using start-local.sh
   curl -fsSL "${SCRIPT_URL}" | bash -s -- up
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh up' command failed"; fi
+  
+  log_info "Initial sleep for 20s after 'up' to allow service full initialization..."
+  sleep 20
 
   log_info "Waiting for default Easysearch (port ${PORT_TO_CHECK} and health, max ${CHECK_TIMEOUT}s)..."
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
@@ -126,11 +129,11 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
       
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl --fail --connect-timeout 10 --retry 2 --retry-delay 3 \
-                       -s -w "%{http_code}" \
-                       -u "admin:${DEFAULT_PASSWORD}" \
-                       "http://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
-                       -o "${body_file}")
+      http_code=$(curl -v --trace-ascii - --fail --connect-timeout 15 --retry 1 --retry-delay 5 \
+                   -s -w "%{http_code}" \
+                   -u "admin:${DEFAULT_PASSWORD}" \
+                   "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
+                   -o "${body_file}")
       curl_exit_code=$?
 
       if [ $curl_exit_code -eq 0 ] && [[ "$http_code" == "200" ]]; then
@@ -188,7 +191,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
       health_http_code=$(curl --fail --connect-timeout 10 --retry 2 --retry-delay 3 \
                              -s -w "%{http_code}" \
                              -u "admin:${CUSTOM_PASSWORD}" \
-                             "http://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
+                             "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}")
       health_curl_exit_code=$?
 
@@ -200,7 +203,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
           nodes_http_code=$(curl --fail --connect-timeout 10 --retry 2 --retry-delay 3 \
                                  -s -w "%{http_code}" \
                                  -u "admin:${CUSTOM_PASSWORD}" \
-                                 "http://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
+                                 "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
                                  -o "${nodes_body_file}")
           nodes_curl_exit_code=$?
 
