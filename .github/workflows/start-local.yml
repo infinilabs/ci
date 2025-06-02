@@ -77,54 +77,8 @@ jobs:
         echo "macOS runner detected. Checking/Installing Docker and Docker Compose via Homebrew..."
         if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
           echo "Docker or Docker Compose not found or not fully functional. Attempting installation..."
-          # Ensure Homebrew is updated
-          brew update --quiet
-          # Install Docker (this usually includes docker, docker-compose or docker compose plugin)
-          # Using 'docker' formula often installs Docker Desktop or Colima, which can be heavy.
-          # Consider 'docker-slim' or just 'docker' and 'docker-compose' if available as separate CLI formulae.
-          # For a full environment similar to local dev, Docker Desktop via cask might be needed.
-          # However, for CI, a lighter CLI setup is often preferred if possible.
-
-          # Option 1: Install docker CLI and docker-compose separately (if available and sufficient)
-          # brew install docker docker-compose # Check if these formulae provide CLI without full Desktop app
-          # OR
-          # Option 2: Install Docker (might install Docker Desktop, which is heavier but more complete)
-          brew install --cask docker && brew install docker-compose # This installs Docker Desktop and Docker Compose plugin
-          echo "Docker Desktop installation requested. It might take some time and require GUI interaction if not handled."
-          echo "INFO: Docker Desktop installation on CI might be tricky. Ensure it runs headlessly."
-          echo "INFO: After Docker Desktop install, CLI tools should be in PATH after shell sourcing or new terminal."
-          echo "Attempting to start Docker Desktop if it was installed..."
-          # Starting Docker Desktop from CLI can be complex and might require backgrounding.
-          open /Applications/Docker.app --background
-          # This part is highly dependent on how Docker Desktop behaves in a CI environment.
-          # It's often simpler if the runner image *already* has Docker setup.
-
-          max_wait=${CHECK_TIMEOUT_ARG:-300} # Default to 5 minutes if not set
-          interval=10
-          elapsed=0
-          docker_ready=false
-          while [ $elapsed -lt $max_wait ]; do
-            if docker info > /dev/null 2>&1 && docker version > /dev/null 2>&1; then
-              echo "Docker Engine appears to be running."
-              docker_ready=true
-              break
-            fi
-            echo "Docker Engine not ready yet, waiting $interval seconds... (elapsed: $elapsed/$max_wait)"
-            sleep $interval
-            elapsed=$((elapsed + interval))
-          done
-
-          if ! $docker_ready; then
-            echo "::error::Docker Engine did not become available after starting Docker.app."
-            exit 1
-          fi
-
-          # A more direct approach IF Docker CLI and Compose are just missing from PATH
-          # but Docker Engine (from a previous partial install or different setup) might exist:
-          # Try to find and add Docker paths. This is speculative.
-          export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin"
-          echo 'PATH=\$PATH:/Applications/Docker.app/Contents/Resources/bin' >> ~/.bash_profile
-
+          # Ensure Homebrew is updated and install Orbstack
+          brew update --quiet && brew install --cask orbstack
           # Re-check after attempting installation/path fix
           if ! command -v docker &> /dev/null; then
             echo "::error::Docker CLI still not found after attempting Homebrew installation."
@@ -139,7 +93,7 @@ jobs:
           echo "Docker and Docker Compose already found on macOS."
         fi
         docker --version
-        docker compose version || docker-compose --version      q      
+        docker compose version || docker-compose --version
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
       if: matrix.os_config.runner != 'windows-latest'
@@ -238,9 +192,9 @@ jobs:
           echo "jq version: $(jq --version || echo 'jq not found')"
 
           if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
-            echo "Script URL: $SCRIPT_URL"
+            echo "Script URL: $SCRIPT_URL_ARG"
             echo "Default Password: $DEFAULT_PASSWORD_ARG"
-            curl -fsSL $SCRIPT_URL | bash -s -- up
+            curl -fsSL $SCRIPT_URL_ARG | bash -s -- up
             if [ $? -ne 0 ]; then echo "::error::Default UP failed"; docker compose logs || true; exit 1; fi
 
             echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
@@ -256,15 +210,15 @@ jobs:
             if ! $service_ready; then echo "::error::Default Easysearch did not become healthy"; docker compose logs || true; exit 1; fi
 
             echo "Default run successful. Cleaning up..."
-            curl -fsSL $SCRIPT_URL | bash -s -- clean
+            curl -fsSL $SCRIPT_URL_ARG | bash -s -- clean
             if [ $? -ne 0 ]; then echo "::error::Default CLEAN failed"; exit 1; fi
             if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
 
           elif [[ "$SCENARIO_TO_RUN" == "custom-run" ]]; then
-            echo "Script URL: $SCRIPT_URL"
+            echo "Script URL: $SCRIPT_URL_ARG"
             echo "Custom Password: $CUSTOM_PASSWORD_ARG"
             echo "Expected Nodes: $NUM_NODES_EXPECTED_ARG"
-            curl -fsSL $SCRIPT_URL | bash -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
+            curl -fsSL $SCRIPT_URL_ARG | bash -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
             if [ $? -ne 0 ]; then echo "::error::Custom UP failed"; docker compose logs || true; exit 1; fi
 
             echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_ARG nodes, max ${CHECK_TIMEOUT}s)..."
@@ -288,7 +242,7 @@ jobs:
             if ! $cluster_ready_and_nodes_verified; then echo "::error::Custom Easysearch did not become healthy with correct node count"; docker compose logs || true; exit 1; fi
 
             echo "Custom run successful. Cleaning up..."
-            curl -fsSL $SCRIPT_URL | bash -s -- clean
+            curl -fsSL $SCRIPT_URL_ARG | bash -s -- clean
             if [ $? -ne 0 ]; then echo "::error::Custom CLEAN failed"; exit 1; fi
             if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
           fi
