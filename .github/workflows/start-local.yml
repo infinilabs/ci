@@ -234,7 +234,7 @@ jobs:
             echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
             timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              if curl --retry 3 --retry-delay 3 -s -u admin:$DEFAULT_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+              if curl --retry 3 --retry-delay 3 -s -ku admin:$DEFAULT_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
                 echo "Default Easysearch is healthy."
                 service_ready=true; break
               fi
@@ -258,9 +258,9 @@ jobs:
             echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_GLOBAL nodes, max ${CHECK_TIMEOUT}s)..."
             timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              health_json=$(curl --retry 3 --retry-delay 3 -s -u admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health?format=json")
+              health_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health?format=json")
               if echo "$health_json" | jq -e '.status == "green"' > /dev/null; then
-                nodes_json=$(curl --retry 3 --retry-delay 3 -s -u admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cat/nodes?format=json")
+                nodes_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cat/nodes?format=json")
                 actual_nodes_in_cluster=$(echo "$nodes_json" | jq 'length')
                 if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_GLOBAL" ]; then
                   echo "Custom Easysearch is healthy with $actual_nodes_in_cluster nodes."
