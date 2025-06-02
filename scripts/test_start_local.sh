@@ -32,7 +32,7 @@ try_fetch_app_logs() {
     # For simplicity, assuming it's inherited or re-exported if needed.
     # The 'curl | bash' part might need careful handling of variables if SCRIPT_URL is not directly accessible.
     # If SCRIPT_URL is an env var, it should be fine.
-    curl -fsSL "${SCRIPT_URL}" | bash -s -- logs &
+    curl -fsSL "${SCRIPT_URL}" | sh -s -- logs &
     LOGS_PID=$!
     # Wait for a bit, then kill if still running
     # This is a very basic timeout mechanism for the logs command
@@ -58,7 +58,7 @@ cleanup_and_exit_failure() {
 
   log_info "Attempting cleanup using 'start-local.sh clean' after failure..."
   if [ -d "./startlocal" ]; then # Check if the work directory exists
-    curl -fsSL "${SCRIPT_URL}" | bash -s -- clean || log_info "Cleanup command ('start-local.sh clean') also had issues."
+    curl -fsSL "${SCRIPT_URL}" | sh -s -- clean || log_info "Cleanup command ('start-local.sh clean') also had issues."
   else
     log_info "No ./startlocal directory found (relative to current dir: $(pwd)). Skipping 'start-local.sh clean'."
   fi
@@ -111,7 +111,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   log_info "Default Password: (hidden for security, using variable)"
 
   # Execute the 'up' command using start-local.sh
-  curl -fsSL "${SCRIPT_URL}" | bash -s -- up
+  curl -fsSL "${SCRIPT_URL}" | sh -s -- up
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh up' command failed"; fi
   
   log_info "Initial sleep for 20s after 'up' to allow service full initialization..."
@@ -164,7 +164,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   if ! $service_ready; then cleanup_and_exit_failure "Default Easysearch did not become healthy within ${timeout_seconds}s"; fi
 
   log_info "Default run successful. Cleaning up..."
-  curl -fsSL "${SCRIPT_URL}" | bash -s -- clean
+  curl -fsSL "${SCRIPT_URL}" | sh -s -- clean
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh clean' command failed"; fi
   if [ -d "./startlocal" ]; then cleanup_and_exit_failure "Work dir ./startlocal still exists after clean!"; fi
   log_info "Default run scenario completed successfully."
@@ -174,7 +174,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
   log_info "Custom Password: (hidden for security, using variable)"
   log_info "Expected Nodes: ${NUM_NODES_EXPECTED}"
 
-  curl -fsSL "${SCRIPT_URL}" | bash -s -- up --nodes "${NUM_NODES_EXPECTED}" --password "${CUSTOM_PASSWORD}"
+  curl -fsSL "${SCRIPT_URL}" | sh -s -- up --nodes "${NUM_NODES_EXPECTED}" --password "${CUSTOM_PASSWORD}"
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Custom 'start-local.sh up' command failed"; fi
 
   log_info "Waiting for custom Easysearch (port ${PORT_TO_CHECK}, ${NUM_NODES_EXPECTED} nodes, max ${CHECK_TIMEOUT}s)..."
@@ -249,7 +249,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
   if ! $cluster_ready_and_nodes_verified; then cleanup_and_exit_failure "Custom Easysearch did not become healthy with correct node count within ${timeout_seconds}s"; fi
   
   log_info "Custom run successful. Cleaning up..."
-  curl -fsSL "${SCRIPT_URL}" | bash -s -- clean
+  curl -fsSL "${SCRIPT_URL}" | sh -s -- clean
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Custom 'start-local.sh clean' command failed"; fi
   if [ -d "./startlocal" ]; then cleanup_and_exit_failure "Work dir ./startlocal still exists after clean!"; fi
   log_info "Custom run scenario completed successfully."
