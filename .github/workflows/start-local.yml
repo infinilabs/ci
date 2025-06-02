@@ -227,14 +227,14 @@ jobs:
 
           if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
             echo "Script URL: $SCRIPT_URL"
-            echo "Default Password: $DEFAULT_PASSWORD_GLOBAL"
+            echo "Default Password: $DEFAULT_PASSWORD_ARG"
             curl -fsSL $SCRIPT_URL | bash -s -- up
             if [ $? -ne 0 ]; then echo "::error::Default UP failed"; docker compose logs || true; exit 1; fi
 
             echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT}s)..."
             timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              if curl --retry 3 --retry-delay 3 -s -ku admin:$DEFAULT_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+              if curl --retry 3 --retry-delay 3 -s -ku admin:$DEFAULT_PASSWORD_ARG "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
                 echo "Default Easysearch is healthy."
                 service_ready=true; break
               fi
@@ -250,23 +250,23 @@ jobs:
 
           elif [[ "$SCENARIO_TO_RUN" == "custom-run" ]]; then
             echo "Script URL: $SCRIPT_URL"
-            echo "Custom Password: $CUSTOM_PASSWORD_GLOBAL"
-            echo "Expected Nodes: $NUM_NODES_EXPECTED_GLOBAL"
-            curl -fsSL $SCRIPT_URL | bash -s -- up --nodes $NUM_NODES_EXPECTED_GLOBAL --password "$CUSTOM_PASSWORD_GLOBAL"
+            echo "Custom Password: $CUSTOM_PASSWORD_ARG"
+            echo "Expected Nodes: $NUM_NODES_EXPECTED_ARG"
+            curl -fsSL $SCRIPT_URL | bash -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
             if [ $? -ne 0 ]; then echo "::error::Custom UP failed"; docker compose logs || true; exit 1; fi
 
-            echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_GLOBAL nodes, max ${CHECK_TIMEOUT}s)..."
+            echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_ARG nodes, max ${CHECK_TIMEOUT}s)..."
             timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              health_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cluster/health?format=json")
+              health_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_ARG "https://localhost:9200/_cluster/health?format=json")
               if echo "$health_json" | jq -e '.status == "green"' > /dev/null; then
-                nodes_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_GLOBAL "https://localhost:9200/_cat/nodes?format=json")
+                nodes_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:$CUSTOM_PASSWORD_ARG "https://localhost:9200/_cat/nodes?format=json")
                 actual_nodes_in_cluster=$(echo "$nodes_json" | jq 'length')
-                if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_GLOBAL" ]; then
+                if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_ARG" ]; then
                   echo "Custom Easysearch is healthy with $actual_nodes_in_cluster nodes."
                   cluster_ready_and_nodes_verified=true; break
                 else
-                  echo "Custom Easysearch healthy, but node count is $actual_nodes_in_cluster (expected $NUM_NODES_EXPECTED_GLOBAL). Waiting..."
+                  echo "Custom Easysearch healthy, but node count is $actual_nodes_in_cluster (expected $NUM_NODES_EXPECTED_ARG). Waiting..."
                 fi
               else
                 echo "Custom Easysearch not green yet ($((elapsed+interval))s). Status: $(echo $health_json | jq -r .status)"
