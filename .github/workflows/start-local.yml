@@ -1,4 +1,4 @@
-name: Test start-local.sh Script on Multiple Platforms
+name: Start Local Test
 
 on:
   schedule:
