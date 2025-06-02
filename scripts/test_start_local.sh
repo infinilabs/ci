@@ -76,8 +76,8 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
   curl -fsSL "${SCRIPT_URL}" | bash -s -- up --nodes "${NUM_NODES_EXPECTED}" --password "${CUSTOM_PASSWORD}"
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Custom UP failed"; fi
 
-  log_info "Waiting for custom Easysearch (${NUM_NODES_EXPECTED} nodes, max ${NUM_NODES_EXPECTED}s)..."
-  timeout_seconds=${NUM_NODES_EXPECTED}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
+  log_info "Waiting for custom Easysearch (${NUM_NODES_EXPECTED} nodes, max ${CHECK_TIMEOUT}s)..."
+  timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
   while [ $elapsed -lt $timeout_seconds ]; do
     health_json=$(curl --retry 3 --retry-delay 3 -s -ku admin:"${CUSTOM_PASSWORD}" "https://localhost:9200/_cluster/health?format=json")
     if echo "${health_json}" | jq -e '.status == "green"' > /dev/null; then
