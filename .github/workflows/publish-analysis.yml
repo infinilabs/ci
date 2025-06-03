@@ -280,12 +280,14 @@ jobs:
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
                 minor="$(echo "$ver" | cut -d. -f2)"
-                branch_exists=$(git ls-remote --exit-code --heads origin "${ver%%.*}.${minor}" &>/dev/null)
-                echo "check branch_exists: $branch_exists for ${ver%%.*}.${minor}"
-                if [[ "$branch_exists" -eq 0 ]]; then
-                  git fetch origin "${ver%%.*}.${minor}" && git checkout "${ver%%.*}.${minor}"
+                target_branch_specific="${ver%%.*}.${minor}"
+                target_branch_generic="${ver%%.*}.x"
+                if git ls-remote --exit-code --heads origin "$target_branch_specific" &>/dev/null; then
+                  echo "Specific branch $target_branch_specific found. Fetching and checking out."
+                  git fetch origin "$target_branch_specific" && git checkout "$target_branch_specific"
                 else
-                  git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+                  echo "Specific branch $target_branch_specific not found. Fetching and checking out generic branch $target_branch_generic."
+                  git fetch origin "$target_branch_generic" && git checkout "$target_branch_generic"
                 fi
               else
                 git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
@@ -420,7 +422,16 @@ jobs:
             # Build when not publish
             if [[ "${ver%%.*}" -lt 9 ]]; then
               if [[ "$TNAME" == "elasticsearch" ]]; then
-                git fetch origin "${ver%%.*}.x" && git checkout "${ver%%.*}.x"
+                minor="$(echo "$ver" | cut -d. -f2)"
+                target_branch_specific="${ver%%.*}.${minor}"
+                target_branch_generic="${ver%%.*}.x"
+                if git ls-remote --exit-code --heads origin "$target_branch_specific" &>/dev/null; then
+                  echo "Specific branch $target_branch_specific found. Fetching and checking out."
+                  git fetch origin "$target_branch_specific" && git checkout "$target_branch_specific"
+                else
+                  echo "Specific branch $target_branch_specific not found. Fetching and checking out generic branch $target_branch_generic."
+                  git fetch origin "$target_branch_generic" && git checkout "$target_branch_generic"
+                fi
               else
                 git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
               fi
