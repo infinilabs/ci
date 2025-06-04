@@ -47,7 +47,7 @@ on:
 jobs:
   publish_versions_with_jdk_input:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} versions with JDK 17
+    name: Publish ${{ matrix.plugins }} for ${{ matrix.product }} @ ${{inputs.REPUBLISH_VERSION}} with input jdk ${{ inputs.JAVA_VERSION }}
     runs-on: ubuntu-latest
     env:
       PNAME: ${{ matrix.plugins }}
@@ -150,12 +150,6 @@ jobs:
                   echo "Specific branch $target_branch_specific not found. Fetching and checking out generic branch $target_branch_generic."
                   git fetch origin "$target_branch_generic" && git checkout "$target_branch_generic"
                 fi
-                # TODO: need remove after 8.17.5 & 8.17.6 release
-                if [[ "$ver" == "8.17.5" || "$ver" == "8.17.6" ]]; then
-                  sed -i 's/configDir/configFile/' elasticsearch/src/main/java/com/infinilabs/ik/elasticsearch/ConfigurationSub.java
-                  grep PLUGIN_NAME elasticsearch/src/main/java/com/infinilabs/ik/elasticsearch/ConfigurationSub.java
-                fi
-                # End of TODO
               else
                 git fetch origin "open-${ver%%.*}.x" && git checkout "open-${ver%%.*}.x"
               fi
