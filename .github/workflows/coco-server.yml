@@ -839,7 +839,7 @@ jobs:
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/$PNAME/server/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
