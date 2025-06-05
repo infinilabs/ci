@@ -147,6 +147,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
         run: |
@@ -196,17 +199,18 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
+          pnpm install --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -345,6 +349,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
         run: |
@@ -395,17 +402,18 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         run: |
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
+          pnpm install --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -616,6 +624,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
         run: |
@@ -669,17 +680,18 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco web server
         run: |
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
+          pnpm install --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
