@@ -160,8 +160,7 @@ jobs:
           if ! command -v pnpm >/dev/null 2>&1; then
             npm install -g pnpm
           fi
-          node -v && npm -v && 
-          pnpm config set registry https://registry.npmjs.com
+          node -v && npm -v && pnpm -v
 
       - name: Preper coco server build code
         run: |
@@ -203,11 +202,11 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -359,7 +358,6 @@ jobs:
             npm install -g pnpm
           fi
           node -v && npm -v && pnpm -v
-          pnpm config set registry https://registry.npmjs.com
 
       - name: Preper coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
@@ -403,11 +401,11 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -631,7 +629,6 @@ jobs:
             npm install -g pnpm
           fi
           node -v && npm -v && pnpm -v
-          pnpm config set registry https://registry.npmjs.com
 
       - name: Preper coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
@@ -672,17 +669,16 @@ jobs:
 
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-
       - name: Build coco web server
         run: |
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
