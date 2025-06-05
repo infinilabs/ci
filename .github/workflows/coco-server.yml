@@ -202,11 +202,11 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -401,11 +401,11 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
@@ -675,11 +675,11 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
-          pnpm install --quiet && pnpm build -- --silent
+          pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --quiet && mkdir -p dist && pnpm exec tsup --silent
+          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
           mkdir -p $WORK/$PNAME/.public/widgets/searchbox
           cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
           
