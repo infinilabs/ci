@@ -147,8 +147,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
@@ -199,7 +197,6 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
@@ -349,8 +346,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
@@ -402,7 +397,6 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         run: |
@@ -624,8 +618,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check with coco server nodejs toolchain
@@ -680,7 +672,6 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Build coco web server
         run: |
