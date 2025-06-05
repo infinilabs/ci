@@ -7,6 +7,7 @@ env:
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  PNPM_VERSION: 'latest'
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   
@@ -142,19 +143,25 @@ jobs:
 
       - name: Check coco server go toolchain
         run: go version
-
-      - name: Set up  with coco server nodejs toolchain
+      
+      - name: Set up with coco server pnpm toolchain
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Check with coco server nodejs toolchain
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             npm install -g pnpm
           fi
-          node -v && npm -v && pnpm -v
+          node -v && npm -v && 
+          pnpm config set registry https://registry.npmjs.com
 
       - name: Preper coco server build code
         run: |
@@ -190,13 +197,6 @@ jobs:
           EOL_DATE=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z")
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
-
-      - name: Sync node cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
@@ -342,18 +342,24 @@ jobs:
       - name: Check coco server go toolchain
         run: go version
 
-      - name: Set up  with coco server nodejs toolchain
+      - name: Set up with coco server pnpm toolchain
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
-
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          
       - name: Check with coco server nodejs toolchain
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             npm install -g pnpm
           fi
           node -v && npm -v && pnpm -v
+          pnpm config set registry https://registry.npmjs.com
 
       - name: Preper coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
@@ -391,12 +397,6 @@ jobs:
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Sync node cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         run: |
@@ -614,18 +614,24 @@ jobs:
       - name: Check coco server go toolchain
         run: go version
 
-      - name: Set up  with coco server nodejs toolchain
+      - name: Set up with coco server pnpm toolchain
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
-
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+          
       - name: Check with coco server nodejs toolchain
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             npm install -g pnpm
           fi
           node -v && npm -v && pnpm -v
+          pnpm config set registry https://registry.npmjs.com
 
       - name: Preper coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
@@ -666,12 +672,6 @@ jobs:
 
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Sync node cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Build coco web server
         run: |
@@ -830,7 +830,7 @@ jobs:
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/$PNAME/server/update
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
