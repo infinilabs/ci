@@ -188,30 +188,28 @@ jobs:
           gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
         
       - name: Publish coco website
-        if: ${{ inputs.OPERATION == 'RELEASE' }}
+        if: ${{ inputs.OPERATION == 'RELEASE' && matrix.product == 'coco-server'}}
         run: |
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
 
           # Publish coco website
-          if [[ "${{ matrix.product }}" == "coco-server" ]]; then
-            echo "Publish coco website"
-            
-            # coco website publish
-            git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
-            cd $GITHUB_WORKSPACE/coco-website
-            git config user.name github-actions
-            git config user.email github-actions@github.com
-            echo "Check tag and create tag for coco-website"
-            PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
-            tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
-            if [[ "$tag_exists" == "false" ]]; then
-              git tag -a $PVER -m "Release $PVER"
-              git push origin $PVER
-              echo "Tag $PVER created for coco-website"
-              sleep 10 #wait for 10 secs to make sure the tag is created
-            else
-              echo "Tag $PVER already exists for coco-website"
-            fi
+          echo "Publish coco website"
+          
+          # coco website publish
+          git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
+          cd $GITHUB_WORKSPACE/coco-website
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          echo "Check tag and create tag for coco-website"
+          PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
+          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
+          if [[ "$tag_exists" == "false" ]]; then
+            git tag -a $PVER -m "Release $PVER"
+            git push origin $PVER
+            echo "Tag $PVER created for coco-website"
+            sleep 10 #wait for 10 secs to make sure the tag is created
+          else
+            echo "Tag $PVER already exists for coco-website"
           fi
 
       - name: Checkout code for ${{ matrix.product }}

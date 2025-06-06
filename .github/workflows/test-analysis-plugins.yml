@@ -54,6 +54,17 @@ jobs:
           if [ "${{ matrix.product }}" == "elasticsearch" ]; then
             # Pull and run Elasticsearch container of specified version
             docker pull docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }}
+            
+            # Create directories for plugins, data, and logs and set permissions
+            mkdir -p $PWD/$TNAME/plugins $PWD/$TNAME/data $PWD/$TNAME/logs
+            docker run --rm --user root \
+              -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
+              -v $PWD/$TNAME/data:/usr/share/elasticsearch/data \
+              -v $PWD/$TNAME/logs:/usr/share/elasticsearch/logs \
+              docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }} \
+              chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/{data,logs,plugins}
+              
+            # Run the Elasticsearch container
             docker run -d --name test-$TNAME -p 9200:9200 \
               -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
               -v $PWD/$TNAME/data:/usr/share/elasticsearch/data \
@@ -62,6 +73,17 @@ jobs:
           elif [ "${{ matrix.product }}" == "opensearch" ]; then
             # Pull and run OpenSearch container of specified version
             docker pull opensearchproject/opensearch:${{ inputs.TEST_VERSION }}
+
+            # Create directories for plugins, data, and logs and set permissions
+            mkdir -p $PWD/$TNAME/plugins $PWD/$TNAME/data $PWD/$TNAME/logs
+            docker run --rm --user root \
+              -v $PWD/$TNAME/plugins:/usr/share/opensearch/plugins \
+              -v $PWD/$TNAME/data:/usr/share/opensearch/data \    
+              -v $PWD/$TNAME/logs:/usr/share/opensearch/logs \
+              opensearchproject/opensearch:${{ inputs.TEST_VERSION }} \
+              chown -R opensearch:opensearch /usr/share/opensearch/{data,logs,plugins}
+
+            # Run the OpenSearch container
             docker run -d --name test-$TNAME -p 9200:9200 \
               -v $PWD/$TNAME/plugins:/usr/share/opensearch/plugins \
               -v $PWD/$TNAME/data:/usr/share/opensearch/data \
