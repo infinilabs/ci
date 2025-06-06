@@ -1,0 +1,97 @@
+name:  Test Analysis Plugins
+defaults:
+  run:
+    shell: bash
+env:
+    RELEASE_URL: ${{ vars.RELEASE_URL }}
+    JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION}}
+
+on:
+  workflow_dispatch:
+    inputs:
+      TEST_TNAME:
+        description: 'Setting Test Product'
+        required: false
+        type: choice
+        options:
+          - elasticsearch
+          - opensearch
+        default: 'elasticsearch'
+      TEST_PRODUCT:
+        description: 'Setting Test Product'
+        required: false
+        type: choice
+        options:
+          - analysis-ik
+          - analysis-pinyin
+          - analysis-stconvert
+        default: 'analysis-ik'
+      TEST_VERSION:
+        description: 'Setting Test version'
+        required: false
+        default: '7.10.2'
+
+jobs:
+  test_versions_with_jdk_input:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    name: Test ${{ matrix.plugins }} for ${{ matrix.product }} @ ${{inputs.TEST_VERSION}}
+    runs-on: ubuntu-latest
+    env:
+      PNAME: ${{ matrix.plugins }}
+      TNAME: ${{ matrix.product }}
+    strategy:
+      matrix:
+        plugins:
+          - ${{ inputs.TEST_PRODUCT }}
+        product:
+          - ${{ inputs.TEST_TNAME }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start ${{ matrix.product }} Docker Container
+        run: |
+          if [ "${{ matrix.product }}" == "elasticsearch" ]; then
+            # Pull and run Elasticsearch container of specified version
+            docker pull docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }}
+            docker run -d --name test-$TNAME -p 9200:9200 \
+              -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
+              -v $PWD/$TNAME/data:/usr/share/elasticsearch/data \
+              -v $PWD/$TNAME/logs:/usr/share/elasticsearch/logs \
+              docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }}
+          elif [ "${{ matrix.product }}" == "opensearch" ]; then
+            # Pull and run OpenSearch container of specified version
+            docker pull opensearchproject/opensearch:${{ inputs.TEST_VERSION }}
+            docker run -d --name test-$TNAME -p 9200:9200 \
+              -v $PWD/$TNAME/plugins:/usr/share/opensearch/plugins \
+              -v $PWD/$TNAME/data:/usr/share/opensearch/data \
+              -v $PWD/$TNAME/logs:/usr/share/opensearch/logs \
+              opensearchproject/opensearch:${{ inputs.TEST_VERSION }}
+          fi
+
+      - name: Install ${{ matrix.product}} plugin with ${{ matrix.plugins }}
+        run: |
+          # Install the plugin
+          PLUGIN_URL="https://get.infini.cloud/$TNAME/$PNAME/${{ inputs.TEST_VERSION }}"
+          echo "Installing plugin from $PLUGIN_URL"
+          docker exec test-$TNAME /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL
+
+      - name: Verify ${{ matrix.product}} Plugin Installation with ${{ matrix.plugins }}
+        run: |
+          # Verify the plugin is installed successfully
+          curl -X GET "localhost:9200/_cat/plugins" | grep -i $TNAME
+          if [ $? -ne 0 ]; then
+            echo "Plugin installation failed or plugin not found"
+            exit 1
+          else
+            echo "Plugin $PNAME installed successfully"
+          fi
+
+      - name: Verify ${{ matrix.product}} running logs
+        run: |
+          if grep -qiE "error|exception" $PWD/$TNAME/logs/*.log; then
+            echo "Errors found in $TNAME logs"
+            exit 1
+          else
+            echo "No errors found in ${{ matrix.product}} logs"
+          fi

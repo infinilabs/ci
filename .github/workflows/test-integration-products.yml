@@ -1,0 +1,643 @@
+name: Products Integration Test
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
+  EZS_VERSION: ${{ inputs.EZS_VERSION }}
+  PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
+
+on:
+  schedule:
+    - cron: '30 16 * * *'
+  workflow_dispatch:
+    inputs:
+      EZS_VERSION:
+        description: 'Easysearch Version'
+        required: false
+        type: string
+        default: '1.12.4'
+      PRODUCT_VERSION:
+        description: 'Products Version'
+        required: false
+        type: string
+        default: '1.29.6'
+      RUN_INSTALL_TEST:
+        description: 'Run Products Install Test?'
+        required: false
+        type: boolean
+        default: false
+      RUN_COMPILE_TEST:
+        description: 'Run Products Compile Test?'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+    compile-test:
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event.inputs && inputs.RUN_COMPILE_TEST) }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Init env
+              run: |
+                export WORKBASE=$HOME/go/src
+                export WORK=$WORKBASE/infini.sh
+
+                echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+                echo WORK=$WORK >> $GITHUB_ENV
+                echo ES_USERNAME=admin >> $GITHUB_ENV
+                echo ES_PASSWORD=admin >> $GITHUB_ENV
+                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=admin >> $GITHUB_ENV
+                echo ES_ENDPOINT=https://127.0.0.1:9200 >> $GITHUB_ENV
+                echo GW_ENDPOINT=https://127.0.0.1:8000 >> $GITHUB_ENV
+                echo VERSION=1.0.0 >> $GITHUB_ENV
+                echo BUILD_NUMBER=$(date +%Y%m%d) >> $GITHUB_ENV
+                echo EOF=$(date -d "$(date +%Y)-12-31 +1 day -1 day" +%Y-%m-%d) >> $GITHUB_ENV
+                echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+                cat $GITHUB_ENV
+            
+            - name: Checkout current repository
+              uses: actions/checkout@v4
+
+            - name: Checkout console
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/console
+                path: console
+                
+            - name: Checkout gateway
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/gateway
+                path: gateway
+            
+            - name: Checkout agent
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/agent
+                path: agent
+              
+            - name: Checkout loadgen
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/loadgen
+                path: loadgen
+                  
+            - name: Checkout framework
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/framework
+                path: framework
+
+            - name: Checkout framework-vendor
+              uses: actions/checkout@v4
+              with:
+                ref: main
+                repository: infinilabs/framework-vendor
+                path: vendor
+
+            - name: Set up nodejs toolchain
+              uses: actions/setup-node@v4
+              with:
+                node-version: ${{ env.NODEJS_VERSION }}
+                cache: 'npm'
+                cache-dependency-path: "**/package.json"
+            
+            - name: Check nodejs toolchain
+              run: |
+                if ! command -v cnpm >/dev/null 2>&1; then
+                  npm install -g rimraf
+                  npm install -g cnpm@9.2.0
+                fi
+                node -v && npm -v && cnpm -v
+
+            - name: Set up go toolchain
+              uses: actions/setup-go@v5
+              with:
+                go-version: ${{ env.GO_VERSION }}
+                check-latest: false
+                cache: true
+
+            - name: Check go toolchain
+              run: go version
+
+            - name: Set up java toolchain
+              uses: actions/setup-java@v4
+              with:
+                distribution: ${{ env.JAVA_DISTRIBUTION }}
+                java-version: ${{ env.JAVA_VERSION }}
+            
+            - name: Check java toolchain
+              run: java -version && which java
+
+            - name: Install and run easysearch
+              shell: bash
+              run: |
+                # Install easysearch
+                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                echo "The latest easysearch version is $VER"
+                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
+                fi
+                curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
+                [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
+                # Initialize easysearch
+                echo "Initialize easysearch at $HOME/easysearch ..."
+                cd $HOME/easysearch && bin/initialize.sh -s
+                echo "Start easysearch at $HOME/easysearch ..."
+                # Run easysearch
+                bin/easysearch -d
+
+            - name: Compile products code
+              shell: bash
+              run: |
+                mkdir -p $WORKBASE
+                echo Home path is $HOME
+                
+                echo Check work folder $GITHUB_WORKSPACE
+                ln -s $GITHUB_WORKSPACE $WORK
+                ls -al $WORK/
+
+                # for console web
+                cd $WORK/console/web && echo Compiling code at $PWD ...
+                cnpm install --quiet --no-progress && cnpm run build --quiet
+                
+                # for products
+                for p in console gateway agent loadgen; do
+                  cd $WORK/$p && echo Compiling $p at $PWD ...
+                  OFFLINE_BUILD=true GOMODULE=false make build
+                done
+
+            - name: Prepare console config
+              shell: bash
+              run: |
+                export PRODUCT=console
+                cd $WORK/$PRODUCT/bin
+
+                # for console config
+                echo Prepare $PRODUCT config at $PWD ...
+                mkdir -p $WORK/$PRODUCT/bin/config
+                PERMJSON=$WORK/$PRODUCT/modules/security/realm/authc/native/permission.json
+                if [[ -e $PERMJSON ]]; then
+                  cp -rf $PERMJSON $WORK/$PRODUCT/bin/config
+                fi
+                cp -rf $WORK/$PRODUCT/config/*.tpl $WORK/$PRODUCT/bin/config
+                [ -d $WORK/$PRODUCT/config/setup ] && cp -rf $WORK/$PRODUCT/config/setup $WORK/$PRODUCT/bin/config
+                ls -lrt $WORK/$PRODUCT/bin
+                
+            - name: Run easysearch test
+              shell: bash
+              timeout-minutes: 5
+              run: |
+                echo "Running integration test at $PWD ..."
+                tail -n 100 "$HOME/easysearch/logs/easysearch.log"
+
+                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
+                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
+                PORT=${PORT:-443}
+
+                while ! nc -z "$HOST" "$PORT"; do
+                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
+                  sleep 5
+                done
+
+                curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
+
+
+            - name: Run console test
+              shell: bash
+              run: |
+                export PRODUCT=console
+                cd $WORK/$PRODUCT/bin
+
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run loadgen api test for console initialize
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/data/loadgen_yml $WORK/$PRODUCT/bin/$PRODUCT-api.yml
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/data/*.dsl $WORK/$PRODUCT/bin
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
+
+            - name: Run agent test
+              shell: bash
+              run: |
+                export PRODUCT=agent
+                cd $WORK/$PRODUCT/bin
+                mkdir -p $WORK/$PRODUCT/bin/config
+                sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run gateway test
+              shell: bash
+              run: |
+                export PRODUCT=gateway
+                cd $WORK/$PRODUCT/bin
+                sed -i -e "/ES_USER:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USER:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                sed -i -e "/ES_PASS:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASS:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run loadgen test for gateway
+              shell: bash
+              run: |
+                  export PRODUCT=loadgen
+                  cd $WORK/$PRODUCT/bin
+                  sed -i -e "/ES_USERNAME:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USERNAME:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_PASSWORD:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASSWORD:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$GW_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  
+                  echo Running integration test at $PWD ...
+                  $WORK/$PRODUCT/bin/$PRODUCT -d 10
+                  # Check indices created
+                  if command -v curl >/dev/null 2>&1; then
+                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  fi
+
+            - name: Run loadgen api test for runtime registry
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
+
+            - name: Run loadgen api test for metrics search
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                # wait agent collect metrics
+                for i in $(seq 60); do sleep 1 && printf .; done; echo
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+                # wait agent collect metrics
+                for i in $(seq 60); do sleep 1 && printf .; done; echo
+                echo "Check metrics count and search metrics"
+                # Check metrics count
+                if command -v curl >/dev/null 2>&1; then
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
+                fi
+
+            - name: Check console logs
+              shell: bash
+              run: |
+                export PRODUCT=console
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+            
+            - name: Check gateway logs
+              shell: bash
+              run: |
+                export PRODUCT=gateway
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+
+            - name: Check agent logs
+              shell: bash
+              run: |
+                export PRODUCT=agent
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+
+            - name: Check loadgen logs
+              shell: bash
+              run: |
+                  export PRODUCT=loadgen
+                  cd $WORK/$PRODUCT/bin
+  
+                  echo Check $PRODUCT logs at $PWD ...
+                  cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                  if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                    echo "Error found in $PRODUCT logs!"
+                    exit 1
+                  fi
+
+            - name: Check easysearch logs
+              shell: bash
+              run: |
+                echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
+                cat $HOME/easysearch/logs/easysearch.log
+                if grep -qiE "Exception|Error" $HOME/easysearch/logs/easysearch.log; then
+                  echo "Error found in easysearch logs!"
+                  exit 1
+                fi
+
+    install-test:
+        runs-on: ubuntu-latest
+        if : ${{ inputs.RUN_INSTALL_TEST }}
+        steps:
+            - name: Init env
+              run: |
+                export WORKBASE=$HOME/go/src
+                export WORK=$WORKBASE/infini.sh
+
+                echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+                echo WORK=$WORK >> $GITHUB_ENV
+                echo ES_USERNAME=admin >> $GITHUB_ENV
+                echo ES_PASSWORD=admin >> $GITHUB_ENV
+                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=admin >> $GITHUB_ENV
+                echo ES_ENDPOINT=https://127.0.0.1:9200 >> $GITHUB_ENV
+                echo GW_ENDPOINT=https://127.0.0.1:8000 >> $GITHUB_ENV
+                echo VERSION=1.0.0 >> $GITHUB_ENV
+                echo BUILD_NUMBER=$(date +%Y%m%d) >> $GITHUB_ENV
+                echo EOF=$(date -d "$(date +%Y)-12-31 +1 day -1 day" +%Y-%m-%d) >> $GITHUB_ENV
+                echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+                cat $GITHUB_ENV
+
+            - name: Validate version formats
+              run: |
+                EZS_VERSION="${{ inputs.EZS_VERSION }}"
+                PRODUCT_VERSION="${{ inputs.PRODUCT_VERSION }}"
+
+                echo "Checking EZS_VERSION: $EZS_VERSION"
+                echo "Checking PRODUCT_VERSION: $PRODUCT_VERSION"
+
+                version_regex='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$'
+
+                for VAR_NAME in EZS_VERSION PRODUCT_VERSION; do
+                  VERSION=${!VAR_NAME}
+                  if [[ ! "$VERSION" =~ $version_regex ]]; then
+                    echo "❌ Invalid format for $VAR_NAME: $VERSION"
+                    echo "Expected format: x.y.z or x.y.z-build_number (e.g. 1.2.3 or 1.2.3-45)"
+                    exit 1
+                  else
+                    echo "✅ $VAR_NAME format is valid: $VERSION"
+                  fi
+                done
+
+            - name: Checkout current repository
+              uses: actions/checkout@v4
+              with:
+                ref: main
+
+            - name: Set up java toolchain
+              uses: actions/setup-java@v4
+              with:
+                distribution: ${{ env.JAVA_DISTRIBUTION }}
+                java-version: ${{ env.JAVA_VERSION }}
+            
+            - name: Check java toolchain
+              run: java -version && which java
+
+            - name: Install and run easysearch
+              shell: bash
+              run: |
+                # Install easysearch
+                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
+                fi
+                curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
+                [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
+                # Initialize easysearch
+                cd $HOME/easysearch && bin/initialize.sh -s
+                # Run easysearch
+                bin/easysearch -d
+
+            - name: Install products
+              shell: bash
+              run: |
+                mkdir -p $WORKBASE
+                echo Home path is $HOME
+                
+                # for products
+                for p in console gateway agent loadgen; do
+                  [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
+                  VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
+                  if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
+                    if [[ "$PRODUCT_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                      VER=$PRODUCT_VERSION
+                    else
+                      echo "PRODUCT_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                    fi
+                  fi
+                  curl -sSL http://get.infini.cloud | bash -s -- -p $p -d $WORK/$p/bin -v $VER
+                  # change binary name
+                  cp -rf $WORK/$p/bin/$p-linux-amd64 $WORK/$p/bin/$p
+                done
+
+            - name: Run easysearch test
+              shell: bash
+              timeout-minutes: 5
+              run: |
+                echo "Running integration test at $PWD ..."
+                tail -n 100 "$HOME/easysearch/logs/easysearch.log"
+
+                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
+                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
+                PORT=${PORT:-443}
+
+                while ! nc -z "$HOST" "$PORT"; do
+                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
+                  sleep 5
+                done
+
+                curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
+
+
+            - name: Run console test
+              shell: bash
+              run: |
+                export PRODUCT=console
+                cd $WORK/$PRODUCT/bin
+
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run loadgen api test for console initialize
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/data/loadgen_yml $WORK/$PRODUCT/bin/$PRODUCT-api.yml
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/data/*.dsl $WORK/$PRODUCT/bin
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
+
+            - name: Run agent test
+              shell: bash
+              run: |
+                export PRODUCT=agent
+                cd $WORK/$PRODUCT/bin
+                mkdir -p $WORK/$PRODUCT/bin/config
+                sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run gateway test
+              shell: bash
+              run: |
+                export PRODUCT=gateway
+                cd $WORK/$PRODUCT/bin
+                sed -i -e "/ES_USER:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USER:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                sed -i -e "/ES_PASS:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASS:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+
+                echo Running integration test at $PWD ...
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+
+            - name: Run loadgen test for gateway
+              shell: bash
+              run: |
+                  export PRODUCT=loadgen
+                  cd $WORK/$PRODUCT/bin
+                  sed -i -e "/ES_USERNAME:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USERNAME:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_PASSWORD:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASSWORD:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$GW_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  
+                  echo Running integration test at $PWD ...
+                  $WORK/$PRODUCT/bin/$PRODUCT -d 10
+                  # Check indices created
+                  if command -v curl >/dev/null 2>&1; then
+                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  fi
+
+            - name: Run loadgen api test for runtime registry
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
+
+            - name: Run loadgen api test for metrics search
+              shell: bash
+              run: |
+                export PRODUCT=loadgen
+                cd $WORK/$PRODUCT/bin
+
+                # wait agent collect metrics
+                for i in $(seq 60); do sleep 1 && printf .; done; echo
+                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+                # wait agent collect metrics
+                for i in $(seq 60); do sleep 1 && printf .; done; echo
+                echo "Check metrics count and search metrics"
+                # Check metrics count
+                if command -v curl >/dev/null 2>&1; then
+                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
+                fi
+
+            - name: Check console logs
+              shell: bash
+              run: |
+                export PRODUCT=console
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+            
+            - name: Check gateway logs
+              shell: bash
+              run: |
+                export PRODUCT=gateway
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+
+            - name: Check agent logs
+              shell: bash
+              run: |
+                export PRODUCT=agent
+                cd $WORK/$PRODUCT/bin
+
+                echo Check $PRODUCT logs at $PWD ...
+                cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                  echo "Error found in $PRODUCT logs!"
+                  exit 1
+                fi
+
+            - name: Check loadgen logs
+              shell: bash
+              run: |
+                  export PRODUCT=loadgen
+                  cd $WORK/$PRODUCT/bin
+  
+                  echo Check $PRODUCT logs at $PWD ...
+                  cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
+                  if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
+                    echo "Error found in $PRODUCT logs!"
+                    exit 1
+                  fi
+
+            - name: Check easysearch logs
+              shell: bash
+              run: |
+                echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
+                cat $HOME/easysearch/logs/easysearch.log
+                if grep -qiE "Exception|Error" $HOME/easysearch/logs/easysearch.log; then
+                  echo "Error found in easysearch logs!"
+                  exit 1
+                fi
+
+    notify_on_failure:
+      runs-on: ubuntu-latest
+      needs: [compile-test, install-test]
+      if: failure()
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          
+        - name: Send Feishu Notification on Failure
+          env:
+            FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+            REPO_NAME: ${{ github.repository }}
+            WORKFLOW_NAME: ${{ github.workflow }}
+            RUN_ID: ${{ github.run_id }}
+            ACTOR: ${{ github.triggering_actor }}
+            SERVER_URL: ${{ github.server_url }}
+          run: $GITHUB_WORKSPACE/scripts/feishu_message.sh                  

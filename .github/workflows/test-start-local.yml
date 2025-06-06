@@ -1,0 +1,358 @@
+name: Start Local Test
+
+on:
+  schedule:
+    - cron: '30 16 * * *' 
+  workflow_dispatch:
+
+jobs:
+  test-script:
+    strategy:
+      fail-fast: false
+      matrix:
+        os_config:
+          - name: Ubuntu-x86_64
+            runner: ubuntu-22.04
+            is_container_test: false
+          - name: Ubuntu-aarch64
+            runner: ubuntu-22.04-arm
+            is_container_test: false
+          # - name: MacOS-aarch64
+          #   runner: macos-latest
+          #   is_container_test: false
+          # - name: Windows-x86_64
+          #   runner: windows-latest
+          #   is_container_test: false
+          # - name: CentOS-x86_64-on-UbuntuHost
+          #   runner: ubuntu-latest
+          #   is_container_test: true
+          #   container_image: centos:7
+
+        scenario: [default-run, custom-run]
+
+    runs-on: ${{ matrix.os_config.runner }}
+
+    env:
+      SCRIPT_URL_ARG: "https://get.infini.cloud/start-local"
+      DEFAULT_PASSWORD_ARG: "ShouldChangeme123!"
+      CUSTOM_PASSWORD_ARG: "MySecurePassword123"
+      NUM_NODES_EXPECTED_ARG: 3
+      TEST_WORK_DIR: ${{ github.workspace }}/ezs_run_data
+      TEST_SCRIPT_NAME: test_start_local.sh
+      CHECK_TIMEOUT_ARG: 120
+
+    steps:
+    - name: Checkout code (includes ${{ env.TEST_SCRIPT_NAME }})
+      uses: actions/checkout@v4
+
+    - name: Verify Docker availability
+      shell: bash
+      run: |
+        echo "Checking for Docker on ${{ matrix.os_config.name }}..."
+        docker --version || (echo "::warning::Docker not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if Docker is not on host but will be in container.
+        # test_start_local.sh itself verifies Docker and will fail if it's missing and needed.
+
+    - name: Verify Docker Compose availability
+      shell: bash
+      run: |
+        echo "Checking for Docker Compose on ${{ matrix.os_config.name }}..."
+        docker compose version || (echo "::warning::Docker Compose not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if Docker Compose is not on host but will be in container.
+        # test_start_local.sh itself verifies Docker Compose and will fail if it's missing and needed.
+
+    - name: Verify jq availability
+      shell: bash
+      run: |
+        echo "Checking for jq on ${{ matrix.os_config.name }}..."
+        jq --version || (echo "::warning::jq not found or not executable on host/container base. test_start_local.sh might fail if it needs it." && exit 0)
+        # The exit 0 above prevents failure if jq is not on host but will be in container.
+        # test_start_local.sh itself verifies jq and will fail if it's missing and needed.
+
+    - name: Install Docker and Docker Compose on ${{ matrix.os_config.name }}
+      if: matrix.os_config.runner == 'macos-latest'
+      shell: bash
+      timeout-minutes: 15
+      run: |
+        echo "macOS runner detected. Setting up Docker environment..."
+        DOCKER_CLI_FOUND=false
+        DOCKER_COMPOSE_CLI_FOUND=false
+
+        # First, check if Docker is already available and functional
+        if command -v docker &> /dev/null && (docker compose version &> /dev/null || docker-compose --version &> /dev/null); then
+          echo "Docker and Docker Compose seem to be already available and functional."
+          docker --version
+          docker compose version || docker-compose --version
+          DOCKER_CLI_FOUND=true
+          DOCKER_COMPOSE_CLI_FOUND=true
+        else
+          echo "Docker or Docker Compose not fully functional. Attempting installation/configuration..."
+          brew update --quiet
+          
+          # Option: Install OrbStack (seems to be what you are using or tried)
+          echo "Installing OrbStack via Homebrew Cask..."
+          brew install --cask orbstack
+          if [ $? -ne 0 ]; then
+            echo "::error:: 'brew install --cask orbstack' failed."
+            exit 1
+          fi
+          echo "🍺 OrbStack cask installation reported success."
+
+          # OrbStack usually adds its CLI tools to standard paths like /usr/local/bin
+          # or directly via its own path additions.
+          # Give it a moment, then try to source shell profiles which might update PATH.
+          echo "Attempting to source shell profiles to update PATH..."
+          # Common profiles. This might not always work reliably in non-interactive CI shells.
+          [ -f ~/.bash_profile ] && source ~/.bash_profile || echo "No ~/.bash_profile"
+          [ -f ~/.zprofile ] && source ~/.zprofile || echo "No ~/.zprofile" # macOS default shell is zsh
+          [ -f ~/.zshrc ] && source ~/.zshrc || echo "No ~/.zshrc"
+          
+          # Explicitly add known OrbStack CLI paths if they exist and are not in PATH
+          # OrbStack's CLI `orb` is often symlinked to /usr/local/bin/orb.
+          # Docker CLI from OrbStack might be handled via its own context or symlinks.
+          # Docker Desktop path (for reference, if OrbStack doesn't use it):
+          # DOCKER_DESKTOP_CLI_PATH="/Applications/Docker.app/Contents/Resources/bin"
+          # For OrbStack, check its documentation for CLI path if not in /usr/local/bin automatically.
+          # OrbStack typically integrates well, so /usr/local/bin should be sufficient.
+
+          # Try to find 'orb' CLI first, as it's specific to OrbStack
+          if command -v orb &> /dev/null; then
+            echo "OrbStack CLI 'orb' found at: $(command -v orb)"
+            echo "Attempting to start OrbStack services if not already running..."
+            # OrbStack might auto-start, or you might need `orb start` or similar.
+            # `orb version` or `orb ps` can check its status.
+            # This example assumes OrbStack handles Docker daemon startup implicitly or via a simple command.
+            # If OrbStack manages Docker contexts, ensure the correct one is active.
+            # orbctl docker activate # Or similar if needed
+            orb start
+          else
+            echo "::warning::OrbStack CLI 'orb' not found even after installation."
+          fi
+
+          # Re-check for 'docker' CLI after OrbStack install and potential PATH updates
+          if command -v docker &> /dev/null; then
+            DOCKER_CLI_FOUND=true
+            echo "Docker CLI found after OrbStack setup at: $(command -v docker)"
+          else
+            # Fallback: Check common locations if `command -v` fails
+            if [ -x "/usr/local/bin/docker" ]; then
+                echo "Found docker at /usr/local/bin/docker. Adding /usr/local/bin to PATH if not present."
+                export PATH="/usr/local/bin:$PATH"
+                DOCKER_CLI_FOUND=true
+            elif [ -x "/opt/homebrew/bin/docker" ]; then # For ARM Macs, Homebrew is in /opt/homebrew
+                echo "Found docker at /opt/homebrew/bin/docker. Adding /opt/homebrew/bin to PATH if not present."
+                export PATH="/opt/homebrew/bin:$PATH"
+                DOCKER_CLI_FOUND=true
+            else
+                echo "::error::Docker CLI ('docker') still not found after OrbStack installation and PATH checks."
+                echo "Current PATH: $PATH"
+                echo "Contents of /usr/local/bin:"
+                ls -la /usr/local/bin | grep docker || echo "/usr/local/bin does not contain docker"
+                echo "Contents of /opt/homebrew/bin:"
+                ls -la /opt/homebrew/bin | grep docker || echo "/opt/homebrew/bin does not contain docker"
+                # If OrbStack has a specific bin dir, list it too.
+                exit 1
+            fi
+          fi
+        fi # End of installation block
+
+        # If Docker CLI was found or became available, now check Docker Engine and Compose
+        if [ "$DOCKER_CLI_FOUND" = true ]; then
+          echo "Verifying Docker Engine responsiveness..."
+          max_wait=${CHECK_TIMEOUT_ARG}; interval=10; elapsed=0; docker_engine_ready=false
+          while [ $elapsed -lt $max_wait ]; do
+            if docker version > /dev/null 2>&1; then # 'docker version' talks to the daemon
+              echo "Docker Engine is responsive."
+              docker_engine_ready=true; break
+            fi
+            echo "Docker Engine not ready yet ($((elapsed+interval))s / ${max_wait}s), retrying..."
+            # If using OrbStack and it has a start command, ensure it was run
+            # e.g., if `orb start` was needed and not run, this loop might always fail.
+            sleep $interval; elapsed=$((elapsed + interval))
+          done
+          if ! $docker_engine_ready; then
+            echo "::error::Docker Engine did not become available."
+            docker info || echo "docker info failed" # Get more details
+            exit 1
+          fi
+
+          echo "Verifying Docker Compose..."
+          if docker compose version &> /dev/null; then
+            echo "Docker Compose v2 plugin successfully verified."
+            docker compose version
+            DOCKER_COMPOSE_CLI_FOUND=true
+          elif docker-compose --version &> /dev/null; then
+            echo "Docker Compose v1 standalone successfully verified."
+            docker-compose --version
+            DOCKER_COMPOSE_CLI_FOUND=true
+          else
+            echo "::error::Docker Compose (v2 or v1) still not found or not working."
+            exit 1
+          fi
+        else
+            echo "::error::Docker CLI was not found, cannot proceed to check Engine or Compose."
+            exit 1
+        fi
+
+        if ! ( $DOCKER_CLI_FOUND && $DOCKER_COMPOSE_CLI_FOUND ); then
+             echo "::error::Docker CLI or Docker Compose setup failed."
+             exit 1
+        fi
+        echo "Docker environment setup on macOS appears successful."
+
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
+      if: matrix.os_config.runner != 'windows-latest'
+      shell: bash
+      timeout-minutes: 15
+      run: |
+        # Prepare the working directory on the host
+        # This directory will be mounted into the CentOS container if needed
+        # and will contain the test_start_local.sh script after checkout.
+        mkdir -p ${{ env.TEST_WORK_DIR }}
+        cp ${{ github.workspace }}/scripts/${{ env.TEST_SCRIPT_NAME }} ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        chmod +x ${{ env.TEST_WORK_DIR }}/${{ env.TEST_SCRIPT_NAME }}
+        cd ${{ env.TEST_WORK_DIR }}
+
+        # Environment variables for the test_start_local.sh script
+        export SCENARIO_TO_RUN_ARG="${{ matrix.scenario }}"
+        # SCRIPT_URL_ARG, DEFAULT_PASSWORD_ARG, etc., are already in the job's env,
+        # so they will be inherited by this script execution directly on host,
+        # and need to be passed explicitly to the docker container.
+
+        if [[ "${{ matrix.os_config.is_container_test }}" == "true" ]]; then
+          echo "Running test inside ${{ matrix.os_config.container_image }} container..."
+          # For DooD, mount host's Docker socket and the shared workspace (which now contains test_start_local.sh)
+          docker run --rm \
+            --dns 8.8.8.8 --dns 1.1.1.1 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v ${{ env.TEST_WORK_DIR }}:${{ env.TEST_WORK_DIR }}:rw \
+            -w ${{ env.TEST_WORK_DIR }} \
+            --env SCENARIO_TO_RUN_ARG \
+            --env SCRIPT_URL_ARG \
+            --env DEFAULT_PASSWORD_ARG \
+            --env CUSTOM_PASSWORD_ARG \
+            --env NUM_NODES_EXPECTED_ARG \
+            ${{ matrix.os_config.container_image }} \
+            bash -ec '
+              echo "Inside CentOS container..."
+              echo "Updating yum cache and installing prerequisites..."
+              yum update -y -q # Update cache first
+              yum install -y -q curl gettext yum-utils # Basic tools + yum-utils for repos
+              echo "Setting up Docker CE repo and installing docker-ce-cli..."
+              yum-config-manager --quiet --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+              # Install docker-ce-cli. This provides "docker" and the "docker compose" plugin.
+              # For CentOS 7, you might need a specific version or to handle dependencies like containerd.io if installing full docker-ce.
+              # However, for CLI only, docker-ce-cli should be sufficient and lighter.
+              yum install -y -q docker-ce-cli
+              if [ $? -ne 0 ]; then
+                echo "::error::Failed to install docker-ce-cli in CentOS container!"
+                # As a fallback, or if older compose is needed, try installing docker-compose (v1)
+                echo "Attempting to install docker-compose (v1) as a fallback..."
+                LATEST_COMPOSE_V1=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)
+                if [ -n "$LATEST_COMPOSE_V1" ]; then
+                  curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE_V1}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                  chmod +x /usr/local/bin/docker-compose
+                  echo "docker-compose (v1) installed: $(docker-compose --version || echo "v1 install check failed")"
+                else
+                  echo "Could not determine latest docker-compose v1 version."
+                fi
+              fi
+              echo "--- Prerequisites in CentOS Container Checked/Installed ---"
+
+              echo "--- Debugging Docker/Compose Availability IN CentOS CONTAINER ---"
+              echo "Current user: $(whoami)"
+              echo "Current PATH: $PATH"
+              echo "Attempting ''command -v docker'': $(command -v docker || echo ''NOT FOUND'')"
+              docker --version || echo "docker --version FAILED IN CONTAINER"
+              echo "Attempting ''docker compose version'' (v2 plugin):"
+              docker compose version || echo "docker compose version FAILED IN CONTAINER (v2 plugin)"
+              echo "Attempting ''docker-compose --version'' (v1 standalone):"
+              docker-compose --version || echo "docker-compose --version FAILED IN CONTAINER (v1)"
+              echo "--- End Debugging IN CentOS CONTAINER ---"
+
+              echo "Executing ./${{ env.TEST_SCRIPT_NAME }} in container..."
+              ./${{ env.TEST_SCRIPT_NAME }} # Execute the mounted script
+            '
+        else
+          echo "Running test directly on ${{ matrix.os_config.runner }}..."
+          ./${{ env.TEST_SCRIPT_NAME }}
+        fi
+
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
+      if: matrix.os_config.runner == 'windows-latest'
+      shell: bash
+      timeout-minutes: 15
+      run: |
+        # Prepare the working directory on the host
+        mkdir -p ${{ env.TEST_WORK_DIR }}
+        cd ${{ env.TEST_WORK_DIR }}
+
+        # Define the actual test commands as a bash function
+        run_test_logic() {
+          SCENARIO_TO_RUN="${{ matrix.scenario }}"
+
+          echo "--- Testing Scenario: $SCENARIO_TO_RUN on ${{ matrix.os_config.name }} ---"
+          echo "Working directory: $(pwd)"
+          echo "jq version: $(jq --version || echo 'jq not found')"
+
+          if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
+            echo "Script URL: $SCRIPT_URL_ARG"
+            echo "Default Password: $DEFAULT_PASSWORD_ARG"
+            curl -fsSL $SCRIPT_URL_ARG | sh -s -- up
+            if [ $? -ne 0 ]; then echo "::error::Default UP failed"; docker compose logs || true; exit 1; fi
+
+            echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT_ARG}s)..."
+            timeout_seconds=${CHECK_TIMEOUT_ARG}; interval=10; elapsed=0; service_ready=false
+            while [ $elapsed -lt $timeout_seconds ]; do
+              if curl --retry 3 --retry-delay 3 -s -ku "admin:$DEFAULT_PASSWORD_ARG" "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+                echo "Default Easysearch is healthy."
+                service_ready=true; break
+              fi
+              echo "Default Easysearch not healthy yet ($((elapsed+interval))s)..."
+              sleep $interval; elapsed=$((elapsed + interval))
+            done
+            if ! $service_ready; then echo "::error::Default Easysearch did not become healthy"; docker compose logs || true; exit 1; fi
+
+            echo "Default run successful. Cleaning up..."
+            curl -fsSL $SCRIPT_URL_ARG | sh -s -- clean
+            if [ $? -ne 0 ]; then echo "::error::Default CLEAN failed"; exit 1; fi
+            if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
+
+          elif [[ "$SCENARIO_TO_RUN" == "custom-run" ]]; then
+            echo "Script URL: $SCRIPT_URL_ARG"
+            echo "Custom Password: $CUSTOM_PASSWORD_ARG"
+            echo "Expected Nodes: $NUM_NODES_EXPECTED_ARG"
+            curl -fsSL $SCRIPT_URL_ARG | sh -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
+            if [ $? -ne 0 ]; then echo "::error::Custom UP failed"; docker compose logs || true; exit 1; fi
+
+            echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_ARG nodes, max ${CHECK_TIMEOUT_ARG}s)..."
+            timeout_seconds=${CHECK_TIMEOUT_ARG}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
+            while [ $elapsed -lt $timeout_seconds ]; do
+              health_json=$(curl --retry 3 --retry-delay 3 -s -ku "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cluster/health?format=json")
+              if echo "$health_json" | jq -e '.status == "green"' > /dev/null; then
+                nodes_json=$(curl --retry 3 --retry-delay 3 -s -ku "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cat/nodes?format=json")
+                actual_nodes_in_cluster=$(echo "$nodes_json" | jq 'length')
+                if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_ARG" ]; then
+                  echo "Custom Easysearch is healthy with $actual_nodes_in_cluster nodes."
+                  cluster_ready_and_nodes_verified=true; break
+                else
+                  echo "Custom Easysearch healthy, but node count is $actual_nodes_in_cluster (expected $NUM_NODES_EXPECTED_ARG). Waiting..."
+                fi
+              else
+                echo "Custom Easysearch not green yet ($((elapsed+interval))s). Status: $(echo $health_json | jq -r .status)"
+              fi
+              sleep $interval; elapsed=$((elapsed + interval))
+            done
+            if ! $cluster_ready_and_nodes_verified; then echo "::error::Custom Easysearch did not become healthy with correct node count"; docker compose logs || true; exit 1; fi
+
+            echo "Custom run successful. Cleaning up..."
+            curl -fsSL $SCRIPT_URL_ARG | sh -s -- clean
+            if [ $? -ne 0 ]; then echo "::error::Custom CLEAN failed"; exit 1; fi
+            if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
+          fi
+          echo "--- Test Scenario $SCENARIO_TO_RUN on ${{ matrix.os_config.name }} completed ---"
+        } # End of run_test_logic function
+         
+        echo "Running test directly on ${{ matrix.os_config.runner }}..."
+        run_test_logic
+          
