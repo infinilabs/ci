@@ -353,6 +353,7 @@ jobs:
                   echo "Easysearch initialization failed."
                   exit 1
                 fi
+                echo "Easysearch initialized successfully." && cat "$LOG_FILE"
 
     install-test:
         runs-on: ubuntu-latest
@@ -608,6 +609,7 @@ jobs:
                   echo "Easysearch initialization failed."
                   exit 1
                 fi
+                echo "Easysearch initialized successfully." && cat "$LOG_FILE"
 
     notify_on_failure:
       runs-on: ubuntu-latest
