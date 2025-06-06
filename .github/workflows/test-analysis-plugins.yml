@@ -63,7 +63,7 @@ jobs:
               -v $PWD/$TNAME/logs:/usr/share/elasticsearch/logs \
               docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }} \
               chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/{data,logs,plugins}
-              
+
             # Run the Elasticsearch container
             docker run -d --name test-$TNAME -p 9200:9200 \
               -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
@@ -96,7 +96,7 @@ jobs:
           # Install the plugin
           PLUGIN_URL="https://get.infini.cloud/$TNAME/$PNAME/${{ inputs.TEST_VERSION }}"
           echo "Installing plugin from $PLUGIN_URL"
-          docker exec test-$TNAME /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL
+          docker exec test-$TNAME echo y | /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL
 
       - name: Verify ${{ matrix.product}} Plugin Installation with ${{ matrix.plugins }}
         run: |

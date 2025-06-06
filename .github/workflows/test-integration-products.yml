@@ -140,7 +140,6 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
-              shell: bash
               run: |
                 # Install easysearch
                 VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -162,7 +161,6 @@ jobs:
                 bin/easysearch -d
 
             - name: Compile products code
-              shell: bash
               run: |
                 mkdir -p $WORKBASE
                 echo Home path is $HOME
@@ -182,7 +180,6 @@ jobs:
                 done
 
             - name: Prepare console config
-              shell: bash
               run: |
                 export PRODUCT=console
                 cd $WORK/$PRODUCT/bin
@@ -199,7 +196,6 @@ jobs:
                 ls -lrt $WORK/$PRODUCT/bin
                 
             - name: Run easysearch test
-              shell: bash
               timeout-minutes: 5
               run: |
                 echo "Running integration test at $PWD ..."
@@ -218,16 +214,14 @@ jobs:
 
 
             - name: Run console test
-              shell: bash
               run: |
                 export PRODUCT=console
                 cd $WORK/$PRODUCT/bin
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run loadgen api test for console initialize
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -237,17 +231,15 @@ jobs:
                 $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
 
             - name: Run agent test
-              shell: bash
               run: |
                 export PRODUCT=agent
                 cd $WORK/$PRODUCT/bin
                 mkdir -p $WORK/$PRODUCT/bin/config
                 sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run gateway test
-              shell: bash
               run: |
                 export PRODUCT=gateway
                 cd $WORK/$PRODUCT/bin
@@ -256,10 +248,9 @@ jobs:
                 sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run loadgen test for gateway
-              shell: bash
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
@@ -275,7 +266,6 @@ jobs:
                   fi
 
             - name: Run loadgen api test for runtime registry
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -283,7 +273,6 @@ jobs:
                 $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
 
             - name: Run loadgen api test for metrics search
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -301,7 +290,6 @@ jobs:
                 fi
 
             - name: Check console logs
-              shell: bash
               run: |
                 export PRODUCT=console
                 cd $WORK/$PRODUCT/bin
@@ -314,7 +302,6 @@ jobs:
                 fi
             
             - name: Check gateway logs
-              shell: bash
               run: |
                 export PRODUCT=gateway
                 cd $WORK/$PRODUCT/bin
@@ -327,7 +314,7 @@ jobs:
                 fi
 
             - name: Check agent logs
-              shell: bash
+              continue-on-error: true
               run: |
                 export PRODUCT=agent
                 cd $WORK/$PRODUCT/bin
@@ -340,7 +327,6 @@ jobs:
                 fi
 
             - name: Check loadgen logs
-              shell: bash
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
@@ -353,7 +339,6 @@ jobs:
                   fi
 
             - name: Check easysearch logs
-              shell: bash
               run: |
                 echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
                 cat $HOME/easysearch/logs/easysearch.log
@@ -420,7 +405,6 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
-              shell: bash
               run: |
                 # Install easysearch
                 VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -439,7 +423,6 @@ jobs:
                 bin/easysearch -d
 
             - name: Install products
-              shell: bash
               run: |
                 mkdir -p $WORKBASE
                 echo Home path is $HOME
@@ -461,7 +444,6 @@ jobs:
                 done
 
             - name: Run easysearch test
-              shell: bash
               timeout-minutes: 5
               run: |
                 echo "Running integration test at $PWD ..."
@@ -480,16 +462,14 @@ jobs:
 
 
             - name: Run console test
-              shell: bash
               run: |
                 export PRODUCT=console
                 cd $WORK/$PRODUCT/bin
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run loadgen api test for console initialize
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -499,17 +479,15 @@ jobs:
                 $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
 
             - name: Run agent test
-              shell: bash
               run: |
                 export PRODUCT=agent
                 cd $WORK/$PRODUCT/bin
                 mkdir -p $WORK/$PRODUCT/bin/config
                 sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run gateway test
-              shell: bash
               run: |
                 export PRODUCT=gateway
                 cd $WORK/$PRODUCT/bin
@@ -518,10 +496,9 @@ jobs:
                 sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log debug &
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
 
             - name: Run loadgen test for gateway
-              shell: bash
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
@@ -537,7 +514,6 @@ jobs:
                   fi
 
             - name: Run loadgen api test for runtime registry
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -545,7 +521,6 @@ jobs:
                 $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
 
             - name: Run loadgen api test for metrics search
-              shell: bash
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
@@ -563,7 +538,6 @@ jobs:
                 fi
 
             - name: Check console logs
-              shell: bash
               run: |
                 export PRODUCT=console
                 cd $WORK/$PRODUCT/bin
@@ -576,7 +550,6 @@ jobs:
                 fi
             
             - name: Check gateway logs
-              shell: bash
               run: |
                 export PRODUCT=gateway
                 cd $WORK/$PRODUCT/bin
@@ -589,7 +562,7 @@ jobs:
                 fi
 
             - name: Check agent logs
-              shell: bash
+              continue-on-error: true
               run: |
                 export PRODUCT=agent
                 cd $WORK/$PRODUCT/bin
@@ -602,7 +575,6 @@ jobs:
                 fi
 
             - name: Check loadgen logs
-              shell: bash
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
@@ -615,7 +587,6 @@ jobs:
                   fi
 
             - name: Check easysearch logs
-              shell: bash
               run: |
                 echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
                 cat $HOME/easysearch/logs/easysearch.log
