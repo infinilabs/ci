@@ -96,7 +96,7 @@ jobs:
           # Install the plugin
           PLUGIN_URL="https://get.infini.cloud/$TNAME/$PNAME/${{ inputs.TEST_VERSION }}"
           echo "Installing plugin from $PLUGIN_URL"
-          docker exec test-$TNAME echo y | /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL
+          docker exec test-$TNAME yes | /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL
 
       - name: Verify ${{ matrix.product}} Plugin Installation with ${{ matrix.plugins }}
         run: |
