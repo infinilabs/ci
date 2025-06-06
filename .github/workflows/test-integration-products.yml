@@ -1,4 +1,4 @@
-name: Products Integration Test
+name: Test Products Integration
 defaults:
   run:
     shell: bash

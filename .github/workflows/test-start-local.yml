@@ -1,4 +1,4 @@
-name: Start Local Test
+name: Test Start Local
 
 on:
   schedule:
