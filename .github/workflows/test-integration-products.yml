@@ -340,10 +340,17 @@ jobs:
 
             - name: Check easysearch logs
               run: |
-                echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
-                cat $HOME/easysearch/logs/easysearch.log
-                if grep -qiE "Exception|Error" $HOME/easysearch/logs/easysearch.log; then
-                  echo "Error found in easysearch logs!"
+                LOG_FILE="$HOME/easysearch/logs/easysearch.log"
+                echo Check at $HOME/easysearch/logs/easysearch.log ...
+                if grep -wq "initialized" $HOME/easysearch/logs/easysearch.log; then
+                  INITIALIZED_LINE=$(grep -n -i -m 1 "initialized" "$LOG_FILE" | cut -d: -f1)
+                  if head -n "$INITIALIZED_LINE" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                    echo "Error found before 'initialized' (line $INIT_LINE)!"
+                    grep -A 10 -B 10 -iE "Exception|Error" "$LOG_FILE"
+                    exit 1
+                  fi
+                else
+                  echo "Easysearch initialization failed."
                   exit 1
                 fi
 
@@ -588,10 +595,17 @@ jobs:
 
             - name: Check easysearch logs
               run: |
-                echo Check easysearch logs at $HOME/easysearch/logs/easysearch.log ...
-                cat $HOME/easysearch/logs/easysearch.log
-                if grep -qiE "Exception|Error" $HOME/easysearch/logs/easysearch.log; then
-                  echo "Error found in easysearch logs!"
+                LOG_FILE="$HOME/easysearch/logs/easysearch.log"
+                echo Check at $HOME/easysearch/logs/easysearch.log ...
+                if grep -wq "initialized" $HOME/easysearch/logs/easysearch.log; then
+                  INITIALIZED_LINE=$(grep -n -i -m 1 "initialized" "$LOG_FILE" | cut -d: -f1)
+                  if head -n "$INITIALIZED_LINE" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                    echo "Error found before 'initialized' (line $INIT_LINE)!"
+                    grep -A 10 -B 10 -iE "Exception|Error" "$LOG_FILE"
+                    exit 1
+                  fi
+                else
+                  echo "Easysearch initialization failed."
                   exit 1
                 fi
 
