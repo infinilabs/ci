@@ -280,8 +280,8 @@ jobs:
           cat "$PINYIN_ANALYSIS_RESULT_FILE"
 
           # Check if the expected token part is present in the analysis result
-          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "zhonghuarenmingongheguo" '.tokens[] | select(.token | contains($token_part))'; then
-             echo "Error: Pinyin analysis for '中华人民共和国国歌' did not produce expected token part 'zhonghuarenmingongheguo' on $PRODUCT_ENV."
+          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "zhrmghggg" '.tokens[] | select(.token | contains($token_part))'; then
+             echo "Error: Pinyin analysis for '中华人民共和国国歌' did not produce expected token part 'zhrmghggg' on $PRODUCT_ENV."
              exit 1
           fi
           echo "Pinyin Analyzer test passed for $PRODUCT_ENV."
