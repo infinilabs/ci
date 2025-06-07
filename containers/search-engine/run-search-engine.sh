@@ -22,7 +22,7 @@ NETWORK_NAME="search-engine-net"
 IMAGE_NAME=""
 PLUGIN_INSTALL_CMD=""
 
-HOST_DATA_ROOT="$PWD/search_engine_data_$(date +%s%N)"
+HOST_DATA_ROOT="$PWD/search_engine"
 HOST_CONFIG_DIR="$HOST_DATA_ROOT/config"
 HOST_PLUGINS_DIR="$HOST_DATA_ROOT/plugins"
 HOST_LOGS_DIR="$HOST_DATA_ROOT/logs"
@@ -41,6 +41,7 @@ docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create 
 
 # Prepare plugin directory on host
 mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
+chown -R 1000:1000 "$HOST_DATA_ROOT"
 
 echo "Host config directory: $HOST_CONFIG_DIR"
 echo "Host plugins directory: $HOST_PLUGINS_DIR"
@@ -114,6 +115,7 @@ if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
     "$IMAGE_NAME" \
     -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
   touch "$CONFIG_INITIALIZED_MARKER"
+  ls -alrt "$HOST_CONFIG_DIR"
 else
   echo "Host config directory already initialized. Skipping copy from image."
 fi
@@ -140,7 +142,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
   done
   echo "Plugin installation phase complete."
 
-  ls -lrt "$HOST_PLUGINS_DIR" && ls -lrt "$HOST_CONFIG_DIR"
+  ls -alrt "$HOST_PLUGINS_DIR"
 fi
 
 # --- Start Search Engine Container ---
