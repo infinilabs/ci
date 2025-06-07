@@ -44,7 +44,6 @@ mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR
 
 echo "Host config directory: $HOST_CONFIG_DIR"
 echo "Host plugins directory: $HOST_PLUGINS_DIR"
-chown -R 1000:1000 "$HOST_DATA_ROOT"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
@@ -109,12 +108,12 @@ echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
 if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
   docker run --rm \
+    --user="0:0" \
     --entrypoint="/bin/sh" \
-    -v "$HOST_CONFIG_DIR:/mnt/host_config" \
+    -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
     -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
   touch "$CONFIG_INITIALIZED_MARKER"
-  chown -R 1000:1000 "$HOST_DATA_ROOT"
 else
   echo "Host config directory already initialized. Skipping copy from image."
 fi
@@ -134,12 +133,14 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     # Install plugin using the appropriate command
     docker run --rm \
       --user="0:0" \
-      -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER" \
-      -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER" \
+      -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
+      -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
       "$IMAGE_NAME" \
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
+
+  chown -R 1000:1000 "$HOST_DATA_ROOT"
   ls -lrt "$HOST_PLUGINS_DIR" && ls -lrt "$HOST_CONFIG_DIR"
 fi
 
@@ -154,8 +155,8 @@ DOCKER_RUN_CMD=(
   "--publish" "${ENGINE_PORT}:${ENGINE_PORT}"
   "--ulimit" "nofile=65536:65536"
   "--ulimit" "memlock=-1:-1"
-  "-v" "$HOST_DATA_DIR:/usr/share/$ENGINE_TYPE/data"
-  "-v" "$HOST_LOGS_DIR:/usr/share/$ENGINE_TYPE/logs" 
+  "-v" "$HOST_DATA_DIR:/usr/share/$ENGINE_TYPE/data:rw"
+  "-v" "$HOST_LOGS_DIR:/usr/share/$ENGINE_TYPE/logs:rw" 
   "-v" "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER" 
   "-v" "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER"
 )
