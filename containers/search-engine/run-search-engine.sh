@@ -153,9 +153,9 @@ docker run --rm \
   -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
   -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
   "$IMAGE_NAME" \
-  sh -c "echo 'Setting ownership for plugins...' && chown -R \"$ENGINE_USER_ID:$ENGINE_GROUP_ID\" \"$PLUGIN_DIR_CONTAINER\" && echo 'Setting ownership for config (if modified by plugin)...' && chown -R \"$ENGINE_USER_ID:$ENGINE_GROUP_ID\" \"$CONFIG_DIR_CONTAINER\"" || { echo "Chown FAILED for $PNAME's directories"; exit 1; }
+  sh -c "echo 'Setting ownership for plugins...' && chown -R "1000:1000" \"$PLUGIN_DIR_CONTAINER\" && echo 'Setting ownership for config (if modified by plugin)...' && chown -R "1000:1000" \"$CONFIG_DIR_CONTAINER\"" || { echo "Chown FAILED for $PNAME's directories"; exit 1; }
   
-echo "Ownership set for plugin '$PNAME' directories."
+echo "Ownership set for $ENGINE_TYPE's plugin and config directories."
 
 # --- Start Search Engine Container ---
 echo "Starting $ENGINE_TYPE node..."
