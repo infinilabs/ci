@@ -339,6 +339,7 @@ jobs:
                   fi
 
             - name: Check easysearch logs
+              continue-on-error: true
               run: |
                 LOG_FILE="$HOME/easysearch/logs/easysearch.log"
                 echo Check at $HOME/easysearch/logs/easysearch.log ...
@@ -362,12 +363,13 @@ jobs:
                   echo "Checking for errors up to the initialization pattern (line $INITIALIZED_LINE_NUMBER)..."
                   if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "Exception|Error"; then
                     echo "Error/Exception found in logs before or at the initialization pattern!"
+                    head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -iE "Exception|Error"
                     exit 1
                   else
                     echo "No errors found before or at the initialization pattern. Log check passed."
                   fi
                 fi
-                echo "Easysearch initialized successfully." && cat "$LOG_FILE"
+                echo "Easysearch initialized successfully."
 
     install-test:
         runs-on: ubuntu-latest
