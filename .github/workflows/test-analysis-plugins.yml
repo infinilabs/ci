@@ -209,6 +209,7 @@ jobs:
           AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
+          PRODUCT_ENV="${{ matrix.product }}"
           echo "--- Verifying loaded plugins for $PRODUCT_ENV ---"
           PLUGIN_LIST_CMD="curl $CURL_OPTS $AUTH_OPTS '${BASE_URL}/_cat/plugins?h=component&format=txt'"
           echo "Executing: $PLUGIN_LIST_CMD"
@@ -233,6 +234,7 @@ jobs:
           AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
+          PRODUCT_ENV="${{ matrix.product }}"
           echo "--- Verifying IK Analyzer for $PRODUCT_ENV ---"
           ANALYSIS_PAYLOAD_IK='{"analyzer": "ik_smart", "text": "中华人民共和国国歌"}'
           # Corrected: Use env vars for TNAME, VERSION_ENV, and github.run_id
@@ -245,8 +247,6 @@ jobs:
              cat "$IK_ANALYSIS_RESULT_FILE"
              exit 1
           fi
-
-          cat "$IK_ANALYSIS_RESULT_FILE"
 
           # Check if the expected token is present in the analysis result
           if ! cat "$IK_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
@@ -262,6 +262,7 @@ jobs:
           AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
+          PRODUCT_ENV="${{ matrix.product }}"
           echo "--- Verifying Pinyin Analyzer for $PRODUCT_ENV ---"
           ANALYSIS_PAYLOAD_PINYIN='{"analyzer": "pinyin", "text": "中华人民共和国国歌"}'
           # Corrected: Use env vars for TNAME, VERSION_ENV, and github.run_id
@@ -276,8 +277,6 @@ jobs:
              cat "$PINYIN_ANALYSIS_RESULT_FILE"
              exit 1
           fi
-
-          cat "$PINYIN_ANALYSIS_RESULT_FILE"
 
           # Check if the expected token part is present in the analysis result
           if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "zhrmghggg" '.tokens[] | select(.token | contains($token_part))'; then
@@ -294,8 +293,9 @@ jobs:
           AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
+          PRODUCT_ENV="${{ matrix.product }}"
           echo "--- Verifying Stconvert Analyzer for $PRODUCT_ENV ---"
-          ANALYSIS_PAYLOAD_STCONVERT='{"tokenizer": "standard", "filter": ["lowercase"], "char_filter": ["tsconvert"], "text": "中华人民共和国国歌"}'
+          ANALYSIS_PAYLOAD_STCONVERT='{"tokenizer": "standard", "filter": ["lowercase"], "char_filter": ["stconvert"], "text": "中华人民共和国国歌"}'
           STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$STCONVERT_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_STCONVERT'"
           echo "Executing Stconvert Analyze: $ANALYZE_CMD"
