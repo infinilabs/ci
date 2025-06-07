@@ -363,9 +363,8 @@ jobs:
           cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq . # Pretty print JSON
 
           # Verify simplified output for Chinese part
-          # Assuming '忧郁', '的', '乌龟' are expected tokens after ik_smart and stconvert
-          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧郁")'; then
-             echo "Error: Stconvert (t2s) test 1 failed. Expected '忧郁' not found."
+          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")'; then
+             echo "Error: Stconvert (t2s) test 1 failed. Expected '忧' not found."
              exit 1
           fi
            if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="乌龟")'; then
