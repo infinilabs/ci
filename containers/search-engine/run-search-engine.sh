@@ -41,6 +41,7 @@ docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create 
 
 # Prepare plugin directory on host
 mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
+chmod -R 777 "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
@@ -107,12 +108,12 @@ echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
 if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
   docker run --rm \
-    --user="0:0" \
     --entrypoint="/bin/sh" \
     -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
     -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
   touch "$CONFIG_INITIALIZED_MARKER"
+  chmod -R 755 "$HOST_CONFIG_DIR"
   ls -alrt "$HOST_CONFIG_DIR"
 else
   echo "Host config directory already initialized. Skipping copy from image."
@@ -139,7 +140,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
-
+  chmod -R 755 "$HOST_CONFIG_DIR" 
   ls -alrt "$HOST_PLUGINS_DIR"
 fi
 
