@@ -21,7 +21,9 @@ NETWORK_NAME="search-engine-net"
 # --- Engine Specific Configuration ---
 IMAGE_NAME=""
 PLUGIN_INSTALL_CMD=""
+CONFIG_DIR_HOST="$PWD/engine_config"
 PLUGIN_DIR_HOST="$PWD/engine_plugins"
+CONFIG_DIR_CONTAINER=""
 PLUGIN_DIR_CONTAINER=""
 DEFAULT_USER=""
 HEALTH_CHECK_USER=""
@@ -32,13 +34,16 @@ DOCKER_ENV_VARS=()
 # Create network if it doesn't exist
 docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create "$NETWORK_NAME"
 
-# Prepare plugin directory on host
+# Prepare config/plugin directory on host
+mkdir -p "$CONFIG_DIR_HOST"
+chown -R 1000:1000 "$CONFIG_DIR_HOST"
 mkdir -p "$PLUGIN_DIR_HOST"
 chown -R 1000:1000 "$PLUGIN_DIR_HOST"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/elasticsearch/bin/elasticsearch-plugin"
+  CONFIG_DIR_CONTAINER="/usr/share/elasticsearch/config"
   PLUGIN_DIR_CONTAINER="/usr/share/elasticsearch/plugins"
   DEFAULT_USER="elastic"
   DOCKER_ENV_VARS+=(
@@ -65,6 +70,7 @@ if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
 elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   IMAGE_NAME="opensearchproject/opensearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/opensearch/bin/opensearch-plugin"
+  CONFIG_DIR_CONTAINER="/usr/share/opensearch/config"
   PLUGIN_DIR_CONTAINER="/usr/share/opensearch/plugins"
   DEFAULT_USER="admin"
   DOCKER_ENV_VARS+=(
@@ -94,8 +100,19 @@ fi
 
 echo "Using image: $IMAGE_NAME"
 echo "Container name: $CONTAINER_NAME"
+echo "Host config directory: $CONFIG_DIR_HOST"
+echo "Container config directory: $CONFIG_DIR_CONTAINER"
 echo "Host plugin directory: $PLUGIN_DIR_HOST"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
+
+# --- Prepare Config Directory ---
+echo "Attemppting to prepare config directory: $CONFIG_DIR_HOST"
+docker run --rm \
+    --user="0:0" \
+    --entrypoint="/bin/sh" \
+    -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
+    "$IMAGE_NAME" \
+    -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && ls -lrt /mnt/host_config && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
 
 # --- Plugin Installation ---
 # ENGINE_PLUGINS: analysis-ik,analysis-pinyin,analysis-strconvert
@@ -112,12 +129,12 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     # Install plugin using the appropriate command
     docker run --rm \
       --user="0:0" \
-      -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER" \
+      -v "$CONFIG_DIR_HOST:$CONFIG_DIR_CONTAINER:rw" \
+      -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER:rw" \
       "$IMAGE_NAME" \
-      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
+      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch && ls -lrt $CONFIG_DIR_CONTAINER $PLUGIN_DIR_CONTAINER && echo 'Plugin $PNAME installed successfully.'"
   done
   echo "Plugin installation phase complete."
-  ls -l "$PLUGIN_DIR_HOST"
 fi
 
 # --- Start Search Engine Container ---
@@ -132,6 +149,7 @@ DOCKER_RUN_CMD=(
   "--ulimit" "nofile=65536:65536"
   "--ulimit" "memlock=-1:-1"
   "-v" "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER"
+  "-v" "$CONFIG_DIR_HOST:$CONFIG_DIR_CONTAINER"
 )
 
 # Add environment variables
