@@ -108,6 +108,7 @@ echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
 if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
   docker run --rm \
+    --user="0:0" \
     --entrypoint="/bin/sh" \
     -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
