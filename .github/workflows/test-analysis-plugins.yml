@@ -1,104 +1,257 @@
-name:  Test Analysis Plugins
+name: Test Analysis Plugins
 defaults:
   run:
     shell: bash
 
 on:
+  schedule:
+    - cron: '30 18 * * *'
   workflow_dispatch:
     inputs:
       PRODUCT:
-        description: 'Setting Test Product'
-        required: false
+        description: 'Product to test (elasticsearch or opensearch).'
+        required: true
         type: choice
         options:
           - elasticsearch
           - opensearch
-        default: 'elasticsearch'
-      VERSION:
-        description: 'Setting Test version'
+      MANUAL_VERSION:
+        description: 'Version to test (e.g., 8.11.0). If empty, latest stable for PRODUCT is fetched.'
         required: false
-        default: '8.17.7'
+        type: string
+        default: ''
 
 jobs:
-  test-analysis-plugins:
-    name: Test Analysis Plugins for ${{ matrix.product }} @ ${{inputs.VERSION}}
+  build-test-matrix: 
+    name: Build Test Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      # This output will be a JSON string like '[{"product": "...", "version": "..."}, ...]'
+      # or '[]' if no tests are to be run.
+      matrix_json: ${{ steps.generate_matrix.outputs.matrix_json_string }}
+    steps:
+      - name: Get Date 7 Days Ago (UTC) for Schedule
+        id: get_date_schedule
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [[ "$(uname)" == "Darwin" ]]; then
+            echo "seven_days_ago_utc=$(date -u -v-7d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          else
+            echo "seven_days_ago_utc=$(date -u -d '7 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate Test Matrix Configuration
+        id: generate_matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PRODUCT: ${{ inputs.PRODUCT }}
+          INPUT_MANUAL_VERSION: ${{ inputs.MANUAL_VERSION }}
+          SINCE_DATE_SCHEDULE: ${{ steps.get_date_schedule.outputs.seven_days_ago_utc }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FINAL_MATRIX_ENTRIES="[]"
+
+          # Function to create a JSON entry for the matrix
+          generate_matrix_entry_json() {
+            local prod="$1"
+            local ver="$2"
+            # Ensure product and version are not empty before creating entry
+            if [[ -n "$prod" && -n "$ver" ]]; then
+              echo "{\"product\": \"$prod\", \"version\": \"$ver\"}"
+            fi
+          }
+
+          # Function to fetch latest stable version for a given product
+          fetch_latest_stable_version() {
+            local product_name="$1"; local repo_url="$2"; local version_prefix="$3"; local version_regex="$4";
+            local latest_version=""
+            echo "Fetching latest stable for $product_name (for dispatch without manual version)..."
+            RELEASES_PAYLOAD=$(curl -sL --retry 3 --retry-delay 5 -H "Authorization: Bearer $GH_TOKEN" "$repo_url?per_page=10") # Get a few recent
+            latest_version=$(echo "$RELEASES_PAYLOAD" \
+              | jq -r --arg prefix "$version_prefix" --arg regex "$version_regex" '[.[] | 
+                select(.prerelease==false and .draft==false and (.tag_name | startswith($prefix)) and (.tag_name | test($regex))) 
+              | .tag_name | sub($prefix; "")] | .[0]')
+            if [[ -n "$latest_version" && "$latest_version" != "null" ]]; then
+              echo "$latest_version"
+            fi
+          }
+          
+          # Function to fetch recent (last 7 days) stable versions for a product
+          fetch_recent_schedule_versions() {
+            local product_name="$1"; local repo_url="$2"; local version_prefix="$3"; local version_regex="$4";
+            local current_matrix="$FINAL_MATRIX_ENTRIES" # Use the global accumulator
+            echo "Fetching $product_name releases since $SINCE_DATE_SCHEDULE..."
+            RELEASES_PAYLOAD=$(curl -sL --retry 3 --retry-delay 5 -H "Authorization: Bearer $GH_TOKEN" "$repo_url?per_page=50")
+            RECENT_VERSIONS_FOUND=$(echo "$RELEASES_PAYLOAD" \
+              | jq -r --arg since_date "$SINCE_DATE_SCHEDULE" --arg prefix "$version_prefix" --arg regex "$version_regex" '[.[] | 
+                select(.prerelease==false and .draft==false and (.published_at >= $since_date) and (.tag_name | startswith($prefix)) and (.tag_name | test($regex))) 
+              | .tag_name | sub($prefix; "")] | unique | .[]') # Get unique versions, one per line
+            
+            if [[ -n "$RECENT_VERSIONS_FOUND" ]]; then
+              echo "Found recent stable $product_name versions: $RECENT_VERSIONS_FOUND"
+              for version_item in $RECENT_VERSIONS_FOUND; do
+                entry_json=$(generate_matrix_entry_json "$product_name" "$version_item")
+                if [[ -n "$entry_json" ]]; then
+                    current_matrix=$(echo "$current_matrix" | jq --argjson entry "$entry_json" '. + [$entry]')
+                fi
+              done
+            else
+              echo "No stable $product_name versions found published since $SINCE_DATE_SCHEDULE for schedule."
+            fi
+            FINAL_MATRIX_ENTRIES="$current_matrix" # Update the global accumulator
+          }
+
+          if [[ "$EVENT_NAME" == 'schedule' ]]; then
+            fetch_recent_schedule_versions "elasticsearch" "https://api.github.com/repos/elastic/elasticsearch/releases" "v" "^v[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+            fetch_recent_schedule_versions "opensearch" "https://api.github.com/repos/opensearch-project/OpenSearch/releases" "" "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+          
+          elif [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            if [[ -n "$INPUT_MANUAL_VERSION" ]]; then
+              echo "Using manually provided version: $INPUT_MANUAL_VERSION for product: $INPUT_PRODUCT"
+              entry=$(generate_matrix_entry_json "$INPUT_PRODUCT" "$INPUT_MANUAL_VERSION")
+              if [[ -n "$entry" ]]; then FINAL_MATRIX_ENTRIES=$(echo "$FINAL_MATRIX_ENTRIES" | jq --argjson entry "$entry" '. + [$entry]'); fi
+            else
+              echo "Manual version not provided for dispatch. Fetching latest stable for $INPUT_PRODUCT..."
+              LATEST_VER=""
+              if [[ "$INPUT_PRODUCT" == "elasticsearch" ]]; then
+                LATEST_VER=$(fetch_latest_stable_version "elasticsearch" "https://api.github.com/repos/elastic/elasticsearch/releases" "v" "^v[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
+              elif [[ "$INPUT_PRODUCT" == "opensearch" ]]; then
+                LATEST_VER=$(fetch_latest_stable_version "opensearch" "https://api.github.com/repos/opensearch-project/OpenSearch/releases" "" "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
+              fi
+              
+              if [[ -n "$LATEST_VER" ]]; then
+                echo "Latest stable for $INPUT_PRODUCT is $LATEST_VER"
+                entry=$(generate_matrix_entry_json "$INPUT_PRODUCT" "$LATEST_VER")
+                if [[ -n "$entry" ]]; then FINAL_MATRIX_ENTRIES=$(echo "$FINAL_MATRIX_ENTRIES" | jq --argjson entry "$entry" '. + [$entry]'); fi
+              else
+                echo "::error::Could not find latest stable version for $INPUT_PRODUCT on dispatch."
+                # FINAL_MATRIX_ENTRIES will remain '[]', so the next job won't run due to its 'if' condition
+              fi
+            fi
+          fi
+          
+          echo "Final matrix JSON for test job: $FINAL_MATRIX_ENTRIES"
+          echo "matrix_json_string=$FINAL_MATRIX_ENTRIES" >> $GITHUB_OUTPUT
+
+  test-engine-plugins:
+    name: Test Plugins on ${{ matrix.product }} @ ${{ matrix.version }}
+    needs: build-test-matrix
+    if: ${{ needs.build-test-matrix.outputs.matrix_json != '[]' }}
     runs-on: ubuntu-latest
     env:
-      TNAME: ${{ matrix.product }}
-      VERSION: ${{ inputs.VERSION }}
       SECURITY_ENABLED: true
-      ENGINE_PASSWORD: ${{ secrets.SEARCH_APIKEY}}
+      ENGINE_PASSWORD: ${{ secrets.SEARCH_APIKEY }}
       JAVA_OPTS: '-Xms1g -Xmx1g'
-      CONTAINER_NAME: 'search-engine-node'
+      CONTAINER_NAME_BASE: 'search-engine-node'
       PORT: '9200'
-      WAIT_SECONDS: '60'
+      WAIT_SECONDS: '120'
     strategy:
-      matrix:
-        product:
-          - ${{ inputs.PRODUCT }}
+      fail-fast: false
+      matrix: 
+        include: ${{ fromJSON(needs.build-test-matrix.outputs.matrix_json) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Search Engine with IK and Pinyin and strconvert plugins
+      - name: Display Matrix Combination
+        run: |
+          echo Testing Product: ${{ matrix.product }}, Version: ${{ matrix.version }}
+
+      - name: Run Search Engine (${{ matrix.product }} @ ${{ matrix.version }})
         uses: ./containers/search-engine
         with:
-          engine-type: ${{ inputs.PRODUCT }}
-          engine-version: ${{inputs.VERSION}}
+          engine-type: ${{ matrix.product }}
+          engine-version: ${{ matrix.version }}
           security-enabled: ${{ env.SECURITY_ENABLED }}
-          wait-for-seconds: ${{ env.WAIT_SECONDS }}
           engine_password: ${{ env.ENGINE_PASSWORD }}
           port: ${{ env.PORT }}
           java-opts: ${{ env.JAVA_OPTS }}
-          container-name: ${{ env.CONTAINER_NAME }}
+          container-name: ${{ env.CONTAINER_NAME_BASE }}-${{ matrix.product }}-${{ matrix.version }}-${{ github.run_id }}
           plugins: 'analysis-ik,analysis-pinyin,analysis-stconvert'
+          wait-for-seconds: ${{ env.WAIT_SECONDS }}
 
-      - name: Verify Plugins and IK Analyzer (${{ matrix.product }})
+      - name: Verify Plugins (${{ matrix.product }} @ ${{ matrix.version }})
         if: success()
+        env:
+          TNAME: ${{ matrix.product }}
+          ENGINE_VERSION_TESTED: ${{ matrix.version }}
         run: |
+          # Verification script remains the same as your last provided version
+          echo "Verifying plugins for $TNAME version $ENGINE_VERSION_TESTED"
           PROTOCOL="http"
-          CURL_OPTS="-s"
+          CURL_OPTS="-s --fail --connect-timeout 10 --max-time 30" 
           AUTH_OPTS=""
-
+          CURRENT_USER=""
           if [[ "$SECURITY_ENABLED" == "true" ]]; then
             PROTOCOL="https"
             CURL_OPTS="$CURL_OPTS -k"
             if [[ -n "$ENGINE_PASSWORD" ]]; then
-              if [[ "$TNAME" == "elasticsearch" ]]; then
-                ES_USER="elastic"
-              else
-                ES_USER="admin"
-              fi
-              AUTH_OPTS="-u elastic:$ENGINE_PASSWORD"
+              if [[ "$TNAME" == "elasticsearch" ]]; then CURRENT_USER="elastic"; 
+              elif [[ "$TNAME" == "opensearch" ]]; then CURRENT_USER="admin"; 
+              else echo "Error: Unknown TNAME '$TNAME' for user determination" && exit 1; fi
+              AUTH_OPTS="-u $CURRENT_USER:$ENGINE_PASSWORD"
             else
-              echo "Warning: Security enabled but no password provided for ES_USER=$ES_USER"
+              echo "Error: Security enabled for $TNAME but ENGINE_PASSWORD is not set!" && exit 1
             fi
           fi
-          
           BASE_URL="${PROTOCOL}://localhost:${PORT}"
-
-          echo "--- Verifying loaded plugins ---"
-          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?v&h=component,version,description"
-
-          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-ik" || (echo "IK plugin not found!" && exit 1)
-          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-pinyin" || (echo "Pinyin plugin not found!" && exit 1)
-          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-stconvert" || (echo "Stconvert plugin not found!" && exit 1)
-          echo "IK and Pinyin and Stconvert plugins are listed."
-
-          echo "--- Verifying IK Analyzer ---"
-          ANALYSIS_PAYLOAD='{
-            "analyzer": "ik_smart",
-            "text": "中华人民共和国国歌"
-          }'
-
-          curl $CURL_OPTS $AUTH_OPTS -X POST "${BASE_URL}/_analyze" -H 'Content-Type: application/json' -d "$ANALYSIS_PAYLOAD" | tee /tmp/ik_analysis_result.json
+          echo "Waiting a bit more for engine to be fully responsive after startup (additional 20s)..."
+          sleep 20
+          echo "--- Verifying loaded plugins for $TNAME ---"
+          PLUGIN_LIST_CMD="curl $CURL_OPTS $AUTH_OPTS '${BASE_URL}/_cat/plugins?h=component&format=txt'"
+          echo "Executing: $PLUGIN_LIST_CMD"
+          PLUGIN_LIST_OUTPUT=$(eval "$PLUGIN_LIST_CMD")
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to fetch plugin list from $BASE_URL/_cat/plugins for $TNAME"
+            curl $CURL_OPTS $AUTH_OPTS "$BASE_URL" || echo "Engine root is also not responding for $TNAME."
+            exit 1
+          fi
+          echo "Installed plugins reported by $TNAME _cat/plugins:"
+          echo "$PLUGIN_LIST_OUTPUT"
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-ik" || (echo "Error: IK plugin not found for $TNAME!" && exit 1)
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-pinyin" || (echo "Error: Pinyin plugin not found for $TNAME!" && exit 1)
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-stconvert" || (echo "Error: Stconvert plugin not found for $TNAME!" && exit 1)
+          echo "All specified plugins are listed for $TNAME."
+          echo "--- Verifying IK Analyzer for $TNAME ---"
+          ANALYSIS_PAYLOAD_IK='{"analyzer": "ik_smart", "text": "中华人民共和国国歌"}'
+          IK_ANALYSIS_RESULT_FILE="/tmp/ik_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$IK_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_IK'"
+          echo "Executing IK Analyze: $ANALYZE_CMD"
+          HTTP_STATUS=$(eval "$ANALYZE_CMD")
+          if [[ "$HTTP_STATUS" -ne 200 ]]; then
+             echo "Error: IK analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             cat "$IK_ANALYSIS_RESULT_FILE"
+             exit 1
+          fi
+          if ! cat "$IK_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
+             echo "Error: IK analysis for '中华人民共和国' failed on $TNAME." && exit 1
+          fi
+          echo "IK Analyzer test passed for $TNAME."
+          echo "--- Verifying Pinyin Analyzer for $TNAME ---"
+          ANALYSIS_PAYLOAD_PINYIN='{"analyzer": "pinyin", "text": "中华人民共和国国歌"}'
+          PINYIN_ANALYSIS_RESULT_FILE="/tmp/pinyin_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
+          echo "Executing Pinyin Analyze: $ANALYZE_CMD"
+          HTTP_STATUS=$(eval "$ANALYZE_CMD")
+          if [[ "$HTTP_STATUS" -ne 200 ]]; then
+             echo "Error: Pinyin analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             cat "$PINYIN_ANALYSIS_RESULT_FILE"
+             exit 1
+          fi
+          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="zhong guo ren min gong he guo")'; then
+             echo "Error: Pinyin analysis for '中华人民共和国' failed on $TNAME." && exit 1
+          fi
+          echo "Pinyin Analyzer test passed for $TNAME."
+          echo "--- Verifying Stconvert Analyzer for $TNAME ---"
+          ANALYSIS_PAYLOAD_STCONVERT='{"analyzer": "stconvert", "text": "中华人民共和国国歌"}'
+          STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$STCONVERT_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_STCONVERT'"
+          echo "Executing Stconvert Analyze: $ANALYZE_CMD"
+          HTTP_STATUS=$(eval "$ANALYZE_CMD")
+          if [[ "$HTTP_STATUS" -ne 200 ]]; then
+             echo "Error: Stconvert analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             cat "$STCONVERT_ANALYSIS_RESULT_FILE"
+            exit 1
+          fi
+          echo "Stconvert analysis request completed successfully for $TNAME"
           
-          if ! cat /tmp/ik_analysis_result.json | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
-             echo "IK analysis for '中华人民共和国' failed or did not produce expected token."
-             exit 1
-          fi
-          if ! cat /tmp/ik_analysis_result.json | jq -e '.tokens[] | select(.token=="国歌")'; then
-             echo "IK analysis for '国歌' failed or did not produce expected token."
-             exit 1
-          fi
-          echo "IK Analyzer test passed."

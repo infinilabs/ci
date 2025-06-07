@@ -112,7 +112,7 @@ docker run --rm \
     --entrypoint="/bin/sh" \
     -v "$CONFIG_DIR_HOST:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
-    -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && ls -lrt /mnt/host_config && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
+    -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
 
 # --- Plugin Installation ---
 # ENGINE_PLUGINS: analysis-ik,analysis-pinyin,analysis-strconvert
@@ -132,7 +132,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
       -v "$CONFIG_DIR_HOST:$CONFIG_DIR_CONTAINER:rw" \
       -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER:rw" \
       "$IMAGE_NAME" \
-      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch && ls -lrt $CONFIG_DIR_CONTAINER $PLUGIN_DIR_CONTAINER && echo 'Plugin $PNAME installed successfully.'"
+      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch && echo 'Plugin $PNAME installed successfully.'"
   done
   echo "Plugin installation phase complete."
 fi
