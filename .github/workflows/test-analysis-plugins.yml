@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Search Engine with IK and Pinyin and strconvert plugins
-        uses: ./search-engine
+        uses: ./containers/search-engine
         with:
           engine-type: ${{ inputs.PRODUCT }}
           engine-version: ${{inputs.VERSION}}
