@@ -56,9 +56,6 @@ jobs:
       - name: Verify Plugins and IK Analyzer (${{ matrix.product }})
         if: success()
         run: |
-          echo "Waiting a bit more for plugins to fully initialize..."
-          sleep 15
-
           PROTOCOL="http"
           CURL_OPTS="-s"
           AUTH_OPTS=""
@@ -78,7 +75,7 @@ jobs:
             fi
           fi
           
-          BASE_URL="${PROTOCOL}://localhost:${ES_PORT}"
+          BASE_URL="${PROTOCOL}://localhost:${PORT}"
 
           echo "--- Verifying loaded plugins ---"
           curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?v&h=component,version,description"

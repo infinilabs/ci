@@ -87,6 +87,7 @@ elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   fi
 
 else
+  echo
   echo -e "\033[31;1mERROR:\033[0m Unsupported ENGINE_TYPE: [$ENGINE_TYPE]. Must be 'elasticsearch' or 'opensearch'."
   exit 1
 fi
@@ -174,5 +175,6 @@ until docker run --network "$NETWORK_NAME" --rm appropriate/curl --silent --show
   SECONDS_WAITED=$((SECONDS_WAITED + 5))
 done
 
+echo
 echo -e "\033[32;1m$ENGINE_TYPE is up and running at $URL\033[0m"
 docker run --network "$NETWORK_NAME" --rm appropriate/curl --silent $CURL_INSECURE_OPT $CURL_USER_OPT "$URL"
