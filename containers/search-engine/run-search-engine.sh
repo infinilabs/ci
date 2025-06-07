@@ -44,7 +44,7 @@ docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create 
 
 # Prepare plugin directory on host
 mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
-chown -R "$RUNNER_UID:$RUNNER_GID" "$HOST_DATA_ROOT"
+chown -R "1000:1000" "$HOST_DATA_ROOT"
 chmod -R u+rwx "$HOST_DATA_ROOT"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
