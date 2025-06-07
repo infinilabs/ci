@@ -105,7 +105,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     PNAME=$(echo "$PNAME" | xargs) # Trim whitespace
     if [[ -z "$PNAME" ]]; then continue; fi
 
-    PLUGIN_URL="${BASE_PLUGIN_DOWNLOAD_URL}/${ENGINE_TYPE_LOWER}/${PNAME}/${ENGINE_VERSION}"
+    PLUGIN_URL="${BASE_PLUGIN_DOWNLOAD_URL}/${ENGINE_TYPE}/${PNAME}/${ENGINE_VERSION}"
     
     echo "Installing plugin '$PNAME' from URL: $PLUGIN_URL ..."
     # Install plugin using the appropriate command
