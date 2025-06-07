@@ -41,10 +41,6 @@ docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create 
 
 # Prepare plugin directory on host
 mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
-chown -R 1000:1000 "$HOST_DATA_ROOT"
-
-echo "Host config directory: $HOST_CONFIG_DIR"
-echo "Host plugins directory: $HOST_PLUGINS_DIR"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
@@ -102,6 +98,8 @@ fi
 
 echo "Using image: $IMAGE_NAME"
 echo "Container name: $CONTAINER_NAME"
+echo "Host config directory: $HOST_CONFIG_DIR"
+echo "Container config directory: $CONFIG_DIR_CONTAINER"
 echo "Host plugin directory: $HOST_PLUGINS_DIR"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 
@@ -109,7 +107,7 @@ echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
 if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
   docker run --rm \
-    --user="1000:1000" \
+    --user="0:0" \
     --entrypoint="/bin/sh" \
     -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
@@ -134,7 +132,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     echo "Installing plugin '$PNAME' from URL: $PLUGIN_URL ..."
     # Install plugin using the appropriate command
     docker run --rm \
-      --user="1000:1000" \
+      --user="0:0" \
       -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
       -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
       "$IMAGE_NAME" \
