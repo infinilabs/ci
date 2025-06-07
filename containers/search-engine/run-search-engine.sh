@@ -117,6 +117,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
+  ls -l "$PLUGIN_DIR_HOST"
 fi
 
 # --- Start Search Engine Container ---
