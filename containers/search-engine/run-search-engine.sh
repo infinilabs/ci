@@ -110,7 +110,7 @@ echo "Attemppting to prepare config directory: $CONFIG_DIR_HOST"
 docker run --rm \
     --user="0:0" \
     --entrypoint="/bin/sh" \
-    -v "$CONFIG_DIR_CONTAINER:/mnt/host_config:rw" \
+    -v "$CONFIG_DIR_HOST:/mnt/host_config:rw" \
     "$IMAGE_NAME" \
     -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && ls -lrt /mnt/host_config && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
 
