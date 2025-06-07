@@ -40,6 +40,7 @@ jobs:
           engine-type: ${{ inputs.PRODUCT }}
           engine-version: ${{inputs.VERSION}}
           security-enabled: 'false'
+          wait-for-seconds: '300'
           plugins: 'analysis-ik,analysis-pinyin,analysis-stconvert'
 
       - name: Verify IK Analyzer (${{ inputs.PRODUCT }})
