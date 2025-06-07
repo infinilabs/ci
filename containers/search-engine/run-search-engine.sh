@@ -148,7 +148,7 @@ echo "$ENGINE_TYPE container $CONTAINER_NAME started."
 # --- Health Check ---
 echo "Waiting for $ENGINE_TYPE to become healthy (max ${WAIT_SECONDS}s)..."
 PROTOCOL=$HEALTH_CHECK_PROTOCOL
-URL="${PROTOCOL}://localhost:${ENGINE_PORT}"
+URL="${PROTOCOL}://$CONTAINER_NAME:${ENGINE_PORT}"
 HEALTH_CHECK_URL="${URL}/_cluster/health?wait_for_status=yellow&timeout=5s"
 
 CURL_USER_OPT=""
