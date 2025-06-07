@@ -44,12 +44,11 @@ mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR
 
 echo "Host config directory: $HOST_CONFIG_DIR"
 echo "Host plugins directory: $HOST_PLUGINS_DIR"
-chown -R 1000:1000 "$HOST_DATA_ROOT"
+sudo chown -R 1000:1000 "$HOST_DATA_ROOT"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/elasticsearch/bin/elasticsearch-plugin"
-  PLUGIN_DIR_CONTAINER="/usr/share/elasticsearch/plugins"
   DEFAULT_USER="elastic"
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
@@ -75,7 +74,6 @@ if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
 elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   IMAGE_NAME="opensearchproject/opensearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/opensearch/bin/opensearch-plugin"
-  PLUGIN_DIR_CONTAINER="/usr/share/opensearch/plugins"
   DEFAULT_USER="admin"
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
@@ -107,6 +105,20 @@ echo "Container name: $CONTAINER_NAME"
 echo "Host plugin directory: $HOST_PLUGINS_DIR"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 
+# --- Initialize Host Config Directory (if empty) from Image ---
+CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
+if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
+  docker run --rm \
+    --entrypoint="/bin/sh" \
+    -v "$HOST_CONFIG_DIR:/mnt/host_config" \
+    "$IMAGE_NAME" \
+    -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
+  touch "$CONFIG_INITIALIZED_MARKER"
+  sudo chown -R 1000:1000 "$HOST_DATA_ROOT"
+else
+  echo "Host config directory already initialized. Skipping copy from image."
+fi
+
 # --- Plugin Installation ---
 # ENGINE_PLUGINS: analysis-ik,analysis-pinyin,analysis-strconvert
 if [[ -n "$ENGINE_PLUGINS" ]]; then
@@ -123,6 +135,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     docker run --rm \
       --user="0:0" \
       -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER" \
+      -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER" \
       "$IMAGE_NAME" \
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
@@ -140,6 +153,9 @@ DOCKER_RUN_CMD=(
   "--publish" "${ENGINE_PORT}:${ENGINE_PORT}"
   "--ulimit" "nofile=65536:65536"
   "--ulimit" "memlock=-1:-1"
+  "-v" "$HOST_DATA_DIR:/usr/share/$ENGINE_TYPE/data"
+  "-v" "$HOST_LOGS_DIR:/usr/share/$ENGINE_TYPE/logs" 
+  "-v" "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER" 
   "-v" "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER"
 )
 
