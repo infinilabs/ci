@@ -2,10 +2,7 @@
 
 set -euo pipefail
 
-RUNNER_UID=$(id -u)
-RUNNER_GID=$(id -g)
-BASE_PLUGIN_DOWNLOAD_URL="https://get.infini.cloud"
-echo "Running as UID: $RUNNER_UID, GID: $RUNNER_GID on host"
+BASE_PLUGIN_DOWNLOAD_URL="https://get.infini.cloud" 
 
 # --- Input Validation & Defaulting ---
 if [[ -z "$ENGINE_TYPE" || -z "$ENGINE_VERSION" ]]; then
@@ -24,32 +21,25 @@ NETWORK_NAME="search-engine-net"
 # --- Engine Specific Configuration ---
 IMAGE_NAME=""
 PLUGIN_INSTALL_CMD=""
-
-HOST_DATA_ROOT="$PWD/search_engine"
-HOST_CONFIG_DIR="$HOST_DATA_ROOT/config"
-HOST_PLUGINS_DIR="$HOST_DATA_ROOT/plugins"
-HOST_LOGS_DIR="$HOST_DATA_ROOT/logs"
-HOST_DATA_DIR="$HOST_DATA_ROOT/data" 
-
+PLUGIN_DIR_HOST="$PWD/engine_plugins"
+PLUGIN_DIR_CONTAINER=""
 DEFAULT_USER=""
 HEALTH_CHECK_USER=""
 HEALTH_CHECK_PASS=""
 HEALTH_CHECK_PROTOCOL="http"
 DOCKER_ENV_VARS=() 
-CONFIG_DIR_CONTAINER="/usr/share/$ENGINE_TYPE/config"
-PLUGIN_DIR_CONTAINER="/usr/share/$ENGINE_TYPE/plugins"
 
 # Create network if it doesn't exist
 docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create "$NETWORK_NAME"
 
 # Prepare plugin directory on host
-mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
-chown -R "1000:1000" "$HOST_DATA_ROOT"
-chmod -R u+rwx "$HOST_DATA_ROOT"
+mkdir -p "$PLUGIN_DIR_HOST"
+chown -R 1000:1000 "$PLUGIN_DIR_HOST"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/elasticsearch/bin/elasticsearch-plugin"
+  PLUGIN_DIR_CONTAINER="/usr/share/elasticsearch/plugins"
   DEFAULT_USER="elastic"
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
@@ -75,11 +65,12 @@ if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
 elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   IMAGE_NAME="opensearchproject/opensearch:${ENGINE_VERSION}"
   PLUGIN_INSTALL_CMD_BASE="/usr/share/opensearch/bin/opensearch-plugin"
+  PLUGIN_DIR_CONTAINER="/usr/share/opensearch/plugins"
   DEFAULT_USER="admin"
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
     "-e" "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS}"
-    "-e" "plugins.security.disabled=true"
+    "-e" "plugins.security.disabled=true" 
   )
   # Security plugin configuration
   SECURITY_ENABLED=${SECURITY_ENABLED_INPUT:-false} 
@@ -103,25 +94,8 @@ fi
 
 echo "Using image: $IMAGE_NAME"
 echo "Container name: $CONTAINER_NAME"
-echo "Host config directory: $HOST_CONFIG_DIR"
-echo "Container config directory: $CONFIG_DIR_CONTAINER"
-echo "Host plugin directory: $HOST_PLUGINS_DIR"
+echo "Host plugin directory: $PLUGIN_DIR_HOST"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
-
-# --- Initialize Host Config Directory (if empty) from Image ---
-CONFIG_INITIALIZED_MARKER="$HOST_CONFIG_DIR/.host_config_initialized"
-if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
-  docker run --rm \
-    --user "$RUNNER_UID:$RUNNER_GID" \
-    --entrypoint="/bin/sh" \
-    -v "$HOST_CONFIG_DIR:/mnt/host_config:rw" \
-    "$IMAGE_NAME" \
-    -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
-  touch "$CONFIG_INITIALIZED_MARKER"
-  ls -alrt "$HOST_CONFIG_DIR"
-else
-  echo "Host config directory already initialized. Skipping copy from image."
-fi
 
 # --- Plugin Installation ---
 # ENGINE_PLUGINS: analysis-ik,analysis-pinyin,analysis-strconvert
@@ -137,25 +111,13 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     echo "Installing plugin '$PNAME' from URL: $PLUGIN_URL ..."
     # Install plugin using the appropriate command
     docker run --rm \
-      --user "$RUNNER_UID:$RUNNER_GID" \
-      -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
-      -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
+      --user="0:0" \
+      -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER" \
       "$IMAGE_NAME" \
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
-  ls -alrt "$HOST_PLUGINS_DIR"
 fi
-
-# --- Set Ownership for Plugin and Config Directories ---
-docker run --rm \
-  --user="0:0" \
-  -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
-  -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
-  "$IMAGE_NAME" \
-  sh -c "echo 'Setting ownership for plugins...' && chown -R "1000:1000" \"$PLUGIN_DIR_CONTAINER\" && echo 'Setting ownership for config (if modified by plugin)...' && chown -R "1000:1000" \"$CONFIG_DIR_CONTAINER\"" || { echo "Chown FAILED for $PNAME's directories"; exit 1; }
-  
-echo "Ownership set for $ENGINE_TYPE's plugin and config directories."
 
 # --- Start Search Engine Container ---
 echo "Starting $ENGINE_TYPE node..."
@@ -168,10 +130,7 @@ DOCKER_RUN_CMD=(
   "--publish" "${ENGINE_PORT}:${ENGINE_PORT}"
   "--ulimit" "nofile=65536:65536"
   "--ulimit" "memlock=-1:-1"
-  "-v" "$HOST_DATA_DIR:/usr/share/$ENGINE_TYPE/data:rw"
-  "-v" "$HOST_LOGS_DIR:/usr/share/$ENGINE_TYPE/logs:rw" 
-  "-v" "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER" 
-  "-v" "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER"
+  "-v" "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER"
 )
 
 # Add environment variables
