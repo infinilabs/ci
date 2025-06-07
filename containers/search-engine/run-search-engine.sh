@@ -21,20 +21,30 @@ NETWORK_NAME="search-engine-net"
 # --- Engine Specific Configuration ---
 IMAGE_NAME=""
 PLUGIN_INSTALL_CMD=""
-PLUGIN_DIR_HOST="$PWD/engine_plugins"
-PLUGIN_DIR_CONTAINER=""
+
+HOST_DATA_ROOT="$PWD/search_engine_data_$(date +%s%N)"
+HOST_CONFIG_DIR="$HOST_DATA_ROOT/config"
+HOST_PLUGINS_DIR="$HOST_DATA_ROOT/plugins"
+HOST_LOGS_DIR="$HOST_DATA_ROOT/logs"
+HOST_DATA_DIR="$HOST_DATA_ROOT/data" 
+
 DEFAULT_USER=""
 HEALTH_CHECK_USER=""
 HEALTH_CHECK_PASS=""
 HEALTH_CHECK_PROTOCOL="http"
 DOCKER_ENV_VARS=() 
+CONFIG_DIR_CONTAINER="/usr/share/$ENGINE_TYPE/config"
+PLUGIN_DIR_CONTAINER="/usr/share/$ENGINE_TYPE/plugins"
 
 # Create network if it doesn't exist
 docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create "$NETWORK_NAME"
 
 # Prepare plugin directory on host
-mkdir -p "$PLUGIN_DIR_HOST"
-chown -R 1000:1000 "$PLUGIN_DIR_HOST"
+mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR"
+
+echo "Host config directory: $HOST_CONFIG_DIR"
+echo "Host plugins directory: $HOST_PLUGINS_DIR"
+chown -R 1000:1000 "$HOST_DATA_ROOT"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
@@ -70,7 +80,7 @@ elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
     "-e" "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS}"
-    "-e" "plugins.security.disabled=true" 
+    "-e" "plugins.security.disabled=true"
   )
   # Security plugin configuration
   SECURITY_ENABLED=${SECURITY_ENABLED_INPUT:-false} 
@@ -94,7 +104,7 @@ fi
 
 echo "Using image: $IMAGE_NAME"
 echo "Container name: $CONTAINER_NAME"
-echo "Host plugin directory: $PLUGIN_DIR_HOST"
+echo "Host plugin directory: $HOST_PLUGINS_DIR"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
 
 # --- Plugin Installation ---
@@ -112,7 +122,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
     # Install plugin using the appropriate command
     docker run --rm \
       --user="0:0" \
-      -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER" \
+      -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER" \
       "$IMAGE_NAME" \
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
@@ -130,7 +140,7 @@ DOCKER_RUN_CMD=(
   "--publish" "${ENGINE_PORT}:${ENGINE_PORT}"
   "--ulimit" "nofile=65536:65536"
   "--ulimit" "memlock=-1:-1"
-  "-v" "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER"
+  "-v" "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER"
 )
 
 # Add environment variables
@@ -150,7 +160,7 @@ echo "$ENGINE_TYPE container $CONTAINER_NAME started."
 echo "Waiting for $ENGINE_TYPE to become healthy (max ${WAIT_SECONDS}s)..."
 PROTOCOL=$HEALTH_CHECK_PROTOCOL
 URL="${PROTOCOL}://$CONTAINER_NAME:${ENGINE_PORT}"
-HEALTH_CHECK_URL="${URL}/_cluster/health?wait_for_status=yellow&timeout=5s"
+HEALTH_CHECK_URL="${URL}/_cluster/health?wait_for_status=yellow&timeout=5s&pretty"
 
 CURL_USER_OPT=""
 if [[ -n "$HEALTH_CHECK_USER" && -n "$HEALTH_CHECK_PASS" ]]; then
