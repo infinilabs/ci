@@ -342,16 +342,30 @@ jobs:
               run: |
                 LOG_FILE="$HOME/easysearch/logs/easysearch.log"
                 echo Check at $HOME/easysearch/logs/easysearch.log ...
-                if grep -wq "initialized" $HOME/easysearch/logs/easysearch.log; then
-                  INITIALIZED_LINE=$(grep -n -i -m 1 "initialized" "$LOG_FILE" | cut -d: -f1)
-                  if head -n "$INITIALIZED_LINE" "$LOG_FILE" | grep -qiE "Exception|Error"; then
-                    echo "Error found before 'initialized' (line $INIT_LINE)!"
-                    grep -A 10 -B 10 -iE "Exception|Error" "$LOG_FILE"
+                INIT_MATCH_LINE_INFO=$(grep -n -i -E -m 1 "Node '[^']+' initialized" "$LOG_FILE")
+                if [ -z "$INIT_MATCH_LINE_INFO" ]; then
+                  echo "Error: Initialization pattern \"Node '...' initialized\" not found in logs!"
+                  echo "Checking entire log for errors as initialization pattern was not found..."
+                  if grep -qiE "Exception|Error" "$LOG_FILE"; then
+                    echo "Error/Exception found in the full log (initialization pattern was missing)!"
+                    exit 1
+                  else
+                    echo "No initialization pattern, but also no errors found in the full log. Treating as an issue."
                     exit 1
                   fi
                 else
-                  echo "Easysearch initialization failed."
-                  exit 1
+                  INITIALIZED_LINE_NUMBER=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f1)
+                  MATCHED_INIT_LINE_CONTENT=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f2-)
+
+                  echo "Initialization pattern found: \"$MATCHED_INIT_LINE_CONTENT\" at line: $INITIALIZED_LINE_NUMBER"
+                  
+                  echo "Checking for errors up to the initialization pattern (line $INITIALIZED_LINE_NUMBER)..."
+                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                    echo "Error/Exception found in logs before or at the initialization pattern!"
+                    exit 1
+                  else
+                    echo "No errors found before or at the initialization pattern. Log check passed."
+                  fi
                 fi
                 echo "Easysearch initialized successfully." && cat "$LOG_FILE"
 
@@ -598,16 +612,30 @@ jobs:
               run: |
                 LOG_FILE="$HOME/easysearch/logs/easysearch.log"
                 echo Check at $HOME/easysearch/logs/easysearch.log ...
-                if grep -wq "initialized" $HOME/easysearch/logs/easysearch.log; then
-                  INITIALIZED_LINE=$(grep -n -i -m 1 "initialized" "$LOG_FILE" | cut -d: -f1)
-                  if head -n "$INITIALIZED_LINE" "$LOG_FILE" | grep -qiE "Exception|Error"; then
-                    echo "Error found before 'initialized' (line $INIT_LINE)!"
-                    grep -A 10 -B 10 -iE "Exception|Error" "$LOG_FILE"
+                INIT_MATCH_LINE_INFO=$(grep -n -i -E -m 1 "Node '[^']+' initialized" "$LOG_FILE")
+                if [ -z "$INIT_MATCH_LINE_INFO" ]; then
+                  echo "Error: Initialization pattern \"Node '...' initialized\" not found in logs!"
+                  echo "Checking entire log for errors as initialization pattern was not found..."
+                  if grep -qiE "Exception|Error" "$LOG_FILE"; then
+                    echo "Error/Exception found in the full log (initialization pattern was missing)!"
+                    exit 1
+                  else
+                    echo "No initialization pattern, but also no errors found in the full log. Treating as an issue."
                     exit 1
                   fi
                 else
-                  echo "Easysearch initialization failed."
-                  exit 1
+                  INITIALIZED_LINE_NUMBER=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f1)
+                  MATCHED_INIT_LINE_CONTENT=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f2-)
+
+                  echo "Initialization pattern found: \"$MATCHED_INIT_LINE_CONTENT\" at line: $INITIALIZED_LINE_NUMBER"
+                  
+                  echo "Checking for errors up to the initialization pattern (line $INITIALIZED_LINE_NUMBER)..."
+                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                    echo "Error/Exception found in logs before or at the initialization pattern!"
+                    exit 1
+                  else
+                    echo "No errors found before or at the initialization pattern. Log check passed."
+                  fi
                 fi
                 echo "Easysearch initialized successfully." && cat "$LOG_FILE"
 
