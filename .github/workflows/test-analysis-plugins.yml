@@ -359,16 +359,16 @@ jobs:
           fi
 
           # Verify simplified output for Chinese part
-          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")'; then
+          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")' > /dev/null 2>&1; then
              echo "Error: Stconvert (t2s) test 1 failed. Expected '忧' not found."
              exit 1
           fi
-           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="龟")'; then
+           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="龟")' > /dev/null 2>&1; then
              echo "Error: Stconvert (t2s) test 1 failed. Expected '龟' not found."
              exit 1
           fi
           # Bengali part should ideally remain unchanged or be tokenized by standard tokenizer
-           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="আন্তর্জাতিক")'; then
+           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="আন্তর্জাতিক")' > /dev/null 2>&1; then
              echo "Warning: Stconvert (t2s) test 1, non-Chinese token 'আন্তর্জাতিক' might have changed or not found as expected."
            fi
           echo "Stconvert (t2s) with analyzer 'my_st_analyzer' test passed for Chinese part."
