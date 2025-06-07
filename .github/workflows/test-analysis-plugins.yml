@@ -2,14 +2,11 @@ name:  Test Analysis Plugins
 defaults:
   run:
     shell: bash
-env:
-    RELEASE_URL: ${{ vars.RELEASE_URL }}
-    JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION}}
 
 on:
   workflow_dispatch:
     inputs:
-      TEST_TNAME:
+      PRODUCT:
         description: 'Setting Test Product'
         required: false
         type: choice
@@ -17,103 +14,43 @@ on:
           - elasticsearch
           - opensearch
         default: 'elasticsearch'
-      TEST_PRODUCT:
-        description: 'Setting Test Product'
-        required: false
-        type: choice
-        options:
-          - analysis-ik
-          - analysis-pinyin
-          - analysis-stconvert
-        default: 'analysis-ik'
-      TEST_VERSION:
+      VERSION:
         description: 'Setting Test version'
         required: false
-        default: '7.10.2'
+        default: '8.17.7'
 
 jobs:
-  test_versions_with_jdk_input:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    name: Test ${{ matrix.plugins }} for ${{ matrix.product }} @ ${{inputs.TEST_VERSION}}
+  test-analysis-plugins:
+    name: Test Analysis Plugins for ${{ matrix.product }} @ ${{inputs.VERSION}}
     runs-on: ubuntu-latest
     env:
-      PNAME: ${{ matrix.plugins }}
       TNAME: ${{ matrix.product }}
+      VERSION: ${{ inputs.VERSION }}
     strategy:
       matrix:
-        plugins:
-          - ${{ inputs.TEST_PRODUCT }}
         product:
-          - ${{ inputs.TEST_TNAME }}
+          - ${{ inputs.PRODUCT }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start ${{ matrix.product }} Docker Container
+      - name: Run Search Engine with IK and Pinyin and strconvert plugins
+        uses: ./search-engine
+        with:
+          engine-type: ${{ inputs.PRODUCT }}
+          engine-version: ${{inputs.VERSION}}
+          security-enabled: 'false'
+          plugins: 'analysis-ik,analysis-pinyin,analysis-stconvert'
+
+      - name: Verify IK Analyzer (${{ inputs.PRODUCT }})
+        if: success()
         run: |
-          if [ "${{ matrix.product }}" == "elasticsearch" ]; then
-            # Pull and run Elasticsearch container of specified version
-            docker pull docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }}
-            
-            # Create directories for plugins, data, and logs and set permissions
-            mkdir -p $PWD/$TNAME/plugins $PWD/$TNAME/data $PWD/$TNAME/logs
-            docker run --rm --user root \
-              -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
-              -v $PWD/$TNAME/data:/usr/share/elasticsearch/data \
-              -v $PWD/$TNAME/logs:/usr/share/elasticsearch/logs \
-              docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }} \
-              chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/{data,logs,plugins}
-
-            # Run the Elasticsearch container
-            docker run -d --name test-$TNAME -p 9200:9200 \
-              -v $PWD/$TNAME/plugins:/usr/share/elasticsearch/plugins \
-              -v $PWD/$TNAME/data:/usr/share/elasticsearch/data \
-              -v $PWD/$TNAME/logs:/usr/share/elasticsearch/logs \
-              docker.elastic.co/elasticsearch/elasticsearch:${{ inputs.TEST_VERSION }}
-          elif [ "${{ matrix.product }}" == "opensearch" ]; then
-            # Pull and run OpenSearch container of specified version
-            docker pull opensearchproject/opensearch:${{ inputs.TEST_VERSION }}
-
-            # Create directories for plugins, data, and logs and set permissions
-            mkdir -p $PWD/$TNAME/plugins $PWD/$TNAME/data $PWD/$TNAME/logs
-            docker run --rm --user root \
-              -v $PWD/$TNAME/plugins:/usr/share/opensearch/plugins \
-              -v $PWD/$TNAME/data:/usr/share/opensearch/data \    
-              -v $PWD/$TNAME/logs:/usr/share/opensearch/logs \
-              opensearchproject/opensearch:${{ inputs.TEST_VERSION }} \
-              chown -R opensearch:opensearch /usr/share/opensearch/{data,logs,plugins}
-
-            # Run the OpenSearch container
-            docker run -d --name test-$TNAME -p 9200:9200 \
-              -v $PWD/$TNAME/plugins:/usr/share/opensearch/plugins \
-              -v $PWD/$TNAME/data:/usr/share/opensearch/data \
-              -v $PWD/$TNAME/logs:/usr/share/opensearch/logs \
-              opensearchproject/opensearch:${{ inputs.TEST_VERSION }}
-          fi
-
-      - name: Install ${{ matrix.product}} plugin with ${{ matrix.plugins }}
-        run: |
-          # Install the plugin
-          PLUGIN_URL="https://get.infini.cloud/$TNAME/$PNAME/${{ inputs.TEST_VERSION }}"
-          echo "Installing plugin from $PLUGIN_URL"
-          docker exec test-$TNAME sh -c "yes | /usr/share/$TNAME/bin/$TNAME-plugin install $PLUGIN_URL"
-
-      - name: Verify ${{ matrix.product}} Plugin Installation with ${{ matrix.plugins }}
-        run: |
-          # Verify the plugin is installed successfully
-          curl -X GET "localhost:9200/_cat/plugins" | grep -i $TNAME
-          if [ $? -ne 0 ]; then
-            echo "Plugin installation failed or plugin not found"
-            exit 1
-          else
-            echo "Plugin $PNAME installed successfully"
-          fi
-
-      - name: Verify ${{ matrix.product}} running logs
-        run: |
-          if grep -qiE "error|exception" $PWD/$TNAME/logs/*.log; then
-            echo "Errors found in $TNAME logs"
-            exit 1
-          else
-            echo "No errors found in ${{ matrix.product}} logs"
-          fi
+          sleep 15
+          curl -X PUT "http://localhost:9200/test_ik_index" -H 'Content-Type: application/json' -d'
+          {
+            "settings": { "index.analysis.analyzer.default.tokenizer": "ik_max_word" }
+          }'
+          curl -X GET "http://localhost:9200/test_ik_index/_analyze?pretty" -H 'Content-Type: application/json' -d'
+          {
+            "text": "中华人民共和国"
+          }'
