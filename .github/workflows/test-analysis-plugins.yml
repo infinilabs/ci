@@ -330,7 +330,6 @@ jobs:
 
           echo "Creating index $INDEX_NAME with stconvert analyzer..."
           CREATE_INDEX_CMD="curl $CURL_OPTS $AUTH_OPTS -X PUT '${BASE_URL}/${INDEX_NAME}' -H 'Content-Type: application/json' -d '$INDEX_SETTINGS_PAYLOAD'"
-          echo "Executing: $CREATE_INDEX_CMD"
           HTTP_STATUS_CREATE=$(eval "$CREATE_INDEX_CMD -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_create.json'")
           
           if [[ "$HTTP_STATUS_CREATE" -ne 200 && "$HTTP_STATUS_CREATE" -ne 201 ]]; then
@@ -351,7 +350,6 @@ jobs:
           EXPECTED_TOKEN_1_SIMPLIFIED="忧郁的乌龟" # Expected simplified Chinese part
           
           ANALYZE_CMD_1="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json' -X POST '${BASE_URL}/${INDEX_NAME}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_1'"
-          echo "Executing: $ANALYZE_CMD_1"
           HTTP_STATUS_ANALYZE_1=$(eval "$ANALYZE_CMD_1")
 
           if [[ "$HTTP_STATUS_ANALYZE_1" -ne 200 ]]; then
@@ -359,8 +357,6 @@ jobs:
              cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json"
              exit 1
           fi
-          echo "Stconvert analysis (test 1) response:"
-          cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq . 
 
           # Verify simplified output for Chinese part
           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")'; then
@@ -374,7 +370,6 @@ jobs:
           # Bengali part should ideally remain unchanged or be tokenized by standard tokenizer
            if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="আন্তর্জাতিক")'; then
              echo "Warning: Stconvert (t2s) test 1, non-Chinese token 'আন্তর্জাতিক' might have changed or not found as expected."
-             # This might not be a failure depending on stconvert's behavior with non-Chinese text
            fi
           echo "Stconvert (t2s) with analyzer 'my_st_analyzer' test passed for Chinese part."
 
@@ -391,7 +386,6 @@ jobs:
           EXPECTED_TOKEN_2="计算机国际"
 
           ANALYZE_CMD_2="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_2'"
-          echo "Executing: $ANALYZE_CMD_2"
           HTTP_STATUS_ANALYZE_2=$(eval "$ANALYZE_CMD_2")
 
           if [[ "$HTTP_STATUS_ANALYZE_2" -ne 200 ]]; then
@@ -399,8 +393,6 @@ jobs:
              cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json"
              exit 1
           fi
-          echo "Stconvert direct analysis (test 2) response:"
-          cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json" | jq .
 
           # Verify output (single token expected due to keyword tokenizer)
           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json" | jq -e --arg expected "$EXPECTED_TOKEN_2" '.tokens[0].token == $expected'; then
