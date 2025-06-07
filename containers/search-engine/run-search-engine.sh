@@ -113,7 +113,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
       --user="0:0" \
       -v "$PLUGIN_DIR_HOST:$PLUGIN_DIR_CONTAINER" \
       "$IMAGE_NAME" \
-      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$plugin_name_or_url\" --batch"
+      sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
 fi
