@@ -182,22 +182,22 @@ jobs:
           AUTH_OPTS_VAR=""
           CURRENT_USER_VAR=""
 
-          if [[ "${{ env.SECURITY_ENABLED_GLOBAL }}" == "true" ]]; then
+          if [[ "${{ env.SECURITY_ENABLED }}" == "true" ]]; then
             PROTOCOL_VAR="https"
             CURL_OPTS_VAR="$CURL_OPTS_VAR -k"
-            if [[ -n "${{ env.ENGINE_PASSWORD_GLOBAL }}" ]]; then
-              if [[ "${{ env.PRODUCT_ENV }}" == "elasticsearch" ]]; then CURRENT_USER_VAR="elastic"; 
-              elif [[ "${{ env.PRODUCT_ENV }}" == "opensearch" ]]; then CURRENT_USER_VAR="admin"; 
-              else echo "Error: Unknown PRODUCT_ENV '${{ env.PRODUCT_ENV }}' for user determination" && exit 1; fi
-              AUTH_OPTS_VAR="-u $CURRENT_USER_VAR:${{ env.ENGINE_PASSWORD_GLOBAL }}"
+            if [[ -n "${{ env.ENGINE_PASSWORD }}" ]]; then
+              if [[ "${{ matrix.product }}" == "elasticsearch" ]]; then CURRENT_USER_VAR="elastic"; 
+              elif [[ "${{ matrix.product }}" == "opensearch" ]]; then CURRENT_USER_VAR="admin"; 
+              else echo "Error: Unknown PRODUCT_ENV '${{ matrix.product }}' for user determination" && exit 1; fi
+              AUTH_OPTS_VAR="-u $CURRENT_USER_VAR:${{ env.ENGINE_PASSWORD }}"
             else
-              echo "Error: Security enabled for ${{ env.PRODUCT_ENV }} but ENGINE_PASSWORD_GLOBAL is not set!" && exit 1
+              echo "Error: Security enabled for ${{ matrix.product }} but ENGINE_PASSWORD_GLOBAL is not set!" && exit 1
             fi
           fi
           echo "PROTOCOL=${PROTOCOL_VAR}" >> $GITHUB_OUTPUT
           echo "CURL_OPTS=${CURL_OPTS_VAR}" >> $GITHUB_OUTPUT
           echo "AUTH_OPTS=${AUTH_OPTS_VAR}" >> $GITHUB_OUTPUT
-          echo "BASE_URL=${PROTOCOL_VAR}://localhost:${{ env.PORT_GLOBAL }}" >> $GITHUB_OUTPUT
+          echo "BASE_URL=${PROTOCOL_VAR}://localhost:${{ env.PORT }}" >> $GITHUB_OUTPUT
 
       - name: Verify Loaded Plugins
         if: success() 
@@ -207,8 +207,6 @@ jobs:
           AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
-          echo "Waiting a bit more for engine to be fully responsive (additional 20s)..."
-          sleep 20
           echo "--- Verifying loaded plugins for $PRODUCT_ENV ---"
           PLUGIN_LIST_CMD="curl $CURL_OPTS $AUTH_OPTS '${BASE_URL}/_cat/plugins?h=component&format=txt'"
           echo "Executing: $PLUGIN_LIST_CMD"
