@@ -173,88 +173,128 @@ jobs:
           plugins: 'analysis-ik,analysis-pinyin,analysis-stconvert'
           wait-for-seconds: ${{ env.WAIT_SECONDS }}
 
-      - name: Verify Plugins (${{ matrix.product }} @ ${{ matrix.version }})
-        if: success()
-        env:
-          TNAME: ${{ matrix.product }}
-          ENGINE_VERSION_TESTED: ${{ matrix.version }}
+      - name: Setup Test Environment Variables
+        id: setup_test_env
         run: |
-          # Verification script remains the same as your last provided version
-          echo "Verifying plugins for $TNAME version $ENGINE_VERSION_TESTED"
-          PROTOCOL="http"
-          CURL_OPTS="-s --fail --connect-timeout 10 --max-time 30" 
-          AUTH_OPTS=""
-          CURRENT_USER=""
-          if [[ "$SECURITY_ENABLED" == "true" ]]; then
-            PROTOCOL="https"
-            CURL_OPTS="$CURL_OPTS -k"
-            if [[ -n "$ENGINE_PASSWORD" ]]; then
-              if [[ "$TNAME" == "elasticsearch" ]]; then CURRENT_USER="elastic"; 
-              elif [[ "$TNAME" == "opensearch" ]]; then CURRENT_USER="admin"; 
-              else echo "Error: Unknown TNAME '$TNAME' for user determination" && exit 1; fi
-              AUTH_OPTS="-u $CURRENT_USER:$ENGINE_PASSWORD"
+          echo "Setting up test environment variables..."
+          PROTOCOL_VAR="http"
+          CURL_OPTS_VAR="-s --fail --connect-timeout 10 --max-time 30"
+          AUTH_OPTS_VAR=""
+          CURRENT_USER_VAR=""
+
+          if [[ "${{ env.SECURITY_ENABLED_GLOBAL }}" == "true" ]]; then
+            PROTOCOL_VAR="https"
+            CURL_OPTS_VAR="$CURL_OPTS_VAR -k"
+            if [[ -n "${{ env.ENGINE_PASSWORD_GLOBAL }}" ]]; then
+              if [[ "${{ env.PRODUCT_ENV }}" == "elasticsearch" ]]; then CURRENT_USER_VAR="elastic"; 
+              elif [[ "${{ env.PRODUCT_ENV }}" == "opensearch" ]]; then CURRENT_USER_VAR="admin"; 
+              else echo "Error: Unknown PRODUCT_ENV '${{ env.PRODUCT_ENV }}' for user determination" && exit 1; fi
+              AUTH_OPTS_VAR="-u $CURRENT_USER_VAR:${{ env.ENGINE_PASSWORD_GLOBAL }}"
             else
-              echo "Error: Security enabled for $TNAME but ENGINE_PASSWORD is not set!" && exit 1
+              echo "Error: Security enabled for ${{ env.PRODUCT_ENV }} but ENGINE_PASSWORD_GLOBAL is not set!" && exit 1
             fi
           fi
-          BASE_URL="${PROTOCOL}://localhost:${PORT}"
-          echo "Waiting a bit more for engine to be fully responsive after startup (additional 20s)..."
+          echo "PROTOCOL=${PROTOCOL_VAR}" >> $GITHUB_OUTPUT
+          echo "CURL_OPTS=${CURL_OPTS_VAR}" >> $GITHUB_OUTPUT
+          echo "AUTH_OPTS=${AUTH_OPTS_VAR}" >> $GITHUB_OUTPUT
+          echo "BASE_URL=${PROTOCOL_VAR}://localhost:${{ env.PORT_GLOBAL }}" >> $GITHUB_OUTPUT
+
+      - name: Verify Loaded Plugins
+        if: success() 
+        env: 
+          PROTOCOL: ${{ steps.setup_test_env.outputs.PROTOCOL }}
+          CURL_OPTS: ${{ steps.setup_test_env.outputs.CURL_OPTS }}
+          AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
+          BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
+        run: |
+          echo "Waiting a bit more for engine to be fully responsive (additional 20s)..."
           sleep 20
-          echo "--- Verifying loaded plugins for $TNAME ---"
+          echo "--- Verifying loaded plugins for $PRODUCT_ENV ---"
           PLUGIN_LIST_CMD="curl $CURL_OPTS $AUTH_OPTS '${BASE_URL}/_cat/plugins?h=component&format=txt'"
           echo "Executing: $PLUGIN_LIST_CMD"
           PLUGIN_LIST_OUTPUT=$(eval "$PLUGIN_LIST_CMD")
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to fetch plugin list from $BASE_URL/_cat/plugins for $TNAME"
-            curl $CURL_OPTS $AUTH_OPTS "$BASE_URL" || echo "Engine root is also not responding for $TNAME."
+            echo "Error: Failed to fetch plugin list from $BASE_URL/_cat/plugins for $PRODUCT_ENV"
+            curl $CURL_OPTS $AUTH_OPTS "$BASE_URL" || echo "Engine root is also not responding for $PRODUCT_ENV."
             exit 1
           fi
-          echo "Installed plugins reported by $TNAME _cat/plugins:"
+          echo "Installed plugins reported by $PRODUCT_ENV _cat/plugins:"
           echo "$PLUGIN_LIST_OUTPUT"
-          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-ik" || (echo "Error: IK plugin not found for $TNAME!" && exit 1)
-          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-pinyin" || (echo "Error: Pinyin plugin not found for $TNAME!" && exit 1)
-          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-stconvert" || (echo "Error: Stconvert plugin not found for $TNAME!" && exit 1)
-          echo "All specified plugins are listed for $TNAME."
-          echo "--- Verifying IK Analyzer for $TNAME ---"
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-ik" || (echo "Error: IK plugin not found for $PRODUCT_ENV!" && exit 1)
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-pinyin" || (echo "Error: Pinyin plugin not found for $PRODUCT_ENV!" && exit 1)
+          echo "$PLUGIN_LIST_OUTPUT" | grep -q "analysis-stconvert" || (echo "Error: Stconvert plugin not found for $PRODUCT_ENV!" && exit 1)
+          echo "All specified plugins are listed for $PRODUCT_ENV."
+
+      - name: Verify IK Analyzer
+        if: success()
+        env:
+          PROTOCOL: ${{ steps.setup_test_env.outputs.PROTOCOL }}
+          CURL_OPTS: ${{ steps.setup_test_env.outputs.CURL_OPTS }}
+          AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
+          BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
+        run: |
+          echo "--- Verifying IK Analyzer for $PRODUCT_ENV ---"
           ANALYSIS_PAYLOAD_IK='{"analyzer": "ik_smart", "text": "中华人民共和国国歌"}'
-          IK_ANALYSIS_RESULT_FILE="/tmp/ik_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          # Corrected: Use env vars for TNAME, VERSION_ENV, and github.run_id
+          IK_ANALYSIS_RESULT_FILE="/tmp/ik_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$IK_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_IK'"
           echo "Executing IK Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
-             echo "Error: IK analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             echo "Error: IK analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$IK_ANALYSIS_RESULT_FILE"
              exit 1
           fi
           if ! cat "$IK_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
-             echo "Error: IK analysis for '中华人民共和国' failed on $TNAME." && exit 1
+             echo "Error: IK analysis for '中华人民共和国' failed on $PRODUCT_ENV." && exit 1
           fi
-          echo "IK Analyzer test passed for $TNAME."
-          echo "--- Verifying Pinyin Analyzer for $TNAME ---"
+          echo "IK Analyzer test passed for $PRODUCT_ENV."
+
+      - name: Verify Pinyin Analyzer
+        if: success()
+        env:
+          PROTOCOL: ${{ steps.setup_test_env.outputs.PROTOCOL }}
+          CURL_OPTS: ${{ steps.setup_test_env.outputs.CURL_OPTS }}
+          AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
+          BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
+        run: |
+          echo "--- Verifying Pinyin Analyzer for $PRODUCT_ENV ---"
           ANALYSIS_PAYLOAD_PINYIN='{"analyzer": "pinyin", "text": "中华人民共和国国歌"}'
-          PINYIN_ANALYSIS_RESULT_FILE="/tmp/pinyin_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          PINYIN_ANALYSIS_RESULT_FILE="/tmp/pinyin_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
+          # Note: For OpenSearch, 'pinyin' analyzer might need to be pre-defined in an index setting
+          # For Elasticsearch, 'pinyin' analyzer is typically available after installing the plugin
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
           echo "Executing Pinyin Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
-             echo "Error: Pinyin analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             echo "Error: Pinyin analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$PINYIN_ANALYSIS_RESULT_FILE"
              exit 1
           fi
-          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="zhong guo ren min gong he guo")'; then
-             echo "Error: Pinyin analysis for '中华人民共和国' failed on $TNAME." && exit 1
+          # Adjust the expected token based on your pinyin plugin's output
+          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="zhonghuarenmingongheguoge" or .token=="zhrnghg" or .token=="zhong hua ren min gong he guo guo ge")'; then
+             echo "Error: Pinyin analysis for '中华人民共和国国歌' failed or did not produce expected pinyin token on $PRODUCT_ENV." && exit 1
           fi
-          echo "Pinyin Analyzer test passed for $TNAME."
-          echo "--- Verifying Stconvert Analyzer for $TNAME ---"
-          ANALYSIS_PAYLOAD_STCONVERT='{"analyzer": "stconvert", "text": "中华人民共和国国歌"}'
-          STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${TNAME}_${ENGINE_VERSION_TESTED//./_}_${github.run_id}.json"
+          echo "Pinyin Analyzer test passed for $PRODUCT_ENV."
+      
+      - name: Verify Stconvert Analyzer
+        if: success()
+        env:
+          PROTOCOL: ${{ steps.setup_test_env.outputs.PROTOCOL }}
+          CURL_OPTS: ${{ steps.setup_test_env.outputs.CURL_OPTS }}
+          AUTH_OPTS: ${{ steps.setup_test_env.outputs.AUTH_OPTS }}
+          BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
+        run: |
+          echo "--- Verifying Stconvert Analyzer for $PRODUCT_ENV ---"
+          ANALYSIS_PAYLOAD_STCONVERT='{"analyzer": "stconvert", "text": "中华人民共和国国歌"}' # Or text in Traditional Chinese
+          STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$STCONVERT_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_STCONVERT'"
           echo "Executing Stconvert Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
-             echo "Error: Stconvert analysis request failed with HTTP status $HTTP_STATUS for $TNAME. Response:"
+             echo "Error: Stconvert analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$STCONVERT_ANALYSIS_RESULT_FILE"
-            exit 1
+             exit 1
           fi
-          echo "Stconvert analysis request completed successfully for $TNAME"
-          
+          # Add specific jq check for stconvert if you have expected output
+          echo "Stconvert analysis request completed successfully for $PRODUCT_ENV. Manual verification of output might be needed."
