@@ -44,7 +44,7 @@ mkdir -p "$HOST_CONFIG_DIR" "$HOST_PLUGINS_DIR" "$HOST_LOGS_DIR" "$HOST_DATA_DIR
 
 echo "Host config directory: $HOST_CONFIG_DIR"
 echo "Host plugins directory: $HOST_PLUGINS_DIR"
-sudo chown -R 1000:1000 "$HOST_DATA_ROOT"
+chown -R 1000:1000 "$HOST_DATA_ROOT"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"
@@ -114,7 +114,7 @@ if [ ! -f "$CONFIG_INITIALIZED_MARKER" ]; then
     "$IMAGE_NAME" \
     -c "cp -a $CONFIG_DIR_CONTAINER/. /mnt/host_config/ && echo 'Copied default config from $CONFIG_DIR_CONTAINER to host.'"
   touch "$CONFIG_INITIALIZED_MARKER"
-  sudo chown -R 1000:1000 "$HOST_DATA_ROOT"
+  chown -R 1000:1000 "$HOST_DATA_ROOT"
 else
   echo "Host config directory already initialized. Skipping copy from image."
 fi
@@ -140,6 +140,7 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
       sh -c "$PLUGIN_INSTALL_CMD_BASE install \"$PLUGIN_URL\" --batch"
   done
   echo "Plugin installation phase complete."
+  ls -lrt "$HOST_PLUGINS_DIR" && ls -lrt "$HOST_CONFIG_DIR"
 fi
 
 # --- Start Search Engine Container ---
