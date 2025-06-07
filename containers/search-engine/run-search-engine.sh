@@ -147,6 +147,16 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
   ls -alrt "$HOST_PLUGINS_DIR"
 fi
 
+# --- Set Ownership for Plugin and Config Directories ---
+docker run --rm \
+  --user="0:0" \
+  -v "$HOST_PLUGINS_DIR:$PLUGIN_DIR_CONTAINER:rw" \
+  -v "$HOST_CONFIG_DIR:$CONFIG_DIR_CONTAINER:rw" \
+  "$IMAGE_NAME" \
+  sh -c "echo 'Setting ownership for plugins...' && chown -R \"$ENGINE_USER_ID:$ENGINE_GROUP_ID\" \"$PLUGIN_DIR_CONTAINER\" && echo 'Setting ownership for config (if modified by plugin)...' && chown -R \"$ENGINE_USER_ID:$ENGINE_GROUP_ID\" \"$CONFIG_DIR_CONTAINER\"" || { echo "Chown FAILED for $PNAME's directories"; exit 1; }
+  
+echo "Ownership set for plugin '$PNAME' directories."
+
 # --- Start Search Engine Container ---
 echo "Starting $ENGINE_TYPE node..."
 DOCKER_RUN_CMD=(
