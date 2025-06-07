@@ -295,7 +295,7 @@ jobs:
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
           echo "--- Verifying Stconvert Analyzer for $PRODUCT_ENV ---"
-          ANALYSIS_PAYLOAD_STCONVERT='{"tokenizer" : "keyword","filter" : ["lowercase"], "char_filter" : ["tsconvert"],"text" : "極限科技"}'
+          ANALYSIS_PAYLOAD_STCONVERT='{"tokenizer": "standard", "filter": ["lowercase"], "char_filter": ["tsconvert"], "text": "中华人民共和国国歌"}'
           STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$STCONVERT_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_STCONVERT'"
           echo "Executing Stconvert Analyze: $ANALYZE_CMD"
@@ -310,8 +310,8 @@ jobs:
           cat "$PINYIN_ANALYSIS_RESULT_FILE"
 
           # Check if the expected token part is present in the analysis result
-          if ! cat "$STCONVERT_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "极限科技" '.tokens[] | select(.token | contains($token_part))'; then
-             echo "Error: Stconvert analysis for '极限科技' did not produce expected token part '極限科技' on $PRODUCT_ENV."
+          if ! cat "$STCONVERT_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "國歌" '.tokens[] | select(.token | contains($token_part))'; then
+             echo "Error: Stconvert analysis for '中华人民共和国国歌' did not produce expected token part '國歌' on $PRODUCT_ENV."
              exit 1
           fi
           # Add specific jq check for stconvert if you have expected output
