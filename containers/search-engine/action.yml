@@ -1,0 +1,55 @@
+name: 'Run Search Engine (Elasticsearch/OpenSearch) Node'
+description: 'Spins up a Single-Node Elasticsearch or OpenSearch instance for testing plugin installation and basic functionality.'
+author: 'Hardy/INFINI Labs'
+
+branding:
+  icon: 'database'
+  color: 'blue'
+
+inputs:
+  engine-type:
+    description: 'The type of search engine to run (elasticsearch or opensearch)'
+    required: true
+  engine-version:
+    description: 'The version of the search engine you want to run (e.g., 8.14.0 for ES, 2.11.0 for OS)'
+    required: true
+  security-enabled:
+    description: 'Enable or disable security (HTTPS and basic auth). Default for ES 8+ is true, for OS is true (with demo certs).'
+    required: false
+  engine_password:
+    description: 'The password for the admin user (elastic for ES, admin for OS).'
+    required: false
+    default: 'infinilabs'
+  plugins:
+    description: 'Comma-separated list of plugin names to install (e.g., analysis-ik,analysis-pinyin,ingest-attachment). Assumes official or known download URLs.'
+    required: false
+  port:
+    description: 'Port where you want to run the search engine'
+    required: false
+    default: "9200"
+  java-opts:
+    description: 'Java options for the search engine (e.g., -Xms512m -Xmx512m)'
+    required: false
+    default: '-Xms1g -Xmx1g'
+  wait-for-seconds:
+    description: 'Number of seconds to wait for the engine to become healthy after launch'
+    required: false
+    default: "30"
+  container-name:
+    description: 'Name for the container'
+    required: false
+    default: search-engine-node
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    ENGINE_TYPE: ${{ inputs.engine-type }}
+    ENGINE_VERSION: ${{ inputs.engine-version }}
+    ENGINE_PORT: ${{ inputs.port }}
+    ENGINE_PLUGINS: ${{ inputs.plugins }}
+    SECURITY_ENABLED_INPUT: ${{ inputs.security-enabled }} 
+    ENGINE_PASSWORD: ${{ inputs.engine_password }}
+    JAVA_OPTS: ${{ inputs.java-opts }}
+    WAIT_SECONDS: ${{ inputs.wait-for-seconds }}
+    CONTAINER_NAME: ${{ inputs.container-name }}
