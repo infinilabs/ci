@@ -26,6 +26,12 @@ jobs:
     env:
       TNAME: ${{ matrix.product }}
       VERSION: ${{ inputs.VERSION }}
+      SECURITY_ENABLED: true
+      ENGINE_PASSWORD: ${{ secrets.SEARCH_APIKEY}}
+      JAVA_OPTS: '-Xms1g -Xmx1g'
+      CONTAINER_NAME: 'search-engine-node'
+      PORT: '9200'
+      WAIT_SECONDS: '60'
     strategy:
       matrix:
         product:
@@ -39,19 +45,63 @@ jobs:
         with:
           engine-type: ${{ inputs.PRODUCT }}
           engine-version: ${{inputs.VERSION}}
-          security-enabled: true
-          wait-for-seconds: 60
+          security-enabled: ${{ env.SECURITY_ENABLED }}
+          wait-for-seconds: ${{ env.WAIT_SECONDS }}
+          engine_password: ${{ env.ENGINE_PASSWORD }}
+          port: ${{ env.PORT }}
+          java-opts: ${{ env.JAVA_OPTS }}
+          container-name: ${{ env.CONTAINER_NAME }}
           plugins: 'analysis-ik,analysis-pinyin,analysis-stconvert'
 
-      - name: Verify IK Analyzer (${{ inputs.PRODUCT }})
+      - name: Verify Plugins and IK Analyzer (${{ matrix.product }})
         if: success()
         run: |
+          echo "Waiting a bit more for plugins to fully initialize..."
           sleep 15
-          curl -X PUT "http://localhost:9200/test_ik_index" -H 'Content-Type: application/json' -d'
-          {
-            "settings": { "index.analysis.analyzer.default.tokenizer": "ik_max_word" }
+
+          PROTOCOL="http"
+          CURL_OPTS="-s"
+          AUTH_OPTS=""
+
+          if [[ "$SECURITY_ENABLED" == "true" ]]; then
+            PROTOCOL="https"
+            CURL_OPTS="$CURL_OPTS -k"
+            if [[ -n "$ENGINE_PASSWORD" ]]; then
+              if [[ "$TNAME" == "elasticsearch" ]]; then
+                ES_USER="elastic"
+              else
+                ES_USER="admin"
+              fi
+              AUTH_OPTS="-u elastic:$ENGINE_PASSWORD"
+            else
+              echo "Warning: Security enabled but no password provided for ES_USER=$ES_USER"
+            fi
+          fi
+          
+          BASE_URL="${PROTOCOL}://localhost:${ES_PORT}"
+
+          echo "--- Verifying loaded plugins ---"
+          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?v&h=component,version,description"
+
+          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-ik" || (echo "IK plugin not found!" && exit 1)
+          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-pinyin" || (echo "Pinyin plugin not found!" && exit 1)
+          curl $CURL_OPTS $AUTH_OPTS "${BASE_URL}/_cat/plugins?h=component" | grep -q "analysis-stconvert" || (echo "Stconvert plugin not found!" && exit 1)
+          echo "IK and Pinyin and Stconvert plugins are listed."
+
+          echo "--- Verifying IK Analyzer ---"
+          ANALYSIS_PAYLOAD='{
+            "analyzer": "ik_smart",
+            "text": "中华人民共和国国歌"
           }'
-          curl -X GET "http://localhost:9200/test_ik_index/_analyze?pretty" -H 'Content-Type: application/json' -d'
-          {
-            "text": "中华人民共和国"
-          }'
+
+          curl $CURL_OPTS $AUTH_OPTS -X POST "${BASE_URL}/_analyze" -H 'Content-Type: application/json' -d "$ANALYSIS_PAYLOAD" | tee /tmp/ik_analysis_result.json
+          
+          if ! cat /tmp/ik_analysis_result.json | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
+             echo "IK analysis for '中华人民共和国' failed or did not produce expected token."
+             exit 1
+          fi
+          if ! cat /tmp/ik_analysis_result.json | jq -e '.tokens[] | select(.token=="国歌")'; then
+             echo "IK analysis for '国歌' failed or did not produce expected token."
+             exit 1
+          fi
+          echo "IK Analyzer test passed."

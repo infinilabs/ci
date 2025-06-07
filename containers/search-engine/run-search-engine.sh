@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 BASE_PLUGIN_DOWNLOAD_URL="https://get.infini.cloud" 
 
