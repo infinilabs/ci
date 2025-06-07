@@ -9,17 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       PRODUCT:
-        description: 'Product to test (elasticsearch or opensearch).'
+        description: 'Product to test'
         required: true
         type: choice
         options:
           - elasticsearch
           - opensearch
       MANUAL_VERSION:
-        description: 'Version to test (e.g., 8.11.0). If empty, latest stable for PRODUCT is fetched.'
+        description: 'Version to test'
         required: false
         type: string
-        default: ''
+        default: '8.17.7'
 
 jobs:
   build-test-matrix: 
@@ -130,8 +130,11 @@ jobs:
             fi
           fi
           
-          echo "Final matrix JSON for test job: $FINAL_MATRIX_ENTRIES"
-          echo "matrix_json_string=$FINAL_MATRIX_ENTRIES" >> $GITHUB_OUTPUT
+          echo "Generated matrix entries (multiline for readability):"
+          echo "$FINAL_MATRIX_ENTRIES"
+
+          SINGLE_LINE_JSON=$(echo "$FINAL_MATRIX_ENTRIES" | jq -c .)
+          echo "matrix_json_string=$SINGLE_LINE_JSON" >> $GITHUB_OUTPUT
 
   test-engine-plugins:
     name: Test Plugins on ${{ matrix.product }} @ ${{ matrix.version }}
