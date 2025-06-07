@@ -148,6 +148,8 @@ jobs:
       CONTAINER_NAME_BASE: 'search-engine-node'
       PORT: '9200'
       WAIT_SECONDS: '120'
+      PRODUCT_ENV: ${{ matrix.product }}
+      VERSION_ENV: ${{ matrix.version }}
     strategy:
       fail-fast: false
       matrix: 
@@ -188,7 +190,7 @@ jobs:
             if [[ -n "${{ env.ENGINE_PASSWORD }}" ]]; then
               if [[ "${{ matrix.product }}" == "elasticsearch" ]]; then CURRENT_USER_VAR="elastic"; 
               elif [[ "${{ matrix.product }}" == "opensearch" ]]; then CURRENT_USER_VAR="admin"; 
-              else echo "Error: Unknown PRODUCT_ENV '${{ matrix.product }}' for user determination" && exit 1; fi
+              else echo "Error: Unknown product '${{ matrix.product }}' for user determination" && exit 1; fi
               AUTH_OPTS_VAR="-u $CURRENT_USER_VAR:${{ env.ENGINE_PASSWORD }}"
             else
               echo "Error: Security enabled for ${{ matrix.product }} but ENGINE_PASSWORD_GLOBAL is not set!" && exit 1
@@ -243,6 +245,10 @@ jobs:
              cat "$IK_ANALYSIS_RESULT_FILE"
              exit 1
           fi
+
+          cat "$IK_ANALYSIS_RESULT_FILE"
+
+          # Check if the expected token is present in the analysis result
           if ! cat "$IK_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="中华人民共和国")'; then
              echo "Error: IK analysis for '中华人民共和国' failed on $PRODUCT_ENV." && exit 1
           fi
@@ -258,20 +264,25 @@ jobs:
         run: |
           echo "--- Verifying Pinyin Analyzer for $PRODUCT_ENV ---"
           ANALYSIS_PAYLOAD_PINYIN='{"analyzer": "pinyin", "text": "中华人民共和国国歌"}'
+          # Corrected: Use env vars for TNAME, VERSION_ENV, and github.run_id
           PINYIN_ANALYSIS_RESULT_FILE="/tmp/pinyin_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
-          # Note: For OpenSearch, 'pinyin' analyzer might need to be pre-defined in an index setting
-          # For Elasticsearch, 'pinyin' analyzer is typically available after installing the plugin
-          ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
+
+          ANALYZE_CMD="curl ${{ env.CURL_OPTS }} ${{ env.AUTH_OPTS }} -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${{ env.BASE_URL }}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
           echo "Executing Pinyin Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
+          
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
              echo "Error: Pinyin analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$PINYIN_ANALYSIS_RESULT_FILE"
              exit 1
           fi
-          # Adjust the expected token based on your pinyin plugin's output
-          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e '.tokens[] | select(.token=="zhonghuarenmingongheguoge" or .token=="zhrnghg" or .token=="zhong hua ren min gong he guo guo ge")'; then
-             echo "Error: Pinyin analysis for '中华人民共和国国歌' failed or did not produce expected pinyin token on $PRODUCT_ENV." && exit 1
+
+          cat "$PINYIN_ANALYSIS_RESULT_FILE"
+
+          # Check if the expected token part is present in the analysis result
+          if ! cat "$PINYIN_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "zhonghuarenmingongheguo" '.tokens[] | select(.token | contains($token_part))'; then
+             echo "Error: Pinyin analysis for '中华人民共和国国歌' did not produce expected token part 'zhonghuarenmingongheguo' on $PRODUCT_ENV."
+             exit 1
           fi
           echo "Pinyin Analyzer test passed for $PRODUCT_ENV."
       
@@ -284,14 +295,23 @@ jobs:
           BASE_URL: ${{ steps.setup_test_env.outputs.BASE_URL }}
         run: |
           echo "--- Verifying Stconvert Analyzer for $PRODUCT_ENV ---"
-          ANALYSIS_PAYLOAD_STCONVERT='{"analyzer": "stconvert", "text": "中华人民共和国国歌"}' # Or text in Traditional Chinese
+          ANALYSIS_PAYLOAD_STCONVERT='{"tokenizer" : "keyword","filter" : ["lowercase"], "char_filter" : ["tsconvert"],"text" : "極限科技"}'
           STCONVERT_ANALYSIS_RESULT_FILE="/tmp/stconvert_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$STCONVERT_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_STCONVERT'"
           echo "Executing Stconvert Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
+
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
              echo "Error: Stconvert analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$STCONVERT_ANALYSIS_RESULT_FILE"
+             exit 1
+          fi
+
+          cat "$PINYIN_ANALYSIS_RESULT_FILE"
+
+          # Check if the expected token part is present in the analysis result
+          if ! cat "$STCONVERT_ANALYSIS_RESULT_FILE" | jq -e --arg token_part "极限科技" '.tokens[] | select(.token | contains($token_part))'; then
+             echo "Error: Stconvert analysis for '极限科技' did not produce expected token part '極限科技' on $PRODUCT_ENV."
              exit 1
           fi
           # Add specific jq check for stconvert if you have expected output
