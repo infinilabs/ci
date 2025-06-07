@@ -140,7 +140,6 @@ if [[ -n "$ENGINE_PLUGINS" ]]; then
   done
   echo "Plugin installation phase complete."
 
-  chown -R 1000:1000 "$HOST_DATA_ROOT"
   ls -lrt "$HOST_PLUGINS_DIR" && ls -lrt "$HOST_CONFIG_DIR"
 fi
 
