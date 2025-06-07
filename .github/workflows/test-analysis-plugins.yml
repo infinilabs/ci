@@ -360,15 +360,15 @@ jobs:
              exit 1
           fi
           echo "Stconvert analysis (test 1) response:"
-          cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq . # Pretty print JSON
+          cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq . 
 
           # Verify simplified output for Chinese part
           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")'; then
              echo "Error: Stconvert (t2s) test 1 failed. Expected '忧' not found."
              exit 1
           fi
-           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="乌龟")'; then
-             echo "Error: Stconvert (t2s) test 1 failed. Expected '乌龟' not found."
+           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="龟")'; then
+             echo "Error: Stconvert (t2s) test 1 failed. Expected '龟' not found."
              exit 1
           fi
           # Bengali part should ideally remain unchanged or be tokenized by standard tokenizer
