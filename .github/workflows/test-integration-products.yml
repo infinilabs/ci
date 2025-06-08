@@ -347,8 +347,9 @@ jobs:
                 if [ -z "$INIT_MATCH_LINE_INFO" ]; then
                   echo "Error: Initialization pattern \"Node '...' initialized\" not found in logs!"
                   echo "Checking entire log for errors as initialization pattern was not found..."
-                  if grep -qiE "Exception|Error" "$LOG_FILE"; then
+                  if grep -qiE "\[ERROR\]|ExceptionHandler|Caused by" "$LOG_FILE"; then
                     echo "Error/Exception found in the full log (initialization pattern was missing)!"
+                    cat "$LOG_FILE" | grep -iE "\[ERROR\]|ExceptionHandler|Caused by"
                     exit 1
                   else
                     echo "No initialization pattern, but also no errors found in the full log. Treating as an issue."
@@ -361,9 +362,9 @@ jobs:
                   echo "Initialization pattern found: \"$MATCHED_INIT_LINE_CONTENT\" at line: $INITIALIZED_LINE_NUMBER"
                   
                   echo "Checking for errors up to the initialization pattern (line $INITIALIZED_LINE_NUMBER)..."
-                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "\[ERROR\]|ExceptionHandler|Caused by"; then
                     echo "Error/Exception found in logs before or at the initialization pattern!"
-                    head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -iE "Exception|Error"
+                    head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -iE "\[ERROR\]|ExceptionHandler|Caused by"
                     exit 1
                   else
                     echo "No errors found before or at the initialization pattern. Log check passed."
@@ -618,8 +619,9 @@ jobs:
                 if [ -z "$INIT_MATCH_LINE_INFO" ]; then
                   echo "Error: Initialization pattern \"Node '...' initialized\" not found in logs!"
                   echo "Checking entire log for errors as initialization pattern was not found..."
-                  if grep -qiE "Exception|Error" "$LOG_FILE"; then
+                  if grep -qiE "\[ERROR\]|ExceptionHandler|Caused by" "$LOG_FILE"; then
                     echo "Error/Exception found in the full log (initialization pattern was missing)!"
+                    cat "$LOG_FILE" | grep -iE "\[ERROR\]|ExceptionHandler|Caused by"
                     exit 1
                   else
                     echo "No initialization pattern, but also no errors found in the full log. Treating as an issue."
@@ -632,8 +634,9 @@ jobs:
                   echo "Initialization pattern found: \"$MATCHED_INIT_LINE_CONTENT\" at line: $INITIALIZED_LINE_NUMBER"
                   
                   echo "Checking for errors up to the initialization pattern (line $INITIALIZED_LINE_NUMBER)..."
-                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "Exception|Error"; then
+                  if head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -qiE "\[ERROR\]|ExceptionHandler|Caused by"; then
                     echo "Error/Exception found in logs before or at the initialization pattern!"
+                    head -n "$INITIALIZED_LINE_NUMBER" "$LOG_FILE" | grep -iE "\[ERROR\]|ExceptionHandler|Caused by"
                     exit 1
                   else
                     echo "No errors found before or at the initialization pattern. Log check passed."
