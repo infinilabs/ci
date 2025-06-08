@@ -17,7 +17,9 @@ env:
   CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
-  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}  
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  WGET_CMD: "wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
+
 
 on:
   schedule:
@@ -97,7 +99,7 @@ jobs:
 
       - name: Install Hugo
         run: |
-          wget -q -nc https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
+          $WGET_CMD -q -nc https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
           tar -xzf hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
           sudo mv hugo /usr/local/bin/
 

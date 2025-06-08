@@ -1,9 +1,11 @@
 #!/bin/bash
 
+USER_GRAALVM=true
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
-USER_GRAALVM=true
+WGET_CMD="wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
+
 
 echo "Prepar build bundle files"
 mkdir -p $DEST
@@ -18,7 +20,7 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
     echo "Download GraalVM JDK with https://download.oracle.com/graalvm/$JAVA_VERSION_21/archive/$FILE"
 
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
-      wget -q -nc \
+      $WGET_CMD -q -nc \
         https://download.oracle.com/graalvm/${JAVA_VERSION_21}/archive/$FILE \
         -P "$BUILD_JDKS"
     fi
@@ -26,7 +28,7 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
 else
   for x in linux_x64 linux_aarch64 macosx_x64 macosx_aarch64 win_x64; do
     if [ ! -e $BUILD_JDKS/$ZULU_JAVA_VERSION-$x.tar.gz ]; then
-      wget -q -nc \
+      $WGET_CMD -q -nc \
         https://cdn.azul.com/zulu/bin/$ZULU_JAVA_VERSION-$x.tar.gz \
         -P $BUILD_JDKS
     fi

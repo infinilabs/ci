@@ -34,6 +34,8 @@ env:
   AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
+  WGET_CMD: "wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
+
   
 on:
   push:
@@ -94,7 +96,7 @@ jobs:
       - name: Set up gradle
         run: |
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
-            wget -q -nc https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            $WGET_CMD -q -nc https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
           fi
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV

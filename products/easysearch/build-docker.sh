@@ -2,6 +2,7 @@
 
 WORK=$GITHUB_WORKSPACE/products/$PNAME
 DEST=$GITHUB_WORKSPACE/dest
+WGET_CMD="wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
 
 echo "Prepar build docker files"
 if [[ -d $DEST ]]; then
@@ -32,7 +33,7 @@ for t in amd64 arm64; do
   AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
   for f in stable snapshot; do
     if curl -IL -m 10 -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
-      wget -q -nc $RELEASE_URL/agent/$f/$AGENT_FILENAME
+      $WGET_CMD -q -nc $RELEASE_URL/agent/$f/$AGENT_FILENAME
     fi
   done
 
