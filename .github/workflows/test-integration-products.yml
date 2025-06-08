@@ -323,6 +323,7 @@ jobs:
                 cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                 if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
                   echo "Error found in $PRODUCT logs!"
+                  grep -iE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   exit 1
                 fi
 
@@ -339,7 +340,6 @@ jobs:
                   fi
 
             - name: Check easysearch logs
-              continue-on-error: true
               run: |
                 LOG_FILE="$HOME/easysearch/logs/easysearch.log"
                 echo Check at $HOME/easysearch/logs/easysearch.log ...
@@ -596,6 +596,7 @@ jobs:
                 cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                 if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
                   echo "Error found in $PRODUCT logs!"
+                  grep -iE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   exit 1
                 fi
 
