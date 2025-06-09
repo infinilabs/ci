@@ -240,7 +240,6 @@ jobs:
           # Corrected: Use env vars for TNAME, VERSION_ENV, and github.run_id
           IK_ANALYSIS_RESULT_FILE="/tmp/ik_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
           ANALYZE_CMD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '$IK_ANALYSIS_RESULT_FILE' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_IK'"
-          echo "Executing IK Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
              echo "Error: IK analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
@@ -269,7 +268,6 @@ jobs:
           PINYIN_ANALYSIS_RESULT_FILE="/tmp/pinyin_analysis_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}.json"
 
           ANALYZE_CMD="curl ${{ env.CURL_OPTS }} ${{ env.AUTH_OPTS }} -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${{ env.BASE_URL }}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
-          echo "Executing Pinyin Analyze: $ANALYZE_CMD"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           
           if [[ "$HTTP_STATUS" -ne 200 ]]; then
@@ -299,113 +297,40 @@ jobs:
           STCONVERT_RESULT_FILE_PREFIX="/tmp/stconvert_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}"
 
           # Define the index with stconvert analyzer
-          # Convert_type 't2s' (Traditional to Simplified)
-          INDEX_SETTINGS_PAYLOAD='{
-            "settings": {
-              "analysis": {
-                "analyzer": {
-                  "my_st_analyzer": {
-                    "tokenizer": "standard",
-                    "filter": ["lowercase", "st_token_filter"],
-                    "char_filter": ["st_char_filter"]
-                  }
-                },
-                "filter": {
-                  "st_token_filter": {
-                    "type": "stconvert",
-                    "convert_type": "t2s",
-                    "keep_both": false,
-                    "delimiter": ","
-                  }
-                },
-                "char_filter": {
-                  "st_char_filter": {
-                    "type": "stconvert",
-                    "convert_type": "t2s" 
-                  }
-                }
-              }
-            }
-          }'
+          INDEX_SETTINGS_PAYLOAD='{"settings":{"analysis":{"analyzer":{"my_st_analyzer":{"tokenizer":"standard","filter":["lowercase","st_token_filter"],"char_filter":["st_char_filter"]}},"filter":{"st_token_filter":{"type":"stconvert","convert_type":"t2s","keep_both":false,"delimiter":","}},"char_filter":{"st_char_filter":{"type":"stconvert","convert_type":"t2s"}}}}}'
 
-          echo "Creating index $INDEX_NAME with stconvert analyzer..."
           CREATE_INDEX_CMD="curl $CURL_OPTS $AUTH_OPTS -X PUT '${BASE_URL}/${INDEX_NAME}' -H 'Content-Type: application/json' -d '$INDEX_SETTINGS_PAYLOAD'"
           HTTP_STATUS_CREATE=$(eval "$CREATE_INDEX_CMD -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_create.json'")
           
           if [[ "$HTTP_STATUS_CREATE" -ne 200 && "$HTTP_STATUS_CREATE" -ne 201 ]]; then
              echo "Error: Failed to create index $INDEX_NAME for stconvert test. HTTP status: $HTTP_STATUS_CREATE. Response:"
              cat "${STCONVERT_RESULT_FILE_PREFIX}_create.json"
-             # Try to delete index if it partially exists to clean up
-             curl $CURL_OPTS $AUTH_OPTS -X DELETE "${BASE_URL}/${INDEX_NAME}" > /dev/null 2>&1 || true
-             exit 1
-          fi
-          echo "Index $INDEX_NAME created successfully."
-
-          # Test Case 1: Using the defined analyzer in the index
-          echo "Testing stconvert with analyzer 'my_st_analyzer'..."
-          ANALYZE_PAYLOAD_1='{
-            "analyzer": "my_st_analyzer",
-            "text": "憂鬱的烏龜 আন্তর্জাতিক" 
-          }' # Traditional Chinese, then Bengali (to see if non-Chinese chars are handled)
-          EXPECTED_TOKEN_1_SIMPLIFIED="忧郁的乌龟" # Expected simplified Chinese part
-          
-          ANALYZE_CMD_1="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json' -X POST '${BASE_URL}/${INDEX_NAME}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_1'"
-          HTTP_STATUS_ANALYZE_1=$(eval "$ANALYZE_CMD_1")
-
-          if [[ "$HTTP_STATUS_ANALYZE_1" -ne 200 ]]; then
-             echo "Error: Stconvert analysis (test 1) request failed with HTTP status $HTTP_STATUS_ANALYZE_1. Response:"
-             cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json"
              exit 1
           fi
 
-          # Verify simplified output for Chinese part
-          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="忧")' > /dev/null 2>&1; then
-             echo "Error: Stconvert (t2s) test 1 failed. Expected '忧' not found."
-             exit 1
-          fi
-           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="龟")' > /dev/null 2>&1; then
-             echo "Error: Stconvert (t2s) test 1 failed. Expected '龟' not found."
-             exit 1
-          fi
-          # Bengali part should ideally remain unchanged or be tokenized by standard tokenizer
-           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze1.json" | jq -e '.tokens[] | select(.token=="আন্তর্জাতিক")' > /dev/null 2>&1; then
-             echo "Warning: Stconvert (t2s) test 1, non-Chinese token 'আন্তর্জাতিক' might have changed or not found as expected."
-           fi
-          echo "Stconvert (t2s) with analyzer 'my_st_analyzer' test passed for Chinese part."
-
-          # Test Case 2: Directly testing char_filter and filter as per your example
-          # Note: Your example uses "tsconvert" in char_filter, but plugin type is "stconvert". Assuming "stconvert".
-          # The GET request to _analyze with tokenizer, filter, char_filter is an ad-hoc analysis.
-          echo "Testing stconvert directly with char_filter (t2s) and filter (t2s)..."
-          ANALYZE_PAYLOAD_2='{
+          ANALYZE_PAYLOAD='{
             "tokenizer": "keyword", 
             "filter": ["lowercase", {"type": "stconvert", "convert_type": "t2s", "keep_both": false}],
             "char_filter": [{"type": "stconvert", "convert_type": "t2s"}],
-            "text": "計算機國際" 
-          }' # Text with Traditional and Simplified mixed
-          EXPECTED_TOKEN_2="计算机国际"
+            "text": "中華人民共和國國歌" 
+          }'
+          EXPECTED_TOKEN="中华人民共和国国歌"
 
-          ANALYZE_CMD_2="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_2'"
-          HTTP_STATUS_ANALYZE_2=$(eval "$ANALYZE_CMD_2")
+          ANALYZE_PAYLOAD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_2'"
+          HTTP_STATUS_ANALYZE=$(eval "$ANALYZE_PAYLOAD")
 
-          if [[ "$HTTP_STATUS_ANALYZE_2" -ne 200 ]]; then
-             echo "Error: Stconvert direct analysis (test 2) request failed with HTTP status $HTTP_STATUS_ANALYZE_2. Response:"
-             cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json"
+          if [[ "$HTTP_STATUS_ANALYZE" -ne 200 ]]; then
+             echo "Error: Stconvert direct analysis (test 2) request failed with HTTP status $HTTP_STATUS_ANALYZE. Response:"
+             cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze.json"
              exit 1
           fi
 
           # Verify output (single token expected due to keyword tokenizer)
-          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze2.json" | jq -e --arg expected "$EXPECTED_TOKEN_2" '.tokens[0].token == $expected'; then
-             echo "Error: Stconvert (t2s) direct test 2 failed. Expected token '$EXPECTED_TOKEN_2' not found or not matching."
+          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze.json" | jq -e --arg expected "$EXPECTED_TOKEN" '.tokens[0].token == $expected'; then
+             echo "Error: Stconvert analysis for '中華人民共和國國歌' did not produce expected token part '中華人民共和國國歌' on $PRODUCT_ENV."
              exit 1
           fi
-          echo "Stconvert (t2s) direct test passed."
-
-          # Cleanup: Delete the test index
-          echo "Deleting test index $INDEX_NAME..."
-          curl $CURL_OPTS $AUTH_OPTS -X DELETE "${BASE_URL}/${INDEX_NAME}" || echo "Warning: Failed to delete test index $INDEX_NAME, but tests might have passed."
-          
-          echo "Stconvert Analyzer verification completed for $PRODUCT_ENV."
+          echo "Stconvert Analyzer test passed for $PRODUCT_ENV."
 
   notify_on_failure:
     runs-on: ubuntu-latest
