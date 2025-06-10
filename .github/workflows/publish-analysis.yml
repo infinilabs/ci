@@ -218,13 +218,9 @@ jobs:
           cache: maven
 
       - name: Set up maven with ${{ env.MAVEN_VERSION }}
-        run: |
-          if [[ ! -d "$HOME/maven-$MAVEN_VERSION" ]]; then
-            cd $HOME
-            $WGET_CMD -q -nc $MAVEN_DOWNLOAD_URL/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.zip
-            unzip -q apache-maven-$MAVEN_VERSION-bin.zip && rm -rf apache-maven-$MAVEN_VERSION-bin.zip
-          fi
-          echo Maven path is $HOME/apache-maven-$MAVEN_VERSION
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: ${{ env.MAVEN_VERSION }}
 
       - name: Preper build code
         run: |
