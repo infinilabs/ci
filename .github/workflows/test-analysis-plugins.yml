@@ -293,8 +293,8 @@ jobs:
         run: |
           PRODUCT_ENV="${{ matrix.product }}"
           echo "--- Verifying Stconvert Analyzer for $PRODUCT_ENV ---"
-          INDEX_NAME="test_stconvert_index_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}"
-          STCONVERT_RESULT_FILE_PREFIX="/tmp/stconvert_result_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}"
+          INDEX_NAME="stconvert_index_${PRODUCT_ENV}_${VERSION_ENV//./_}_${{ github.run_id }}"
+          STCONVERT_RESULT_FILE_PREFIX="/tmp/${INDEX_NAME}"
 
           # Define the index with stconvert analyzer
           INDEX_SETTINGS_PAYLOAD='{"settings":{"analysis":{"analyzer":{"my_st_analyzer":{"tokenizer":"standard","filter":["lowercase","st_token_filter"],"char_filter":["st_char_filter"]}},"filter":{"st_token_filter":{"type":"stconvert","convert_type":"t2s","keep_both":false,"delimiter":","}},"char_filter":{"st_char_filter":{"type":"stconvert","convert_type":"t2s"}}}}}'
@@ -316,7 +316,7 @@ jobs:
           }'
           EXPECTED_TOKEN="中华人民共和国国歌"
 
-          ANALYZE_PAYLOAD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD_2'"
+          ANALYZE_PAYLOAD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD'"
           HTTP_STATUS_ANALYZE=$(eval "$ANALYZE_PAYLOAD")
 
           if [[ "$HTTP_STATUS_ANALYZE" -ne 200 ]]; then
