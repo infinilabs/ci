@@ -48,11 +48,11 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: "1.12.4"
+        default: "1.13.0"
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
         required: false
-        default: "1.29.6"
+        default: ""
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -62,7 +62,7 @@ on:
         description: 'Publish Docker <Only>'
         required: false
         type: boolean
-        default: true      
+        default: false      
 
 jobs:
   publish:
