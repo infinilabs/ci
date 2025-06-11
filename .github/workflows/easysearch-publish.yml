@@ -46,11 +46,11 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Version'
         required: false
         default: "1.12.4"
       PUBLISH_AGENT_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish With Agent Version'
         required: false
         default: "1.29.6"
       PUBLISH_RELEASE:
