@@ -167,7 +167,6 @@ jobs:
 
       - name: Release latest version
         if: ${{ inputs.OPERATION == 'RELEASE' }}
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
@@ -175,17 +174,38 @@ jobs:
           EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
           COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
-            echo "Please input the publish version, easysearch version, coco app version and coco version"
+          
+          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release version to $VER"
+            gh variable set PUBLISH_VERSION --body "$VER"
+          else
+            echo "Publish version is not a valid semantic version: $VER"
+            exit 1
+          fi
+          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release Easysearch version to $EZS_VER"
+            gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+          else
+            echo "Easysearch version is not a valid semantic version: $EZS_VER"
+            exit 1
+          fi
+          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release Coco app version to $COCO_APP_VER"
+            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
+          else
+            echo "Coco app version is not a valid semantic version: $COCO_APP_VER"
+            exit 1
+          fi
+          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release Coco server version to $COCO_VER"
+            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+          else
+            echo "Coco server version is not a valid semantic version: $COCO_VER"
             exit 1
           fi
           
           # set actions variables
-          echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER"
-          gh variable set PUBLISH_VERSION --body "$VER"
-          gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
-          gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
-          gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+          echo && echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER, Coco app version: $COCO_APP_VER, Coco server version: $COCO_VER"
         
       - name: Publish coco website
         if: ${{ inputs.OPERATION == 'RELEASE' && matrix.product == 'coco-server'}}

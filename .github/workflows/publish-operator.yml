@@ -173,8 +173,15 @@ jobs:
 
       - name: Update GitHub release version
         if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
-          gh variable set PUBLISH_OPERATOR_VERSION --body "${{ inputs.PUBLISH_VERSIOIN }}"
+          VERSION=${{ inputs.PUBLISH_VERSIOIN }}
+          if [[ ! -z "$VERSION" && "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release version to $VERSION"
+            gh variable set PUBLISH_OPERATOR_VERSION --body "$VERSION"
+          fi
+          
 
       - name: Deploy operator to staging k8s
         if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
