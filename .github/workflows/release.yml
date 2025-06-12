@@ -175,33 +175,41 @@ jobs:
           COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
-          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "Updating GitHub release version to $VER"
-            gh variable set PUBLISH_VERSION --body "$VER"
+          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+            if [[ "${{matrix.product}}" == "console" || "${{matrix.product}}" == "gateway" || "${{matrix.product}}" == "loadgen" || "${{matrix.product}}" == "framework"]]; then
+              VER="${VER%%-*}"
+              echo "Updating GitHub release version to $VER"
+              gh variable set PUBLISH_VERSION --body "$VER"
+            fi
           else
             echo "Publish version is not a valid semantic version: $VER"
-            exit 1
           fi
-          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "Updating GitHub release Easysearch version to $EZS_VER"
-            gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+            if [[ "${{matrix.product}}" == "easysearch" ]]; then
+              EZS_VER="${EZS_VER%%-*}"
+              echo "Updating GitHub release Easysearch version to $EZS_VER"
+              gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
+            fi
           else
             echo "Easysearch version is not a valid semantic version: $EZS_VER"
-            exit 1
           fi
-          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "Updating GitHub release Coco app version to $COCO_APP_VER"
-            gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
+          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+            if [[ "${{matrix.product}}" == "coco-app" ]]; then
+              COCO_APP_VER="${COCO_APP_VER%%-*}"
+              echo "Updating GitHub release Coco app version to $COCO_APP_VER"
+              gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
+            fi
           else
             echo "Coco app version is not a valid semantic version: $COCO_APP_VER"
-            exit 1
           fi
-          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "Updating GitHub release Coco server version to $COCO_VER"
-            gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+            if [[ "${{matrix.product}}" == "coco-server" ]]; then
+              COCO_VER="${COCO_VER%%-*}"
+              echo "Updating GitHub release Coco server version to $COCO_VER"
+              gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
+            fi
           else
             echo "Coco server version is not a valid semantic version: $COCO_VER"
-            exit 1
           fi
           
           # set actions variables
