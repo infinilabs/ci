@@ -258,7 +258,7 @@ jobs:
           fi
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
       - name: Update GitHub release version
-        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        if: ${{ inputs.PUBLISH_RELEASE }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |

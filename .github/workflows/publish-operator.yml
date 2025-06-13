@@ -172,7 +172,7 @@ jobs:
           push: true
 
       - name: Update GitHub release version
-        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        if: ${{ inputs.PUBLISH_RELEASE }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
@@ -184,7 +184,7 @@ jobs:
           
 
       - name: Deploy operator to staging k8s
-        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        if: ${{ inputs.PUBLISH_RELEASE }}
         timeout-minutes: 30
         continue-on-error: true
         run: |
