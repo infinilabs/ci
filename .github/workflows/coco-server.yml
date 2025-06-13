@@ -145,7 +145,7 @@ jobs:
         run: go version
       
       - name: Set up with coco server pnpm toolchain
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set up with coco server nodejs toolchain
@@ -342,7 +342,7 @@ jobs:
         run: go version
 
       - name: Set up with coco server pnpm toolchain
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set up with coco server nodejs toolchain
@@ -613,7 +613,7 @@ jobs:
         run: go version
 
       - name: Set up with coco server pnpm toolchain
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set up with coco server nodejs toolchain
