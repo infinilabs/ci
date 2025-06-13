@@ -171,6 +171,7 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
           VER=${{ inputs.PUBLISH_VERSION }}
+          FRAMEWORK_VER=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
           EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
           COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
@@ -275,21 +276,49 @@ jobs:
             sleep 10 #wait for 10 secs to make sure the tag is created
           else
             echo "Tag $PVER already exists for ${{ matrix.product }}"
+            exit 0
           fi
 
       - name: Create Branch and update release notes & data for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' }}
+        continue-on-error: true
         run: |
+          VER=${{ inputs.PUBLISH_VERSION }}
+          FRAMEWORK_VER=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
+          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          # Check if the branch already exists
+          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
+            # Branch already exists, pr exists, skip
+            echo "Branch $PR_BRANCH already exists. Skipping creation."
+            exit 0
+          fi
+          # Create a new branch
           echo "Create Branch $PR_BRANCH for ${{ matrix.product }}"
           git checkout -b "$PR_BRANCH"
           #update release notes
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
+          # first uppercase for product name
+          PRODUCT_NAME=$(echo "${{ matrix.product }}" | tr '[:lower:]' '[:upper:]' | sed 's/^./\U&/')
           for f in en zh; do
             if [[ ! -d docs/content.$f ]]; then
               continue
             fi
+
+            FRAMEWORK_UPDATE_NOTES ="- This release includes updates from the underlying [Framework v${FRAMEWORK_VER}](https://docs.infinilabs.com/framework/v${FRAMEWORK_VER}), which resolves several common issues and enhances overall stability and performance. While there are no direct changes to ${PRODUCT_NAME} itself, the improvements inherited from Framework benefit ${PRODUCT_NAME} indirectly."
+            if [[ "$f" == "zh" ]]; then
+              FRAMEWORK_UPDATE_NOTES="- 此版本包含了底层 [Framework v${FRAMEWORK_VER}](https://docs.infinilabs.com/framework/v${FRAMEWORK_VER}) 的更新，解决了一些常见问题，并增强了整体稳定性和性能。虽然 ${PRODUCT_NAME} 本身没有直接的变更，但从 Framework 中继承的改进间接地使 ${PRODUCT_NAME} 受益。"
+            fi
+
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
+              if [[ "${{ matrix.product }}" == "console" || "${{ matrix.product }}" == "agent" || "${{ matrix.product }}" == "gateway" || "${{ matrix.product }}" == "loadgen" ]]; then
+                # insert the FRAMEWORK_UPDATE_NOTES to the first Improvements section
+                sed -i "0,/^[[:space:]]*###\{1,2\}[[:space:]]*✈️[[:space:]]*Improvements[[:space:]]*$/s||&\n$FRAMEWORK_UPDATE_NOTES|" docs/content.$f/docs/release-notes/_index.md
+              fi
+              # insert the PUBLISH to the latest section
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
               sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### ❌ Breaking changes  \\n### 🚀 Features  \\n### 🐛 Bug fix  \\n### ✈️ Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
               git add docs/content.$f/docs/release-notes/_index.md
@@ -300,6 +329,9 @@ jobs:
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             if [[ "${{ matrix.product }}" == "easysearch" ]]; then
               sed -i "19s/version:.*/version: '$PUBLISH_VERSION'/" docs/data/quick_start.yaml
+            fi
+            if [[ "${{ matrix.product }}" == "console" ]]; then
+              sed -i "44s/version:.*/version: '$EZS_VER'/" docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
