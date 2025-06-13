@@ -33,7 +33,7 @@ on:
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.1.7" 
+          default: "1.1.8" 
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
@@ -41,15 +41,15 @@ on:
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "1.12.4"
+        default: "1.13.0"
       PUBLISH_COCO_APP_VERSION:
         description: 'Publish Coco App Version'
         required: false
-        default: "0.6.0"
+        default: "0.5.3"
       PUBLISH_COCO_VERSION:
         description: 'Publish Coco Server Version'
         required: false
-        default: "0.6.0"
+        default: "0.5.3"
       EASYSEARCH_PUBLISH:
           description: 'Easysearch'
           required: false
