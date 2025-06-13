@@ -177,7 +177,7 @@ jobs:
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
           if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-            if [[ "${{matrix.product}}" == "console" || "${{matrix.product}}" == "gateway" || "${{matrix.product}}" == "loadgen" || "${{matrix.product}}" == "framework" ]]; then
+            if [[ "${{matrix.product}}" == "console" ]]; then
               VER="${VER%%-*}"
               echo "Updating GitHub release version to $VER"
               gh variable set PUBLISH_VERSION --body "$VER"
@@ -205,7 +205,7 @@ jobs:
           else
             echo "Coco app version is not a valid semantic version: $COCO_APP_VER"
           fi
-          
+
           if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
             if [[ "${{matrix.product}}" == "coco-server" ]]; then
               COCO_VER="${COCO_VER%%-*}"
