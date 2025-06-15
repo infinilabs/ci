@@ -11,7 +11,7 @@
 
 ## What is Repo do
 
-> English | [中文](README_zh.md)
+> **English** | [中文 (Chinese)](README_zh.md)
 
 
 *   **`Analysis Plugins Publish`**: Automatically publishes the `analysis-ik`, `analysis-pinyin`, and `analysis-stconvert` plugins.

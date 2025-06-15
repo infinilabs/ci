@@ -11,7 +11,7 @@
 
 ## 这个仓库能做什么
 
-> [English](README.md) | 中文
+> [English (英文)](README.md) | **中文**
 
 - `Analysis Plugins Publish` 自动发布 `analysis-ik` `analysis-pinyin` `analysis-stconvert` 插件
 - `Coco App Files Publish` 自动发布 `Coco-AI` 快照版本, 手动发布 `Release` 版本
