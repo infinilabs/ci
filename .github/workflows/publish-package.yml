@@ -1,0 +1,274 @@
+name: Publish Platform Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_platform:
+        description: 'Publish Platform (snapcraft, msstore, or all)'
+        required: true
+        type: choice
+        options:
+          - snapcraft
+          - msstore
+          - all
+        default: snapcraft
+      app_version:
+        description: 'Publish Version (e.g., 0.5.3-2323)'
+        required: true
+        type: string
+
+env:
+  RELEASE_BASE_URL: "https://release.infinilabs.com/coco/app/stable"
+  APP_NAME_IN_FILENAME: "Coco-AI"
+
+jobs:
+  # ======================================================================
+  # Job 1: Download, Package, and Publish to Snap Store (Snapcraft)
+  # ======================================================================
+  publish-snapcraft:
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.target_platform == 'snapcraft' || github.event.inputs.target_platform == 'all')
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+    runs-on: ubuntu-latest
+    env:
+      APP_VERSION: ${{ github.event.inputs.app_version }}
+      SNAP_ARCH: ${{ matrix.architecture }}
+    outputs:
+      published_version: ${{ steps.set_snap_version.outputs.version_number }}
+    steps:
+      - name: Checkout CI repository (for snapcraft.yaml)
+        uses: actions/checkout@v4
+
+      - name: Set Snap Version
+        id: set_snap_version
+        run: |
+          echo "Snapcraft publishing version: ${{ env.APP_VERSION }} for arch: ${{ env.SNAP_ARCH }}"
+          echo "version_number=${{ env.APP_VERSION }}" >> $GITHUB_OUTPUT
+
+      - name: Determine and Download Linux artifact for Snap (${{ env.SNAP_ARCH }})
+        id: download_linux_artifact
+        run: |
+          ARTIFACT_SUFFIX=""
+          if [ "${{ env.SNAP_ARCH }}" = "amd64" ]; then
+            ARTIFACT_SUFFIX="-deb-linux-amd64.zip"
+          elif [ "${{ env.SNAP_ARCH }}" = "arm64" ]; then
+            ARTIFACT_SUFFIX="-deb-linux-arm64.zip"
+          else
+            echo "Error: Unsupported snap architecture matrix value: ${{ env.SNAP_ARCH }}"
+            exit 1
+          fi
+          
+          ARTIFACT_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_VERSION }}${ARTIFACT_SUFFIX}"
+          DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_FILENAME}"
+          echo "Downloading $DOWNLOAD_URL for Snap (${{ env.SNAP_ARCH }})..."
+          curl -L -o "${ARTIFACT_FILENAME}" "${DOWNLOAD_URL}"
+          # Optional: Verify checksum here
+          
+          # Create a unique payload directory for this architecture
+          mkdir -p "./snap_payload_${{ env.SNAP_ARCH }}"
+          unzip -q "${ARTIFACT_FILENAME}" -d "./snap_payload_${{ env.SNAP_ARCH }}" # -q for quiet
+          rm "${ARTIFACT_FILENAME}" # Clean up zip
+
+          # This output will be used to tell snapcraft.yaml where to find the files if needed,
+          # or the override-build script in snapcraft.yaml can deduce this.
+          echo "snap_payload_dir=./snap_payload_${{ env.SNAP_ARCH }}" >> $GITHUB_OUTPUT
+          echo "Downloaded and extracted to ./snap_payload_${{ env.SNAP_ARCH }}"
+
+      - name: Install Snapcraft if not present or ensure latest
+        run: |
+          if ! snap list snapcraft > /dev/null 2>&1; then
+            echo "Snapcraft not found. Installing..."
+            sudo snap install snapcraft --classic
+          else
+            echo "Snapcraft is already installed. Refreshing..."
+            sudo snap refresh snapcraft
+          fi
+
+      - name: Prepare snapcraft.yaml for version and architecture
+        # This step is crucial. Your snap/snapcraft.yaml in this CI repo
+        # needs to be designed to either:
+        # A) Have an override-build script that uses $(snapcraft prime --show-arch)
+        #    to pick the correct files from the downloaded payload.
+        # B) Be templated, and you use `sed` or similar here to point its `source`
+        #    to the correct `snap_payload_${{ env.SNAP_ARCH }}` dir and set the version.
+        run: |
+          echo "Preparing snapcraft.yaml for version ${{ env.APP_VERSION }} and arch ${{ env.SNAP_ARCH }}"
+          # Example using sed (adjust to your snapcraft.yaml structure):
+          # cp snap/snapcraft.yaml snap/snapcraft.yaml.tmp # Work on a copy
+          # sed -i "s/^version:.*$/version: ${{ env.APP_VERSION }}/" snap/snapcraft.yaml.tmp
+          # If your part 'my-app-part' needs to get files from the payload:
+          # Assuming 'my-app-part' has a source like 'source: ../payload_placeholder'
+          # PAYLOAD_DIR_RELATIVE_TO_SNAP_YAML="../snap_payload_${{ env.SNAP_ARCH }}" # if snapcraft.yaml is in snap/
+          # sed -i "s|source: ../payload_placeholder|source: ${PAYLOAD_DIR_RELATIVE_TO_SNAP_YAML}|" snap/snapcraft.yaml.tmp
+          # For this example, we assume snapcraft.yaml has an override-build that handles architecture.
+          # If not, you MUST adapt snapcraft.yaml or use sed here.
+          # A common practice is to have snap/snapcraft.yaml's parts reference something like:
+          # parts:
+          #   my-app:
+          #     plugin: dump
+          #     source: ../snap_payload_${SNAP_ARCH_ENV_VAR_PASSED_TO_SNAPCRAFT} # Not directly possible
+          #     source-subdir: extracted_app_dir # if zip has a top-level dir
+          # This is why override-build in snapcraft.yaml is often preferred for this scenario.
+          # It would look at $(snapcraft prime --show-arch) and then construct paths
+          # relative to where snapcraft is running from (e.g. it can see ../snap_payload_amd64).
+
+          # For simplicity now, let's assume snapcraft.yaml's override-build
+          # expects the files in a known location relative to the snapcraft.yaml itself
+          # and it uses $(snapcraft prime --show-arch) to differentiate.
+          # The key is that the `snapcraft` command needs to find the correct arch files.
+          if [ ! -d "snap" ]; then mkdir snap; fi # Ensure snap directory exists if snapcraft.yaml is there
+          # You might need to copy your snapcraft.yaml from a template or the checkout
+          # cp .github/snapcraft/snapcraft.yaml snap/snapcraft.yaml # If it's stored elsewhere
+          echo "Ensure your snap/snapcraft.yaml is configured for multi-arch and version ${{ env.APP_VERSION }}"
+
+
+      - name: Build Snap package for ${{ env.SNAP_ARCH }}
+        id: build_snap
+        run: |
+          # The `snapcraft` command typically builds for the host architecture.
+          # To build for a *different* architecture than the runner (e.g. arm64 on an amd64 runner)
+          # using pre-built binaries, your snapcraft.yaml MUST specify:
+          # architectures:
+          #  - build-on: [amd64] # The arch of the runner
+          #    run-on: [${{ env.SNAP_ARCH }}] # The arch we are packaging for
+          # And the override-build script for the part MUST place the correct pre-built binary.
+
+          # If building on a native runner for the target arch, or if snapcraft.yaml handles it:
+          snapcraft pack --output ${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_VERSION }}_${{ env.SNAP_ARCH }}.snap
+          # The `pack` command allows specifying an output name.
+          # Otherwise, `snapcraft` alone would also work if snapcraft.yaml is well configured.
+          
+          SNAP_FILE_PATH=$(ls *_${{ env.SNAP_ARCH }}.snap | head -n 1)
+          if [ -z "$SNAP_FILE_PATH" ]; then
+            echo "Error: No .snap file found for ${{ env.SNAP_ARCH }} after snapcraft build!"
+            exit 1
+          fi
+          echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
+          echo "Built snap: $SNAP_FILE_PATH"
+
+      - name: Log in to Snapcraft
+        env:
+          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+        run: |
+          echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > snapcraft.login
+          snapcraft login --with snapcraft.login
+          rm snapcraft.login
+
+      - name: Push and Release Snap for ${{ env.SNAP_ARCH }}
+        run: |
+          echo "Pushing ${{ steps.build_snap.outputs.snap_package_path }} to stable channel"
+          snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
+
+  # ======================================================================
+  # Job 2: Download, Package, and Publish to Microsoft Store
+  # ======================================================================
+  publish-msstore:
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
+    strategy:
+      matrix:
+        # For Windows, common archs are x64 (amd64), arm64, x86 (386 in your filename)
+        architecture: [amd64, arm64, "386"] # Match your filename convention
+    runs-on: windows-latest
+    env:
+      APP_VERSION: ${{ github.event.inputs.app_version }}
+      MS_ARCH_MATRIX: ${{ matrix.architecture }} # Use a different name to avoid confusion with snap
+    outputs:
+      published_version: ${{ env.APP_VERSION }}
+    steps:
+      - name: Checkout CI repository (for MSIX packaging scripts, manifest templates etc.)
+        uses: actions/checkout@v4
+
+      - name: Set MS Store Version
+        id: set_ms_version
+        run: |
+          Write-Host "MS Store publishing version: ${{ env.APP_VERSION }} for arch: ${{ env.MS_ARCH_MATRIX }}"
+          echo "version_number=${{ env.APP_VERSION }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        shell: pwsh
+
+      - name: Determine and Download Windows artifact for MSIX (${{ env.MS_ARCH_MATRIX }})
+        id: download_windows_zip
+        run: |
+          $archForFile = "${{ env.MS_ARCH_MATRIX }}" # Already matches your filename for amd64, arm64, 386
+          
+          $artifactFilename = "${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_VERSION }}-windows-$($archForFile).zip"
+          $downloadUrl = "${{ env.RELEASE_BASE_URL }}/${artifactFilename}"
+          Write-Host "Downloading $downloadUrl for MS Store (${{ env.MS_ARCH_MATRIX }})..."
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $artifactFilename
+          # Optional: Verify checksum
+          
+          $payloadDir = "./msix_payload_${{ env.MS_ARCH_MATRIX }}"
+          New-Item -ItemType Directory -Force -Path $payloadDir | Out-Null
+          Expand-Archive -Path $artifactFilename -DestinationPath $payloadDir -Force
+          Remove-Item $artifactFilename # Clean up zip
+          
+          # Attempt to find the main executable, assuming it's named like the APP_NAME_IN_FILENAME
+          $appExe = Get-ChildItem -Path $payloadDir -Recurse -Filter "${{ env.APP_NAME_IN_FILENAME }}.exe" | Select-Object -First 1
+          If ($appExe) {
+            echo "app_exe_path=$($appExe.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            echo "payload_dir=$payloadDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            Write-Host "Windows app executable for ${{ env.MS_ARCH_MATRIX }} found at: $($appExe.FullName)"
+          } Else {
+            Write-Warning "${{ env.APP_NAME_IN_FILENAME }}.exe not found in $payloadDir for ${{ env.MS_ARCH_MATRIX }}! MSIX packaging might fail or need adjustment."
+            # Depending on your MSIX structure, this might not be a fatal error if you package other things
+            # For now, let's output the payload_dir anyway.
+            echo "payload_dir=$payloadDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+        shell: pwsh
+
+      - name: Package as MSIX for ${{ env.MS_ARCH_MATRIX }}
+        id: package_msix
+        run: |
+          Write-Host "Packaging content from ${{ steps.download_windows_zip.outputs.payload_dir }} into MSIX for version ${{ env.APP_VERSION }} arch ${{ env.MS_ARCH_MATRIX }}..."
+          # --- YOUR ACTUAL MSIX PACKAGING AND SIGNING LOGIC HERE ---
+          # This must use files from ${{ steps.download_windows_zip.outputs.payload_dir }}
+          # Update AppxManifest.xml with version ${{ env.APP_VERSION }} and ProcessorArchitecture:
+          #   amd64 -> x64
+          #   arm64 -> arm64
+          #   386   -> x86
+          # Then sign the package.
+
+          # Dummy MSIX creation:
+          $msArchForPackage = switch ("${{ env.MS_ARCH_MATRIX }}") {
+            "amd64" { "x64" }
+            "arm64" { "arm64" }
+            "386"   { "x86" }
+            default { "${{ env.MS_ARCH_MATRIX }}" } # Fallback, should not happen with matrix
+          }
+          $versionForFile = "${{ env.APP_VERSION }}".Replace("-","_").Replace(".","_")
+          New-Item -ItemType Directory -Force -Path "./msix_output" | Out-Null
+          $msixFileName = "${{ env.APP_NAME_IN_FILENAME }}_${versionForFile}_${msArchForPackage}.msix"
+          Set-Content -Path "./msix_output/$($msixFileName)" -Value "Dummy MSIX for ${{ env.APP_VERSION }} arch ${{ env.MS_ARCH_MATRIX }}"
+          
+          $msixFile = Get-ChildItem -Path "./msix_output" -Filter "*.msix" | Where-Object {$_.Name -like "*_${msArchForPackage}.msix"} | Select-Object -First 1 -ExpandProperty FullName
+          If ($msixFile) {
+            echo "msix_file_path=$msixFile" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            Write-Host "Packaged MSIX: $msixFile"
+          } Else {
+            Write-Error "MSIX file for arch $msArchForPackage not found after packaging!"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Publish to Microsoft Store (${{ env.MS_ARCH_MATRIX }})
+        uses: microsoft/msstore-devcenter-api-action@v1
+        with:
+          tenantId: ${{ secrets.AZURE_TENANT_ID }}
+          clientId: ${{ secrets.AZURE_CLIENT_ID }}
+          clientSecret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          productId: ${{ secrets.MSSTORE_PRODUCT_ID }}
+          packageFilePath: ${{ steps.package_msix.outputs.msix_file_path }}
+          # For handling multiple architectures in one submission, you might need to:
+          # 1. Ensure the action correctly updates an existing submission if one is in draft for this product ID.
+          # 2. Or, implement logic to create a submission ID once (e.g., on the first matrix run or in a prior job)
+          #    and then use that submissionId for all subsequent matrix runs. This makes it more explicit.
+          #    e.g., submissionId: ${{ needs.some_setup_job.outputs.submission_id }}
+          # For now, it will attempt to publish each package. How MS Store Dev Center handles this
+          # (e.g., adding to current draft, creating new submissions) needs verification.
+          whatsNew: |
+            Version ${{ env.APP_VERSION }} for ${{ env.MS_ARCH_MATRIX }} architecture.
+            - General improvements and updates.
