@@ -109,6 +109,50 @@ jobs:
           echo "Generated snap/snapcraft.yaml:"
           cat snap/snapcraft.yaml
         shell: bash
+        
+      - name: Initialize LXD and add runner to lxd group
+        run: |
+          # LXD might be pre-installed on GitHub runners, but not always initialized for the runner user
+          # Check if LXD group exists, if not, lxd might not be installed properly via snapd dependencies yet
+          if ! getent group lxd > /dev/null; then
+            echo "LXD group does not exist. Waiting a bit for snapd to settle or install lxd if needed."
+            # Sometimes, after installing snapd/core, lxd snap might still be setting up.
+            # A small sleep or trying to install lxd snap explicitly might help in some edge cases,
+            # but usually snapcraft itself or its dependencies should bring in lxd if it's the chosen provider.
+            # sudo snap install lxd # This might be too much if snapcraft is meant to manage it
+          fi
+          
+          # Add current user (runner) to the lxd group
+          # This requires sudo and the change typically requires a new login session to take effect.
+          # In GitHub Actions, subsequent steps in the same job might not see the group change immediately.
+          sudo usermod -a -G lxd $USER
+          
+          # Attempt to initialize LXD if it's not already.
+          # The --minimal flag uses sensible defaults.
+          # This command might also need to be run as a user in the lxd group, or with sudo if it's the first time.
+          # We use 'lxd init --minimal' which is non-interactive.
+          # If 'lxd' command is not found, it means lxd snap is not installed/ready.
+          if command -v lxd > /dev/null; then
+            # Check if LXD is already initialized; if 'lxc profile list' fails, it might not be.
+            if ! lxc profile list > /dev/null 2>&1; then
+              echo "LXD not initialized or runner not yet effectively in lxd group. Attempting sudo lxd init --minimal."
+              sudo lxd init --minimal
+            else
+              echo "LXD seems to be initialized."
+            fi
+          else
+            echo "WARN: lxd command not found. Snapcraft might fail if it needs LXD."
+            # Consider explicitly installing LXD if snapcraft doesn't pull it as a dependency
+            # sudo snap install lxd
+            # sudo lxd init --minimal
+          fi
+          
+          # IMPORTANT: Group changes might not apply to the current shell session immediately.
+          # One workaround is to execute the rest of the snapcraft commands in a new group context.
+          # However, often for CI, subsequent sudo commands might work, or snapcraft itself might handle it.
+          echo "Runner user $USER added to lxd group. LXD initialization attempted."
+          echo "The group change might require a new shell session to be fully effective for non-sudo commands."
+          echo "If 'snapcraft pack' still fails with permission errors, using 'sg lxd -c \"snapcraft pack ...\"' might be needed."
 
       - name: Build Snap package for ${{ matrix.snap_arch }}
         id: build_snap
