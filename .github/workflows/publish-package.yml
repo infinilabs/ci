@@ -38,8 +38,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        snap_arch: [amd64, arm64]
-    runs-on: ubuntu-latest
+        include:
+          - snap_arch: amd64
+            runner: ubuntu-22.04
+          - snap_arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }} 
     env:
       APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
       APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
@@ -101,10 +105,6 @@ jobs:
               plugin: dump
               source: snap_sources/app_${{ matrix.snap_arch }}.deb
               source-type: deb
-              build-on:
-                - ${{ matrix.snap_arch }}
-              build-for:
-                - ${{ matrix.snap_arch }}
           EOF
           echo "Generated snap/snapcraft.yaml:"
           cat snap/snapcraft.yaml
