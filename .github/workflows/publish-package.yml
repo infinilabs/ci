@@ -111,13 +111,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target_arch_config:
-          - { download_arch: "amd64", ms_api_arch: "X64",   exe_filename_arch: "amd64", friendly_name: "Windows x64" }
-          - { download_arch: "arm64", ms_api_arch: "ARM64", exe_filename_arch: "arm64", friendly_name: "Windows ARM64" }
-          - { download_arch: "x86",   ms_api_arch: "X86",   exe_filename_arch: "x86",   friendly_name: "Windows x86" }
+        download_arch: [amd64, arm64, x86]
     runs-on: windows-latest
     outputs: 
-      package_url_${{ matrix.target_arch_config.ms_api_arch }}: ${{ steps.upload_to_release.outputs.browser_download_url }}
+      package_asset_name_${{ matrix.download_arch }}: ${{ steps.upload_to_release.outputs.asset_name }}
+      package_asset_url_${{ matrix.download_arch }}: ${{ steps.upload_to_release.outputs.browser_download_url }}
     env:
       APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
       APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
@@ -127,19 +125,57 @@ jobs:
       - name: Checkout CI repository
         uses: actions/checkout@v4
 
-      - name: Download Windows Installer (${{ matrix.target_arch_config.friendly_name }})
+      - name: Set Architecture-Specific Variables
+        id: arch_vars
+        run: |
+          $dlArch = "${{ matrix.download_arch }}"
+          $msApiArch = ""
+          $exeFilenameArch = "" # This will be same as download_arch for your exe naming
+          $friendlyName = ""
+
+          if ($dlArch -eq "amd64") {
+            $msApiArch = "X64"
+            $exeFilenameArch = "amd64"
+            $friendlyName = "Windows x64"
+          } elseif ($dlArch -eq "arm64") {
+            $msApiArch = "ARM64"
+            $exeFilenameArch = "arm64"
+            $friendlyName = "Windows ARM64"
+          } elseif ($dlArch -eq "x86") {
+            $msApiArch = "X86"
+            $exeFilenameArch = "x86" # Your filename uses x86, not 386
+            $friendlyName = "Windows x86"
+          } else {
+            Write-Error "Unknown download_arch: $dlArch"
+            exit 1
+          }
+          
+          echo "ms_api_arch=$msApiArch" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          echo "exe_filename_arch=$exeFilenameArch" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          echo "friendly_name=$friendlyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          
+          # For versioning in filenames/paths
+          $fullVersion = "${{ env.APP_FULL_VERSION_STRING }}"
+          $baseVersion = ($fullVersion -split '-')[0]
+          echo "app_base_version=$baseVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          echo "app_full_version_cleaned=$($fullVersion.Replace('-','_').Replace('.','_'))" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          Write-Host "Processing $friendlyName (Download Arch: $dlArch, MS API Arch: $msApiArch)"
+        shell: pwsh
+
+      - name: Download Windows Installer (${{ steps.arch_vars.outputs.friendly_name }})
         id: download_installer
         run: |
-          $baseVersionPath = ".v${{ env.APP_VERSION_BASE }}"
-          # Use matrix.target_arch_config.exe_filename_arch for the filename part
-          $installerFilename = "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.target_arch_config.exe_filename_arch }}-setup.exe"
+          $baseVersionPath = ".v${{ steps.arch_vars.outputs.app_base_version }}"
+          $installerFilename = "${{ env.APP_NAME_FOR_URL_FILENAME }}_${{ env.APP_FULL_VERSION_STRING }}_${{ steps.arch_vars.outputs.exe_filename_arch }}-setup.exe"
           $downloadUrl = "${{ env.RELEASE_BASE_URL }}/${baseVersionPath}/${installerFilename}"
           $downloadedInstallerPath = "./${installerFilename}"
 
-          Write-Host "Downloading $downloadUrl for ${{ matrix.target_arch_config.friendly_name }}..."
+          Write-Host "Downloading $downloadUrl for ${{ steps.arch_vars.outputs.friendly_name }}..."
           Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadedInstallerPath
           If (-not (Test-Path $downloadedInstallerPath)) { Write-Error "Failed to download installer"; exit 1 }
           echo "installer_path=$downloadedInstallerPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Installer downloaded: $downloadedInstallerPath"
         shell: pwsh
       
   # Job 2.2: Publish to Microsoft Store (runs once, after all packages are prepared and URLs are available)
