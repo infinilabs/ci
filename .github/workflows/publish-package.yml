@@ -75,15 +75,15 @@ jobs:
           mkdir -p "snap_payload_${{ matrix.snap_arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.snap_arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
           DEB_FILE=$(find "snap_payload_${{ matrix.snap_arch }}" -name "*.deb" -type f -print -quit)
           if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
-          echo "Found .deb file: $DEB_FILE"
           mkdir -p snap/sources; cp "${DEB_FILE}" "snap/sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb"
+          echo "the .deb file has been copied to snap/sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb"
         shell: bash
 
       - name: Setup LXD
         uses: canonical/setup-lxd@main
         with:
           group: lxd
-          channel: latest/stable
+          channel: 5.21/stable
 
       - name: Add user to the LXD (lxd) group
         run: |
@@ -102,7 +102,7 @@ jobs:
           base: core22
           version: '${{ env.APP_FULL_VERSION }}'
           summary: Coco-AI
-          icon: snap/gui/coco-ai.png
+          icon: gui/coco-ai.png
           contact: hello@infini.ltd
           license: MIT
           description: |
@@ -120,7 +120,7 @@ jobs:
           parts:
             coco-ai:
               plugin: dump
-              source: snap/sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb
+              source: sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb
               source-type: deb
           EOF
           echo "Generated snap/snapcraft.yaml:"
