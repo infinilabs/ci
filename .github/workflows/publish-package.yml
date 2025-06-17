@@ -114,8 +114,10 @@ jobs:
         env:
           SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_${{ matrix.snap_arch }}"
         run: |
-          sudo snapcraft --use-lxd --debug --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
-          #sudo snapcraft --use-lxd --debug pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
+          #sudo snapcraft --use-lxd --debug --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
+          echo "Using SNAPCRAFT_CACHE_DIR=${SNAPCRAFT_CACHE_DIR}"
+          mkdir -p "${SNAPCRAFT_CACHE_DIR}"
+          sudo snapcraft --use-lxd --debug pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
           SNAP_FILE_PATH=$(ls *_${{ matrix.snap_arch }}.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
