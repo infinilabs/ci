@@ -83,7 +83,7 @@ jobs:
         uses: canonical/setup-lxd@main
         with:
           group: lxd
-          channel: 5.21/stable
+          channel: latest/stable
 
       - name: Add user to the LXD (lxd) group
         run: |
@@ -91,39 +91,15 @@ jobs:
           newgrp lxd
 
       - name: Install Snapcraft
-        run: sudo snap install snapcraft --classic
+        run: |
+          sudo apt install snapd
+          sudo snap install core22
+          sudo snap install snapcraft --classic
 
       - name: Generate snapcraft.yaml
         run: |
-          mkdir -p snap/gui
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/coco-ai.png snap/gui
-          cat > snap/snapcraft.yaml <<EOF
-          name: coco-ai
-          base: core22
-          version: '${{ env.APP_FULL_VERSION }}'
-          summary: Coco-AI
-          icon: gui/coco-ai.png
-          contact: hello@infini.ltd
-          license: MIT
-          description: |
-            🥥 Coco AI App - Search, Connect, Collaborate, Your Personal AI Search and Assistant, all in one space.
-          grade: stable
-          confinement: strict
-          architectures:
-            - ${{ matrix.snap_arch }} 
-          apps:
-            coco-ai:
-              command: /usr/bin/coco
-              plugs:
-                - network
-                - home
-          parts:
-            coco-ai:
-              plugin: dump
-              source: sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb
-              source-type: deb
-          EOF
-          echo "Generated snap/snapcraft.yaml:"
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml snap
+          sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" snap/snapcraft.yaml
           cat snap/snapcraft.yaml
         shell: bash
 
