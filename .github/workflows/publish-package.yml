@@ -87,8 +87,14 @@ jobs:
 
       - name: Add user to the LXD (lxd) group
         run: |
-          sudo usermod -a -G lxd ${USER}
-          newgrp lxd
+          if getent group lxd > /dev/null; then
+            echo "Adding user ${USER} to group lxd."
+            sudo usermod -aG lxd "${USER}" # Use -aG, ensure USER is quoted
+            echo "User ${USER} added to lxd group. Note: This change typically requires a new session for the current process to see it."
+          else
+            echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
+          fi
+        shell: bash
 
       - name: Install Snapcraft
         run: |
