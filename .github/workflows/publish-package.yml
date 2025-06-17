@@ -47,6 +47,7 @@ jobs:
     steps:
       - name: Checkout CI repository
         uses: actions/checkout@v4
+
       - name: Set Snap Architecture-Specific Variables
         id: snap_arch_vars
         run: |
@@ -59,35 +60,70 @@ jobs:
           full_version="${{ env.APP_FULL_VERSION }}"; base_version=$(echo "$full_version" | awk -F'-' '{print $1}'); if [ -z "$base_version" ]; then echo "Could not extract base version"; exit 1; fi
           echo "app_base_version=$base_version" >> $GITHUB_OUTPUT
         shell: bash
+
       - name: Download and Prepare .deb Artifact for Snap (${{ steps.snap_arch_vars.outputs.friendly_name }})
         id: download_deb_artifact
         run: |
           ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.snap_arch_vars.outputs.download_zip_suffix }}"
           DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_ZIP_FILENAME}"
-          curl -fL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
+          curl -sfL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
           mkdir -p "./snap_payload_${{ matrix.snap_arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "./snap_payload_${{ matrix.snap_arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
           DEB_FILE=$(find "./snap_payload_${{ matrix.snap_arch }}" -name "*.deb" -type f -print -quit)
           if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
           mkdir -p ./snap_sources; cp "${DEB_FILE}" "./snap_sources/app_${{ matrix.snap_arch }}.deb"
         shell: bash
+        
       - name: Install Snapcraft
         run: sudo snap install snapcraft --classic
+
+      - name: Generate snapcraft.yaml
+        run: |
+          mkdir -p snap
+          cat > snap/snapcraft.yaml <<EOF
+          name: coco-ai
+          base: core22
+          version: '${{ env.APP_FULL_VERSION }}'
+          summary: Coco-AI Application
+          description: |
+            🥥 Coco AI App - Search, Connect, Collaborate, Your Personal AI Search and Assistant, all in one space.
+          grade: stable
+          confinement: strict
+          architectures:
+            - build-on: amd64
+              run-on: amd64
+            - build-on: amd64
+              run-on: arm64
+          apps:
+            coco-ai:
+              command: /usr/bin/coco
+              plugs:
+                - network
+                - home
+          parts:
+            coco-ai-app:
+              plugin: dump
+              source: snap_sources/app_${{ matrix.snap_arch }}.deb
+              source-type: deb
+          EOF
+          echo "Generated snap/snapcraft.yaml:"
+          cat snap/snapcraft.yaml
+        shell: bash
+
       - name: Build Snap package for ${{ matrix.snap_arch }}
         id: build_snap
         run: |
-          if [ ! -f snap/snapcraft.yaml ]; then echo "ERROR: snap/snapcraft.yaml not found!"; exit 1; fi
-          sed -i "s|^version:.*$|version: '${{ env.APP_FULL_VERSION }}'|" snap/snapcraft.yaml
-          # Ensure snapcraft.yaml part source: $SNAPCRAFT_PROJECT_DIR/snap_sources/app_${SNAPCRAFT_TARGET_ARCH}.deb
           snapcraft pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
           SNAP_FILE_PATH=$(ls *_${{ matrix.snap_arch }}.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
         shell: bash
+
       - name: Log in to Snapcraft
         env: 
           SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
         run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
         shell: bash
+
       - name: Push and Release Snap for ${{ matrix.snap_arch }}
         run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
         shell: bash
