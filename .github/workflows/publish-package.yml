@@ -85,7 +85,8 @@ jobs:
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
         shell: bash
       - name: Log in to Snapcraft
-        env: SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+        env: 
+          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
         run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
         shell: bash
       - name: Push and Release Snap for ${{ matrix.snap_arch }}
