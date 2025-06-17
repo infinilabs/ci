@@ -163,7 +163,7 @@ jobs:
           snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
 
   # ======================================================================
-  # Job 2: Download, Package, and Publish to Microsoft Store
+  # Job 2: Download, Package, and Publish to Microsoft Store using msstore CLI
   # ======================================================================
   publish-msstore:
     if: |
@@ -171,18 +171,18 @@ jobs:
       (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
     strategy:
       matrix:
-        # For Windows, common archs are x64 (amd64), arm64, x86 (386 in your filename)
         architecture: [amd64, arm64, "386"] # Match your filename convention
     runs-on: windows-latest
     env:
       APP_VERSION: ${{ github.event.inputs.app_version }}
-      MS_ARCH_MATRIX: ${{ matrix.architecture }} # Use a different name to avoid confusion with snap
-    outputs:
-      published_version: ${{ env.APP_VERSION }}
+      RELEASE_BASE_URL: ${{ env.RELEASE_BASE_URL }} 
+      MS_ARCH_MATRIX: ${{ matrix.architecture }}
+      APP_NAME_IN_FILENAME: "Coco-AI"
     steps:
-      - name: Checkout CI repository (for MSIX packaging scripts, manifest templates etc.)
+      - name: Checkout CI repository
         uses: actions/checkout@v4
 
+      # ... (Set MS Store Version step remains the same) ...
       - name: Set MS Store Version
         id: set_ms_version
         run: |
@@ -190,85 +190,106 @@ jobs:
           echo "version_number=${{ env.APP_VERSION }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         shell: pwsh
 
+      # ... (Determine and Download Windows artifact step remains the same, outputs: payload_dir) ...
       - name: Determine and Download Windows artifact for MSIX (${{ env.MS_ARCH_MATRIX }})
         id: download_windows_zip
         run: |
-          $archForFile = "${{ env.MS_ARCH_MATRIX }}" # Already matches your filename for amd64, arm64, 386
-          
+          $archForFile = "${{ env.MS_ARCH_MATRIX }}"
           $artifactFilename = "${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_VERSION }}-windows-$($archForFile).zip"
           $downloadUrl = "${{ env.RELEASE_BASE_URL }}/${artifactFilename}"
           Write-Host "Downloading $downloadUrl for MS Store (${{ env.MS_ARCH_MATRIX }})..."
           Invoke-WebRequest -Uri $downloadUrl -OutFile $artifactFilename
-          # Optional: Verify checksum
-          
           $payloadDir = "./msix_payload_${{ env.MS_ARCH_MATRIX }}"
           New-Item -ItemType Directory -Force -Path $payloadDir | Out-Null
           Expand-Archive -Path $artifactFilename -DestinationPath $payloadDir -Force
-          Remove-Item $artifactFilename # Clean up zip
-          
-          # Attempt to find the main executable, assuming it's named like the APP_NAME_IN_FILENAME
-          $appExe = Get-ChildItem -Path $payloadDir -Recurse -Filter "${{ env.APP_NAME_IN_FILENAME }}.exe" | Select-Object -First 1
-          If ($appExe) {
-            echo "app_exe_path=$($appExe.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            echo "payload_dir=$payloadDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            Write-Host "Windows app executable for ${{ env.MS_ARCH_MATRIX }} found at: $($appExe.FullName)"
-          } Else {
-            Write-Warning "${{ env.APP_NAME_IN_FILENAME }}.exe not found in $payloadDir for ${{ env.MS_ARCH_MATRIX }}! MSIX packaging might fail or need adjustment."
-            # Depending on your MSIX structure, this might not be a fatal error if you package other things
-            # For now, let's output the payload_dir anyway.
-            echo "payload_dir=$payloadDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          }
+          Remove-Item $artifactFilename
+          echo "payload_dir=$payloadDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Downloaded and extracted to $payloadDir"
         shell: pwsh
 
+      # ... (Package as MSIX step remains the same, outputs: msix_file_path) ...
       - name: Package as MSIX for ${{ env.MS_ARCH_MATRIX }}
         id: package_msix
         run: |
           Write-Host "Packaging content from ${{ steps.download_windows_zip.outputs.payload_dir }} into MSIX for version ${{ env.APP_VERSION }} arch ${{ env.MS_ARCH_MATRIX }}..."
           # --- YOUR ACTUAL MSIX PACKAGING AND SIGNING LOGIC HERE ---
-          # This must use files from ${{ steps.download_windows_zip.outputs.payload_dir }}
-          # Update AppxManifest.xml with version ${{ env.APP_VERSION }} and ProcessorArchitecture:
-          #   amd64 -> x64
-          #   arm64 -> arm64
-          #   386   -> x86
-          # Then sign the package.
-
-          # Dummy MSIX creation:
           $msArchForPackage = switch ("${{ env.MS_ARCH_MATRIX }}") {
             "amd64" { "x64" }
             "arm64" { "arm64" }
             "386"   { "x86" }
-            default { "${{ env.MS_ARCH_MATRIX }}" } # Fallback, should not happen with matrix
+            default { "${{ env.MS_ARCH_MATRIX }}" }
           }
           $versionForFile = "${{ env.APP_VERSION }}".Replace("-","_").Replace(".","_")
           New-Item -ItemType Directory -Force -Path "./msix_output" | Out-Null
-          $msixFileName = "${{ env.APP_NAME_IN_FILENAME }}_${versionForFile}_${msArchForPackage}.msix"
-          Set-Content -Path "./msix_output/$($msixFileName)" -Value "Dummy MSIX for ${{ env.APP_VERSION }} arch ${{ env.MS_ARCH_MATRIX }}"
-          
+          $msixFileName = "${{ env.APP_NAME_IN_FILENAME }}_${versionForFile}_${msArchForPackage}.msix" # Ensure your app name is correct
+          Set-Content -Path "./msix_output/$($msixFileName)" -Value "Dummy MSIX for ${{ env.APP_VERSION }} arch ${{ env.MS_ARCH_MATRIX }}" # Replace with actual packaging
           $msixFile = Get-ChildItem -Path "./msix_output" -Filter "*.msix" | Where-Object {$_.Name -like "*_${msArchForPackage}.msix"} | Select-Object -First 1 -ExpandProperty FullName
           If ($msixFile) {
             echo "msix_file_path=$msixFile" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             Write-Host "Packaged MSIX: $msixFile"
-          } Else {
-            Write-Error "MSIX file for arch $msArchForPackage not found after packaging!"
-            exit 1
-          }
+          } Else { Write-Error "MSIX file for arch $msArchForPackage not found!"; exit 1 }
         shell: pwsh
 
-      - name: Publish to Microsoft Store (${{ env.MS_ARCH_MATRIX }})
-        uses: microsoft/msstore-devcenter-api-action@v1
-        with:
-          tenantId: ${{ secrets.AZURE_TENANT_ID }}
-          clientId: ${{ secrets.AZURE_CLIENT_ID }}
-          clientSecret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          productId: ${{ secrets.MSSTORE_PRODUCT_ID }}
-          packageFilePath: ${{ steps.package_msix.outputs.msix_file_path }}
-          # For handling multiple architectures in one submission, you might need to:
-          # 1. Ensure the action correctly updates an existing submission if one is in draft for this product ID.
-          # 2. Or, implement logic to create a submission ID once (e.g., on the first matrix run or in a prior job)
-          #    and then use that submissionId for all subsequent matrix runs. This makes it more explicit.
-          #    e.g., submissionId: ${{ needs.some_setup_job.outputs.submission_id }}
-          # For now, it will attempt to publish each package. How MS Store Dev Center handles this
-          # (e.g., adding to current draft, creating new submissions) needs verification.
-          whatsNew: |
-            Version ${{ env.APP_VERSION }} for ${{ env.MS_ARCH_MATRIX }} architecture.
-            - General improvements and updates.
+      # ----------------------------------------------------------------------
+      # Step: Setup and Configure msstore CLI
+      # ----------------------------------------------------------------------
+      - name: Setup msstore CLI
+        uses: microsoft/setup-msstore-cli@v1.1 # Use the version you found
+
+      - name: Configure msstore CLI credentials
+        run: |
+          msstore reconfigure --tenantId "${{ secrets.AZURE_TENANT_ID }}" `
+                              --sellerId "${{ secrets.PARTNER_CENTER_SELLER_ID }}" `
+                              --clientId "${{ secrets.AZURE_CLIENT_ID }}" `
+                              --clientSecret "${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}"
+        shell: pwsh
+
+      # ----------------------------------------------------------------------
+      # Step: Use msstore CLI to publish the package
+      #       The exact commands below are educated guesses based on common CLI patterns.
+      #       YOU MUST FIND THE ACTUAL DOCUMENTATION FOR 'msstore' CLI.
+      # ----------------------------------------------------------------------
+      - name: Publish to Microsoft Store via msstore CLI (${{ env.MS_ARCH_MATRIX }})
+        id: publish_package # Give this step an id if subsequent steps depend on its output (like a submission ID)
+        run: |
+          Write-Host "Publishing package: ${{ steps.package_msix.outputs.msix_file_path }}"
+          Write-Host "Product ID: ${{ secrets.MSSTORE_PRODUCT_ID }}"
+          Write-Host "App Version: ${{ env.APP_VERSION }}"
+
+          # --- THIS SECTION REQUIRES ACTUAL MSSTORE CLI DOCUMENTATION ---
+          # The following are HYPOTHETICAL commands.
+          # You need to find out how the msstore CLI handles submissions,
+          # adding packages for different architectures to the same submission, and publishing.
+
+          # Example: A simple (likely too simple) publish command
+          # This might work if the CLI can infer a lot or if you have a single package per submission.
+          # For multi-arch, this is unlikely to be sufficient without managing a submission ID.
+          #
+          # msstore apps products submissions publish --productId "${{ secrets.MSSTORE_PRODUCT_ID }}" `
+          #                                         --filePath "${{ steps.package_msix.outputs.msix_file_path }}" `
+          #                                         --versionString "${{ env.APP_VERSION }}" ` # Or it might take this from the package
+          #                                         # Potentially other flags for notes, rollout, etc.
+          #
+          # A more realistic flow for multi-arch might be:
+          # 1. (Run once, e.g., if matrix.architecture == 'amd64'):
+          #    msstore apps products submissions init --productId "${{ secrets.MSSTORE_PRODUCT_ID }}" --notes "Automated submission for v${{ env.APP_VERSION }}"
+          #    (This command would ideally output a Submission ID)
+          #    (Store this Submission ID in an output or environment variable for other matrix jobs)
+          #
+          # 2. (Run for each architecture in the matrix):
+          #    msstore apps products submissions update --submissionId <THE_ID_FROM_STEP_1> `
+          #                                             --packageFilePath "${{ steps.package_msix.outputs.msix_file_path }}"
+          #
+          # 3. (Run once, after all matrix jobs, e.g., in a separate dependent job):
+          #    msstore apps products submissions commit --submissionId <THE_ID_FROM_STEP_1>
+          #    msstore apps products submissions publish --submissionId <THE_ID_FROM_STEP_1> --publishMode Immediate
+
+          # For now, let's just try a command to list apps to verify CLI and auth work
+          # Replace this with your actual publishing commands once known.
+          msstore apps list
+          
+          Write-Host "TODO: Replace 'msstore apps list' with actual publish commands for:"
+          Write-Host "File: ${{ steps.package_msix.outputs.msix_file_path }}"
+          Write-Host "This step needs to be carefully designed for multi-architecture submissions."
+
+        shell: pwsh
