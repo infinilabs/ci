@@ -102,9 +102,9 @@ jobs:
       (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
     runs-on: windows-latest
     env:
-      APP_VERSION_BASE: ${{ github.event.inputs.app_version }} # e.g., 0.5.3
-      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }} # e.g., 2323
-      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}" # e.g., 0.5.3-2323
+      APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
+      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
+      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
     steps:
       - name: Checkout CI repository (needed if AppxManifest.xml or other local config is used)
         uses: actions/checkout@v4
@@ -123,7 +123,7 @@ jobs:
           
           # Define architectures and their corresponding filename/API identifiers
           $archMap = @{
-            "X64"   = @{ filename_arch = "amd64" } # API Arch -> Filename Arch Suffix
+            "X64"   = @{ filename_arch = "amd64" }
             "ARM64" = @{ filename_arch = "arm64" }
             "X86"   = @{ filename_arch = "x86"   }
           }
@@ -159,7 +159,7 @@ jobs:
         uses: microsoft/store-submission@v1
         with:
           command: configure
-          type: win32 # Or 'msix' if your packageUrls point to MSIX files
+          type: win32
           seller-id: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
           product-id: ${{ secrets.MSSTORE_PRODUCT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
