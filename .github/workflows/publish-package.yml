@@ -38,198 +38,143 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        snap_arch_config:
-          - { download_zip_suffix: "-deb-linux-amd64.zip", snap_arch: "amd64", friendly_name: "Snap Linux amd64" }
-          - { download_zip_suffix: "-deb-linux-arm64.zip", snap_arch: "arm64", friendly_name: "Snap Linux arm64" }
+        snap_arch: [amd64, arm64]
     runs-on: ubuntu-latest
     env:
       APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
       APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
       APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
     steps:
-      - name: Checkout CI repository (for snap/snapcraft.yaml)
+      - name: Checkout CI repository
         uses: actions/checkout@v4
-
-      - name: Download and Prepare .deb Artifact for Snap (${{ matrix.snap_arch_config.friendly_name }})
+      - name: Set Snap Architecture-Specific Variables
+        id: snap_arch_vars
+        run: |
+          current_snap_arch="${{ matrix.snap_arch }}"
+          download_suffix=""; friendly_name_text=""
+          if [ "$current_snap_arch" == "amd64" ]; then download_suffix="-deb-linux-amd64.zip"; friendly_name_text="Snap Linux amd64";
+          elif [ "$current_snap_arch" == "arm64" ]; then download_suffix="-deb-linux-arm64.zip"; friendly_name_text="Snap Linux arm64";
+          else echo "Error: Unknown snap_arch: $current_snap_arch"; exit 1; fi
+          echo "download_zip_suffix=${download_suffix}" >> $GITHUB_OUTPUT; echo "friendly_name=${friendly_name_text}" >> $GITHUB_OUTPUT
+          full_version="${{ env.APP_FULL_VERSION }}"; base_version=$(echo "$full_version" | awk -F'-' '{print $1}'); if [ -z "$base_version" ]; then echo "Could not extract base version"; exit 1; fi
+          echo "app_base_version=$base_version" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Download and Prepare .deb Artifact for Snap (${{ steps.snap_arch_vars.outputs.friendly_name }})
         id: download_deb_artifact
         run: |
-          base_version_path=".v${{ env.APP_VERSION_BASE }}"
-          ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ matrix.snap_arch_config.download_zip_suffix }}"
+          base_version_path=".v${{ steps.snap_arch_vars.outputs.app_base_version }}"
+          ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.snap_arch_vars.outputs.download_zip_suffix }}"
           DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${base_version_path}/${ARTIFACT_ZIP_FILENAME}"
-
-          echo "Downloading $DOWNLOAD_URL for Snap (${{ matrix.snap_arch_config.friendly_name }})..."
           curl -fL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
-          
-          mkdir -p "./snap_payload_${{ matrix.snap_arch_config.snap_arch }}"
-          unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "./snap_payload_${{ matrix.snap_arch_config.snap_arch }}"
-          rm "${ARTIFACT_ZIP_FILENAME}"
-          
-          DEB_FILE=$(find "./snap_payload_${{ matrix.snap_arch_config.snap_arch }}" -name "*.deb" -type f -print -quit)
+          mkdir -p "./snap_payload_${{ matrix.snap_arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "./snap_payload_${{ matrix.snap_arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
+          DEB_FILE=$(find "./snap_payload_${{ matrix.snap_arch }}" -name "*.deb" -type f -print -quit)
           if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
-          
-          mkdir -p ./snap_sources
-          cp "${DEB_FILE}" "./snap_sources/app_${{ matrix.snap_arch_config.snap_arch }}.deb"
-          echo "Prepared .deb: ./snap_sources/app_${{ matrix.snap_arch_config.snap_arch }}.deb"
+          mkdir -p ./snap_sources; cp "${DEB_FILE}" "./snap_sources/app_${{ matrix.snap_arch }}.deb"
         shell: bash
-
       - name: Install Snapcraft
         run: sudo snap install snapcraft --classic
-
-      - name: Build Snap package for ${{ matrix.snap_arch_config.snap_arch }}
+      - name: Build Snap package for ${{ matrix.snap_arch }}
         id: build_snap
         run: |
           if [ ! -f snap/snapcraft.yaml ]; then echo "ERROR: snap/snapcraft.yaml not found!"; exit 1; fi
           sed -i "s|^version:.*$|version: '${{ env.APP_FULL_VERSION }}'|" snap/snapcraft.yaml
-          # Ensure snapcraft.yaml part source points to:
-          # source: $SNAPCRAFT_PROJECT_DIR/snap_sources/app_${SNAPCRAFT_TARGET_ARCH}.deb
-          snapcraft pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch_config.snap_arch }}.snap"
-          SNAP_FILE_PATH=$(ls *_${{ matrix.snap_arch_config.snap_arch }}.snap | head -n 1)
+          # Ensure snapcraft.yaml part source: $SNAPCRAFT_PROJECT_DIR/snap_sources/app_${SNAPCRAFT_TARGET_ARCH}.deb
+          snapcraft pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
+          SNAP_FILE_PATH=$(ls *_${{ matrix.snap_arch }}.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
         shell: bash
-
       - name: Log in to Snapcraft
-        env: 
-          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-        run: |
-          echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > snapcraft.login
-          snapcraft login --with snapcraft.login && rm snapcraft.login
+        env: SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
         shell: bash
-
-      - name: Push and Release Snap for ${{ matrix.snap_arch_config.snap_arch }}
+      - name: Push and Release Snap for ${{ matrix.snap_arch }}
         run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
         shell: bash
 
   # ======================================================================
-  # Microsoft Store Publishing
+  # Microsoft Store Publishing - Single Job
+  # ASSUMES: Packages (.exe installers or MSIX) are ALREADY hosted at public URLs.
   # ======================================================================
-  # Job 2.1: Build/Prepare Windows packages and upload them to a temporary location (e.g., GitHub Release assets)
-  prepare-msstore-packages:
+  publish-all-msstore-packages:
     if: |
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
-    strategy:
-      fail-fast: false
-      matrix:
-        download_arch: [amd64, arm64, x86]
     runs-on: windows-latest
-    outputs: 
-      package_asset_name_${{ matrix.download_arch }}: ${{ steps.upload_to_release.outputs.asset_name }}
-      package_asset_url_${{ matrix.download_arch }}: ${{ steps.upload_to_release.outputs.browser_download_url }}
     env:
-      APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
-      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
-      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      APP_VERSION_BASE: ${{ github.event.inputs.app_version }} # e.g., 0.5.3
+      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }} # e.g., 2323
+      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}" # e.g., 0.5.3-2323
     steps:
-      - name: Checkout CI repository
+      - name: Checkout CI repository (needed if AppxManifest.xml or other local config is used)
         uses: actions/checkout@v4
 
-      - name: Set Architecture-Specific Variables
-        id: arch_vars
+      # This step is now primarily for logging and constructing the JSON,
+      # as the actual package files are assumed to be at pre-existing public URLs.
+      - name: Prepare Submission Details
+        id: prepare_submission_details
         run: |
-          $dlArch = "${{ matrix.download_arch }}"
-          $msApiArch = ""
-          $exeFilenameArch = "" # This will be same as download_arch for your exe naming
-          $friendlyName = ""
+          $baseVersionForUrlPath = ".v${{ env.APP_VERSION_BASE }}"
+          $fullVersionForFilename = "${{ env.APP_FULL_VERSION }}"
+          $appName = "${{ env.APP_NAME_IN_FILENAME }}"
+          $baseUrl = "${{ env.RELEASE_BASE_URL }}"
+          
+          $packagesJson = @()
+          
+          # Define architectures and their corresponding filename/API identifiers
+          $archMap = @{
+            "X64"   = @{ filename_arch = "amd64" } # API Arch -> Filename Arch Suffix
+            "ARM64" = @{ filename_arch = "arm64" }
+            "X86"   = @{ filename_arch = "x86"   }
+          }
 
-          if ($dlArch -eq "amd64") {
-            $msApiArch = "X64"
-            $exeFilenameArch = "amd64"
-            $friendlyName = "Windows x64"
-          } elseif ($dlArch -eq "arm64") {
-            $msApiArch = "ARM64"
-            $exeFilenameArch = "arm64"
-            $friendlyName = "Windows ARM64"
-          } elseif ($dlArch -eq "x86") {
-            $msApiArch = "X86"
-            $exeFilenameArch = "x86" # Your filename uses x86, not 386
-            $friendlyName = "Windows x86"
-          } else {
-            Write-Error "Unknown download_arch: $dlArch"
-            exit 1
+          foreach ($apiArch in $archMap.Keys) {
+            $fileNameArch = $archMap[$apiArch].filename_arch
+            # Construct package filename: Coco-AI_0.5.3-2323_amd64-setup.exe
+            $packageFileName = "${appName}_${fullVersionForFilename}_${fileNameArch}-setup.exe"
+            # If you are submitting MSIX files, the filename and type would be different, e.g.:
+            # $packageFileName = "${appName}_${fullVersionForFilename}_${apiArch}.msix" 
+            
+            $packagePublicUrl = "${baseUrl}/${baseVersionForUrlPath}/${packageFileName}"
+            Write-Host "Package URL for $apiArch : $packagePublicUrl"
+            
+            $packagesJson += @{
+              packageUrl = $packagePublicUrl 
+              languages = @("en-us") # Defaulting to en-us
+              architectures = @($apiArch) # X64, ARM64, X86 for the API
+              isSilentInstall = $true    # Assuming -setup.exe supports silent install
+              # If submitting MSIX, isSilentInstall might not be applicable or needed
+            }
           }
           
-          echo "ms_api_arch=$msApiArch" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          echo "exe_filename_arch=$exeFilenameArch" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          echo "friendly_name=$friendlyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          
-          # For versioning in filenames/paths
-          $fullVersion = "${{ env.APP_FULL_VERSION_STRING }}"
-          $baseVersion = ($fullVersion -split '-')[0]
-          echo "app_base_version=$baseVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          echo "app_full_version_cleaned=$($fullVersion.Replace('-','_').Replace('.','_'))" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-          Write-Host "Processing $friendlyName (Download Arch: $dlArch, MS API Arch: $msApiArch)"
+          $productUpdatePayload = @{ packages = $packagesJson } | ConvertTo-Json -Depth 5 -Compress
+          Write-Host "Product Update JSON Payload:"
+          Write-Host $productUpdatePayload
+          # Escape for multiline output
+          $productUpdatePayloadForOutput = $productUpdatePayload -replace "`n","%0A" -replace "`r","%0D"
+          echo "product_update_json=$productUpdatePayloadForOutput" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         shell: pwsh
 
-      - name: Download Windows Installer (${{ steps.arch_vars.outputs.friendly_name }})
-        id: download_installer
-        run: |
-          $baseVersionPath = ".v${{ steps.arch_vars.outputs.app_base_version }}"
-          $installerFilename = "${{ env.APP_NAME_FOR_URL_FILENAME }}_${{ env.APP_FULL_VERSION_STRING }}_${{ steps.arch_vars.outputs.exe_filename_arch }}-setup.exe"
-          $downloadUrl = "${{ env.RELEASE_BASE_URL }}/${baseVersionPath}/${installerFilename}"
-          $downloadedInstallerPath = "./${installerFilename}"
-
-          Write-Host "Downloading $downloadUrl for ${{ steps.arch_vars.outputs.friendly_name }}..."
-          Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadedInstallerPath
-          If (-not (Test-Path $downloadedInstallerPath)) { Write-Error "Failed to download installer"; exit 1 }
-          echo "installer_path=$downloadedInstallerPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          Write-Host "Installer downloaded: $downloadedInstallerPath"
-        shell: pwsh
-      
-  # Job 2.2: Publish to Microsoft Store (runs once, after all packages are prepared and URLs are available)
-  publish-to-msstore-via-api:
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
-    runs-on: windows-latest
-    needs: prepare-msstore-packages
-    env:
-      APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
-      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
-      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
-    steps:
-      - name: Configure Store Credentials
+      - name: Configure Store Connection
         uses: microsoft/store-submission@v1
         with:
           command: configure
-          type: win32
+          type: win32 # Or 'msix' if your packageUrls point to MSIX files
           seller-id: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
           product-id: ${{ secrets.MSSTORE_PRODUCT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Construct product-update JSON
-        id: construct_json
-        run: |
-          $packagesJson = @()
-
-          $package_X64_Url = "${RELEASE_BASE_URL}/.v${APP_VERSION_BASE}/${APP_NAME_IN_FILENAME}_${APP_FULL_VERSION}_x64-setup.exe"
-          $package_ARM64_Url = "${RELEASE_BASE_URL}/.v${APP_VERSION_BASE}/${APP_NAME_IN_FILENAME}_${APP_FULL_VERSION}_x86-setup.exe"
-          $package_X86_Url = "${RELEASE_BASE_URL}/.v${APP_VERSION_BASE}/${APP_NAME_IN_FILENAME}_${APP_FULL_VERSION}_arm64-setup.exe"
-          
-          # Check if files actually exist at these URLs (important if release creation is separate)
-          # For now, assuming they will exist after the 'prepare-msstore-packages' job runs.
-
-          $packagesJson += @{ packageUrl = $package_X64_Url; languages = @("en-us"); architectures = @("X64"); isSilentInstall = $true } # Assuming en-us and silent install
-          $packagesJson += @{ packageUrl = $package_ARM64_Url; languages = @("en-us"); architectures = @("ARM64"); isSilentInstall = $true }
-          $packagesJson += @{ packageUrl = $package_X86_Url; languages = @("en-us"); architectures = @("X86"); isSilentInstall = $true }
-          
-          $productUpdatePayload = @{ packages = $packagesJson } | ConvertTo-Json -Depth 5 -Compress
-          Write-Host "Product Update JSON Payload:"
-          Write-Host $productUpdatePayload
-          echo "product_update_json=$productUpdatePayload" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        shell: pwsh
-
       - name: Update Draft Submission with Packages
         uses: microsoft/store-submission@v1
         with:
           command: update
-          product-update: ${{ steps.construct_json.outputs.product_update_json }}
+          product-update: ${{ steps.prepare_submission_details.outputs.product_update_json }}
 
       - name: Publish Submission
         uses: microsoft/store-submission@v1
         with:
           command: publish
+          # Optional: Add --flight-id "your-flight-id" if publishing to a specific flight
+          # Optional: Add --skip-polling true if you don't want the action to wait for completion
