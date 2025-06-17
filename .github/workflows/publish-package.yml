@@ -89,10 +89,7 @@ jobs:
           grade: stable
           confinement: strict
           architectures:
-            - build-on: amd64
-              run-on: amd64
-            - build-on: amd64
-              run-on: arm64
+            - ${{ matrix.snap_arch }} 
           apps:
             coco-ai:
               command: /usr/bin/coco
@@ -104,6 +101,10 @@ jobs:
               plugin: dump
               source: snap_sources/app_${{ matrix.snap_arch }}.deb
               source-type: deb
+              build-on:
+                - ${{ matrix.snap_arch }}
+              build-for:
+                - ${{ matrix.snap_arch }}
           EOF
           echo "Generated snap/snapcraft.yaml:"
           cat snap/snapcraft.yaml
