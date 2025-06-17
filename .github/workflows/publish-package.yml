@@ -111,6 +111,8 @@ jobs:
 
       - name: Build Snap package for ${{ matrix.snap_arch }}
         id: build_snap
+        env:
+          SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_${{ matrix.snap_arch }}"
         run: |
           sudo snapcraft --use-lxd --debug --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
           #sudo snapcraft --use-lxd --debug pack --output "${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap"
