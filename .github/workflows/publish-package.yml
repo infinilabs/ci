@@ -97,7 +97,7 @@ jobs:
 
       - name: Generate snapcraft.yaml
         run: |
-          mdkir -p snap
+          mkdir -p snap
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml snap
           sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" snap/snapcraft.yaml
           cat snap/snapcraft.yaml
