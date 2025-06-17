@@ -62,9 +62,8 @@ jobs:
       - name: Download and Prepare .deb Artifact for Snap (${{ steps.snap_arch_vars.outputs.friendly_name }})
         id: download_deb_artifact
         run: |
-          base_version_path=".v${{ steps.snap_arch_vars.outputs.app_base_version }}"
           ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.snap_arch_vars.outputs.download_zip_suffix }}"
-          DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${base_version_path}/${ARTIFACT_ZIP_FILENAME}"
+          DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_ZIP_FILENAME}"
           curl -fL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
           mkdir -p "./snap_payload_${{ matrix.snap_arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "./snap_payload_${{ matrix.snap_arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
           DEB_FILE=$(find "./snap_payload_${{ matrix.snap_arch }}" -name "*.deb" -type f -print -quit)
