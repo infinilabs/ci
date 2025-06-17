@@ -79,17 +79,6 @@ jobs:
           echo "the .deb file has been copied to snap/sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb"
         shell: bash
 
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-        with:
-          group: lxd
-          channel: latest/stable
-
-      - name: Add user to the LXD (lxd) group
-        run: |
-          sudo usermod -a -G lxd ${USER}
-          newgrp lxd
-
       - name: Install Snapcraft
         run: |
           sudo apt install snapd
