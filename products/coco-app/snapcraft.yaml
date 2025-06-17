@@ -47,7 +47,5 @@ parts:
     source: .
     override-build: |
       set -eu
-      npm install
-      npm run tauri build -- --bundles deb
       dpkg -x snap_sources/*.deb $SNAPCRAFT_PART_INSTALL/
       sed -i -e "s|Icon=coco|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
