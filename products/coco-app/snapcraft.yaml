@@ -44,7 +44,7 @@ parts:
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libayatana-appindicator3-1
-    source: .
+    source: snap_sources
     override-build: |
       set -eu
       dpkg -x snap_sources/*.deb $SNAPCRAFT_PART_INSTALL/
