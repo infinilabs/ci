@@ -27,23 +27,6 @@ package-repositories:
 parts:
   build-app:
     plugin: dump
-    build-snaps:
-      - node/20/stable
-      - rustup/latest/stable
-    build-packages:
-      - libwebkit2gtk-4.1-dev
-      - build-essential
-      - curl
-      - wget
-      - file
-      - libxdo-dev
-      - libssl-dev
-      - libayatana-appindicator3-dev
-      - librsvg2-dev
-      - dpkg
-    stage-packages:
-      - libwebkit2gtk-4.1-0
-      - libayatana-appindicator3-1
     source: snap_sources
     override-build: |
       set -eu

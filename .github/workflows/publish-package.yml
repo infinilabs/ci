@@ -107,7 +107,7 @@ jobs:
           mkdir -p snap
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml snap
           sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" snap/snapcraft.yaml
-          sed -i "s|__SOURCE_DIR__|${{ env.GITHUB_WORKSPACE }}|g" snap/snapcraft.yaml
+          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" snap/snapcraft.yaml
           cat snap/snapcraft.yaml
         shell: bash
 
@@ -118,7 +118,7 @@ jobs:
         run: |
           echo "Using SNAPCRAFT_CACHE_DIR=${SNAPCRAFT_CACHE_DIR}"
           mkdir -p "${SNAPCRAFT_CACHE_DIR}"
-          sg lxd -c "snapcraft --use-lxd --debug --output '${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.arch }}.snap'"
+          sudo snapcraft --use-lxd --debug --output '${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.arch }}.snap'
           SNAP_FILE_PATH=$(ls *_${{ matrix.arch }}.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
