@@ -167,6 +167,7 @@ jobs:
 
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
+        working-directory: ${{ env.REPO-NAME }}
         run: |
           mkdir -p "$GITHUB_WORKSPACE/snap"
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml $GITHUB_WORKSPACE/snap
@@ -216,14 +217,13 @@ jobs:
                   -name "*.exe" \
               \))
           if [[ ! -z "$SOURCES" ]]; then
-            mkdir -p /snap_sources && cp -rf $SOURCES /snap_sources/${{ env.APPNAME }}-${{ env.VERSION }}.deb
-            ls -lh /snap_sources
-            echo "Files copied to $GITHUB_WORKSPACE/snap_sources/${{ env.APPNAME }}-${{ env.VERSION }}.deb"
+            mkdir -p $GITHUB_WORKSPACE/snap_sources && cp -rf $SOURCES $GITHUB_WORKSPACE/snap_sources/${{ env.APPNAME }}-${{ env.VERSION }}.deb
+            ls -lh $GITHUB_WORKSPACE/snap_sources
+            echo "Files copied to $GITHUB_WORKSPACE/snap_sources"
           fi
 
       - name: Build snap package (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
-        working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
           cd $GITHUB_WORKSPACE/snap
