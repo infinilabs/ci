@@ -834,6 +834,18 @@ jobs:
           fi
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
+      - name: Deploy files to production with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            ssh cocoprod "coco_upgrade ${VERSION}-${BUILD_NUMBER}"
+          else
+            echo "No $PNAME binary found"
+          fi
+          echo "Finished deploying $PNAME to cocoprod at $(date +'%m-%d %H:%M:%S')"
+
   notify_on_failure:
     runs-on: ubuntu-latest
     needs: [publish, publish-enterprise, publish-staging]
