@@ -226,7 +226,7 @@ jobs:
         id: build_snap
         run: |
           cd $GITHUB_WORKSPACE/snap
-          snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          sudo snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
@@ -235,9 +235,9 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         env: 
           SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
+        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && sudo snapcraft login --with sc.login && rm sc.login
 
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
-        run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
+        run: sudo snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
       
