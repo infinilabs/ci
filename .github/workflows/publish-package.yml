@@ -39,11 +39,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - snap_arch: amd64
-            runner: ubuntu-22.04
-          - snap_arch: arm64
-            runner: ubuntu-22.04-arm
-    runs-on: ${{ matrix.runner }} 
+          - arch: amd64
+            platform: "ubuntu-22.04"
+          - arch: arm64
+            platform: "ubuntu-22.04-arm"
+    runs-on: ${{ matrix.platform }} 
     env:
       APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
       APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
@@ -53,30 +53,30 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set Snap Architecture-Specific Variables
-        id: snap_arch_vars
+        id: arch_vars
         run: |
-          current_snap_arch="${{ matrix.snap_arch }}"
+          current_arch="${{ matrix.arch }}"
           download_suffix=""; friendly_name_text=""
-          if [ "$current_snap_arch" == "amd64" ]; then download_suffix="-deb-linux-amd64.zip"; friendly_name_text="Snap Linux amd64";
-          elif [ "$current_snap_arch" == "arm64" ]; then download_suffix="-deb-linux-arm64.zip"; friendly_name_text="Snap Linux arm64";
-          else echo "Error: Unknown snap_arch: $current_snap_arch"; exit 1; fi
+          if [ "$current_arch" == "amd64" ]; then download_suffix="-deb-linux-amd64.zip"; friendly_name_text="Snap Linux amd64";
+          elif [ "$current_arch" == "arm64" ]; then download_suffix="-deb-linux-arm64.zip"; friendly_name_text="Snap Linux arm64";
+          else echo "Error: Unknown arch: $current_arch"; exit 1; fi
           echo "download_zip_suffix=${download_suffix}" >> $GITHUB_OUTPUT; echo "friendly_name=${friendly_name_text}" >> $GITHUB_OUTPUT
           full_version="${{ env.APP_FULL_VERSION }}"; base_version=$(echo "$full_version" | awk -F'-' '{print $1}'); if [ -z "$base_version" ]; then echo "Could not extract base version"; exit 1; fi
           echo "app_base_version=$base_version" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Download and Prepare .deb Artifact for Snap (${{ steps.snap_arch_vars.outputs.friendly_name }})
+      - name: Download and Prepare .deb Artifact for Snap (${{ steps.arch_vars.outputs.friendly_name }})
         id: download_deb_artifact
         run: |
-          echo "Downloading .deb artifact for ${{ matrix.snap_arch }} architecture"
-          ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.snap_arch_vars.outputs.download_zip_suffix }}"
+          echo "Downloading .deb artifact for ${{ matrix.arch }} architecture"
+          ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.arch_vars.outputs.download_zip_suffix }}"
           DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_ZIP_FILENAME}"
           curl -sfL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
-          mkdir -p "snap_payload_${{ matrix.snap_arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.snap_arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
-          DEB_FILE=$(find "snap_payload_${{ matrix.snap_arch }}" -name "*.deb" -type f -print -quit)
+          mkdir -p "snap_payload_${{ matrix.arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
+          DEB_FILE=$(find "snap_payload_${{ matrix.arch }}" -name "*.deb" -type f -print -quit)
           if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
-          mkdir -p snap_sources; cp "${DEB_FILE}" "snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb"
-          echo "the .deb file has been copied to snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.snap_arch }}.deb"
+          mkdir -p snap_sources; cp "${DEB_FILE}" "snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
+          echo "the .deb file has been copied to snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
         shell: bash
 
       - name: Setup LXD
@@ -111,15 +111,15 @@ jobs:
           cat snap/snapcraft.yaml
         shell: bash
 
-      - name: Build Snap package for ${{ matrix.snap_arch }}
+      - name: Build Snap package for ${{ matrix.arch }}
         id: build_snap
         env:
-          SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_${{ matrix.snap_arch }}"
+          SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_${{ matrix.arch }}"
         run: |
           echo "Using SNAPCRAFT_CACHE_DIR=${SNAPCRAFT_CACHE_DIR}"
           mkdir -p "${SNAPCRAFT_CACHE_DIR}"
-          sg lxd -c "snapcraft --use-lxd --debug --output '${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.snap_arch }}.snap'"
-          SNAP_FILE_PATH=$(ls *_${{ matrix.snap_arch }}.snap | head -n 1)
+          sg lxd -c "snapcraft --use-lxd --debug --output '${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.arch }}.snap'"
+          SNAP_FILE_PATH=$(ls *_${{ matrix.arch }}.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
         shell: bash
@@ -130,7 +130,7 @@ jobs:
         run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
         shell: bash
 
-      - name: Push and Release Snap for ${{ matrix.snap_arch }}
+      - name: Push and Release Snap for ${{ matrix.arch }}
         run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
         shell: bash
 
