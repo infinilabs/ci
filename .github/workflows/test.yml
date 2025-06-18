@@ -1,0 +1,77 @@
+name: Test Environment Setup
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  PNAME: cloud
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up and check env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
+
+      - name: Setup ${{ env.PNAME }} env
+        run: |
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Clone Repository
+        run: |
+          git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
+          echo "License repo cloned to $GITHUB_WORKSPACE/license"
+
+          git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          echo "$PNAME repo cloned to $GITHUB_WORKSPACE/$PNAME"
+
+          git clone $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
+          echo "$PNAME-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web"
+
+          git clone $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
+          echo "common-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web/src/common"
+
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
