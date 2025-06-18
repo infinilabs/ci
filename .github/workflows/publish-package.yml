@@ -1,224 +1,249 @@
-name: Publish Platform Package
+name: Publish Coco App Package 
+defaults:
+  run:
+    shell: bash
+env:
+  CI: false
+  REPO-NAME: "coco-app"
+  PNAME: "coco/app"
+  OSS_PATH: /Release/coco/app/snapshot
+  TOKEN: ${{ secrets.X_TOKEN }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_CERTIFICATE_PASSWORD: ""
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  NODEJS_VERSION: 20
+  FILE_EXTENSIONS: '\.(dmg|rpm|deb|exe)$'
+  UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
 
 on:
   workflow_dispatch:
     inputs:
-      target_platform:
-        description: 'Publish Platform (snapcraft, msstore, or all)'
-        required: true
-        type: choice
-        options:
-          - snapcraft
-          - msstore
-          - all
-        default: all
-      app_version:
-        description: 'Application Version (e.g., 0.5.3)'
-        required: true
-        type: string
-        default: '0.5.3'
-      build_number:
-        description: 'Build Number (e.g., 2323)'
-        required: true
-        type: string
-        default: '2323'
-
-env:
-  RELEASE_BASE_URL: "https://release.infinilabs.com/coco/app/stable"
-  APP_NAME_IN_FILENAME: "Coco-AI"
-
+      PUBLISH_VERSION:
+        description: 'Publish Package Version'
+        required: false
+        default: "0.5.3"
+      PUBLISH_BUILD_NUMBER:
+        description: 'Publish Package Build Number'
+        required: false
+        default: "2323"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: false
 jobs:
-  # ======================================================================
-  # Job 1: Publish to Snap Store (Snapcraft)
-  # ======================================================================
-  publish-snapcraft:
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.target_platform == 'snapcraft' || github.event.inputs.target_platform == 'all')
+  build-app:
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
+      VITE_LOG_LEVEL: 'warn'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: amd64
-            platform: "ubuntu-22.04"
-          - arch: arm64
-            platform: "ubuntu-22.04-arm"
-    runs-on: ${{ matrix.platform }} 
-    env:
-      APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
-      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
-      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
+          - platform: "macos-latest"
+            target: "aarch64-apple-darwin"
+          - platform: "macos-latest"
+            target: "x86_64-apple-darwin"
+
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "i686-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "aarch64-pc-windows-msvc"
+
+          - platform: "ubuntu-22.04"
+            target: "x86_64-unknown-linux-gnu"
+          - platform: "ubuntu-22.04-arm"
+            target: "aarch64-unknown-linux-gnu"
+
+    runs-on: ${{ matrix.platform }}
     steps:
-      - name: Checkout CI repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set Snap Architecture-Specific Variables
-        id: arch_vars
-        run: |
-          current_arch="${{ matrix.arch }}"
-          download_suffix=""; friendly_name_text=""
-          if [ "$current_arch" == "amd64" ]; then download_suffix="-deb-linux-amd64.zip"; friendly_name_text="Snap Linux amd64";
-          elif [ "$current_arch" == "arm64" ]; then download_suffix="-deb-linux-arm64.zip"; friendly_name_text="Snap Linux arm64";
-          else echo "Error: Unknown arch: $current_arch"; exit 1; fi
-          echo "download_zip_suffix=${download_suffix}" >> $GITHUB_OUTPUT; echo "friendly_name=${friendly_name_text}" >> $GITHUB_OUTPUT
-          full_version="${{ env.APP_FULL_VERSION }}"; base_version=$(echo "$full_version" | awk -F'-' '{print $1}'); if [ -z "$base_version" ]; then echo "Could not extract base version"; exit 1; fi
-          echo "app_base_version=$base_version" >> $GITHUB_OUTPUT
+      - name: Checkout coco app repository
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
+          ref: v0.5.0
+          path: ${{ env.REPO-NAME }}
+
+      - name: Set version & tag with ${{ matrix.platform }}
+        working-directory: ${{ env.REPO-NAME }}
         shell: bash
-
-      - name: Download and Prepare .deb Artifact for Snap (${{ steps.arch_vars.outputs.friendly_name }})
-        id: download_deb_artifact
         run: |
-          echo "Downloading .deb artifact for ${{ matrix.arch }} architecture"
-          ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.arch_vars.outputs.download_zip_suffix }}"
-          DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_ZIP_FILENAME}"
-          echo "Download URL: ${DOWNLOAD_URL}"
-          curl -sfL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
-          mkdir -p "$GITHUB_WORKSPACE/snap_payload_${{ matrix.arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
-          DEB_FILE=$(find "$GITHUB_WORKSPACE/snap_payload_${{ matrix.arch }}" -name "*.deb" -type f -print -quit)
-          if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
-          mkdir -p "$GITHUB_WORKSPACE/snap_sources"; mv "${DEB_FILE}" "$GITHUB_WORKSPACE/snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
-          echo "The $DEB_FILE move to snap sources file $GITHUB_WORKSPACE/snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
-        shell: bash
-
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-        with:
-          group: lxd
-          channel: latest/stable
-
-      - name: Add user to the LXD (lxd) group
-        run: |
-          if getent group lxd > /dev/null; then
-            echo "Adding user ${USER} to group lxd."
-            sudo usermod -aG lxd "${USER}" # Use -aG, ensure USER is quoted
-            echo "User ${USER} added to lxd group. Note: This change typically requires a new session for the current process to see it."
-          else
-            echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
+          current_version=$PUBLISH_VERSION
+          if [[ -z "$current_version" ]]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
           fi
-        shell: bash
 
-      - name: Install Snapcraft
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                build_number=${{ inputs.PUBLISH_BUILD_NUMBER }}
+              fi
+            fi
+          fi
+
+          version="$current_version-$build_number"
+          echo "Build $PNAME with $version"
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i '' "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          else
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          fi
+          
+          tag=".v${current_version}"
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "UPGRADE=$tag" >> $GITHUB_ENV
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install rust target
+        working-directory: ${{ env.REPO-NAME }}/src-tauri
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install dependencies (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04') 
+        working-directory: ${{ env.REPO-NAME }}
         run: |
-          sudo snap install core22
-          sudo snap install snapcraft --classic
-        shell: bash
+            sudo apt-get update
+            sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
 
-      - name: Generate snapcraft.yaml
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/snap"
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml $GITHUB_WORKSPACE/snap
-          sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          sed -i "s|__APP_NAME__|${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          cat $GITHUB_WORKSPACE/snap/snapcraft.yaml
-        shell: bash
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './coco-app/src-tauri -> target'
 
-      - name: Build Snap package for ${{ matrix.arch }}
-        id: build_snap
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install app dependencies and build web
+        working-directory: ${{ env.REPO-NAME }}
+        run: pnpm install
+
+      - name: Build app with ${{ env.VERSION }}
+        working-directory: ${{ env.REPO-NAME }}
         env:
-          SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_${{ matrix.arch }}"
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
-          echo "Using SNAPCRAFT_CACHE_DIR=${SNAPCRAFT_CACHE_DIR}"
-          mkdir -p "${SNAPCRAFT_CACHE_DIR}"
-          sudo snapcraft --use-lxd --debug --output '${{ env.APP_NAME_IN_FILENAME }}_${{ env.APP_FULL_VERSION }}_${{ matrix.arch }}.snap'
-          SNAP_FILE_PATH=$(ls *_${{ matrix.arch }}.snap | head -n 1)
-          if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
-          echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
-        shell: bash
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            pnpm tauri build --target ${{ matrix.target }}
+          else
+            #( cd src-tauri && cargo add --git ssh://git@github.com/infinilabs/pizza.git pizza-engine --features query_string_parser,persistence )
+            make add-dep-pizza-engine
+            pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+          fi
 
-      - name: Log in to Snapcraft
-        env: 
-          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
-        shell: bash
-
-      - name: Push and Release Snap for ${{ matrix.arch }}
-        run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
-        shell: bash
-
-  # ======================================================================
-  # Microsoft Store Publishing - Single Job
-  # ASSUMES: Packages (.exe installers or MSIX) are ALREADY hosted at public URLs.
-  # ======================================================================
-  publish-all-msstore-packages:
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      (github.event.inputs.target_platform == 'msstore' || github.event.inputs.target_platform == 'all')
-    runs-on: windows-latest
-    env:
-      APP_VERSION_BASE: ${{ github.event.inputs.app_version }}
-      APP_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
-      APP_FULL_VERSION: "${{ github.event.inputs.app_version }}-${{ github.event.inputs.build_number }}"
-    steps:
-      - name: Checkout CI repository (needed if AppxManifest.xml or other local config is used)
-        uses: actions/checkout@v4
-
-      # This step is now primarily for logging and constructing the JSON,
-      # as the actual package files are assumed to be at pre-existing public URLs.
-      - name: Prepare Submission Details
-        id: prepare_submission_details
+      - name: Rename upgrade asserts
+        working-directory: ${{ env.REPO-NAME }}
         run: |
-          $baseVersionForUrlPath = ".v${{ env.APP_VERSION_BASE }}"
-          $fullVersionForFilename = "${{ env.APP_FULL_VERSION }}"
-          $appName = "${{ env.APP_NAME_IN_FILENAME }}"
-          $baseUrl = "${{ env.RELEASE_BASE_URL }}"
+          bundle_dir="src-tauri/target/${{ matrix.target }}/release/bundle"
+          base_dir="${bundle_dir}"
+
+          if [[ "${{ matrix.target }}" == *"apple-darwin"* ]]; then
+            base_dir+="/macos"
+          elif [[ "${{ matrix.target }}" == *"linux-gnu"* ]]; then
+            base_dir+="/appimage"
+          elif [[ "${{ matrix.target }}" == *"windows-msvc"* ]]; then
+            base_dir+="/nsis"
+          fi
+
+          puer_version="$(echo "$VERSION" | sed 's/-.*//')"
+          version="$VERSION"
+
+          find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+            if [[ "$file" == *"$version"* ]]; then
+              echo "Skipping '$file', already contains the full version"
+              continue
+            fi
+            new_file="${file/$puer_version/${version}}"
+            echo "Renaming '$file' to '$new_file'"
+            mv "$file" "$new_file"
+          done
+          # Delete the ubuntu files
+          if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
+            find "$bundle_dir" \
+              \( \
+                -name "*arm64.deb.sig" -o \
+                -name "*amd64.deb.sig" -o \
+                -name "*aarch64.deb.sig" -o \
+                -name "*x86_64.rpm.sig" -o \
+                -name "*aarch64.rpm.sig" -o \
+                -name "control.tar.gz" -o \
+                -name "data.tar.gz" \
+              \) -print0 | xargs -0 rm -vf
+          fi
+          # Rename the darwin
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz"
+          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
+          fi
           
-          $packagesJson = @()
-          
-          # Define architectures and their corresponding filename/API identifiers
-          $archMap = @{
-            "X64"   = @{ filename_arch = "amd64" }
-            "ARM64" = @{ filename_arch = "arm64" }
-            "X86"   = @{ filename_arch = "x86"   }
-          }
+      - name: Check files
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          SOURCES=$(find "$target" -type f \( \
+                  -name "*.dmg" -o \
+                  -name "*.deb" -o \
+                  -name "*.rpm" -o \
+                  -name "*.exe" -o \
+                  -name "*.gz" -o \
+                  -name "*.sig" -o \
+                  -name "*.AppImage" \
+              \))
+          if [[ ! -z "$SOURCES" ]]; then
+            echo "Found files: $SOURCES"
+          else
+            echo "No files found matching the specified patterns."
+            exit 1
+          fi
 
-          foreach ($apiArch in $archMap.Keys) {
-            $fileNameArch = $archMap[$apiArch].filename_arch
-            # Construct package filename: Coco-AI_0.5.3-2323_amd64-setup.exe
-            $packageFileName = "${appName}_${fullVersionForFilename}_${fileNameArch}-setup.exe"
-            # If you are submitting MSIX files, the filename and type would be different, e.g.:
-            # $packageFileName = "${appName}_${fullVersionForFilename}_${apiArch}.msix" 
-            
-            $packagePublicUrl = "${baseUrl}/${baseVersionForUrlPath}/${packageFileName}"
-            Write-Host "Package URL for $apiArch : $packagePublicUrl"
-            
-            $packagesJson += @{
-              packageUrl = $packagePublicUrl 
-              languages = @("en-us") # Defaulting to en-us
-              architectures = @($apiArch) # X64, ARM64, X86 for the API
-              isSilentInstall = $true    # Assuming -setup.exe supports silent install
-              # If submitting MSIX, isSilentInstall might not be applicable or needed
-            }
-          }
-          
-          $productUpdatePayload = @{ packages = $packagesJson } | ConvertTo-Json -Depth 5 -Compress
-          Write-Host "Product Update JSON Payload:"
-          Write-Host $productUpdatePayload
-          # Escape for multiline output
-          $productUpdatePayloadForOutput = $productUpdatePayload -replace "`n","%0A" -replace "`r","%0D"
-          echo "product_update_json=$productUpdatePayloadForOutput" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        shell: pwsh
 
-      - name: Configure Store Connection
-        uses: microsoft/store-submission@v1
-        with:
-          command: configure
-          type: win32
-          seller-id: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
-          product-id: ${{ secrets.MSSTORE_PRODUCT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      - name: Update Draft Submission with Packages
-        uses: microsoft/store-submission@v1
-        with:
-          command: update
-          product-update: ${{ steps.prepare_submission_details.outputs.product_update_json }}
-
-      - name: Publish Submission
-        uses: microsoft/store-submission@v1
-        with:
-          command: publish
-          # Optional: Add --flight-id "your-flight-id" if publishing to a specific flight
-          # Optional: Add --skip-polling true if you don't want the action to wait for completion
+      
