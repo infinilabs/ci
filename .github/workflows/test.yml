@@ -48,6 +48,8 @@ jobs:
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
+          cat "$GITHUB_WORKSPACE/.oss.json"
+          cat $HOME/.ssh/config
 
       - name: Setup ${{ env.PNAME }} env
         run: |
