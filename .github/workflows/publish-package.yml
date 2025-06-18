@@ -108,6 +108,7 @@ jobs:
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml snap
           sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" snap/snapcraft.yaml
           sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" snap/snapcraft.yaml
+          sed -i "s|__APP_NAME__|${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}|g" snap/snapcraft.yaml
           cat snap/snapcraft.yaml
         shell: bash
 
