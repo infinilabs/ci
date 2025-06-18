@@ -5,6 +5,7 @@ defaults:
 env:
   CI: false
   REPO-NAME: "coco-app"
+  APPNAME: "Coco-AI"
   PNAME: "coco/app"
   OSS_PATH: /Release/coco/app/snapshot
   TOKEN: ${{ secrets.X_TOKEN }}
@@ -145,6 +146,36 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
 
+      - name: Setup LXD (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        uses: canonical/setup-lxd@main
+        with:
+          group: lxd
+          channel: latest/stable
+
+      - name: Install Snapcraft (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        run: |
+          sudo snap install core22
+          sudo snap install snapcraft --classic
+          if getent group lxd > /dev/null; then
+            echo "Adding user ${USER} to group lxd."
+            sudo usermod -aG lxd "${USER}" # Use -aG, ensure USER is quoted
+            echo "User ${USER} added to lxd group. Note: This change typically requires a new session for the current process to see it."
+          else
+            echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
+          fi
+
+      - name: Generate snapcraft.yaml (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/snap"
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml $GITHUB_WORKSPACE/snap
+          sed -i "s|__VERSION__|${{ env.VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          sed -i "s|__APP_NAME__|${{ env.APPNAME }}-${{ env.VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          cat $GITHUB_WORKSPACE/snap/snapcraft.yaml      
+
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
@@ -224,26 +255,41 @@ jobs:
             mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
           fi
           
-      - name: Check files
+      - name: Check build files and copy to snap sources
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
           target="src-tauri/target/${{ matrix.target }}/release/bundle"
           SOURCES=$(find "$target" -type f \( \
-                  -name "*.dmg" -o \
                   -name "*.deb" -o \
-                  -name "*.rpm" -o \
                   -name "*.exe" -o \
-                  -name "*.gz" -o \
-                  -name "*.sig" -o \
-                  -name "*.AppImage" \
               \))
           if [[ ! -z "$SOURCES" ]]; then
-            echo "Found files: $SOURCES"
+            mkdir -p GITHUB_WORKSPACE/snap_sources && cp -v $SOURCES $GITHUB_WORKSPACE/snap_sources/${{ env.APPNAME }}-${{ env.VERSION }}.deb
+            ls -lh $GITHUB_WORKSPACE/snap_sources
+            echo "Files copied to $GITHUB_WORKSPACE/snap_sources"
           else
             echo "No files found matching the specified patterns."
             exit 1
           fi
 
+      - name: Build snap package (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        id: build_snap
+        run: |
+          cd $GITHUB_WORKSPACE/snap
+          snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          SNAP_FILE_PATH=$(ls *.snap | head -n 1)
+          if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
+          echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
 
+      - name: Log in to Snapcraft
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        env: 
+          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
+
+      - name: Push and Release Snap for ${{ matrix.platform }}
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
       
