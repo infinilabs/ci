@@ -28,6 +28,7 @@ parts:
   build-app:
     plugin: dump
     source: __SOURCE_DIR__
+    source-type: deb
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
