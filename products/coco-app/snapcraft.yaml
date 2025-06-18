@@ -27,7 +27,7 @@ package-repositories:
 parts:
   build-app:
     plugin: dump
-    source: snap_sources
+    source: .
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."

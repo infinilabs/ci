@@ -71,12 +71,13 @@ jobs:
           echo "Downloading .deb artifact for ${{ matrix.arch }} architecture"
           ARTIFACT_ZIP_FILENAME="${{ env.APP_NAME_IN_FILENAME }}-${{ env.APP_FULL_VERSION }}${{ steps.arch_vars.outputs.download_zip_suffix }}"
           DOWNLOAD_URL="${{ env.RELEASE_BASE_URL }}/${ARTIFACT_ZIP_FILENAME}"
+          echo "Download URL: ${DOWNLOAD_URL}"
           curl -sfL -o "${ARTIFACT_ZIP_FILENAME}" "${DOWNLOAD_URL}"
-          mkdir -p "snap_payload_${{ matrix.arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
-          DEB_FILE=$(find "snap_payload_${{ matrix.arch }}" -name "*.deb" -type f -print -quit)
+          mkdir -p "$GITHUB_WORKSPACE/snap_payload_${{ matrix.arch }}"; unzip -q "${ARTIFACT_ZIP_FILENAME}" -d "snap_payload_${{ matrix.arch }}"; rm "${ARTIFACT_ZIP_FILENAME}"
+          DEB_FILE=$(find "$GITHUB_WORKSPACE/snap_payload_${{ matrix.arch }}" -name "*.deb" -type f -print -quit)
           if [ -z "$DEB_FILE" ]; then echo "ERROR: No .deb file found"; exit 1; fi
-          mkdir -p snap_sources; cp "${DEB_FILE}" "snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
-          echo "the .deb file has been copied to snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
+          mkdir -p "$GITHUB_WORKSPACE/snap_sources"; mv "${DEB_FILE}" "$GITHUB_WORKSPACE/snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
+          echo "The $DEB_FILE move to snap sources file $GITHUB_WORKSPACE/snap_sources/${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}.deb"
         shell: bash
 
       - name: Setup LXD
@@ -104,12 +105,12 @@ jobs:
 
       - name: Generate snapcraft.yaml
         run: |
-          mkdir -p snap
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml snap
-          sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" snap/snapcraft.yaml
-          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" snap/snapcraft.yaml
-          sed -i "s|__APP_NAME__|${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}|g" snap/snapcraft.yaml
-          cat snap/snapcraft.yaml
+          mkdir -p "$GITHUB_WORKSPACE/snap"
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml $GITHUB_WORKSPACE/snap
+          sed -i "s|__VERSION__|${{ env.APP_FULL_VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          sed -i "s|__APP_NAME__|${{ env.APP_NAME_IN_FILENAME }}_${{ matrix.arch }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
+          cat $GITHUB_WORKSPACE/snap/snapcraft.yaml
         shell: bash
 
       - name: Build Snap package for ${{ matrix.arch }}
