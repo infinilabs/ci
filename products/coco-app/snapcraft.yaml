@@ -27,7 +27,7 @@ package-repositories:
 parts:
   build-app:
     plugin: dump
-    source: src-tauri/target/__TARGET__/release/bundle/deb
+    source: src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
     source-type: deb
     override-build: |
       set -eu
