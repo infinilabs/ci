@@ -254,16 +254,9 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         env:
-          SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "yes"
-          SNAPCRAFT_BUILD_ENVIRONMENT: "host"
-          SNAPCRAFT_BUILD_ARCH: ${{ matrix.arch }}
-          SNAPCRAFT_BUILD_TARGET: ${{ matrix.target }}
-          SNAPCRAFT_BUILD_PLATFORM: ${{ matrix.platform }}
-          SNAPCRAFT_BUILD_DIR: $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/snap
-          SNAPCRAFT_BUILD_SOURCES: "/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
-          SNAPCRAFT_CACHE_DIR: "/tmp/snapcraft_cache_build_${{ matrix.arch }}"
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
         run: |
-          sudo snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          sudo snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
