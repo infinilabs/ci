@@ -87,7 +87,7 @@ jobs:
       - name: Init ${{ env.REPO-NAME }}
         run: |
           echo "Init ${{ env.REPO-NAME }}"
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/tauri.microsoftstore.conf.json $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/src-tauri
+          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/tauri.microsoftstore.conf.json $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/src-tauri
 
       - name: Set version & tag with ${{ matrix.platform }}
         working-directory: ${{ env.REPO-NAME }}
@@ -205,7 +205,7 @@ jobs:
           else
             echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
           fi
-          
+
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
