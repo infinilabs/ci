@@ -191,7 +191,7 @@ jobs:
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
             fi
           fi
-                
+
       - name: Setup LXD (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         uses: canonical/setup-lxd@main
@@ -226,7 +226,7 @@ jobs:
           DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/deb/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
           SNAP_FILE="/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
           if [[ -e $DEB_FILE ]]; then
-            sudp cp $DEB_FILE $SNAP_FILE
+            sudo cp $DEB_FILE $SNAP_FILE
             echo "Snap source file copied to ${SNAP_FILE}"
           fi
           if [[ ! -e $SNAP_FILE ]]; then
