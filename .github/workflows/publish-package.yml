@@ -187,9 +187,9 @@ jobs:
           sudo snap install core22
           sudo snap install snapcraft --classic
           if getent group lxd > /dev/null; then
-            echo "Adding user ${USER} to group lxd."
-            sudo usermod -aG lxd "${USER}" # Use -aG, ensure USER is quoted
-            echo "User ${USER} added to lxd group. Note: This change typically requires a new session for the current process to see it."
+            echo "Ensuring user ${USER} is in group lxd."
+            # This might still be needed if setup-lxd doesn't make it effective immediately for snapcraft
+            sudo usermod -aG lxd "${USER}"
           else
             echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
           fi
@@ -198,11 +198,23 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
         run: |
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml .
-          sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
-          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
-          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
-          cat snapcraft.yaml
+          mkdir -p snap
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml ./snap/snapcraft.yaml
+          sed -i "s|__VERSION__|${{ env.VERSION }}|g" ./snap/snapcraft.yaml
+          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" ./snap/snapcraft.yaml
+          sed -i "s|__TARGET__|${{ matrix.target }}|g" ./snap/snapcraft.yaml
+          cat ./snap/snapcraft.yaml
+          sudo mkdir -p ${SNAPCRAFT_PART_INSTALL}/snapsources
+          DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
+          SNAP_FILE="${SNAPCRAFT_PART_INSTALL}/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
+          if [[ -e $DEB_FILE ]]; then
+            sudp cp $DEB_FILE $SNAP_FILE
+            echo "Snap source file copied to ${SNAP_FILE}"
+          fi
+          if [[ ! -e $SNAP_FILE ]]; then
+            echo "Error: Snap source file ${SNAP_FILE} does not exist."
+            exit 1
+          fi
 
       - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
@@ -215,7 +227,11 @@ jobs:
             pnpm tauri build --target ${{ matrix.target }}
           else
             make add-dep-pizza-engine
-            pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            if [[ "${{ matrix.platform }}" =~ ^macos.* ]]; then
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            else
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
+            fi
           fi
 
       - name: Check files
