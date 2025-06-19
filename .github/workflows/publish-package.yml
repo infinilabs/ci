@@ -213,7 +213,7 @@ jobs:
             fi
           elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then
               make add-dep-pizza-engine
-              pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
+              pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine
           else
             make add-dep-pizza-engine
             pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine
