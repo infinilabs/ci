@@ -213,11 +213,26 @@ jobs:
             fi
           elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then
               make add-dep-pizza-engine
-              pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
           else
             make add-dep-pizza-engine
-            pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine
+            pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
           fi
+          
+      - name: Check files
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          find "$target" -type f \( \
+                  -name "*.dmg" -o \
+                  -name "*.deb" -o \
+                  -name "*.rpm" -o \
+                  -name "*.exe" -o \
+                  -name "*.gz" -o \
+                  -name "*.sig" -o \
+                  -name "*.AppImage" \
+              \)
 
       - name: Build snap package (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
