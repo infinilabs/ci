@@ -140,6 +140,7 @@ jobs:
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: '**/${{ env.REPO-NAME }}/package-lock.json'
 
       - name: Install rust target
         working-directory: ${{ env.REPO-NAME }}/src-tauri
