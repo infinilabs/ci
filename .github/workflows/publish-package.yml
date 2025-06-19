@@ -211,7 +211,7 @@ jobs:
               pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
               pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
             fi
-          elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then]]
+          elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then
               make add-dep-pizza-engine
               pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
           else
