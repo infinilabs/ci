@@ -84,6 +84,11 @@ jobs:
           ref: v0.5.0
           path: ${{ env.REPO-NAME }}
 
+      - name: Init ${{ env.REPO-NAME }}
+        run: |
+          echo "Init ${{ env.REPO-NAME }}"
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/tauri.microsoftstore.conf.json $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/src-tauri
+
       - name: Set version & tag with ${{ matrix.platform }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
@@ -139,6 +144,42 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}/src-tauri
         run: rustup target add ${{ matrix.target }}
 
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './coco-app/src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install app dependencies and build web
+        working-directory: ${{ env.REPO-NAME }}
+        run: pnpm install
+
+      - name: Build app with ${{ env.VERSION }}
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if ${{ matrix.platform == 'windows-latest' }}; then
+            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+              pnpm tauri build --target ${{ matrix.target }} --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            else
+              make add-dep-pizza-engine
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            fi
+          else
+              make add-dep-pizza-engine
+          fi
+          
       - name: Install dependencies (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04') 
         run: |
@@ -164,62 +205,7 @@ jobs:
           else
             echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
           fi
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './coco-app/src-tauri -> target'
-
-      - name: Sync node version and setup cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
-
-      - name: Install app dependencies and build web
-        working-directory: ${{ env.REPO-NAME }}
-        run: pnpm install
-
-      - name: Build app with ${{ env.VERSION }}
-        working-directory: ${{ env.REPO-NAME }}
-        env:
-          NODE_OPTIONS: "--max_old_space_size=8192"
-          CARGO_NET_GIT_FETCH_WITH_CLI: true
-        run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/tauri.microsoftstore.conf.json $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/src-tauri
-          if ${{ matrix.platform == 'windows-latest' }}; then
-            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-              pnpm tauri build --target ${{ matrix.target }} --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            else
-              make add-dep-pizza-engine
-              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            fi
-          else
-              make add-dep-pizza-engine
-            fi
-          fi
           
-      - name: Check build files and copy to snap sources
-        working-directory: ${{ env.REPO-NAME }}
-        shell: bash
-        run: |
-          target="src-tauri/target/${{ matrix.target }}/release/bundle"
-          SOURCES=$(find "$target" -type f \( \
-                  -name "*.deb" -o \
-                  -name "*.msi" -o \
-                  -name "*.exe" \
-              \))
-          if [[ ! -z "$SOURCES" ]]; then
-            mkdir -p $GITHUB_WORKSPACE/snap_sources && cp -rf $SOURCES $GITHUB_WORKSPACE/snap_sources/${{ env.APPNAME }}-${{ env.VERSION }}.deb
-            ls -lh $GITHUB_WORKSPACE/snap_sources
-            echo "Files copied to $GITHUB_WORKSPACE/snap_sources"
-          fi
-
-      
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
@@ -228,7 +214,7 @@ jobs:
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           cat snapcraft.yaml     
-          
+
       - name: Build snap package (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
