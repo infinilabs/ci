@@ -49,7 +49,5 @@ parts:
     source: .
     override-build: |
       set -eu
-      pnpm install
-      pnpm run tauri build -- --target __TARGET__ --features use_pizza_engine --bundles deb
       dpkg -x src-tauri/target/release/bundle/deb/*.deb $SNAPCRAFT_PART_INSTALL/
       sed -i -e "s|Icon=coco|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop

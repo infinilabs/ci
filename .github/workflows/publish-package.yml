@@ -131,14 +131,15 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
+          cache: 'pnpm'
 
       - name: Install rust target
         working-directory: ${{ env.REPO-NAME }}/src-tauri
@@ -149,36 +150,9 @@ jobs:
         with:
           workspaces: './coco-app/src-tauri -> target'
 
-      - name: Sync node version and setup cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
-
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
-
-      - name: Build app with ${{ env.VERSION }}
-        working-directory: ${{ env.REPO-NAME }}
-        env:
-          NODE_OPTIONS: "--max_old_space_size=8192"
-          CARGO_NET_GIT_FETCH_WITH_CLI: true
-        run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
-          if ${{ matrix.platform == 'windows-latest' }}; then
-            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-              pnpm tauri build --target ${{ matrix.target }} --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            else
-              make add-dep-pizza-engine
-              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            fi
-          else
-              make add-dep-pizza-engine
-          fi
           
       - name: Install dependencies (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04') 
@@ -213,15 +187,38 @@ jobs:
         run: |
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml .
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
-          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
-          cat snapcraft.yaml     
+          cat snapcraft.yaml
+
+      - name: Build app with ${{ env.VERSION }}
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if ${{ matrix.platform == 'windows-latest' }}; then
+            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+              pnpm tauri build --target ${{ matrix.target }} --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            else
+              make add-dep-pizza-engine
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            fi
+          elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then]]
+              make add-dep-pizza-engine
+              pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
+          else
+            make add-dep-pizza-engine
+            pnpm run tauri build -- --target ${{ matrix.target }} --features use_pizza_engine
+          fi
 
       - name: Build snap package (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
-          snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          sudo snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
