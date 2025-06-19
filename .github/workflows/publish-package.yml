@@ -193,6 +193,7 @@ jobs:
         run: |
           cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml .
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
+          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           cat snapcraft.yaml
 
       - name: Build app with ${{ env.VERSION }}
@@ -218,7 +219,7 @@ jobs:
             make add-dep-pizza-engine
             pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
           fi
-          
+
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
