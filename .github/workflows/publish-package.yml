@@ -188,9 +188,7 @@ jobs:
             pnpm tauri build --target ${{ matrix.target }}
           else
             make add-dep-pizza-engine
-            if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
-            else
+            if [[ "${{ matrix.platform }}" =~ ^macos.* ]]; then
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi
           fi
@@ -212,25 +210,11 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
         run: |
-          mkdir -p snap
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml ./snap/snapcraft.yaml
-          sed -i "s|__VERSION__|${{ env.VERSION }}|g" ./snap/snapcraft.yaml
-          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" ./snap/snapcraft.yaml
-          sed -i "s|__TARGET__|${{ matrix.target }}|g" ./snap/snapcraft.yaml
-          
-          mkdir -p snapsources
-          DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/deb/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
-          SNAP_FILE="snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
-          if [[ -e $DEB_FILE ]]; then
-            cp $DEB_FILE $SNAP_FILE
-            echo "Snap source file copied to ${SNAP_FILE}"
-          fi
-          if [[ ! -e $SNAP_FILE ]]; then
-            echo "Error: Snap source file ${SNAP_FILE} does not exist."
-            exit 1
-          fi
-
-          cat ./snap/snapcraft.yaml
+          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft.yaml snapcraft.yaml
+          sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
+          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
+          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
+          cat snapcraft.yaml
 
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
@@ -250,7 +234,7 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
-          snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          sudo snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
