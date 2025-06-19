@@ -40,7 +40,7 @@ runs:
           sudo groupadd ${{ inputs.group }}
         fi
         if ! id -nG "$USER" | grep -qw ${{ inputs.group }}; then
-          sudo usermod -aG ${{ inputs.group }} "$USER"
+          sudo usermod -aG ${{ inputs.group }} "$USER" && groups "$USER" && getent group lxd || true
         fi
 
     - name: Set up permissions for socket
@@ -82,3 +82,13 @@ runs:
             sudo ip6tables -I DOCKER-USER -o "$bridge" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
           fi
         done
+
+    - name: Check LXD status
+      shell: bash
+      run: |
+        set -x
+        sudo lxd waitready
+        sudo lxc config show || true
+        sudo lxc network list || true
+        sudo lxc profile list || true
+        sudo lxc list --columns ns4 || true
