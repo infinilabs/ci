@@ -166,14 +166,32 @@ jobs:
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
-          
+      
       - name: Install dependencies (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04') 
         run: |
             echo 'APT::Sandbox::User "root";' | sudo tee -a /etc/apt/apt.conf.d/10sandbox
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
-
+      
+      - name: Build app with ${{ env.VERSION }}
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            pnpm tauri build --target ${{ matrix.target }}
+          else
+            make add-dep-pizza-engine
+            if [[ "${{ matrix.platform }}" =~ ^macos.* ]]; then
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            else
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
+            fi
+          fi
+                
       - name: Setup LXD (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         uses: canonical/setup-lxd@main
@@ -217,24 +235,6 @@ jobs:
           fi
 
           cat ./snap/snapcraft.yaml
-
-      - name: Build app with ${{ env.VERSION }}
-        working-directory: ${{ env.REPO-NAME }}
-        env:
-          NODE_OPTIONS: "--max_old_space_size=8192"
-          CARGO_NET_GIT_FETCH_WITH_CLI: true
-        run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
-          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-            pnpm tauri build --target ${{ matrix.target }}
-          else
-            make add-dep-pizza-engine
-            if [[ "${{ matrix.platform }}" =~ ^macos.* ]]; then
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
-            else
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
-            fi
-          fi
 
       - name: Check files
         working-directory: ${{ env.REPO-NAME }}
