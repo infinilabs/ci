@@ -220,7 +220,6 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
-          cd $GITHUB_WORKSPACE/snap
           sudo snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
