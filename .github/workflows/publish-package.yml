@@ -222,11 +222,11 @@ jobs:
           sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" ./snap/snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" ./snap/snapcraft.yaml
           
-          sudo mkdir -p /snapsources
+          mkdir -p snapsources
           DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/deb/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
-          SNAP_FILE="/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
+          SNAP_FILE="snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
           if [[ -e $DEB_FILE ]]; then
-            sudo cp $DEB_FILE $SNAP_FILE
+            cp $DEB_FILE $SNAP_FILE
             echo "Snap source file copied to ${SNAP_FILE}"
           fi
           if [[ ! -e $SNAP_FILE ]]; then
@@ -254,9 +254,9 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         env:
-          SNAPCRAFT_BUILD_ENVIRONMENT: host
+          SNAPCRAFT_BUILD_ENVIRONMENT: lxd
         run: |
-          sudo snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
