@@ -139,8 +139,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: '**/package-lock.json'
 
       - name: Install rust target
         working-directory: ${{ env.REPO-NAME }}/src-tauri
@@ -150,6 +148,13 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './coco-app/src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
