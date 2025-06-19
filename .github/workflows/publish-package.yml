@@ -45,7 +45,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false
+        default: true
 jobs:
   build-app:
     env:
@@ -140,7 +140,7 @@ jobs:
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: '**/${{ env.REPO-NAME }}/package-lock.json'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install rust target
         working-directory: ${{ env.REPO-NAME }}/src-tauri
