@@ -183,6 +183,7 @@ jobs:
       - name: Install dependencies (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04') 
         run: |
+            echo 'APT::Sandbox::User "root";' | sudo tee -a /etc/apt/apt.conf.d/10sandbox
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
 
@@ -220,7 +221,7 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
-          sudo snapcraft --use-lxd --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
+          snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
