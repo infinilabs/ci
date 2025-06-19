@@ -165,17 +165,6 @@ jobs:
             echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
           fi
 
-      - name: Generate snapcraft.yaml (ubuntu only)
-        if: startsWith(matrix.platform, 'ubuntu-22.04')
-        working-directory: ${{ env.REPO-NAME }}
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/snap"
-          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml $GITHUB_WORKSPACE/snap
-          sed -i "s|__VERSION__|${{ env.VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          sed -i "s|__SOURCE_DIR__|$GITHUB_WORKSPACE|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          sed -i "s|__APP_NAME__|${{ env.APPNAME }}-${{ env.VERSION }}|g" $GITHUB_WORKSPACE/snap/snapcraft.yaml
-          cat $GITHUB_WORKSPACE/snap/snapcraft.yaml      
-
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
@@ -199,12 +188,19 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-            pnpm tauri build --target ${{ matrix.target }}
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/tauri.microsoftstore.conf.json $GITHUB_WORKSPACE/${{ env.REPO-NAME }}/src-tauri
+          if ${{ matrix.platform == 'windows-latest' }}; then
+            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+              pnpm tauri build --target ${{ matrix.target }} --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            else
+              make add-dep-pizza-engine
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
+            fi
           else
-            #( cd src-tauri && cargo add --git ssh://git@github.com/infinilabs/pizza.git pizza-engine --features query_string_parser,persistence )
-            make add-dep-pizza-engine
-            pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+              make add-dep-pizza-engine
+            fi
           fi
           
       - name: Check build files and copy to snap sources
@@ -214,6 +210,7 @@ jobs:
           target="src-tauri/target/${{ matrix.target }}/release/bundle"
           SOURCES=$(find "$target" -type f \( \
                   -name "*.deb" -o \
+                  -name "*.msi" -o \
                   -name "*.exe" \
               \))
           if [[ ! -z "$SOURCES" ]]; then
@@ -222,8 +219,19 @@ jobs:
             echo "Files copied to $GITHUB_WORKSPACE/snap_sources"
           fi
 
+      
+      - name: Generate snapcraft.yaml (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          cp -rf $GITHUB_WORKSPACE/products/coco-app/snapcraft.yaml .
+          sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
+          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
+          cat snapcraft.yaml     
+          
       - name: Build snap package (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
+        working-directory: ${{ env.REPO-NAME }}
         id: build_snap
         run: |
           cd $GITHUB_WORKSPACE/snap
@@ -234,11 +242,13 @@ jobs:
 
       - name: Log in to Snapcraft
         if: startsWith(matrix.platform, 'ubuntu-22.04')
+        working-directory: ${{ env.REPO-NAME }}
         env: 
           SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && sudo snapcraft login --with sc.login && rm sc.login
+        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
 
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
-        run: sudo snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
+        working-directory: ${{ env.REPO-NAME }}
+        run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
       

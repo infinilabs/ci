@@ -27,10 +27,29 @@ package-repositories:
 parts:
   build-app:
     plugin: dump
-    source: __SOURCE_DIR__/snap_sources/__APP_NAME__.deb
-    source-type: deb
+    build-snaps:
+      - node/20/stable
+      - rustup/latest/stable
+    build-packages:
+      - libwebkit2gtk-4.1-dev
+      - build-essential
+      - curl
+      - wget
+      - file
+      - libxdo-dev
+      - libssl-dev
+      - libayatana-appindicator3-dev
+      - librsvg2-dev
+      - dpkg
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libayatana-appindicator3-1
+      - libglu1-mesa
+      - freeglut3
+    source: .
     override-build: |
       set -eu
-      echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-      dpkg -x __SOURCE_DIR__/snap_sources/__APP_NAME__.deb $SNAPCRAFT_PART_INSTALL/
+      pnpm install
+      pnpm run tauri build -- --target __TARGET__ --features use_pizza_engine --bundles deb
+      dpkg -x src-tauri/target/release/bundle/deb/*.deb $SNAPCRAFT_PART_INSTALL/
       sed -i -e "s|Icon=coco|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
