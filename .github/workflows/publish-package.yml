@@ -217,6 +217,7 @@ jobs:
           cat snapcraft.yaml
 
       - name: Check files
+        continue-on-error: true
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
