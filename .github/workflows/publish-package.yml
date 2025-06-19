@@ -1,4 +1,5 @@
-name: Publish Coco App Package 
+name: Publish Coco App Package
+permissions: write-all
 defaults:
   run:
     shell: bash
@@ -29,6 +30,8 @@ env:
   NODEJS_VERSION: 20
   FILE_EXTENSIONS: '\.(dmg|rpm|deb|exe)$'
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
+  SNAPCRAFT_BUILD_ENVIRONMENT: lxd
+  SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
 
 on:
   workflow_dispatch:
@@ -194,7 +197,7 @@ jobs:
 
       - name: Setup LXD (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
-        uses: canonical/setup-lxd@main
+        uses: ./containers/lxd
         with:
           group: lxd
           channel: latest/stable
@@ -204,13 +207,6 @@ jobs:
         run: |
           sudo snap install core22
           sudo snap install snapcraft --classic
-          if getent group lxd > /dev/null; then
-            echo "Ensuring user ${USER} is in group lxd."
-            # This might still be needed if setup-lxd doesn't make it effective immediately for snapcraft
-            sudo usermod -aG lxd "${USER}"
-          else
-            echo "WARN: Group 'lxd' does not exist. 'canonical/setup-lxd' should create/manage it."
-          fi
 
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
@@ -253,20 +249,11 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
         id: build_snap
-        env:
-          SNAPCRAFT_BUILD_ENVIRONMENT: lxd
         run: |
           snapcraft --debug --output '${{ env.APPNAME }}-${{ env.VERSION }}.snap'
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
-
-      - name: Log in to Snapcraft
-        if: startsWith(matrix.platform, 'ubuntu-22.04')
-        working-directory: ${{ env.REPO-NAME }}
-        env: 
-          SNAPCRAFT_LOGIN_FILE_CONTENT: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
 
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
