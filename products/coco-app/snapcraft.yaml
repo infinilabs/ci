@@ -27,10 +27,10 @@ package-repositories:
 parts:
   build-app:
     plugin: dump
-    source: snapsources/__APPNAME__.deb
+    source: /snapsources/__APPNAME__.deb
     source-type: deb
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-      dpkg -x snapsources/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL/
+      dpkg -x /snapsources/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL/
       sed -i -e "s|Icon=coco|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop

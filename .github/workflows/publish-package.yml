@@ -203,10 +203,10 @@ jobs:
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" ./snap/snapcraft.yaml
           sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" ./snap/snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" ./snap/snapcraft.yaml
-          cat ./snap/snapcraft.yaml
-          sudo mkdir -p ${SNAPCRAFT_PART_INSTALL}/snapsources
-          DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
-          SNAP_FILE="${SNAPCRAFT_PART_INSTALL}/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
+          
+          sudo mkdir -p /snapsources
+          DEB_FILE="src-tauri/target/${{ matrix.target }}/release/bundle/deb/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
+          SNAP_FILE="/snapsources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb"
           if [[ -e $DEB_FILE ]]; then
             sudp cp $DEB_FILE $SNAP_FILE
             echo "Snap source file copied to ${SNAP_FILE}"
@@ -215,6 +215,8 @@ jobs:
             echo "Error: Snap source file ${SNAP_FILE} does not exist."
             exit 1
           fi
+
+          cat ./snap/snapcraft.yaml
 
       - name: Build app with ${{ env.VERSION }}
         working-directory: ${{ env.REPO-NAME }}
