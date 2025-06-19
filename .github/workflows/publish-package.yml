@@ -220,8 +220,6 @@ jobs:
                   -name "*.deb" -o \
                   -name "*.rpm" -o \
                   -name "*.exe" -o \
-                  -name "*.gz" -o \
-                  -name "*.sig" -o \
                   -name "*.AppImage" \
               \)
 
