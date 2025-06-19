@@ -203,18 +203,8 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          if ${{ matrix.platform == 'windows-latest' }}; then
-            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-              pnpm tauri build --target ${{ matrix.target }} --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            else
-              make add-dep-pizza-engine
-              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
-              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
-            fi
-          elif [[ "${{ matrix.platform}}" =~ ^ubuntu-.* ]]; then
-              make add-dep-pizza-engine
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            pnpm tauri build --target ${{ matrix.target }}
           else
             make add-dep-pizza-engine
             pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
