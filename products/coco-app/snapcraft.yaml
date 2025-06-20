@@ -51,7 +51,7 @@ parts:
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
       npm install -g pnpm --unsafe-perm || true
-      pnpm run tauri build --target __TARGET__ --bundles deb
+      pnpm run tauri build -- --target __TARGET__ --bundles deb
       echo "Extract deb package to ${SNAPCRAFT_PART_INSTALL} ..."
 
       if [ -d "$SNAPCRAFT_PART_INSTALL" ]; then
