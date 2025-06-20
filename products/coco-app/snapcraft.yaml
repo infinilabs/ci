@@ -16,11 +16,13 @@ apps:
     command: usr/bin/coco
     desktop: usr/share/applications/Coco-AI.desktop
     extensions: [gnome]
+    plugs:
+      - network
 
 package-repositories:
   - type: apt
     components: [main]
-    suites: [noble]
+    suites: [jammy]
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
