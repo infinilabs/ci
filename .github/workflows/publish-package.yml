@@ -249,9 +249,15 @@ jobs:
           SNAP_FILE_PATH=$(ls *.snap | head -n 1)
           if [ -z "$SNAP_FILE_PATH" ]; then echo "Error: No .snap file found"; exit 1; fi
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Log in to Snapcraft
+        if: startsWith(matrix.platform, 'ubuntu-22.04')
+        working-directory: ${{ env.REPO-NAME }}
+        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
 
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
-        run: snapcraft push "${{ steps.build_snap.outputs.snap_package_path }}" --release stable
+        run: snapcraft upload --release stable "${{ steps.build_snap.outputs.snap_package_path }}"
       
