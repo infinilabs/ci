@@ -48,7 +48,11 @@ parts:
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-      DESKTOP_FILE="\$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop"
-      if [ -f "\$DESKTOP_FILE" ]; then
-        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" "\$DESKTOP_FILE"
+      npm install -g pnpm --unsafe-perm || true
+      pnpm run tauri build --target __TARGET__ --features use_pizza_engine --bundles deb
+
+      dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+      if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
+        echo "Found desktop file, replace icon path ..."
+        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
       fi
