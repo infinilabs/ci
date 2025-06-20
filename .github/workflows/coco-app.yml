@@ -252,6 +252,8 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
           CARGO_NET_GIT_FETCH_WITH_CLI: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
