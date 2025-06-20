@@ -27,25 +27,13 @@ package-repositories:
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
 parts:
-  coco: # Part name, can be anything descriptive
+  coco: 
     plugin: dump
     # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPNAME__.deb
     source: snap_sources/__APPNAME__.deb
     source-type: deb
     # No override-build is needed to extract the .deb
     # plugin: dump with source-type: deb handles this.
-    # override-prime can be used for final tweaks after extraction.
-    override-prime: |
-      set -eu
-      if [ -e snap_sources/__APPNAME__.deb ]; then
-        echo "Extracting deb package to ${SNAPCRAFT_PART_INSTALL} ..."
-        dpkg -x snap_sources/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
-      fi
-      
-      if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
-        echo "Found desktop file, replace icon path ..."
-        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
-      fi
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
@@ -53,10 +41,15 @@ parts:
       if [ -e snap_sources/__APPNAME__.deb ]; then
         echo "Extracting deb package to ${SNAPCRAFT_PART_INSTALL} ..."
         dpkg -x snap_sources/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+        ls -l $SNAPCRAFT_PART_INSTALL
+      else
+        echo "Error: snap_sources/__APPNAME__.deb not found!"
       fi
 
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
         echo "Found desktop file, replace icon path ..."
         sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
+      else
+        echo "Warning: Desktop file not found, skipping icon path replacement."
       fi
       

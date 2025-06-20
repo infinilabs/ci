@@ -27,7 +27,7 @@ package-repositories:
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
 parts:
-  build-app:
+  coco:
     plugin: dump
     build-snaps:
       - node/20/stable
@@ -59,6 +59,7 @@ parts:
 
       if [ -e src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb ]; then
         dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+        ls -l $SNAPCRAFT_PART_INSTALL
       fi
       
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
