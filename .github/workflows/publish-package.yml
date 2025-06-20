@@ -189,7 +189,7 @@ jobs:
           else
             make add-dep-pizza-engine
             if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
-              cargo fetch
+              cargo fetch && pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
             else
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi

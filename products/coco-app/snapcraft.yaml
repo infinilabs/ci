@@ -44,12 +44,11 @@ parts:
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libayatana-appindicator3-1
-    source: .
+    source: src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-      npm install -g pnpm 2>/dev/null || true
-      pnpm run tauri build --target __TARGET__ --features use_pizza_engine --bundles deb
-      
-      dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL/
-      sed -i -e "s|Icon=coco|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
+      DESKTOP_FILE="\$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop"
+      if [ -f "\$DESKTOP_FILE" ]; then
+        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" "\$DESKTOP_FILE"
+      fi
