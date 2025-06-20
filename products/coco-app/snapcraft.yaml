@@ -50,8 +50,22 @@ parts:
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
       npm install -g pnpm --unsafe-perm || true
       pnpm run tauri build --target __TARGET__ --features use_pizza_engine --bundles deb
+      echo "Extract deb package to ${SNAPCRAFT_PART_INSTALL} ..."
 
-      dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+      if [ -d "$SNAPCRAFT_PART_INSTALL" ]; then
+        echo "------------------------------------------------------------"
+        ls -la $SNAPCRAFT_PART_INSTALL
+        echo "------------------------------------------------------------"
+        ls -la src-tauri/target/__TARGET__/release/bundle/deb
+        echo "------------------------------------------------------------"
+        ls -la $(pwd)
+        echo "------------------------------------------------------------"
+      fi
+
+      if [ -e src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb ]; then
+        dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+      fi
+      
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
         echo "Found desktop file, replace icon path ..."
         sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
