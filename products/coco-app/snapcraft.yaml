@@ -1,4 +1,4 @@
-name: coco-ai
+name: coco
 base: core22
 version: '__VERSION__'
 summary: Coco-AI
@@ -12,7 +12,7 @@ layout:
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
 apps:
-  coco-ai:
+  coco:
     command: usr/bin/coco
     desktop: usr/share/applications/Coco-AI.desktop
     extensions: [gnome]
