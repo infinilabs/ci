@@ -187,10 +187,10 @@ jobs:
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             pnpm tauri build --target ${{ matrix.target }}
           else
-            make add-dep-pizza-engine
             if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
-              ( cd src-tauri && cargo fetch )
+              echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
             else
+              make add-dep-pizza-engine
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi
           fi
