@@ -1,0 +1,45 @@
+name: coco
+base: core22
+version: '__VERSION__'
+summary: Coco-AI
+contact: hello@infini.ltd
+license: MIT
+description: |
+  🥥 Coco AI App - Search, Connect, Collaborate, Your Personal AI Search and Assistant, all in one space.
+grade: stable
+confinement: strict
+layout:
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
+apps:
+  coco:
+    command: usr/bin/coco
+    desktop: usr/share/applications/Coco-AI.desktop
+    extensions: [gnome]
+    plugs:
+      - network
+
+package-repositories:
+  - type: apt
+    components: [main]
+    suites: [jammy]
+    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
+
+parts:
+  coco: # Part name, can be anything descriptive
+    plugin: dump
+    # source will be replaced by CI to:
+    # $SNAPCRAFT_PROJECT_DIR/snap_sources/app_amd64.deb or $SNAPCRAFT_PROJECT_DIR/snap_sources/app_arm64.deb
+    source: src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
+    source-type: deb
+    # No override-build is needed to extract the .deb
+    # plugin: dump with source-type: deb handles this.
+    # override-prime can be used for final tweaks after extraction.
+    override-prime: |
+      set -eux
+      
+      if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
+        echo "Found desktop file, replace icon path ..."
+        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
+      fi
