@@ -230,7 +230,8 @@ jobs:
           sed -i "s|__ARCH__|${{ matrix.arch }}|g" snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
-          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
+          sed -i "s|__APPARCHNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
+          sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}|g" snapcraft.yaml
           sed -i "s|__PRIVATE_KEY__|${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}|g" snapcraft.yaml
           cat snapcraft.yaml
 

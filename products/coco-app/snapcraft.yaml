@@ -57,11 +57,11 @@ parts:
       pnpm run tauri build --target __TARGET__ --bundles deb
       echo "Extract deb package to ${SNAPCRAFT_PART_INSTALL} ..."
 
-      if [ -e src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb ]; then
-        dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
+      if [ -e src-tauri/target/__TARGET__/release/bundle/deb/__APPARCHNAME__.deb ]; then
+        dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPARCHNAME__.deb $SNAPCRAFT_PART_INSTALL
         ls -l $SNAPCRAFT_PART_INSTALL
       else
-        echo "Error: Deb package not found at src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
+        echo "Error: Deb package not found at src-tauri/target/__TARGET__/release/bundle/deb/__APPARCHNAME__.deb
       fi
       
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
