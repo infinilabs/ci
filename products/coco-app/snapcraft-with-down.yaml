@@ -42,3 +42,7 @@ parts:
         echo "Found desktop file, replace icon path ..."
         sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
       fi
+    prime:
+      - usr/bin/coco
+      - usr/share/applications/Coco-AI.desktop
+      - usr/share/icons/hicolor/32x32/apps/coco.png
