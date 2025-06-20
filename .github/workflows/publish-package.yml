@@ -182,6 +182,8 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
           CARGO_NET_GIT_FETCH_WITH_CLI: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
@@ -211,11 +213,15 @@ jobs:
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft.yaml snapcraft.yaml
+          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
           sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
-          sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
+          sed -i "s|__PRIVATE_KEY__|${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}|g" snapcraft.yaml
           cat snapcraft.yaml
 
       - name: Check files
