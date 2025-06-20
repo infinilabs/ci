@@ -251,11 +251,6 @@ jobs:
           echo "snap_package_path=$SNAP_FILE_PATH" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-      - name: Log in to Snapcraft
-        if: startsWith(matrix.platform, 'ubuntu-22.04')
-        working-directory: ${{ env.REPO-NAME }}
-        run: echo "${SNAPCRAFT_LOGIN_FILE_CONTENT}" > sc.login && snapcraft login --with sc.login && rm sc.login
-
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
