@@ -191,6 +191,11 @@ jobs:
           else
             if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
               echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
+              # for ubuntu, we will download the deb package
+              mkdir -p src-tauri/target/${{ matrix.target }}/release/bundle/deb
+              wget -q -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
+              unzip /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip -d src-tauri/target/${{ matrix.target }}/release/bundle/deb/
+              ls -lh src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             else
               make add-dep-pizza-engine
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
@@ -217,7 +222,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft.yaml snapcraft.yaml
+          # Generate snapcraft.yaml from template with download part
+          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft-with-down.yaml snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
           sed -i "s|__APPNAME__|${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}|g" snapcraft.yaml
