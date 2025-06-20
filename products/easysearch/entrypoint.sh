@@ -151,8 +151,8 @@ setup_agent() {
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
     if ! grep -q "node:" agent.yml; then # agent.yml relative to $AGENT_DIR
-      log "Adding node configuration to agent.yml."
-      sed -i "/managed: true/managed: false/" agent.yml # Ensure managed is false
+      log "Adding node configuration and disable remote config manage with agent.yml."
+      sed -i "/managed: true/managed: false/g" agent.yml # Ensure managed is false
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       cat <<-EOF >> agent.yml
   always_register_after_restart: true
