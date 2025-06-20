@@ -44,7 +44,7 @@ parts:
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libayatana-appindicator3-1
-    source: src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
+    source: .
     override-build: |
       set -eu
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
