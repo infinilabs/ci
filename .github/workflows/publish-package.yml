@@ -196,6 +196,9 @@ jobs:
               wget -q -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
               unzip /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip -d src-tauri/target/${{ matrix.target }}/release/bundle/deb/
               ls -lh src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+              mkdir -p snap_sources
+              cp -rf src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb snap_sources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb
+              echo "Build deb package with $(ls -lh snap_sources/app_${{ matrix.arch }}.deb)"
             else
               make add-dep-pizza-engine
               pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine

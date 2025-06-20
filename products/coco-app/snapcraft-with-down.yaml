@@ -29,9 +29,8 @@ package-repositories:
 parts:
   coco: # Part name, can be anything descriptive
     plugin: dump
-    # source will be replaced by CI to:
-    # $SNAPCRAFT_PROJECT_DIR/snap_sources/app_amd64.deb or $SNAPCRAFT_PROJECT_DIR/snap_sources/app_arm64.deb
-    source: src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
+    # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPNAME__.deb
+    source: snap_sources/__APPNAME__.deb
     source-type: deb
     # No override-build is needed to extract the .deb
     # plugin: dump with source-type: deb handles this.
