@@ -188,7 +188,11 @@ jobs:
             pnpm tauri build --target ${{ matrix.target }}
           else
             make add-dep-pizza-engine
-            pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb
+            else
+              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            fi
           fi
 
       - name: Setup LXD (ubuntu only)
