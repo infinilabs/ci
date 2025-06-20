@@ -36,8 +36,10 @@ parts:
     # plugin: dump with source-type: deb handles this.
     override-build: |
       set -eu
+      export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-
+      mkdir -p snap_sources && wget -q -O snap_sources/__APPNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__TARGET__.zip
+      unzip /tmp/__APPNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPNAME__.deb || true
       if [ -e snap_sources/__APPNAME__.deb ]; then
         echo "Extracting deb package to ${SNAPCRAFT_PART_INSTALL} ..."
         dpkg -x snap_sources/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL

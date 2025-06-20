@@ -60,9 +60,13 @@ parts:
       if [ -e src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb ]; then
         dpkg -x src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb $SNAPCRAFT_PART_INSTALL
         ls -l $SNAPCRAFT_PART_INSTALL
+      else
+        echo "Error: Deb package not found at src-tauri/target/__TARGET__/release/bundle/deb/__APPNAME__.deb
       fi
       
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
         echo "Found desktop file, replace icon path ..."
         sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
+      else
+        echo "Warning: Desktop file not found, skipping icon path replacement."
       fi
