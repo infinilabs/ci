@@ -254,10 +254,6 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
           CARGO_NET_GIT_FETCH_WITH_CLI: true
-          GIT_SSH_COMMAND: "ssh -vvv -F ~/.ssh/config"
-          GIT_TRACE: "1"
-          GIT_TRACE_PACKET: "1"
-          GIT_TRACE_PERFORMANCE: "1"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
