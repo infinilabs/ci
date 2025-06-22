@@ -1,7 +1,7 @@
 name: coco
 base: core22
 version: '__VERSION__'
-summary: Coco-AI
+summary: 🥥 Coco AI App - Search, Connect, Collaborate, Your Personal AI Search and Assistant, all in one space.
 contact: hello@infini.ltd
 license: MIT
 description: |
@@ -18,6 +18,7 @@ apps:
     extensions: [gnome]
     plugs:
       - network
+      - home
 
 package-repositories:
   - type: apt
@@ -29,6 +30,20 @@ package-repositories:
 parts:
   coco: 
     plugin: dump
+    build-packages:
+      - libwebkit2gtk-4.1-dev
+      - build-essential
+      - curl
+      - wget
+      - file
+      - libxdo-dev
+      - libssl-dev
+      - libayatana-appindicator3-dev
+      - librsvg2-dev
+      - dpkg
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libayatana-appindicator3-1
     # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPARCHNAME__.deb
     source: snap_sources/__APPARCHNAME__.deb
     source-type: deb
@@ -54,7 +69,7 @@ parts:
 
       if [ -f "$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop" ]; then
         echo "Found desktop file, replace icon path ..."
-        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
+        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/128x128/apps/coco.png|g" $SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop
       else
         echo "Warning: Desktop file not found, skipping icon path replacement."
       fi
