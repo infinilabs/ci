@@ -49,10 +49,6 @@ parts:
     source-type: deb
     # No override-build is needed to extract the .deb
     # plugin: dump with source-type: deb handles this.
-    build-packages:
-      - wget
-      - unzip
-      - dpkg
     override-build: |
       set -eu
       export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
