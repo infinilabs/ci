@@ -1,4 +1,4 @@
-name: Test Environment Setup (dry-run)
+name: Test Environment Setup (Dry-Run)
 defaults:
   run:
     shell: bash
