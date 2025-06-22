@@ -21,7 +21,7 @@ jobs:
           #   runner: macos-latest
           #   is_container_test: false
           # - name: Windows-x86_64
-          #   runner: windows-latest
+          #   runner: windows-2019
           #   is_container_test: false
           # - name: CentOS-x86_64-on-UbuntuHost
           #   runner: ubuntu-latest
@@ -201,7 +201,7 @@ jobs:
         echo "Docker environment setup on macOS appears successful."
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
-      if: matrix.os_config.runner != 'windows-latest'
+      if: matrix.os_config.runner != 'windows-2019'
       shell: bash
       timeout-minutes: 15
       run: |
@@ -279,7 +279,7 @@ jobs:
         fi
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
-      if: matrix.os_config.runner == 'windows-latest'
+      if: matrix.os_config.runner == 'windows-2019'
       shell: bash
       timeout-minutes: 15
       run: |
