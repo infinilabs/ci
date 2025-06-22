@@ -228,8 +228,9 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
           
-      #- name: Install Rust stable
-      #  run: rustup toolchain install stable --no-self-update
+      - name: Check Rust toolchain
+        working-directory: ${{ env.REPO-NAME }}/src-tauri
+        run: rustup toolchain list
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -247,11 +248,6 @@ jobs:
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
 
-      - name: Setup ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Build app with ${{ env.VERSION }}
         timeout-minutes: 30
         working-directory: ${{ env.REPO-NAME }}
@@ -265,8 +261,7 @@ jobs:
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             pnpm tauri build --target ${{ matrix.target }}
           else
-            #( cd src-tauri && cargo add --git ssh://git@github.com/infinilabs/pizza.git pizza-engine --features query_string_parser,persistence )
-            make add-dep-pizza-engine
+            ( cd src-tauri && cargo add --git ssh://git@github.com/infinilabs/pizza.git pizza-engine --features query_string_parser,persistence && cargo fetch )
             pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
           fi
 
