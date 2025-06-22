@@ -36,6 +36,7 @@ parts:
       - libwebkit2gtk-4.1-dev
       - build-essential
       - curl
+      - unzip
       - wget
       - file
       - libxdo-dev
