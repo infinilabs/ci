@@ -18,9 +18,9 @@ if [[ ! -z "$SSH_PRIVATE_KEY" ]]; then
 	mkdir -p $SSH_DIR
 	echo "$SSH_PRIVATE_KEY" > $SSH_DIR/id_rsa
 	if [[ ! -z "$SSH_CONFIG" ]]; then
-	 	echo "ConnectTimeout 60" >> $SSH_DIR/config
-		echo "ServerAliveInterval 30" >> $SSH_DIR/config
-		echo "ServerAliveCountMax 3" >> $SSH_DIR/config
+	 	echo "ConnectTimeout 600" >> $SSH_DIR/config
+		echo "ServerAliveInterval 300" >> $SSH_DIR/config
+		echo "ServerAliveCountMax 10" >> $SSH_DIR/config
 		echo "$SSH_CONFIG" >> $SSH_DIR/config
 	fi
 	chmod 600 $SSH_DIR/{id_rsa,config}
