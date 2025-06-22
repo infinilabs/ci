@@ -1,4 +1,4 @@
-name: Test Environment Setup
+name: Test Environment Setup (dry-run)
 defaults:
   run:
     shell: bash
@@ -59,14 +59,21 @@ jobs:
         run: |
           git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           echo "License repo cloned to $GITHUB_WORKSPACE/license"
-
+          cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           echo "$PNAME repo cloned to $GITHUB_WORKSPACE/$PNAME"
-
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
           git clone $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
           echo "$PNAME-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web"
-
+          cd $GITHUB_WORKSPACE/$PNAME/web && echo Checkout $PNAME-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
           git clone $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
           echo "common-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web/src/common"
-
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          cd $GITHUB_WORKSPACE/$PNAME/web/src/common && echo Checkout common-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
+          git clone git@@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
+          echo "Pizza repo cloned to $GITHUB_WORKSPACE/pizza"
+          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
