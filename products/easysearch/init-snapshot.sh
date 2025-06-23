@@ -6,9 +6,11 @@ cd "$GITHUB_WORKSPACE/$PNAME"
 # 1. 生成快照版本号
 
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
-if [[ -z "$BUILD_BYWORFLOW" ]]; then 
+if [[ -z "$BUILD_BYWORKFLOW" ]]; then
+  echo "No BUILD_BYWORKFLOW set, incrementing patch version for snapshot."
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 }')
 else
+  echo "BUILD_BYWORKFLOW is set, using it to determine snapshot version."
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
 fi
 
@@ -49,4 +51,4 @@ sed -i "s/^[# ]*easysearch *[=].*/easysearch     = $SNAPSHOT_VERSION/" "buildSrc
 # 11. 取消注释并设置 build_snapshot = true
 sed -i "s/^#*build_snapshot *=.*/build_snapshot = true/" "buildSrc/version.properties"
 
-echo "Snapshot version update complete."
+echo "Snapshot version update $SNAPSHOT_VERSION complete."

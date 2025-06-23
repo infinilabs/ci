@@ -102,7 +102,7 @@ jobs:
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
           echo Gradle path is $HOME/gradle-$GRADLE_VERSION
 
-      - name: Checkout ${{ env.PNAME }} repo
+      - name: Checkout ${{ env.PNAME }} repo and set build version
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
@@ -110,7 +110,7 @@ jobs:
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
-              BUILD_BYWORFLOW="${{ github.event_name }}"
+              BUILD_BYWORKFLOW="${{ github.event_name }}"
             fi
             if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
               PUBLISH_VERSION="${BASH_REMATCH[1]}"
