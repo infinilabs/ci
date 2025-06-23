@@ -135,37 +135,37 @@ jobs:
             ${{ github.workspace }}/jdks
           key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
 
-      - name: Build Darwin aarch
+      - name: Build Darwin aarch with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinAarch64Tar
       
-      - name: Build Darwin
+      - name: Build Darwin with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinTar
 
-      - name: Build linux
+      - name: Build linux with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
 
-      - name: Build linux aarch
+      - name: Build linux aarch with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxAarch64Tar
 
-      - name: Build win
+      - name: Build win with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkWindowsZip
 
-      - name: Build plugins
+      - name: Build plugins with ${{ env.PUBLISH_VERSION}}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
 
-      - name: Repackage and bundle for publish
+      - name: Repackage and bundle for publish with ${{ env.PUBLISH_VERSION}}
         run: |
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
