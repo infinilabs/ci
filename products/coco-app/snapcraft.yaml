@@ -1,7 +1,7 @@
 name: coco
 base: core22
 version: '__VERSION__'
-summary: Coco-AI
+summary: 🥥 Coco AI App - Your Personal AI Search and Assistant.
 contact: hello@infini.ltd
 license: MIT
 description: |
