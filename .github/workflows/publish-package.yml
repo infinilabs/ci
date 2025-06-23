@@ -217,6 +217,7 @@ jobs:
         run: |
           sudo snap install core22
           sudo snap install snapcraft --classic
+          snapcraft export-login --channels=stable,candidate,beta,edge snapcraft.login
 
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
@@ -265,5 +266,5 @@ jobs:
       - name: Push and Release Snap for ${{ matrix.platform }}
         if: startsWith(matrix.platform, 'ubuntu-22.04')
         working-directory: ${{ env.REPO-NAME }}
-        run: snapcraft upload --release stable "${{ steps.build_snap.outputs.snap_package_path }}"
+        run: snapcraft upload --release latest/stable "${{ steps.build_snap.outputs.snap_package_path }}"
       
