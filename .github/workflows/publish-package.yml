@@ -32,6 +32,7 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
   SNAPCRAFT_BUILD_ENVIRONMENT: lxd
   SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+  WGET_CMD: "wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
 
 on:
   workflow_dispatch:
@@ -193,11 +194,10 @@ jobs:
               echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
               # for ubuntu, we will download the deb package
               mkdir -p src-tauri/target/${{ matrix.target }}/release/bundle/deb
-              wget -q -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
-              unzip /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip -d src-tauri/target/${{ matrix.target }}/release/bundle/deb/
+              $WGET_CMD -q -nc -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
+              [ -e ] && unzip /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip -d src-tauri/target/${{ matrix.target }}/release/bundle/deb/
               ls -lh src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-              mkdir -p snap_sources
-              cp -rf src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb snap_sources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb
+              mkdir -p snap_sources && cp -rf src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb snap_sources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb
               echo "Build deb package with $(ls -lh snap_sources/app_${{ matrix.arch }}.deb)"
             else
               make add-dep-pizza-engine
@@ -217,7 +217,6 @@ jobs:
         run: |
           sudo snap install core22
           sudo snap install snapcraft --classic
-          snapcraft export-login --channels=stable,candidate,beta,edge snapcraft.login
 
       - name: Generate snapcraft.yaml (ubuntu only)
         if: startsWith(matrix.platform, 'ubuntu-22.04')
