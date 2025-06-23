@@ -110,8 +110,7 @@ jobs:
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
-              BUILD_BYWORKFLOW="${{ github.event_name }}"
-              echo "Publish default version is $PUBLISH_VERSION with workflow $BUILD_BYWORKFLOW"
+              echo BUILD_BYWORKFLOW=${{ github.event_name }} >> $GITHUB_ENV
             fi
             if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
               PUBLISH_VERSION="${BASH_REMATCH[1]}"
@@ -121,7 +120,7 @@ jobs:
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
             $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-            echo "Publish release version"
+            echo "Publish release version with ${{ github.event_name }}"
           else
             $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
             echo "Publish snapshot version with ${{ github.event_name }}"
