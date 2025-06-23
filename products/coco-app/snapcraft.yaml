@@ -47,6 +47,8 @@ parts:
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libayatana-appindicator3-1
+      - libglu1-mesa
+      - freeglut3
     source: .
     override-build: |
       set -eu
