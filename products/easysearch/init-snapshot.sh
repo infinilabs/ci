@@ -6,7 +6,7 @@ cd "$GITHUB_WORKSPACE/$PNAME"
 # 1. 生成快照版本号
 
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
-if [[ -z "$BUILD_BYWORKFLOW" ]]; then
+if [[ -v "$BUILD_BYWORKFLOW" ]]; then
   echo "No BUILD_BYWORKFLOW set, incrementing patch version for snapshot."
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 }')
 else
