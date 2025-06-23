@@ -225,6 +225,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
+          # update Cargo.toml to enable debug mode for release profile
+          sed -i '/^\s*\[profile\.release\]\s*$/a debug = true' src-tauri/Cargo.toml
           # Generate snapcraft.yaml from template with download part
           cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft.yaml snapcraft.yaml
           sed -i "s|__ARCH__|${{ matrix.arch }}|g" snapcraft.yaml

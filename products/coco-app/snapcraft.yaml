@@ -72,7 +72,7 @@ parts:
       DESKTOP_FILE="$SNAPCRAFT_PART_INSTALL/usr/share/applications/Coco-AI.desktop"
       if [[ -e $DESKTOP_FILE ]]; then
         echo "Found desktop file, replace icon path ..."
-        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/32x32/apps/coco.png|g" $DESKTOP_FILE
+        sed -i "s|^Icon=.*$|Icon=/usr/share/icons/hicolor/128x128/apps/coco.png|g" $DESKTOP_FILE
       else
         echo "Warning: Desktop file not found, skipping icon path replacement."
       fi
