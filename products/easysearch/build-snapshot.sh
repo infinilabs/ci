@@ -70,13 +70,13 @@ for p in ${plugins[@]}; do
   if [ "$p" == "sql" ]; then
     q=search-sql
   fi
-  # 为了让打镜像的时候能够找到插件包，所以这里的插件包名字不带 SNAPSHOT，但是实际上是 SNAPSHOT 版本，所以打镜像时一定要先 build-release
+  # 为了让打镜像的时候能够找到插件包，所以这里的插件包名字不带 SNAPSHOT，但是实际上是 SNAPSHOT 版本，所以打镜像时一定要先 build
   cp -rf $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip $f
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-    echo Upload $f to oss
-    sha512sum $f |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
+    echo Upload $p to oss
+    sha512sum $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
     oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip -k $PNAME/snapshot/plugins/$p
     oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $p-$VERSION-SNAPSHOT.zip.sha512 -k $PNAME/snapshot/plugins/$p
   fi
