@@ -147,7 +147,7 @@ jobs:
       JAVA_OPTS: '-Xms1g -Xmx1g'
       CONTAINER_NAME_BASE: 'search-engine-node'
       PORT: '9200'
-      WAIT_SECONDS: '120'
+      WAIT_SECONDS: '600'
       PRODUCT_ENV: ${{ matrix.product }}
       VERSION_ENV: ${{ matrix.version }}
     strategy:
