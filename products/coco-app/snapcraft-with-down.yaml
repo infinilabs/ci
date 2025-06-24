@@ -30,6 +30,22 @@ package-repositories:
 parts:
   coco: 
     plugin: dump
+    build-packages:
+      - libwebkit2gtk-4.1-dev
+      - build-essential
+      - curl
+      - wget
+      - file
+      - libxdo-dev
+      - libssl-dev
+      - libayatana-appindicator3-dev
+      - librsvg2-dev
+      - dpkg
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libayatana-appindicator3-1
+      - libglu1-mesa
+      - freeglut3
     # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPARCHNAME__.deb
     source: snap_sources/__APPARCHNAME__.deb
     source-type: deb
@@ -39,10 +55,8 @@ parts:
       set -eu
       export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-      mkdir -p snap_sources && wget -q -O snap_sources/Coco-AI_0.5.0_arm64.deb $RELEASE_URL/.v0.5.3/Coco-AI_0.5.0_arm64.deb
-      mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
-      #mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__ARCH__.zip
-      #unzip /tmp/__APPARCHNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
+      mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__ARCH__.zip
+      unzip /tmp/__APPARCHNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
       if [ -e snap_sources/__APPARCHNAME__.deb ]; then
         echo "Extracting deb package to ${SNAPCRAFT_PART_INSTALL} ..."
         dpkg -x snap_sources/__APPARCHNAME__.deb $SNAPCRAFT_PART_INSTALL
