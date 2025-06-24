@@ -9,16 +9,22 @@ description: |
 grade: stable
 confinement: strict
 layout:
-  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
-    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
+  /usr/libexec/webkit2gtk-4.1:
+    symlink: $SNAP/usr/libexec/webkit2gtk-4.1
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
+    symlink: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
+  /usr/lib/webkit2gtk-4.1/injected-bundle:
+    symlink: $SNAP/usr/lib/webkit2gtk-4.1/injected-bundle
+
 apps:
   coco:
     command: usr/bin/coco
-    desktop: usr/share/applications/Coco-AI.desktop
-    extensions: [gnome]
+    desktop: usr/share/applications/coco.desktop
     plugs:
-      - network
-      - home
+      - wayland
+      - x11
 
 package-repositories:
   - type: apt
@@ -44,7 +50,7 @@ parts:
       else
         export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
         echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-        mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__ARCH__.zip
+        mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__coco__-deb-linux-__ARCH__.zip
         unzip /tmp/__APPARCHNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
       fi
 
