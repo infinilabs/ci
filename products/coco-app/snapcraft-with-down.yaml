@@ -21,7 +21,7 @@ layout:
 apps:
   coco:
     command: usr/bin/coco
-    desktop: usr/share/applications/coco.desktop
+    desktop: usr/share/applications/Coco-AI.desktop
     plugs:
       - wayland
       - x11
