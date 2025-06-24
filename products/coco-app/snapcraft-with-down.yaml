@@ -30,16 +30,6 @@ package-repositories:
 parts:
   coco: 
     plugin: dump
-    build-packages:
-      - libwebkit2gtk-4.1-dev
-      - wget
-      - unzip
-      - dpkg
-    stage-packages:
-      - libwebkit2gtk-4.1-0
-      - libayatana-appindicator3-1
-      - libglu1-mesa
-      - freeglut3
     # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPARCHNAME__.deb
     source: snap_sources/__APPARCHNAME__.deb
     source-type: deb
