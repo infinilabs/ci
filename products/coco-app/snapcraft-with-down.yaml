@@ -49,7 +49,7 @@ parts:
       set -eu
       # TODO: only for arm64, use the official deb package for debug
       if [[ "__ARCH__" == "arm64" ]]; then
-        DOWN_URL=http://infinilabs.oss-cn-shanghai.aliyuncs.com/Release/coco/app/stable/.v0.5.3/Coco-AI_0.5.0_arm64.deb
+        DOWN_URL=https://release.infinilabs.com/coco/app/stable/.v0.5.3/Coco-AI_0.5.0_arm64.deb
         mkdir -p snap_sources && wget -q -O snap_sources/__APPARCHNAME__.deb $DOWN_URL
       else
         export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
