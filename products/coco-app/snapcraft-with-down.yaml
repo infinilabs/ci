@@ -39,6 +39,11 @@ parts:
     # $SNAPCRAFT_PROJECT_DIR/snap_sources/__APPARCHNAME__.deb
     source: snap_sources/__APPARCHNAME__.deb
     source-type: deb
+    build-packages:
+      - dpkg
+      - curl
+      - unzip
+      - wget
     # No override-build is needed to extract the .deb
     # plugin: dump with source-type: deb handles this.
     override-build: |
