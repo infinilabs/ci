@@ -10,6 +10,7 @@ env:
   JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
   PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
 
 on:
   schedule:
@@ -142,7 +143,7 @@ jobs:
             - name: Install and run easysearch
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
@@ -435,7 +436,7 @@ jobs:
             - name: Install and run easysearch
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
                     VER=$EZS_VERSION
@@ -458,7 +459,7 @@ jobs:
                 # for products
                 for p in console gateway agent loadgen; do
                   [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
-                  VER=$(curl -m30 -sLk "https://release.infinilabs.com/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
+                  VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
                   if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
                     if [[ "$PRODUCT_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
                       VER=$PRODUCT_VERSION

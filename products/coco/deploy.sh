@@ -17,7 +17,7 @@ APP_EXECUTABLE_NAME="${PNAME}-linux-amd64"               # Name of the applicati
 
 # Default paths and URLs (can be overridden by env vars or logic below)
 DEFAULT_WORK_PATH="/opt/$PNAME/server"                   # Default base for WORK_PATH
-DEFAULT_RELEASE_URL="https://release.infinilabs.com"              # Default base URL for releases
+DEFAULT_RELEASE_URL="$$RELEASE_URL"              # Default base URL for releases
 
 # These are relative to WORK_PATH or absolute if overridden
 UPDATE_DIR_NAME="update"                               # Subdirectory for download/extraction within WORK_PATH
