@@ -104,6 +104,7 @@ echo "Host config directory: $CONFIG_DIR_HOST"
 echo "Container config directory: $CONFIG_DIR_CONTAINER"
 echo "Host plugin directory: $PLUGIN_DIR_HOST"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
+echo "Docker environment variables: ${DOCKER_ENV_VARS[*]}"
 
 # --- Prepare Config Directory ---
 echo "Attemppting to prepare config directory: $CONFIG_DIR_HOST"
@@ -160,6 +161,8 @@ done
 # Add image name
 DOCKER_RUN_CMD+=("$IMAGE_NAME")
 
+echo "Running command: ${DOCKER_RUN_CMD[*]}"
+
 # Execute the command
 "${DOCKER_RUN_CMD[@]}"
 
@@ -168,6 +171,14 @@ echo "$ENGINE_TYPE container $CONTAINER_NAME started."
 # --- Health Check ---
 echo "Waiting for $ENGINE_TYPE to become healthy (max ${WAIT_SECONDS}s)..."
 PROTOCOL=$HEALTH_CHECK_PROTOCOL
+
+if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
+  MAJOR_VERSION=$(echo "$ENGINE_VERSION" | cut -d. -f1)
+  if [[ "$MAJOR_VERSION" -lt 8 ]]; then
+    PROTOCOL="http"
+  fi
+fi
+
 URL="${PROTOCOL}://$CONTAINER_NAME:${ENGINE_PORT}"
 HEALTH_CHECK_URL="${URL}/_cluster/health?wait_for_status=yellow&timeout=5s&pretty"
 
