@@ -17,6 +17,11 @@ apps:
     command: usr/bin/coco
     desktop: usr/share/applications/Coco-AI.desktop
     extensions: [gnome]
+    plugs:
+      - home
+      - network
+      - audio-playback
+      - audio-record
 
 package-repositories:
   - type: apt

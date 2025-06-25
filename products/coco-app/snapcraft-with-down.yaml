@@ -9,22 +9,19 @@ description: |
 grade: stable
 confinement: strict
 layout:
-  /usr/libexec/webkit2gtk-4.1:
-    symlink: $SNAP/usr/libexec/webkit2gtk-4.1
-  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
-    symlink: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
-  /usr/lib/aarch64-linux-gnu/webkit2gtk-4.1:
-    symlink: $SNAP/usr/lib/aarch64-linux-gnu/webkit2gtk-4.1
-  /usr/lib/webkit2gtk-4.1/injected-bundle:
-    symlink: $SNAP/usr/lib/webkit2gtk-4.1/injected-bundle
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
 
 apps:
   coco:
     command: usr/bin/coco
     desktop: usr/share/applications/Coco-AI.desktop
+    extensions: [gnome]
     plugs:
-      - wayland
-      - x11
+      - home
+      - network
+      - audio-playback
+      - audio-record
 
 package-repositories:
   - type: apt
