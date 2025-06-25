@@ -40,17 +40,11 @@ parts:
     # plugin: dump with source-type: deb handles this.
     override-build: |
       set -eu
-      # TODO: only for arm64, use the official deb package for debug
-      if [[ "__ARCH__" == "arm64" ]]; then
-        DOWN_URL=https://release.infinilabs.com/coco/app/stable/.v0.5.3/Coco-AI_0.5.0_arm64.deb
-        mkdir -p snap_sources && wget -q -O snap_sources/__APPARCHNAME__.deb $DOWN_URL
-      else
-        export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
-        echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
-        mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__ARCH__.zip
-        unzip /tmp/__APPARCHNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
-      fi
-
+      export RELEASE_URL="https://release.infinilabs.com/coco/app/stable"
+      echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
+      mkdir -p snap_sources && wget -q -O /tmp/__APPARCHNAME__.zip $RELEASE_URL/__APPNAME__-deb-linux-__ARCH__.zip
+      unzip /tmp/__APPARCHNAME__.zip -d snap_sources && mv snap_sources/*.deb snap_sources/__APPARCHNAME__.deb || true
+    
       if [ -e snap_sources/__APPARCHNAME__.deb ]; then
         echo "Extracting deb package to ${SNAPCRAFT_PART_INSTALL} ..."
         dpkg -x snap_sources/__APPARCHNAME__.deb $SNAPCRAFT_PART_INSTALL
