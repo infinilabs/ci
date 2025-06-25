@@ -171,14 +171,6 @@ echo "$ENGINE_TYPE container $CONTAINER_NAME started."
 # --- Health Check ---
 echo "Waiting for $ENGINE_TYPE to become healthy (max ${WAIT_SECONDS}s)..."
 PROTOCOL=$HEALTH_CHECK_PROTOCOL
-
-if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
-  MAJOR_VERSION=$(echo "$ENGINE_VERSION" | cut -d. -f1)
-  if [[ "$MAJOR_VERSION" -lt 8 ]]; then
-    PROTOCOL="http"
-  fi
-fi
-
 URL="${PROTOCOL}://$CONTAINER_NAME:${ENGINE_PORT}"
 HEALTH_CHECK_URL="${URL}/_cluster/health?wait_for_status=yellow&timeout=5s&pretty"
 

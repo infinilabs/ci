@@ -161,6 +161,13 @@ jobs:
       - name: Display Matrix Combination
         run: |
           echo Testing Product: ${{ matrix.product }}, Version: ${{ matrix.version }}
+          if [[ "${{ matrix.product }}" == "elasticsearch" ]]; then
+            MAJOR_VERSION=$(echo "${{ matrix.version }}" | cut -d. -f1)
+            if [[ "$MAJOR_VERSION" -lt 8 ]]; then
+              echo SECURITY_ENABLED=false >> $GITHUB_ENV
+              echo "Security is not enabled for Elasticsearch versions < 8."
+            fi
+          fi
 
       - name: Run Search Engine (${{ matrix.product }} @ ${{ matrix.version }})
         uses: ./containers/search-engine
