@@ -160,6 +160,7 @@ jobs:
 
       - name: Display Matrix Combination
         run: |
+          echo
           echo Testing Product: ${{ matrix.product }}, Version: ${{ matrix.version }}
           if [[ "${{ matrix.product }}" == "elasticsearch" ]]; then
             MAJOR_VERSION=$(echo "${{ matrix.version }}" | cut -d. -f1)

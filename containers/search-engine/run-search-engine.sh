@@ -104,7 +104,6 @@ echo "Host config directory: $CONFIG_DIR_HOST"
 echo "Container config directory: $CONFIG_DIR_CONTAINER"
 echo "Host plugin directory: $PLUGIN_DIR_HOST"
 echo "Container plugin directory: $PLUGIN_DIR_CONTAINER"
-echo "Docker environment variables: ${DOCKER_ENV_VARS[*]}"
 
 # --- Prepare Config Directory ---
 echo "Attemppting to prepare config directory: $CONFIG_DIR_HOST"
@@ -161,7 +160,7 @@ done
 # Add image name
 DOCKER_RUN_CMD+=("$IMAGE_NAME")
 
-echo "Running command: ${DOCKER_RUN_CMD[*]}"
+echo -e "====== Running command ======\n${DOCKER_RUN_CMD[*]}"
 
 # Execute the command
 "${DOCKER_RUN_CMD[@]}"
