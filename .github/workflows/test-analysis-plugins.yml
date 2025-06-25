@@ -30,15 +30,16 @@ jobs:
       # or '[]' if no tests are to be run.
       matrix_json: ${{ steps.generate_matrix.outputs.matrix_json_string }}
     steps:
-      - name: Get Date 7 Days Ago (UTC) for Schedule
+      - name: Get Date One Day Ago for Schedule
         id: get_date_schedule
         if: ${{ github.event_name == 'schedule' }}
         run: |
           if [[ "$(uname)" == "Darwin" ]]; then
-            echo "seven_days_ago_utc=$(date -u -v-7d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "seven_days_ago_utc=$(date -u -v-1d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           else
-            echo "seven_days_ago_utc=$(date -u -d '7 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "seven_days_ago_utc=$(date -u -d '1 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           fi
+          cat $GITHUB_OUTPUT
       
       - name: Generate Test Matrix Configuration
         id: generate_matrix
