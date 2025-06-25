@@ -228,7 +228,7 @@ jobs:
           # update Cargo.toml to enable debug mode for release profile
           sed -i '/^\s*\[profile\.release\]\s*$/a debug = true' src-tauri/Cargo.toml
           # Generate snapcraft.yaml from template with download part
-          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft.yaml snapcraft.yaml
+          cp -rf $GITHUB_WORKSPACE/products/${{ env.REPO-NAME }}/snapcraft-with-down.yaml snapcraft.yaml
           sed -i "s|__ARCH__|${{ matrix.arch }}|g" snapcraft.yaml
           sed -i "s|__TARGET__|${{ matrix.target }}|g" snapcraft.yaml
           sed -i "s|__VERSION__|${{ env.VERSION }}|g" snapcraft.yaml
