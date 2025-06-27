@@ -338,7 +338,7 @@ jobs:
 
           # Verify output (single token expected due to keyword tokenizer)
           if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze.json" | jq -e --arg token_part "中华人民共和国国歌" '.tokens[] | select(.token | contains($token_part))'; then
-             echo "Error: Stconvert analysis for '中華人民共和國國歌' did not produce expected token part '中華人民共和國國歌' on $PRODUCT_ENV."
+             echo "Error: Stconvert analysis for '中華人民共和國國歌' did not produce expected token part '中华人民共和国国歌' on $PRODUCT_ENV."
              exit 1
           fi
           echo "Stconvert Analyzer test passed for $PRODUCT_ENV."
