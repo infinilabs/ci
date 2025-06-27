@@ -76,7 +76,6 @@ elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   DOCKER_ENV_VARS+=(
     "-e" "discovery.type=single-node"
     "-e" "OPENSEARCH_JAVA_OPTS=${JAVA_OPTS}"
-    "-e" "plugins.security.disabled=true" 
   )
   # Security plugin configuration
   SECURITY_ENABLED=${SECURITY_ENABLED_INPUT:-false} 
@@ -87,6 +86,7 @@ elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
     HEALTH_CHECK_USER="$DEFAULT_USER"
     HEALTH_CHECK_PROTOCOL="https"
   else
+    DOCKER_ENV_VARS+=("-e" "plugins.security.disabled=true")
     HEALTH_CHECK_USER=""
     HEALTH_CHECK_PASS=""
     HEALTH_CHECK_PROTOCOL="http"

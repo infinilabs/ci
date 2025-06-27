@@ -167,8 +167,11 @@ jobs:
             MAJOR_VERSION=$(echo "${{ matrix.version }}" | cut -d. -f1)
             if [[ "$MAJOR_VERSION" -lt 8 ]]; then
               echo SECURITY_ENABLED=false >> $GITHUB_ENV
-              echo "Security is not enabled for Elasticsearch versions < 8."
+              echo "Security is not enabled for ${{ matrix.product }} when versions < 8."
             fi
+          else
+            echo SECURITY_ENABLED=falase >> $GITHUB_ENV
+            echo "Security is not enabled for ${{ matrix.product }}."
           fi
 
       - name: Run Search Engine (${{ matrix.product }} @ ${{ matrix.version }})
