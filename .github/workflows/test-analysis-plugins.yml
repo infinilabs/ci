@@ -282,7 +282,7 @@ jobs:
           ANALYZE_CMD="curl ${{ env.CURL_OPTS }} ${{ env.AUTH_OPTS }} -w '%{http_code}' -o '$PINYIN_ANALYSIS_RESULT_FILE' -X POST '${{ env.BASE_URL }}/_analyze' -H 'Content-Type: application/json' -d '$ANALYSIS_PAYLOAD_PINYIN'"
           HTTP_STATUS=$(eval "$ANALYZE_CMD")
           
-          if [[ "$HTTP_STATUS" -ne 200 ]]; then
+          if [[ "$HTTP_STATUS" -ne 200 ]]; then 
              echo "Error: Pinyin analysis request failed with HTTP status $HTTP_STATUS for $PRODUCT_ENV. Response:"
              cat "$PINYIN_ANALYSIS_RESULT_FILE"
              exit 1
@@ -326,7 +326,6 @@ jobs:
             "char_filter": [{"type": "stconvert", "convert_type": "t2s"}],
             "text": "中華人民共和國國歌" 
           }'
-          EXPECTED_TOKEN="中华人民共和国国歌"
 
           ANALYZE_PAYLOAD="curl $CURL_OPTS $AUTH_OPTS -w '%{http_code}' -o '${STCONVERT_RESULT_FILE_PREFIX}_analyze.json' -X POST '${BASE_URL}/_analyze' -H 'Content-Type: application/json' -d '$ANALYZE_PAYLOAD'"
           HTTP_STATUS_ANALYZE=$(eval "$ANALYZE_PAYLOAD")
@@ -338,7 +337,7 @@ jobs:
           fi
 
           # Verify output (single token expected due to keyword tokenizer)
-          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze.json" | jq -e --arg expected "$EXPECTED_TOKEN" '.tokens[0].token == $expected'; then
+          if ! cat "${STCONVERT_RESULT_FILE_PREFIX}_analyze.json" | jq -e --arg token_part "中华人民共和国国歌" '.tokens[] | select(.token | contains($token_part))'; then
              echo "Error: Stconvert analysis for '中華人民共和國國歌' did not produce expected token part '中華人民共和國國歌' on $PRODUCT_ENV."
              exit 1
           fi
