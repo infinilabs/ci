@@ -4,7 +4,7 @@ LOCAL_ADDRE="127.0.0.1"
 
 # for tools
 if [[ "$SHELL" == "/bin/bash" ]]; then
-  sudo cp -rf $GITHUB_WORKSPACE/tools/* /usr/bin && echo "Tools setting done."
+  sudo cp -rf $GITHUB_WORKSPACE/tools/* /usr/bin 2>/dev/null && echo "Tools setting done."
 fi
 
 # for ssh

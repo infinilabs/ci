@@ -257,6 +257,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             echo "Build with i686-pc-windows-msvc target"
             pnpm tauri build --target ${{ matrix.target }}
