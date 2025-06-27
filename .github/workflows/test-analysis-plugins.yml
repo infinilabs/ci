@@ -19,7 +19,7 @@ on:
         description: 'Version to test'
         required: false
         type: string
-        default: '8.17.7'
+        default: '7.10.2'
 
 jobs:
   build-test-matrix: 
@@ -35,9 +35,9 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         run: |
           if [[ "$(uname)" == "Darwin" ]]; then
-            echo "seven_days_ago_utc=$(date -u -v-1d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "seven_days_ago_utc=$(date -u -v-3d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           else
-            echo "seven_days_ago_utc=$(date -u -d '1 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "seven_days_ago_utc=$(date -u -d '3 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           fi
           cat $GITHUB_OUTPUT
       
