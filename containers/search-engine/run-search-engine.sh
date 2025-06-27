@@ -80,13 +80,12 @@ elif [[ "$ENGINE_TYPE" == "opensearch" ]]; then
   # Security plugin configuration
   SECURITY_ENABLED=${SECURITY_ENABLED_INPUT:-false} 
   if [[ "$SECURITY_ENABLED" == "true" ]]; then
-    DOCKER_ENV_VARS+=("-e" "plugins.security.disabled=false")
     HEALTH_CHECK_PASS=${ENGINE_PASSWORD:-infinilabs}
     DOCKER_ENV_VARS+=("-e" "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${HEALTH_CHECK_PASS}")
     HEALTH_CHECK_USER="$DEFAULT_USER"
     HEALTH_CHECK_PROTOCOL="https"
   else
-    DOCKER_ENV_VARS+=("-e" "plugins.security.disabled=true")
+    DOCKER_ENV_VARS+=("-e" "DISABLE_SECURITY_PLUGIN=true")
     HEALTH_CHECK_USER=""
     HEALTH_CHECK_PASS=""
     HEALTH_CHECK_PROTOCOL="http"
