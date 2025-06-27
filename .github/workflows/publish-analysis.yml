@@ -90,6 +90,7 @@ jobs:
           mvn -v
 
       - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        if: contains(["11","17"],${{inputs.JAVA_VERSION}})
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
             LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
@@ -113,6 +114,37 @@ jobs:
             while IFS= read -r ver; do
               MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
               if [[ "$MAJOR_VERSION" -lt 3 ]]; then
+                echo "$ver" >> /tmp/versions
+              fi
+            done < /tmp/all_versions
+          fi
+          cat /tmp/versions
+
+      - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
+        if: contains(["21","23"],${{inputs.JAVA_VERSION}})
+        run: |
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          else
+            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            echo "$LATEST_VERSION" > /tmp/all_versions
+          fi
+          [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
+
+          # filter versions
+          > /tmp/versions
+          if [[ $TNAME == "elasticsearch" ]] ; then
+            while IFS= read -r ver; do
+                MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+                if [[ "$MAJOR_VERSION" -ge 9 ]]; then
+                  echo "$ver" >> /tmp/versions
+                fi
+            done < /tmp/all_versions
+          else
+            while IFS= read -r ver; do
+              MAJOR_VERSION=$(echo "$ver" | cut -d '.' -f 1)
+              if [[ "$MAJOR_VERSION" -ge 3 ]]; then
                 echo "$ver" >> /tmp/versions
               fi
             done < /tmp/all_versions
