@@ -247,6 +247,12 @@ jobs:
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
+      
+      - name: Setup SSH Key for private dependency
+        if: ${{ matrix.target != 'i686-pc-windows-msvc' }}
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Build app with ${{ env.VERSION }}
         timeout-minutes: 30
