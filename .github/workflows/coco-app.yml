@@ -249,7 +249,7 @@ jobs:
         run: pnpm install
       
       - name: Setup SSH Key for private dependency
-        if: ${{ matrix.target != 'i686-pc-windows-msvc' }}
+        if:  startsWith(matrix.platform, 'windows') 
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -264,7 +264,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+          if [[ "${{ matrix.platform }}" == "windows-2019" ]]; then
             echo "Build with i686-pc-windows-msvc target"
             pnpm tauri build --target ${{ matrix.target }}
           else
