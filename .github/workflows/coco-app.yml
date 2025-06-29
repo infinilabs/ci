@@ -62,13 +62,13 @@ jobs:
             target: "x86_64-apple-darwin"
             arch: "amd64"
 
-          - platform: "windows-2019"
+          - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
             arch: "x64"
-          - platform: "windows-2019"
+          - platform: "windows-latest"
             target: "i686-pc-windows-msvc"
             arch: "x86"
-          - platform: "windows-2019"
+          - platform: "windows-latest"
             target: "aarch64-pc-windows-msvc"
             arch: "arm64"
 
@@ -127,7 +127,7 @@ jobs:
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i '' "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
-          elif ${{ matrix.platform == 'windows-2019' }}; then
+          elif ${{ matrix.platform == 'windows-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
             sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i -e "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
@@ -191,7 +191,7 @@ jobs:
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i '' "s/^version = *\"[^\"]*\"/tauri_version = \"$version\"/" src-tauri/Cargo.toml
-          elif ${{ matrix.platform == 'windows-2019' }}; then
+          elif ${{ matrix.platform == 'windows-latest' }}; then
             #build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
             version="$tauri_version-SNAPSHOT-$build_number"
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
