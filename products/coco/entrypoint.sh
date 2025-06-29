@@ -50,7 +50,7 @@ setup_coco() {
   else
     log "$COCO_DIR is already owned by ezs."
   fi
-  
+
   return 0
 }
 
@@ -77,8 +77,16 @@ trap "exit 0" SIGINT SIGTERM
 
 if [ "$(id -u)" = '0' ]; then
   if [ -z "${EASYSEARCH_INITIAL_ADMIN_PASSWORD}" ]; then
-    log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Using default coco server password."
-    export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
+    log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Generating a random 16-character password..."
+    RANDOM_PASSWORD=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 16)
+    
+    if [ -n "$RANDOM_PASSWORD" ]; then
+      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-$RANDOM_PASSWORD"
+      log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
+    else
+      log "Error generating random password. Using default 'coco-server'."
+      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
+    fi
   fi
   # for ezs init
   if [[ $(compgen -G "config/*.{crt,key}" 2>/dev/null) ]]; then
