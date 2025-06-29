@@ -262,6 +262,7 @@ jobs:
           CARGO_NET_GIT_FETCH_WITH_CLI: true
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          GIT_SSH_COMMAND: "ssh -vvv"
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
