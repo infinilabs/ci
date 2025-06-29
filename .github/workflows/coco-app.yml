@@ -91,6 +91,11 @@ jobs:
           ref: main
           path: ${{ env.REPO-NAME }}
 
+      - name: Set up and check env
+        run: |
+          $GITHUB_WORKSPACE/scripts/env-init.sh
+          echo "Running on ${{ matrix.platform }} with target ${{ matrix.target }} and arch ${{ matrix.arch }}"
+
       - name: Set version & tag with ${{ matrix.platform }}
         if: ${{ inputs.PUBLISH_RELEASE }}
         working-directory: ${{ env.REPO-NAME }}
@@ -264,7 +269,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
           GIT_SSH_COMMAND: "ssh -vvv"
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             echo "Build without pizza engine at i686-pc-windows-msvc target"
             pnpm tauri build --target ${{ matrix.target }}
