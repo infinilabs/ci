@@ -268,7 +268,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+          #if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
             echo "Build without pizza engine at i686-pc-windows-msvc target"
             pnpm tauri build --target ${{ matrix.target }}
           else
