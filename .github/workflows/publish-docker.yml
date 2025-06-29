@@ -51,7 +51,7 @@ on:
         description: 'Publish Docker <Only>'
         required: false
         type: boolean
-        default: true         
+        default: false         
 
 jobs:
   generate-matrix: 
