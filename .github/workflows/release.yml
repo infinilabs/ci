@@ -295,9 +295,9 @@ jobs:
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           # Check if the branch already exists
           if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
-            # Branch already exists, pr exists, skip
-            echo "Branch $PR_BRANCH already exists. Skipping creation."
-            exit 0
+            echo "Branch $PR_BRANCH found. Deleting remote branch..."
+            git push origin --delete "$PR_BRANCH"
+            echo "Branch $BRANCH_NAME deleted."
           fi
           # Create a new branch
           echo "Create Branch $PR_BRANCH for ${{ matrix.product }}"
@@ -325,6 +325,8 @@ jobs:
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
               sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### ❌ Breaking changes  \\n### 🚀 Features  \\n### 🐛 Bug fix  \\n### ✈️ Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
               git add docs/content.$f/docs/release-notes/_index.md
+            else
+              echo "Release notes for $VERSION already exists in docs/content.$f/docs/release-notes/_index.md"
             fi
           done
           # udpate version
@@ -343,14 +345,11 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' }}
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          # Check if the branch already exists
-          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
-            echo "Branch $PR_BRANCH found. Deleting remote branch..."
-            git push origin --delete "$PR_BRANCH"
-            echo "Branch $BRANCH_NAME deleted."
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "✅ Changes detected. Proceeding with commit and push..."
+            git commit -m "$PR_MESSAGE"     
+            git push origin "$PR_BRANCH"
           fi
-          git commit -m "$PR_MESSAGE"     
-          git push origin "$PR_BRANCH"
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
             git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
           fi
