@@ -305,7 +305,8 @@ jobs:
           #update release notes
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
           # first uppercase for product name
-          PRODUCT_NAME=$(echo "${{ matrix.product }}" | tr '[:lower:]' '[:upper:]' | sed 's/^./\U&/')
+          PRODUCT_NAME=$(echo "${{ matrix.product }}" | sed 's/./\u&/')
+          #PRODUCT_NAME=$(echo "${{ matrix.product }}" | tr '[:lower:]' '[:upper:]' | sed 's/^./\U&/')
           for f in en zh; do
             if [[ ! -d docs/content.$f ]]; then
               continue
