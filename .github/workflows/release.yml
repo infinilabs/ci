@@ -349,6 +349,8 @@ jobs:
             echo "✅ Changes detected. Proceeding with commit and push..."
             git commit -m "$PR_MESSAGE"     
             git push origin "$PR_BRANCH"
+          else
+            echo "🤷 No changes detected. Skipping commit and push."
           fi
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
             git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
