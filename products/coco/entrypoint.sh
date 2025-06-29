@@ -39,7 +39,7 @@ setup_coco() {
     log "Changed ownership of keystore files."
   fi
   
-  if [ "$(stat -c %U $WORK_DIR)" != "ezs" ] ; then
+  if [ "$(stat -c %U $WORK_DIR)" != "ezs" || "$(stat -c %U $COCO_DIR)" != "ezs" ] ; then
     chown -R ezs:ezs $WORK_DIR
   else
     log "$WORK_DIR is already owned by ezs."

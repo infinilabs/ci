@@ -39,10 +39,12 @@ for t in amd64 arm64; do
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/$PNAME-linux-$t $WORK/$PNAME-$t
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/config $WORK/$PNAME-$t
   cp -rf $GITHUB_WORKSPACE/$PNAME/bin/{LICENSE,NOTICE,$PNAME.yml} $WORK/$PNAME-$t
-  # TODO: 更新配置
+  
+  # update config
   echo "" >> $WORK/$PNAME-$t/$PNAME.yml
   echo "path.data: /app/easysearch/data/coco/data" >> $WORK/$PNAME-$t/$PNAME.yml
   echo "path.logs: /app/easysearch/data/coco/logs" >> $WORK/$PNAME-$t/$PNAME.yml
+  sed -i "s/localhost/127.0.0.1/g" $WORK/$PNAME-$t/$PNAME.yml
 
   # ES_DISTRIBUTION_TYPE need change to docker
   sed -i 's/tar/docker/' $WORK/$DNAME-$t/bin/$DNAME-env
