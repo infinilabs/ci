@@ -23,6 +23,9 @@ setup_coco() {
   for dir in data config; do
     if [ ! -d "$COCO_DIR/$dir" ]; then
       mkdir -p "$COCO_DIR/$dir"
+      if [ "$(stat -c %U $COCO_DIR/$dir)" != "ezs" ] ; then
+        chown -R ezs:ezs "$COCO_DIR/$dir"
+      fi
       log "Created $COCO_DIR/$dir"
     fi
   done
@@ -30,21 +33,12 @@ setup_coco() {
   cd $COCO_DIR
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD >/dev/null
-    log "Added ES_PASSWORD to keystore."
-    chown -R ezs:ezs $COCO_DIR/data/coco/nodes/*/.keystore
-    log "Changed ownership of keystore files."
+    chown -R ezs:ezs $WORK_DIR
+    log "Added ES_PASSWORD to keystore and changed ownership."
   else
     log "Keystore is already for Coco."
-    chown -R ezs:ezs $COCO_DIR/data/coco/nodes/*/.keystore
-    log "Changed ownership of keystore files."
   fi
-
-  if [ "$(stat -c %U $WORK_DIR)" != "ezs" ] ; then
-    chown -R ezs:ezs $WORK_DIR
-  else
-    log "$WORK_DIR is already owned by ezs."
-  fi
-
+  
   if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] ; then
     chown -R ezs:ezs $COCO_DIR
   else
