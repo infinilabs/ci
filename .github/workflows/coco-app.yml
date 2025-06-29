@@ -249,10 +249,10 @@ jobs:
         run: pnpm install
       
       - name: Setup SSH Key for private dependency
-        if:  startsWith(matrix.platform, 'windows') 
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          log-public-key: false
 
       - name: Build app with ${{ env.VERSION }}
         timeout-minutes: 30
