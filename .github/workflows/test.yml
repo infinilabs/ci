@@ -64,23 +64,22 @@ jobs:
           git clone --quiet git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
+          
+          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
+          git clone --quiet --depth 1 git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
+          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
+
+          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
+          git clone --quiet --depth 1 git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
+          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
+
           echo "$PNAME repo cloning to $GITHUB_WORKSPACE/$PNAME"
           git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
-          echo "$PNAME-ui repo cloning to $GITHUB_WORKSPACE/$PNAME/web"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
-          cd $GITHUB_WORKSPACE/$PNAME/web && echo Checkout $PNAME-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          echo "common-ui repo cloning to $GITHUB_WORKSPACE/$PNAME/web/src/common"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
-          cd $GITHUB_WORKSPACE/$PNAME/web/src/common && echo Checkout common-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
-          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-
+          
   test-on-windows:
     runs-on: windows-latest
     steps:
@@ -90,7 +89,6 @@ jobs:
       - name: Set up and check env
         run: |
           $GITHUB_WORKSPACE/scripts/env-init.sh
-          git config --global fetch.progress false
           git config --global user.name "GitHub Actions"
           git config --global user.email "ci@github.com"
 
@@ -112,18 +110,21 @@ jobs:
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Clone Repository
+        env:
+          GIT_SSH_COMMAND: "ssh -vvv"
+          GIT_TRACE: "1"
         run: |
           echo "License repo cloning to $GITHUB_WORKSPACE/license"
-          git clone --quiet git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
+          git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
           
           echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet --depth 1 git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
+          git clone --depth 1 git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
 
           echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet --depth 1 git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
+          git clone --depth 1 git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
