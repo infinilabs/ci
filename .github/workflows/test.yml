@@ -131,3 +131,16 @@ jobs:
           git clone --depth 1 ssh://git@ssh.github.com:443/infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
+
+  test-on-checkout:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout private pizza repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'infinilabs/pizza'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fetch-depth: 1 
