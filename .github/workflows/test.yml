@@ -81,7 +81,7 @@ jobs:
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
 
-  test-on-windoes:
+  test-on-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout code
