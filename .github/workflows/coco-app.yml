@@ -276,7 +276,7 @@ jobs:
             else
               echo "Build with pizza engine at ${{ matrix.target }}"
               #make add-dep-pizza-engine
-              ( cd src-tauri && cargo add --path ../../pizza --features query_string_parser,persistence )
+              ( cd src-tauri && cargo add --path ../../pizza/lib/engine --features query_string_parser,persistence )
               pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi
 
