@@ -117,19 +117,13 @@ jobs:
           git clone --quiet git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
-          echo "$PNAME repo cloned to $GITHUB_WORKSPACE/$PNAME"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          echo "$PNAME-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
-          cd $GITHUB_WORKSPACE/$PNAME/web && echo Checkout $PNAME-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          echo "common-ui repo cloned to $GITHUB_WORKSPACE/$PNAME/web/src/common"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
-          cd $GITHUB_WORKSPACE/$PNAME/web/src/common && echo Checkout common-ui repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
+          
           echo "Pizza repo cloned to $GITHUB_WORKSPACE/pizza"
           git clone --quiet git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
+          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          echo ".............................."
+
+          echo "Pizza repo cloned to $GITHUB_WORKSPACE/pizza"
+          git clone --quiet git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
