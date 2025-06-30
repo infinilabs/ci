@@ -273,6 +273,8 @@ jobs:
         with:
           repository: 'infinilabs/pizza'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ref: main
+          path: "${{ env.REPO-NAME }}-pizza"
 
       - name: Build app at ${{matrix.platform}} with ${{ env.VERSION }}
         if: startsWith(matrix.platform, 'windows')
@@ -290,7 +292,7 @@ jobs:
           else
             echo "Start build with ${{ matrix.target }}"
             #make add-dep-pizza-engine
-            ( cd src-tauri && cargo add --path $GITHUB_WORKSPACE/pizza pizza-engine --features query_string_parser,persistence  )
+            ( cd src-tauri && cargo add --path "$GITHUB_WORKSPACE/$REPO-NAME-pizza" --features query_string_parser,persistence  )
             echo "Build with pizza engine at ${{ matrix.target }}"
             pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
           fi
