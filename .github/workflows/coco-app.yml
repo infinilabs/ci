@@ -97,7 +97,7 @@ jobs:
           repository: 'infinilabs/pizza'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ref: main
-          path: "${{ env.REPO-NAME }}-pizza"
+          path: pizza
 
       - name: Set up and check env
         run: |
@@ -276,7 +276,7 @@ jobs:
             else
               echo "Build with pizza engine at ${{ matrix.target }}"
               #make add-dep-pizza-engine
-              ( cd src-tauri && cargo add --path "$GITHUB_WORKSPACE/${REPO-NAME}-pizza" --features query_string_parser,persistence )
+              ( cd src-tauri && cargo add --path ../../pizza --features query_string_parser,persistence )
               pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi
 
