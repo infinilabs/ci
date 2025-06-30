@@ -227,7 +227,7 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Install dependencies (ubuntu only)
-        if: startsWith(matrix.platform, 'ubuntu-22.04') 
+        if: startsWith(matrix.platform, 'ubuntu') 
         working-directory: ${{ env.REPO-NAME }}
         run: |
             sudo apt-get update
@@ -252,14 +252,9 @@ jobs:
       - name: Install app dependencies and build web
         working-directory: ${{ env.REPO-NAME }}
         run: pnpm install
-      
-      - name: Setup SSH Key for private dependency
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          log-public-key: false
 
-      - name: Build app with ${{ env.VERSION }}
+      - name: Build app at ${{matrix.platform}} with ${{ env.VERSION }}
+        if: startsWith(matrix.platform, 'ubuntu')  || startsWith(matrix.platform, 'macos') 
         timeout-minutes: 30
         working-directory: ${{ env.REPO-NAME }}
         env:
@@ -268,14 +263,34 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-          #if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            make add-dep-pizza-engine
+            echo "Build with pizza engine at ${{ matrix.target }}"
+            pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+
+      - name: Checkout dependency at ${{matrix.platform}} with ${{ env.VERSION }}
+        if: startsWith(matrix.platform, 'windows')
+        uses: actions/checkout@v4
+        with:
+          repository: 'infinilabs/pizza'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Build app at ${{matrix.platform}} with ${{ env.VERSION }}
+        if: startsWith(matrix.platform, 'windows')
+        timeout-minutes: 30
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: |
+          if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             echo "Build without pizza engine at i686-pc-windows-msvc target"
             pnpm tauri build --target ${{ matrix.target }}
           else
             echo "Start build with ${{ matrix.target }}"
             #make add-dep-pizza-engine
-            ( cd src-tauri && cargo add --git ssh://git@ssh.github.com:443/infinilabs/pizza.git pizza-engine --features query_string_parser,persistence && cargo fetch )
+            ( cd src-tauri && cargo add --path $GITHUB_WORKSPACE/pizza pizza-engine --features query_string_parser,persistence  )
             echo "Build with pizza engine at ${{ matrix.target }}"
             pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
           fi
