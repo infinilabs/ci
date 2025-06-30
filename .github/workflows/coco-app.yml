@@ -96,6 +96,7 @@ jobs:
         with:
           repository: 'infinilabs/pizza'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          submodules: recursive
           ref: main
           path: pizza
 
