@@ -48,6 +48,9 @@ jobs:
           sleep 5
 
       - name: Setup ${{ env.PNAME }} env
+        env:
+          GIT_SSH_COMMAND: "ssh -vvv"
+          GIT_TRACE: "1"
         run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
