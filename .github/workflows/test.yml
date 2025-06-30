@@ -144,10 +144,16 @@ jobs:
         with:
           repository: 'infinilabs/coco-app'
           path: coco-app
-          
-      - name: Set up and check env
-        working-directory: coco-app
+      
+      - name: Check the path files
         run: |
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+
+      - name: Set up and check env
+        run: |
+          cd $GITHUB_WORKSPACE/coco-app
           PACKAGE_VERSION=$(jq -r '.version' package.json)
           CARGO_VERSION=$(grep -m 1 '^version =' src-tauri/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
           if [ "$PACKAGE_VERSION" != "$CARGO_VERSION" ]; then
