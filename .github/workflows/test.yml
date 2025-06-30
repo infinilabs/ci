@@ -71,7 +71,7 @@ jobs:
           echo ".............................."
 
           echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet --depth 1 git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
+          git clone --quiet --depth 1 git@ssh.github.com:443/infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
 
@@ -125,6 +125,6 @@ jobs:
           echo ".............................."
 
           echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --depth 1 git@ssh.github.com:443:infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
+          git clone --depth 1 git@ssh.github.com:443/infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
           cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
