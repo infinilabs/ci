@@ -337,7 +337,7 @@ jobs:
               sed -i "19s/version:.*/version: '$PUBLISH_VERSION'/" docs/data/quick_start.yaml
             fi
             if [[ "${{ matrix.product }}" == "console" ]]; then
-              sed -i "44s/version:.*/version: '$EZS_VER'/" docs/data/quick_start.yaml
+              sed -i "44s/version:.*/version: '$EZS_VER',/" docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
