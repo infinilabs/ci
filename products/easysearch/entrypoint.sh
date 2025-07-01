@@ -174,13 +174,14 @@ EOF
       log "Agent keystore initialization marker not found. Starting keystore setup."
       if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
         # Execute agent commands relative to current directory ($AGENT_DIR)
-        log "Adding agent_user to keystore."
-        echo "infini_agent" | ./agent keystore add --stdin agent_user
-        if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
-        log "Adding agent_passwd to keystore."
-        echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd
-        if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
-        
+        if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]
+          log "Adding agent_user to keystore."
+          echo "infini_agent" | ./agent keystore add --stdin agent_user
+          if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
+          log "Adding agent_passwd to keystore."
+          echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd
+          if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
+        fi
         log "Copying agent config templates."
         # Ensure /app/tpl exists and contains necessary files
         # Use absolute paths or ensure correct relative path from current directory ($AGENT_DIR)
