@@ -84,6 +84,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout coco app repository
         uses: actions/checkout@v4
         with: 
@@ -102,7 +105,6 @@ jobs:
 
       - name: Set up and check env
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           echo "Running on ${{ matrix.platform }} with target ${{ matrix.target }} and arch ${{ matrix.arch }}"
 
       - name: Set version & tag with ${{ matrix.platform }}
@@ -378,9 +380,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Init Env
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           # Setup environment
           current_version=$PUBLISH_VERSION
           if [[ -z "$current_version" ]]; then

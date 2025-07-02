@@ -64,6 +64,9 @@ jobs:
             - name: Checkout current repository
               uses: actions/checkout@v4
 
+            - name: Setup bootstrap
+              uses: ./containers/bootstrap
+              
             - name: Checkout console
               uses: actions/checkout@v4
               with:

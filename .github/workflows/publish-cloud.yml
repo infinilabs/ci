@@ -66,6 +66,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout agent code
         uses: actions/checkout@v4
         with: 
@@ -85,9 +88,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/framework-vendor
           ref: main
           path: vendor
-      - name: Set up and check env
-        run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
 
       - name: Run connect in background
         run: |

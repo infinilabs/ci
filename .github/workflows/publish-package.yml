@@ -32,7 +32,6 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
   SNAPCRAFT_BUILD_ENVIRONMENT: lxd
   SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
-  WGET_CMD: "wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
 
 on:
   workflow_dispatch:
@@ -87,6 +86,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
 
       - name: Checkout coco app repository
         uses: actions/checkout@v4
@@ -186,7 +188,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
             pnpm tauri build --target ${{ matrix.target }}
           else
@@ -194,7 +195,7 @@ jobs:
               echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
               # for ubuntu, we will download the deb package
               mkdir -p src-tauri/target/${{ matrix.target }}/release/bundle/deb
-              $WGET_CMD -q -nc -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
+              wget -O /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip $RELEASE_URL/${PNAME}/stable/${{ env.APPNAME }}-${{ env.VERSION }}-deb-linux-${{ matrix.arch }}.zip
               [ -e ] && unzip /tmp/${{ env.APPNAME }}-${{ matrix.arch }}.zip -d src-tauri/target/${{ matrix.target }}/release/bundle/deb/
               ls -lh src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
               mkdir -p snap_sources && cp -rf src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb snap_sources/${{ env.APPNAME }}_${{ env.VERSION }}_${{ matrix.arch }}.deb

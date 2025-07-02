@@ -2,7 +2,6 @@
 
 DEST=$GITHUB_WORKSPACE/dest
 WORK=$GITHUB_WORKSPACE/products/$PNAME
-WGET_CMD="wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
 
 echo "Prepar for build $PNAME docker files"
 mkdir -p $DEST
@@ -17,7 +16,7 @@ for t in amd64 arm64; do
     echo "Check $DOWNLOAD_URL"
     if curl -IL -m 10 -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
       echo "Download $EZS_FILE from $DOWNLOAD_URL"
-      $WGET_CMD -q -nc $DOWNLOAD_URL -O $DEST/$EZS_FILE
+      wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
     fi
   done
   # Check if the file exists and is not empty

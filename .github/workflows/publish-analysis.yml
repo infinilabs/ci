@@ -12,7 +12,6 @@ env:
     OSS_SK: ${{ secrets.OSS_SK }}
     OSS_BK: ${{ secrets.OSS_BK }}
     OSS_MODE: ${{ secrets.OSS_MODE }}
-    WGET_CMD: "wget --no-check-certificate --connect-timeout=15 --read-timeout=60 --tries=3 --retry-connrefused --waitretry=5"
 
 on:
   schedule:
@@ -64,6 +63,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout ${{ matrix.plugins }} code
         uses: actions/checkout@v4
         with: 
@@ -85,7 +87,6 @@ jobs:
 
       - name: Preper build code
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           echo "Build $PNAME start..."
           mvn -v
 
@@ -231,6 +232,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout ${{ matrix.plugins }} code
         uses: actions/checkout@v4
         with: 
@@ -252,7 +256,6 @@ jobs:
 
       - name: Preper build code
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           echo "Build $PNAME start..."
           mvn -v
 
@@ -366,6 +369,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout ${{ matrix.plugins }} code
         uses: actions/checkout@v4
         with: 
@@ -387,7 +393,6 @@ jobs:
 
       - name: Preper build code
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           echo "Build $PNAME start..."
           mvn -v
 

@@ -92,10 +92,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Set up and check env for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         run: |
           echo "setting up env with ${{ matrix.component }}"
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           # check if the env is set
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
             echo PNAME=k8s-$IMAGE_TYPE >> $GITHUB_ENV

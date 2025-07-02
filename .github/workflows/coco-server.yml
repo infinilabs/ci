@@ -75,6 +75,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout framework code
         uses: actions/checkout@v4
         with: 
@@ -111,7 +114,6 @@ jobs:
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
-          $GITHUB_WORKSPACE/scripts/env-init.sh
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
@@ -274,6 +276,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
 
       - name: Checkout framework code
         uses: actions/checkout@v4
@@ -310,7 +315,6 @@ jobs:
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
-          $GITHUB_WORKSPACE/scripts/env-init.sh
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
@@ -540,6 +544,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Checkout framework code
         uses: actions/checkout@v4
         with: 
@@ -575,7 +582,6 @@ jobs:
             fi
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
-          $GITHUB_WORKSPACE/scripts/env-init.sh
 
           if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             echo "Publish enterprise version"

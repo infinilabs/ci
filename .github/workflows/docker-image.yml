@@ -27,9 +27,11 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
 
+        - name: Setup bootstrap
+          uses: ./containers/bootstrap
+
         - name: Set up and check env
           run: |
-            $GITHUB_WORKSPACE/scripts/env-init.sh
             echo "${{ secrets.DOCKER_CA }}" > $GITHUB_WORKSPACE/certs/ca.crt
             PROXY=http://${{ vars.LOCAL_HOST }}:${{ vars.LOCAL_PORT }} $GITHUB_WORKSPACE/certs/init.sh
         

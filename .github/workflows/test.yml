@@ -34,9 +34,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Set up and check env
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           git config --global fetch.progress false
           git config --global user.name "GitHub Actions"
           git config --global user.email "ci@github.com"
@@ -86,9 +88,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
       - name: Set up and check env
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           git config --global user.name "GitHub Actions"
           git config --global user.email "ci@github.com"
 

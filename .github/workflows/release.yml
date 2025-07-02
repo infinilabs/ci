@@ -105,10 +105,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
 
       - name: Set up and check env for ${{ matrix.product }}
         run: |
-          $GITHUB_WORKSPACE/scripts/env-init.sh
           if [[ "${{ matrix.product }}" == "framework" ]]; then
             VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
             if [[ -z "$VERSION" ]]; then
