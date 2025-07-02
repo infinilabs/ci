@@ -81,54 +81,6 @@ jobs:
           git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
-          
-  test-on-windows-with-gitclone:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup bootstrap
-        uses: ./containers/bootstrap
-
-      - name: Set up and check env
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "ci@github.com"
-
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
-
-      - name: Setup ${{ env.PNAME }} env
-        run: |
-          source $GITHUB_WORKSPACE/scripts/go-init.sh
-          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
-          fi
-          echo WORK=$WORK >> $GITHUB_ENV
-          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
-          echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
-          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
-
-      - name: Clone Repository
-        run: |
-          echo "License repo cloning to $GITHUB_WORKSPACE/license"
-          git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
-          cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          
-          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --depth 1 git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
-          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-
-          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --depth 1 ssh://git@ssh.github.com:443/infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
-          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
 
   test-on-windows-with-checkout:
     runs-on: windows-latest

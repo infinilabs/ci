@@ -94,9 +94,17 @@ jobs:
         uses: actions/checkout@v4
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
-          ref: v0.5.0
           path: ${{ env.REPO-NAME }}
 
+      - name: Checkout dependency repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'infinilabs/pizza'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          submodules: recursive
+          ref: main
+          path: pizza
+          
       - name: Init ${{ env.REPO-NAME }}
         run: |
           echo "Init ${{ env.REPO-NAME }}"
