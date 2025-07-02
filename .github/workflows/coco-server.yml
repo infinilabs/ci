@@ -22,7 +22,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "0.6.0"
+        default: ""
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
