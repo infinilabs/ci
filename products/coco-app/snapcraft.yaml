@@ -6,8 +6,10 @@ contact: hello@infini.ltd
 license: MIT
 description: |
   🥥 Coco AI App - Search, Connect, Collaborate, Your Personal AI Search and Assistant, all in one space.
+
 grade: stable
 confinement: strict
+
 layout:
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
@@ -26,7 +28,7 @@ package-repositories:
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
 parts:
-  coco:
+  build-app:
     plugin: dump
     build-snaps:
       - node/20/stable
@@ -35,7 +37,6 @@ parts:
       - libwebkit2gtk-4.1-dev
       - build-essential
       - curl
-      - unzip
       - wget
       - file
       - libxdo-dev
