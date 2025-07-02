@@ -11,7 +11,8 @@ env:
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
-  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
   CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
   CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
   CONNECT_KEY: ${{ secrets.CONNECT_KEY }}

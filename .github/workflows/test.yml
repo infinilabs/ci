@@ -17,7 +17,8 @@ env:
   OSS_SK: ${{ secrets.OSS_SK }}
   OSS_BK: ${{ secrets.OSS_BK }}
   OSS_MODE: ${{ secrets.OSS_MODE }}
-  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
   CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
   CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
   CONNECT_KEY: ${{ secrets.CONNECT_KEY }}

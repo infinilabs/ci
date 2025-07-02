@@ -77,7 +77,8 @@ jobs:
 
     env:
       IMAGE_TYPE: operator
-      LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+      LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+      LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
       SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
       SSH_GITHUB_REPO: ${{ secrets.SSH_GITHUB_REPO }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}

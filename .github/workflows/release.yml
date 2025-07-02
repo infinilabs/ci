@@ -7,7 +7,8 @@ env:
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
-  LOCAL_PORT: ${{ vars.LOCAL_PORT }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
   OSS_SK: ${{ secrets.OSS_SK }}
@@ -384,7 +385,7 @@ jobs:
         if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
         uses: infinilabs/gitea-pr@v0
         env:
-          https_proxy: http://${{ vars.LOCAL_HOST }}:${{ vars.LOCAL_PORT }}
+          https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
           url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}

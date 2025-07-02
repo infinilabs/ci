@@ -114,7 +114,7 @@ env_init() {
         proxy_config=$(cat <<-EOF
 			{
 			  "local_port": $LOCAL_PORT,
-			  "local_address": "${LOCAL_ADDRE:-127.0.0.1}",
+			  "local_address": "${LOCAL_HOST:-127.0.0.1}",
 			  "servers": [
 			    {
 			      "server": "$CONNECT_SERVER",
