@@ -107,9 +107,16 @@ jobs:
           echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
+      - name: Checkout dependency repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'infinilabs/license'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ref: main
+          path: license
+
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone --quiet git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
           git clone --quiet --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
