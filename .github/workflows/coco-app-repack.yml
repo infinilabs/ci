@@ -64,7 +64,7 @@ jobs:
 
       - name: Get Release Asset Names
         run: |
-          ASSET_NAMES=$(curl -sL -H "Accept: application/vnd.github.v3+json" \
+          ASSET_NAMES=$(curl -H "Accept: application/vnd.github.v3+json" \
             "$GITHUB_API_RELEASES_URL/tags/$TAG" | \
             jq -r '.assets[].name')
           echo "$ASSET_NAMES" > asset_names.txt
@@ -77,7 +77,7 @@ jobs:
           grep -E -i "$FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
             echo "Downloading $filename ..."
             url="$BASE_URL/$filename"
-            curl -sSL -o "$filename" "$url"
+            curl -o "$filename" "$url"
           done
 
       - name: Repackage Assets
@@ -130,7 +130,7 @@ jobs:
           grep -E -i "$UPGRADE_FILE_EXTENSIONS" asset_names.txt | while read -r filename; do
             echo "Downloading $filename ..."
             url="$BASE_URL/$filename"
-            curl -sSL -o upgrade/"$filename" "$url"
+            curl -o upgrade/"$filename" "$url"
           done
       
       - name: Update the download url

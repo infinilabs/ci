@@ -53,7 +53,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     JNAME=`find $BUILD_JDKS -name "$ZULU_JAVA_VERSION-$JARK*" |head -n 1`
   fi
   URL="$RELEASE_URL/$PNAME/stable/bundle/$DNAME"
-  if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+  if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
     echo "Exists release file $DNAME will overwrite it"
   fi
   echo -e "From: $FNAME \nTo:   $DNAME \nJark: $JARK \nJdk:  $JNAME"

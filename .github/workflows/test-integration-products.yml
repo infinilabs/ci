@@ -66,7 +66,7 @@ jobs:
 
             - name: Setup bootstrap
               uses: ./containers/bootstrap
-              
+
             - name: Checkout console
               uses: actions/checkout@v4
               with:
@@ -146,7 +146,7 @@ jobs:
             - name: Install and run easysearch
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
@@ -155,7 +155,7 @@ jobs:
                     echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
-                curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
+                curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
                 [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
                 # Initialize easysearch
                 echo "Initialize easysearch at $HOME/easysearch ..."
@@ -214,7 +214,7 @@ jobs:
                   sleep 5
                 done
 
-                curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
+                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
 
 
             - name: Run console test
@@ -266,7 +266,7 @@ jobs:
                   $WORK/$PRODUCT/bin/$PRODUCT -d 10
                   # Check indices created
                   if command -v curl >/dev/null 2>&1; then
-                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                    curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   fi
 
             - name: Run loadgen api test for runtime registry
@@ -289,7 +289,7 @@ jobs:
                 echo "Check metrics count and search metrics"
                 # Check metrics count
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
                 fi
 
@@ -439,7 +439,7 @@ jobs:
             - name: Install and run easysearch
               run: |
                 # Install easysearch
-                VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
                   if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
                     VER=$EZS_VERSION
@@ -447,7 +447,7 @@ jobs:
                     echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
-                curl -sSL http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
+                curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
                 [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
                 # Initialize easysearch
                 cd $HOME/easysearch && bin/initialize.sh -s
@@ -462,7 +462,7 @@ jobs:
                 # for products
                 for p in console gateway agent loadgen; do
                   [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
-                  VER=$(curl -m30 -sLk "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
+                  VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
                   if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
                     if [[ "$PRODUCT_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
                       VER=$PRODUCT_VERSION
@@ -470,7 +470,7 @@ jobs:
                       echo "PRODUCT_VERSION does not match x.y.z-build_number pattern, skipping assignment."
                     fi
                   fi
-                  curl -sSL http://get.infini.cloud | bash -s -- -p $p -d $WORK/$p/bin -v $VER
+                  curl http://get.infini.cloud | bash -s -- -p $p -d $WORK/$p/bin -v $VER
                   # change binary name
                   cp -rf $WORK/$p/bin/$p-linux-amd64 $WORK/$p/bin/$p
                 done
@@ -490,7 +490,7 @@ jobs:
                   sleep 5
                 done
 
-                curl -sLku "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
+                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
 
 
             - name: Run console test
@@ -542,7 +542,7 @@ jobs:
                   $WORK/$PRODUCT/bin/$PRODUCT -d 10
                   # Check indices created
                   if command -v curl >/dev/null 2>&1; then
-                    curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                    curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   fi
 
             - name: Run loadgen api test for runtime registry
@@ -565,7 +565,7 @@ jobs:
                 echo "Check metrics count and search metrics"
                 # Check metrics count
                 if command -v curl >/dev/null 2>&1; then
-                  curl -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
                   curl -H 'Content-Type: application/json' -sLku $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/.infini_metrics/_count" -d '{"query":{"bool":{"must":[{"term":{"metadata.category":"elasticsearch"}}]}}}'
                 fi
 

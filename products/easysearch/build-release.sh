@@ -90,9 +90,9 @@ for p in ${plugins[@]}; do
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
     echo Check if $f exists
     URL=$RELEASE_URL/$PNAME/stable/plugins/$p/$f.sha512
-    if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+    if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
       if [ "$onceclean" == "true" ]; then
-        curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
+        curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
         onceclean=false
       fi
     fi

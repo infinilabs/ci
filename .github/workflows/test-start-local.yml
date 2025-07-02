@@ -250,7 +250,7 @@ jobs:
                 echo "Attempting to install docker-compose (v1) as a fallback..."
                 LATEST_COMPOSE_V1=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)
                 if [ -n "$LATEST_COMPOSE_V1" ]; then
-                  curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE_V1}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                  curl "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE_V1}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                   chmod +x /usr/local/bin/docker-compose
                   echo "docker-compose (v1) installed: $(docker-compose --version || echo "v1 install check failed")"
                 else
@@ -298,13 +298,13 @@ jobs:
           if [[ "$SCENARIO_TO_RUN" == "default-run" ]]; then
             echo "Script URL: $SCRIPT_URL_ARG"
             echo "Default Password: $DEFAULT_PASSWORD_ARG"
-            curl -fsSL $SCRIPT_URL_ARG | sh -s -- up
+            curl $SCRIPT_URL_ARG | sh -s -- up
             if [ $? -ne 0 ]; then echo "::error::Default UP failed"; docker compose logs || true; exit 1; fi
 
             echo "Waiting for default Easysearch (max ${CHECK_TIMEOUT_ARG}s)..."
             timeout_seconds=${CHECK_TIMEOUT_ARG}; interval=10; elapsed=0; service_ready=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              if curl --retry 3 --retry-delay 3 -s -ku "admin:$DEFAULT_PASSWORD_ARG" "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
+              if curl -u "admin:$DEFAULT_PASSWORD_ARG" "https://localhost:9200/_cluster/health" | jq -e '.status == "green" or .status == "yellow"' > /dev/null; then
                 echo "Default Easysearch is healthy."
                 service_ready=true; break
               fi
@@ -314,7 +314,7 @@ jobs:
             if ! $service_ready; then echo "::error::Default Easysearch did not become healthy"; docker compose logs || true; exit 1; fi
 
             echo "Default run successful. Cleaning up..."
-            curl -fsSL $SCRIPT_URL_ARG | sh -s -- clean
+            curl $SCRIPT_URL_ARG | sh -s -- clean
             if [ $? -ne 0 ]; then echo "::error::Default CLEAN failed"; exit 1; fi
             if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
 
@@ -322,15 +322,15 @@ jobs:
             echo "Script URL: $SCRIPT_URL_ARG"
             echo "Custom Password: $CUSTOM_PASSWORD_ARG"
             echo "Expected Nodes: $NUM_NODES_EXPECTED_ARG"
-            curl -fsSL $SCRIPT_URL_ARG | sh -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
+            curl $SCRIPT_URL_ARG | sh -s -- up --nodes $NUM_NODES_EXPECTED_ARG --password "$CUSTOM_PASSWORD_ARG"
             if [ $? -ne 0 ]; then echo "::error::Custom UP failed"; docker compose logs || true; exit 1; fi
 
             echo "Waiting for custom Easysearch ($NUM_NODES_EXPECTED_ARG nodes, max ${CHECK_TIMEOUT_ARG}s)..."
             timeout_seconds=${CHECK_TIMEOUT_ARG}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
             while [ $elapsed -lt $timeout_seconds ]; do
-              health_json=$(curl --retry 3 --retry-delay 3 -s -ku "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cluster/health?format=json")
+              health_json=$(curl -u "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cluster/health?format=json")
               if echo "$health_json" | jq -e '.status == "green"' > /dev/null; then
-                nodes_json=$(curl --retry 3 --retry-delay 3 -s -ku "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cat/nodes?format=json")
+                nodes_json=$(curl -u "admin:$CUSTOM_PASSWORD_ARG" "https://localhost:9200/_cat/nodes?format=json")
                 actual_nodes_in_cluster=$(echo "$nodes_json" | jq 'length')
                 if [ "$actual_nodes_in_cluster" -eq "$NUM_NODES_EXPECTED_ARG" ]; then
                   echo "Custom Easysearch is healthy with $actual_nodes_in_cluster nodes."
@@ -346,7 +346,7 @@ jobs:
             if ! $cluster_ready_and_nodes_verified; then echo "::error::Custom Easysearch did not become healthy with correct node count"; docker compose logs || true; exit 1; fi
 
             echo "Custom run successful. Cleaning up..."
-            curl -fsSL $SCRIPT_URL_ARG | sh -s -- clean
+            curl $SCRIPT_URL_ARG | sh -s -- clean
             if [ $? -ne 0 ]; then echo "::error::Custom CLEAN failed"; exit 1; fi
             if [ -d "./startlocal" ]; then echo "::error::Work dir ./startlocal still exists!"; exit 1; fi
           fi

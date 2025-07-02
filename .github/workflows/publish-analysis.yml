@@ -94,10 +94,10 @@ jobs:
         if: contains(["11","17"],${{inputs.JAVA_VERSION}})
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
-            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            LATEST_VERSION=$(curl $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           else
-            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            LATEST_VERSION=$(curl https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
@@ -125,10 +125,10 @@ jobs:
         if: contains(["21","23"],${{inputs.JAVA_VERSION}})
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
-            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            LATEST_VERSION=$(curl $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           else
-            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            LATEST_VERSION=$(curl https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
@@ -159,7 +159,7 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -207,7 +207,7 @@ jobs:
               echo "Uploading ${zip_file##*/} with path $zip_file..."
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 
@@ -262,10 +262,10 @@ jobs:
       - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
-            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            LATEST_VERSION=$(curl $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           else
-            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            LATEST_VERSION=$(curl https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
@@ -296,7 +296,7 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -344,7 +344,7 @@ jobs:
               echo "Uploading ${zip_file##*/} with path $zip_file..."
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 
@@ -399,10 +399,10 @@ jobs:
       - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
         run: |
           if [[ $TNAME == "elasticsearch" ]] ; then
-            LATEST_VERSION=$(curl -sL $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
+            LATEST_VERSION=$(curl $GITHUB_API_URL/repos/elastic/$TNAME/releases | grep -oE 'tag/v[0-9.]+"' | sed 's/tag\/v//; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           else
-            LATEST_VERSION=$(curl -sL https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
+            LATEST_VERSION=$(curl https://api.github.com/repos/$TNAME-project/openSearch/releases | grep -oE 'tag/[0-9.]+"' | sed 's/tag\///; s/\"//g')
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
           
@@ -437,7 +437,7 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -sLI "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -485,7 +485,7 @@ jobs:
               echo "Uploading ${zip_file##*/} with path $zip_file..."
               oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/stable -f "$zip_file"
               #更新文件缓存
-              sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
+              sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/stable/${zip_file##*/}"
             done
           done <<< "$target_dirs"
 

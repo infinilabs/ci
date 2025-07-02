@@ -119,14 +119,14 @@ jobs:
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
           # download easysearch
-          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          EZS_VER=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
             if [[ "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" == *-* ]]; then
               EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
             fi
           fi
           if [[ "${{ inputs.PUBLISH_RELEASE}}" == "true" ]]; then
-            curl -sL -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
+            curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
           fi
 
           echo "Build coco with $PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
@@ -320,7 +320,7 @@ jobs:
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
           # download easysearch
-          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          EZS_VER=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
             current_version="${BASH_REMATCH[1]}"
             build_number="${BASH_REMATCH[3]}"
@@ -595,7 +595,7 @@ jobs:
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
           # download easysearch
-          EZS_VER=$(curl -sSL $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          EZS_VER=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           if [[ -n "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" ]]; then
             if [[ "${{ inputs.PUBLISH_EASYSEARCH_VERSION }}" == *-* ]]; then
               EZS_VER="${{ inputs.PUBLISH_EASYSEARCH_VERSION }}"
@@ -879,5 +879,5 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Refresh download page on ci success"
-            sleep 5 && curl -sL -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"  
+            sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/server/snapshot/"  
           fi      

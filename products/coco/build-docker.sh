@@ -14,7 +14,7 @@ for t in amd64 arm64; do
   for f in stable snapshot; do
     DOWNLOAD_URL=$RELEASE_URL/$DNAME/$f/$EZS_FILE
     echo "Check $DOWNLOAD_URL"
-    if curl -IL -m 10 -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
+    if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
       echo "Download $EZS_FILE from $DOWNLOAD_URL"
       wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
     fi
