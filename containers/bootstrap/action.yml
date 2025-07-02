@@ -44,35 +44,3 @@ runs:
       shell: bash
       run: |
         $GITHUB_WORKSPACE/scripts/env-init.sh
-
-    - name: Setup by inputs
-      shell: bash
-      run: |
-        set -x
-        if [ -n "${{ inputs.golang }}" ]; then
-          go install golang.org/dl/go@${{ inputs.golang }} && go download go@${{ inputs.golang }}
-        fi
-        if [ -n "${{ inputs.python }}" ]; then
-          pyenv install ${{ inputs.python }} && pyenv global ${{ inputs.python }}
-        fi
-        if [ -n "${{ inputs.nodejs }}" ]; then
-          nvm install ${{ inputs.nodejs }} && nvm use ${{ inputs.nodejs }}
-        fi
-        if [ -n "${{ inputs.java }}" ]; then
-          sdk install java ${{ inputs.java }}
-        fi
-        if [ -n "${{ inputs.rust }}" ]; then
-          rustup install ${{ inputs.rust }} && rustup default ${{ inputs.rust }}
-        fi
-        if [ -n "${{ inputs.gradle }}" ]; then
-          sdk install gradle ${{ inputs.gradle }}
-        fi
-        if [ -n "${{ inputs.maven }}" ]; then
-          sdk install maven ${{ inputs.maven }}
-        fi
-        if [ -n "${{ inputs.pnpm }}" ]; then
-          npm install -g pnpm@${{ inputs.pnpm }}
-        fi
-        if [ -n "${{ inputs.cnpm }}" ]; then
-          npm install -g cnpm@${{ inputs.cnpm }}
-        fi
