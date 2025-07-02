@@ -258,6 +258,7 @@ jobs:
             echo "No $PNAME binary found"
           fi
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+
       - name: Update GitHub release version
         if: ${{ inputs.PUBLISH_RELEASE }}
         env:
@@ -267,6 +268,17 @@ jobs:
             echo "Updating GitHub release version to $VERSION"
             gh variable set PUBLISH_CLOUD_VERSION --body "$VERSION"
           fi
+
+      - name: Deploy cloud to staging k8s
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          #Deploy docker
+          echo "kubectl -n infini set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION" >> /tmp/update_image.sh
+          echo "Deploy $PNAME to k8s staging at $(date +'%m-%d %H:%M:%S')"
+          ssh staging 'bash -s' < /tmp/update_image.sh
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
   notify_on_failure:
     runs-on: ubuntu-latest
