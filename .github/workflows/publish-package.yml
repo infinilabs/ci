@@ -43,7 +43,7 @@ on:
       PUBLISH_BUILD_NUMBER:
         description: 'Publish Package Build Number'
         required: false
-        default: "2323"
+        default: "2374"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
