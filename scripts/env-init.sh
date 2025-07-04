@@ -64,6 +64,7 @@ env_init() {
 		waitretry = 5
 		quiet = on
 	EOF
+    cat ~/.wgetrc && cat ~/.curlrc
     log_success "Global HTTP client settings configured."
 
 
