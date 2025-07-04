@@ -41,7 +41,7 @@ env_init() {
     log_info "🔧 Configuring robust defaults for curl and wget..."
     
     # For curl
-    cat > ~/.curlrc <<-EOF
+    cat <<-EOF | sed 's/^[ \t]*//' >> ~/.curlrc
 		# Automatically added by CI init script
 		location
 		fail
@@ -54,7 +54,7 @@ env_init() {
 	EOF
 
     # For wget
-    cat > ~/.wgetrc <<-EOF
+    cat <<-EOF | sed 's/^[ \t]*//' >> ~/.wgetrc
 		# Automatically added by CI init script
 		no-check-certificate = on
 		connect-timeout = 15
