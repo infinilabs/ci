@@ -119,9 +119,9 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
-          git clone --quiet --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
+          git clone --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           
       - name: Setup ${{ env.PNAME }} go toolchain

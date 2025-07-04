@@ -31,6 +31,12 @@ log_error() {
 env_init() {
     log_info "🚀 Starting one-time environment initialization..."
     
+    log_info "🌳 Setting up git config..."
+    git config --global fetch.progress false
+    git config --global user.name "GitHub Actions"
+    git config --global user.email "ci@github.com"
+    log_success "Git configuration is set."
+
     # --- Configure .curlrc and .wgetrc ---
     log_info "🔧 Configuring robust defaults for curl and wget..."
     
@@ -45,7 +51,7 @@ env_init() {
 		max-time = 90
 		insecure
 		silent
-		EOF
+	EOF
 
     # For wget
     cat > ~/.wgetrc <<-EOF
@@ -57,7 +63,7 @@ env_init() {
 		retry-connrefused = on
 		waitretry = 5
 		quiet = on
-		EOF
+	EOF
     log_success "Global HTTP client settings configured."
 
 

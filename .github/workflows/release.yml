@@ -231,7 +231,7 @@ jobs:
           echo "Publish coco website"
           
           # coco website publish
-          git clone --quiet ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
+          git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
           cd $GITHUB_WORKSPACE/coco-website
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -252,9 +252,9 @@ jobs:
         timeout-minutes: 30
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone --quiet ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
-            git clone --quiet ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
           # Set up git
           cd $GITHUB_WORKSPACE/${{ matrix.product }} && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
@@ -265,9 +265,9 @@ jobs:
         if: ${{ inputs.OPERATION == 'TAG'}}
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone --quiet ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           else
-            git clone --quiet ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           git config user.name github-actions

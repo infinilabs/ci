@@ -106,7 +106,7 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo and set build version
         run: |
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           # for build init
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then

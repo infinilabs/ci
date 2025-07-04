@@ -28,7 +28,7 @@ clone_repo() {
   if [ ! -d "$target_dir" ]; then
     echo "  Cloning $repo_url into $target_dir"
     # 执行克隆，--depth 1 只获取最新提交，加快速度
-    git clone --quiet --depth 1 "$repo_url" "$target_dir" || { echo "  Error: Failed to clone $repo_url"; return 1; }
+    git clone --depth 1 "$repo_url" "$target_dir" || { echo "  Error: Failed to clone $repo_url"; return 1; }
     echo "  Successfully cloned $target_path."
   else
     echo "  Directory $target_dir already exists, skipping clone."

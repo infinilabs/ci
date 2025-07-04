@@ -134,9 +134,9 @@ jobs:
       - name: Checkout ${{ matrix.component }}-${{env.IMAGE_TYPE}} repo
         run: |
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
-            git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+            git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
-            git clone --quiet $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+            git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
 
       - name: Set up qemu for ${{ matrix.component }}-${{env.IMAGE_TYPE}}

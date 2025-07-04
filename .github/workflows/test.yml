@@ -38,11 +38,11 @@ jobs:
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
-      - name: Set up and check env
+      - name: Test wget
         run: |
-          git config --global fetch.progress false
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "ci@github.com"
+          echo "Testing wget..."
+          wget https://www.example.com -O /dev/null
+          echo "wget is working."
 
       - name: Run connect in background
         run: |
@@ -64,22 +64,12 @@ jobs:
       - name: Clone Repository
         run: |
           echo "License repo cloning to $GITHUB_WORKSPACE/license"
-          git clone --quiet git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
+          git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
           cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-          
-          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet --depth 1 git@github.com:infinilabs/pizza $GITHUB_WORKSPACE/pizza
-          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-
-          echo "Pizza repo cloning to $GITHUB_WORKSPACE/pizza"
-          git clone --quiet --depth 1 ssh://git@ssh.github.com:443/infinilabs/pizza $GITHUB_WORKSPACE/pizza-https
-          cd $GITHUB_WORKSPACE/pizza && echo Checkout pizza repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
 
           echo "$PNAME repo cloning to $GITHUB_WORKSPACE/$PNAME"
-          git clone --quiet --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           echo ".............................."
 
