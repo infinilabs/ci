@@ -56,7 +56,7 @@ env_init() {
     # For wget
     cat <<-EOF | sed 's/^[ \t]*//' >> ~/.wgetrc
 		# Automatically added by CI init script
-		no-check-certificate = on
+		check_certificate = off
 		connect-timeout = 15
 		read-timeout = 60
 		tries = 3
