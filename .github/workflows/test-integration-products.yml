@@ -23,7 +23,7 @@ on:
         type: string
         default: '1.13.1'
       NOT_USE_EZS_DOCKER:
-        description: 'Not Use Easysearch Docker'
+        description: 'Easysearch Docker(Not Use)'
         required: false
         type: boolean
         default: false
