@@ -187,6 +187,8 @@ jobs:
                 docker run -d --name easysearch \
                   -p 9200:9200 -p 9300:9300 \
                   -e cluster.name=easysearch \
+                  -e "JAVA_OPTS=-Xms2g -Xmx2g" \
+                  -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   infinilabs/easysearch:$VER
 
