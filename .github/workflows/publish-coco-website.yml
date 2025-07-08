@@ -71,101 +71,68 @@ jobs:
       run: |
         set -e
 
-        DATA_JSON_PATH="public/data.json"
-
+        # --- Part 1: Fetch latest versions ---
         echo "Fetching latest version info..."
-        VERSION_INFO=$(curl -s --fail --max-time 10 https://release.infinilabs.com/.latest)
+        DATA_JSON_PATH="public/data.json"
+        VERSION_INFO=$(curl https://release.infinilabs.com/.latest)
         APP_FULL_VERSION=$(echo "$VERSION_INFO" | jq -r '.["coco-app"]')
         SERVER_FULL_VERSION=$(echo "$VERSION_INFO" | jq -r '.["coco-server"]')
+        echo "App Version: $APP_FULL_VERSION, Server Version: $SERVER_FULL_VERSION"
 
-        echo "App Version: $APP_FULL_VERSION"
-        echo "Server Version: $SERVER_FULL_VERSION"
-
-        # Function to get the creation date of a Git tag (compact version)
-        get_gh_tag_date() {
+        # --- Part 2: Define the optimized function to get release date ---
+        # This function now uses `gh api` exclusively and a single powerful `jq` query.
+        get_release_date() {
           local repo_slug="$1"
-          local full_ver_from_latest="$2"
+          local full_ver="$2"
           
-          # Extract version parts
-          local xyz_part=$(echo "$full_ver_from_latest" | cut -d'-' -f1)
+          # Extract version parts in one go
+          local xyz_part=$(echo "$full_ver" | cut -d'-' -f1)
           local xy_part=$(echo "$xyz_part" | cut -d'.' -f1,2)
           
           # Tags to try, in order of preference
           local tag1="v${xyz_part}"
           local tag2="v${xy_part}.0"
 
-          # Fetch all tags once, then process locally.
-          # Using --paginate fetches all pages automatically.
-          sleep 10
-          local all_tags_json=$(gh api --paginate "/repos/${repo_slug}/tags")
-          sleep 10
-          # Use a single jq command to find the preferred tag and get its commit date
-          local commit_sha=$(echo "$all_tags_json" | jq -r \
+          # Fetch all releases once, then process locally with a single jq command.
+          # This is much more efficient than multiple `curl` calls.
+          local release_date=$(gh api --paginate "/repos/${repo_slug}/releases" | jq -r \
             --arg tag1 "$tag1" --arg tag2 "$tag2" \
-            'map(select(.name == $tag1 or .name == $tag2)) | 
-              sort_by(if .name == $tag1 then 0 else 1 end) | 
-              .[0].commit.sha // empty')
+            '
+              # Find the release matching tag1 or tag2
+              map(select(.tag_name == $tag1 or .tag_name == $tag2)) |
+              # Sort by preference: tag1 comes first
+              sort_by(if .tag_name == $tag1 then 0 else 1 end) |
+              # Get the first matching release and its creation date
+              .[0].created_at |
+              # If a date was found, split and take the YYYY-MM-DD part
+              if . then split("T")[0] else empty end
+            '
+          )
 
-          if [[ -n "$commit_sha" ]]; then
-            # Get the commit date from the commit SHA
-            gh api "/repos/${repo_slug}/commits/${commit_sha}" --jq '.commit.committer.date | split("T")[0]'
+          # If no release was found, fall back to the current date
+          if [[ -z "$release_date" ]]; then
+            echo "$(date +%Y-%m-%d)"
           else
-            date +%Y-%m-%d
+            echo "$release_date"
           fi
         }
 
-        # Get dates using the compact function
-        APP_DATE=$(get_gh_tag_date "infinilabs/coco-app" "$APP_FULL_VERSION")
-        SERVER_DATE=$(get_gh_tag_date "infinilabs/coco-server" "$SERVER_FULL_VERSION")
-        get_gh_publish_date() {
-          local repo_slug="$1"  # e.g., infinilabs/coco-app
-          local full_ver_from_latest="$2"   # e.g., 0.5.3-2323 (this is the version string from .latest)
-          local date_val
+        # --- Part 3: Execute and update data.json ---
+        echo "Fetching release dates..."
+        APP_DATE=$(get_release_date "infinilabs/coco-app" "$APP_FULL_VERSION")
+        SERVER_DATE=$(get_release_date "infinilabs/coco-server" "$SERVER_FULL_VERSION")
+        echo "App Publish Date: $APP_DATE, Server Publish Date: $SERVER_DATE"
 
-          # Extract X.Y.Z part from the full version string
-          local xyz_part=$(echo "$full_ver_from_latest" | cut -d'-' -f1) # e.g., 0.5.3
-
-          # Construct the X.Y.0 part
-          local xy_part=$(echo "$xyz_part" | cut -d'.' -f1,2) # e.g., 0.5
-          local xyz_zero_patch_part="${xy_part}.0"            # e.g., 0.5.0
-
-          local tag_attempt1="v${xyz_part}"                   # Primary attempt, e.g., v0.5.3
-          local tag_attempt2="v${xyz_zero_patch_part}"        # Fallback, e.g., v0.5.0
-
-          sleep 10
-          # Attempt 1: X.Y.Z version tag (e.g., v0.5.3)
-          date_val=$(curl "https://api.github.com/repos/${repo_slug}/releases/tags/${tag_attempt1}" | \
-            jq -r '.created_at | split("T")[0 // empty]' 2>/dev/null)
-          sleep 10
-          # Attempt 2: X.Y.0 version tag (e.g., v0.5.0)
-          if [[ -z "$date_val" || "$date_val" == "null" ]]; then
-            date_val=$(curl "https://api.github.com/repos/${repo_slug}/releases/tags/${tag_attempt2}" | \
-              jq -r '.created_at | split("T")[0 // empty]' 2>/dev/null)
-          fi
-          
-          # Final fallback to current date
-          if [[ -z "$date_val" || "$date_val" == "null" ]]; then
-            date_val=$(date +%Y-%m-%d)
-          fi
-          echo "$date_val"
-        }
-
-        APP_PUBLISH_DATE=$(get_gh_publish_date "infinilabs/coco-app" "$APP_FULL_VERSION")
-        SERVER_PUBLISH_DATE=$(get_gh_publish_date "infinilabs/coco-server" "$SERVER_FULL_VERSION")
-
-        echo "App Date: $APP_DATE"
-        echo "Server Date: $SERVER_DATE"
-
-        # Update the data.json file using jq
+        # Update the data.json file using jq in a single, clean step
         jq \
           --arg app_ver "$APP_FULL_VERSION" \
           --arg server_ver "$SERVER_FULL_VERSION" \
           --arg app_date "$APP_DATE" \
           --arg server_date "$SERVER_DATE" \
           '.app = $app_ver | .server = $server_ver | .app_publish = $app_date | .server_publish = $server_date' \
-          "$DATA_JSON_PATH" > tmp_data.json && mv tmp_data.json "$DATA_JSON_PATH"
+          "$DATA_JSON_PATH" > tmp.json && mv tmp.json "$DATA_JSON_PATH"
 
-        echo -e "Updated $DATA_JSON_PATH\n"
+        echo -e "\nUpdated $DATA_JSON_PATH:"
         cat "$DATA_JSON_PATH"
 
     - name: Restore cache
@@ -195,15 +162,11 @@ jobs:
       working-directory: ${{ env.PNAME }}
       run: touch docs/.nojekyll
 
-    - name: Check export directory
-      working-directory: ${{ env.PNAME }}
-      run: ls -la ./docs
-
     - name: Create zip archive
       working-directory: ${{ env.PNAME }}
       run: |
-        ( cd docs && zip -r ../$PANME.zip . )
-        ls -l $PANME.zip
+        ( cd docs && zip -qr ../$PNAME.zip . )
+        ls -l $PNAME.zip
     
     - name: Run connect in background for ${{env.PNAME}}
       run: |
