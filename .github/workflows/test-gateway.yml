@@ -134,4 +134,28 @@ jobs:
           OFFLINE_BUILD=true GOMODULE=false make build
         done
 
-        #TODO: 通过容器来来启动 Easysearch 避免从站点下载
+    - name: Check compiled products
+      run: |
+        echo Check compiled products
+        for p in gateway loadgen; do
+          cd $WORK/$p && ls -al $WORK/$p/bin && echo "PATH=$WORK/$p/bin/bin:\$PATH" >> $GITHUB_ENV
+        done
+
+    - name: Run easysearch docker
+      run: |
+        VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+        echo "The latest easysearch version is $VER"
+        if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+          if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+            VER=$EZS_VERSION
+          else
+            echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+          fi
+        fi
+        echo "Using easysearch docker image with $VER ..."
+        docker pull infinilabs/easysearch:$VER
+        docker run -d --name easysearch \
+          -p 9200:9200 -p 9300:9300 \
+          -e cluster.name=easysearch \
+          -v $HOME/easysearch/logs:/app/easysearch/logs \
+          infinilabs/easysearch:$VER

@@ -22,6 +22,11 @@ on:
         required: false
         type: string
         default: '1.13.1'
+      NOT_USE_EZS_DOCKER:
+        description: 'Not Use Easysearch Docker'
+        required: false
+        type: boolean
+        default: false
       PRODUCT_VERSION:
         description: 'Products Version'
         required: false
@@ -144,6 +149,7 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
+              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -163,6 +169,26 @@ jobs:
                 echo "Start easysearch at $HOME/easysearch ..."
                 # Run easysearch
                 bin/easysearch -d
+
+            - name: Run easysearch docker
+              if: ${{ inputs.NOT_USE_EZS_DOCKER }}
+              run: |
+                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                echo "The latest easysearch version is $VER"
+                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
+                fi
+                echo "Using easysearch docker image with $VER ..."
+                docker pull infinilabs/easysearch:$VER
+                docker run -d --name easysearch \
+                  -p 9200:9200 -p 9300:9300 \
+                  -e cluster.name=easysearch \
+                  -v $HOME/easysearch/logs:/app/easysearch/logs \
+                  infinilabs/easysearch:$VER
 
             - name: Compile products code
               run: |
