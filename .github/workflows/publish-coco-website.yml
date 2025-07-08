@@ -54,7 +54,7 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
-        package_json_file: "$PNAME/package.json"
+        package_json_file: "${{ env.PNAME }}/package.json"
 
     - name: Setup Node
       uses: actions/setup-node@v4
