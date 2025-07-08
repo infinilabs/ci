@@ -42,6 +42,11 @@ on:
         required: false
         type: boolean
         default: true
+      ONLY_DEPLOY_CONSOLE:
+        description: 'Only Deploy Console'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   generate-matrix:
@@ -63,6 +68,10 @@ jobs:
               done
             fi
             if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
+              # Only deploy console if the input is true
+              if [[ "${{ inputs.ONLY_DEPLOY_CONSOLE }}" == "true" ]]; then
+                targets=("linux-amd64")
+              fi
               for target in "${targets[@]}"; do
                 matrix_includes+=('{"product": "console", "target": "'"$target"'" }')
               done
@@ -79,7 +88,6 @@ jobs:
               done
             fi
           else
-            # 非手动触发：构建所有 product 和 target
             for product in "${products[@]}"; do
               for target in "${targets[@]}"; do
                 matrix_includes+=('{"product": "'"$product"'", "target": "'"$target"'" }')
@@ -263,6 +271,7 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} files
+        if: ${{ inputs.ONLY_DEPLOY_CONSOLE != true }}
         run: | 
           cd $WORK
           IFS='-' read -r p1 p2 <<< "${{ matrix.target }}"
