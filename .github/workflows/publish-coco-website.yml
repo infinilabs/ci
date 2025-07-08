@@ -165,8 +165,8 @@ jobs:
     - name: Create zip archive
       working-directory: ${{ env.PNAME }}
       run: |
+        pwd
         ( cd docs && zip -qr ../$PNAME.zip . )
-        ls -l $PNAME.zip
     
     - name: Run connect in background for ${{env.PNAME}}
       run: |
@@ -179,9 +179,9 @@ jobs:
       continue-on-error: true
       working-directory: ${{ env.PNAME }}
       run: |
-        if [[ -f $GITHUB_WORKSPACE/$PNAME.zip ]]; then
-          echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-          scp -r $GITHUB_WORKSPACE/$PNAME.zip staging:/infini/demo-environment/$PNAME.zip
+        if [[ -f $PNAME.zip ]]; then
+          echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
+          scp -r $PNAME.zip staging:/opt
           echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
           ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
         else
