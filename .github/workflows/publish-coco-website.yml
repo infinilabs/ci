@@ -5,7 +5,7 @@ defaults:
 env:
   TZ: Asia/Shanghai
   PNAME: coco-website
-  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
 
 on:
   workflow_dispatch:
