@@ -14,7 +14,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   publish:
@@ -54,7 +54,7 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
-        package_json_file: "package.json"
+        package_json_file: "$PNAME/package.json"
 
     - name: Setup Node
       uses: actions/setup-node@v4
