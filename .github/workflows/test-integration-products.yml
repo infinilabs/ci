@@ -149,7 +149,7 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
-              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
+              if: ${{ inputs.NOT_USE_EZS_DOCKER }}
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -171,7 +171,7 @@ jobs:
                 bin/easysearch -d
 
             - name: Run easysearch docker
-              if: ${{ inputs.NOT_USE_EZS_DOCKER }}
+              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
               run: |
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
