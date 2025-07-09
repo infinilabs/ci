@@ -213,7 +213,7 @@ EOF
           sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
           if [ $? -ne 0 ]; then log "ERROR: Failed to update metrics queue in ingest config."; return 1; fi
         else
-          log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
+          [ -n "$ALLOW_GENERATED_METRICS_TASKS" ] && log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
         fi
         
         # Create keystore initialized marker
