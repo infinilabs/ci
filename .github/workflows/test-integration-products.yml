@@ -170,30 +170,6 @@ jobs:
                 # Run easysearch
                 bin/easysearch -d
 
-            - name: Run easysearch docker
-              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
-              run: |
-                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
-                echo "The latest easysearch version is $VER"
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
-                    VER=$EZS_VERSION
-                  else
-                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
-                  fi
-                fi
-                echo "Using easysearch docker image with $VER ..."
-                docker pull infinilabs/easysearch:$VER
-                docker run -d --name easysearch \
-                  -p 9200:9200 -p 9300:9300 \
-                  -e cluster.name=easysearch \
-                  -e "JAVA_OPTS=-Xms2g -Xmx2g" \
-                  -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
-                  -e METRICS_WITH_AGENT=true \
-                  -e METRICS_CONFIG_SERVER=http://host.docker.internal:9000 \
-                  -v $HOME/easysearch/logs:/app/easysearch/logs \
-                  infinilabs/easysearch:$VER
-
             - name: Compile products code
               run: |
                 mkdir -p $WORKBASE
@@ -254,7 +230,31 @@ jobs:
 
                 echo Running integration test at $PWD ...
                 exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
-
+            
+            - name: Run easysearch docker
+              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
+              run: |
+                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                echo "The latest easysearch version is $VER"
+                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                  fi
+                fi
+                echo "Using easysearch docker image with $VER ..."
+                docker pull infinilabs/easysearch:$VER
+                docker run -d --name easysearch \
+                  -p 9200:9200 -p 9300:9300 \
+                  -e cluster.name=easysearch \
+                  -e "JAVA_OPTS=-Xms2g -Xmx2g" \
+                  -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
+                  -e METRICS_WITH_AGENT=true \
+                  -e METRICS_CONFIG_SERVER=http://host.docker.internal:9000 \
+                  -v $HOME/easysearch/logs:/app/easysearch/logs \
+                  infinilabs/easysearch:$VER
+                  
             - name: Run loadgen api test for console initialize
               run: |
                 export PRODUCT=loadgen
