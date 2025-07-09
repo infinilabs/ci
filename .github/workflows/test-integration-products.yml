@@ -209,24 +209,6 @@ jobs:
                 cp -rf $WORK/$PRODUCT/config/*.tpl $WORK/$PRODUCT/bin/config
                 [ -d $WORK/$PRODUCT/config/setup ] && cp -rf $WORK/$PRODUCT/config/setup $WORK/$PRODUCT/bin/config
                 ls -lrt $WORK/$PRODUCT/bin
-                
-            - name: Run easysearch test
-              timeout-minutes: 5
-              run: |
-                echo "Running integration test at $PWD ..."
-                tail -n 100 "$HOME/easysearch/logs/easysearch.log"
-
-                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
-                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
-                PORT=${PORT:-443}
-
-                while ! nc -z "$HOST" "$PORT"; do
-                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
-                  sleep 5
-                done
-
-                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
-
 
             - name: Run console test
               run: |
@@ -265,6 +247,23 @@ jobs:
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   infinilabs/easysearch:$VER
 
+            - name: Run easysearch test
+              timeout-minutes: 5
+              run: |
+                echo "Running integration test at $PWD ..."
+                tail -n 100 "$HOME/easysearch/logs/easysearch.log"
+
+                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
+                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
+                PORT=${PORT:-443}
+
+                while ! nc -z "$HOST" "$PORT"; do
+                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
+                  sleep 5
+                done
+
+                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
+                
             - name: Run loadgen api test for console initialize
               run: |
                 export PRODUCT=loadgen
