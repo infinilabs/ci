@@ -140,7 +140,6 @@ setup_agent() {
   }" agent.yml # agent.yml is relative to $AGENT_DIR
   if [ $? -ne 0 ]; then log "ERROR: Failed to update agent.yml servers list."; return 1; fi
 
-
   # --- Multi-tenant mode configuration ---
   if [ -n "${TENANT_ID}" ] && [ -n "${CLUSTER_ID}" ]; then
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
@@ -151,7 +150,7 @@ setup_agent() {
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
     if ! grep -q "node:" agent.yml; then # agent.yml relative to $AGENT_DIR
-      if [ "$ALLOW_GENERATED_METRICS_TASKS" == "true" ]; then
+      if [ -n "$ALLOW_GENERATED_METRICS_TASKS" ]; then
         GENERATED_METRICS_TASKS=true
         sed -i "s/managed:.*/managed: false/g" agent.yml
         log "Adding node configuration and disable remote config manage with agent.yml."
@@ -181,7 +180,7 @@ EOF
       log "Agent keystore initialization marker not found. Starting keystore setup."
       if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
         # Execute agent commands relative to current directory ($AGENT_DIR)
-        if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]
+        if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]; then
           log "Adding agent_user to keystore."
           echo "infini_agent" | ./agent keystore add --stdin agent_user
           if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
@@ -223,7 +222,6 @@ EOF
     else
       log "Agent keystore initialization marker found. Skipping keystore setup."
     fi
-
   fi
 
   # Ensure agent directory is owned by ezs after all root operations
