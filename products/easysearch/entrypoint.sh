@@ -75,6 +75,7 @@ perform_initial_setup() {
 setup_agent() {
   log "Agent setup process requested."
   AGENT_DIR="$DATA_DIR/agent"
+  INGEST_CONFIG="$AGENT_DIR/config/system_ingest_config.yml"
 
   # Ensure agent directory exists and has correct permissions (Consider if this should also be part of initial setup)
   # If agent files are part of the initial artifact, this check might be less critical on every start.
@@ -157,6 +158,9 @@ setup_agent() {
       else
         GENERATED_METRICS_TASKS=false
         sed -i "s/managed:.*/managed: true/g" agent.yml
+        if grep -q "#MANAGED: false" $INGEST_CONFIG; then
+          rm -rf $INGEST_CONFIG
+        fi
         log "Adding node configuration and enable remote config manage with agent.yml."
       fi
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
@@ -196,9 +200,8 @@ EOF
 
         SCHEMA=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $1}')
         ADDRESS=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $2}')
-        if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ]; then
+        if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ] && [ -n "$ALLOW_GENERATED_METRICS_TASKS" ]; then
           log "Updating system ingest config based on endpoint."
-          INGEST_CONFIG="$AGENT_DIR/config/system_ingest_config.yml"
           # Use sed carefully, ensure patterns match and replacements are correct
           # Using regex anchors ^ and $ to match the whole line for replacement is safer
           sed -i "s/^  schema: https$/  schema: $SCHEMA/;s/^  address: 127.0.0.1:9200$/  address: $ADDRESS/" "$INGEST_CONFIG"
