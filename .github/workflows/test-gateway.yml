@@ -143,6 +143,7 @@ jobs:
 
     - name: Run easysearch docker
       run: |
+        pwd && whoami
         VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
         echo "The latest easysearch version is $VER"
         if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then

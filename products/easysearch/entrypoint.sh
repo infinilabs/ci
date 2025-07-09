@@ -151,12 +151,19 @@ setup_agent() {
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
     if ! grep -q "node:" agent.yml; then # agent.yml relative to $AGENT_DIR
-      log "Adding node configuration and disable remote config manage with agent.yml."
-      sed -i "/managed: true/managed: false/g" agent.yml # Ensure managed is false
+      if [ "$ALLOW_GENERATED_METRICS_TASKS" == "true" ]; then
+        GENERATED_METRICS_TASKS=true
+        sed -i "s/managed:.*/managed: false/g" agent.yml
+        log "Adding node configuration and disable remote config manage with agent.yml."
+      else
+        GENERATED_METRICS_TASKS=false
+        sed -i "s/managed:.*/managed: true/g" agent.yml
+        log "Adding node configuration and enable remote config manage with agent.yml."
+      fi
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       cat <<-EOF >> agent.yml
   always_register_after_restart: true
-  allow_generated_metrics_tasks: true
+  allow_generated_metrics_tasks: $GENERATED_METRICS_TASKS
 node:
   major_ip_pattern: ".*"
   labels:

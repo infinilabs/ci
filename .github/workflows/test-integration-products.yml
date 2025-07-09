@@ -189,6 +189,8 @@ jobs:
                   -e cluster.name=easysearch \
                   -e "JAVA_OPTS=-Xms2g -Xmx2g" \
                   -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
+                  -e METRICS_WITH_AGENT=true \
+                  -e METRICS_CONFIG_SERVER=http://host.docker.internal:9000 \
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   infinilabs/easysearch:$VER
 
