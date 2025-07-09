@@ -42,6 +42,11 @@ on:
         required: false
         type: boolean
         default: true
+      DEBUG_LOG:
+        description: 'Debug Log Mode'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
     compile-test:
@@ -229,7 +234,12 @@ jobs:
                 cd $WORK/$PRODUCT/bin
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
             
             - name: Run easysearch docker
               if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
@@ -254,7 +264,7 @@ jobs:
                   -e METRICS_CONFIG_SERVER=http://host.docker.internal:9000 \
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   infinilabs/easysearch:$VER
-                  
+
             - name: Run loadgen api test for console initialize
               run: |
                 export PRODUCT=loadgen
@@ -262,7 +272,12 @@ jobs:
 
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/data/loadgen_yml $WORK/$PRODUCT/bin/$PRODUCT-api.yml
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/data/*.dsl $WORK/$PRODUCT/bin
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
+                
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
 
             - name: Run agent test
               run: |
@@ -271,7 +286,12 @@ jobs:
                 mkdir -p $WORK/$PRODUCT/bin/config
                 sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
 
             - name: Run gateway test
               run: |
@@ -282,7 +302,12 @@ jobs:
                 sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
 
             - name: Run loadgen test for gateway
               run: |
@@ -304,7 +329,11 @@ jobs:
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
 
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
 
             - name: Run loadgen api test for metrics search
               run: |
@@ -313,7 +342,13 @@ jobs:
 
                 # wait agent collect metrics
                 for i in $(seq 60); do sleep 1 && printf .; done; echo
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+                
                 # wait agent collect metrics
                 for i in $(seq 60); do sleep 1 && printf .; done; echo
                 echo "Check metrics count and search metrics"
@@ -529,7 +564,12 @@ jobs:
                 cd $WORK/$PRODUCT/bin
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
 
             - name: Run loadgen api test for console initialize
               run: |
@@ -538,7 +578,12 @@ jobs:
 
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/data/loadgen_yml $WORK/$PRODUCT/bin/$PRODUCT-api.yml
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/data/*.dsl $WORK/$PRODUCT/bin
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
+
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run console-initialize.dsl
 
             - name: Run agent test
               run: |
@@ -547,7 +592,12 @@ jobs:
                 mkdir -p $WORK/$PRODUCT/bin/config
                 sed -i "s/2900/2920/g" $WORK/$PRODUCT/bin/$PRODUCT.yml
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
 
             - name: Run gateway test
               run: |
@@ -558,7 +608,12 @@ jobs:
                 sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$ES_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
 
                 echo Running integration test at $PWD ...
-                exec $WORK/$PRODUCT/bin/$PRODUCT -log info &
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  LOG_LEVEL=debug
+                else
+                  LOG_LEVEL=info
+                fi
+                exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
 
             - name: Run loadgen test for gateway
               run: |
@@ -580,7 +635,11 @@ jobs:
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
 
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
 
             - name: Run loadgen api test for metrics search
               run: |
@@ -589,7 +648,13 @@ jobs:
 
                 # wait agent collect metrics
                 for i in $(seq 60); do sleep 1 && printf .; done; echo
-                $WORK/$PRODUCT/bin/$PRODUCT -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+
+                RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
+                if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
+                  RUN_CMD="$RUN_CMD -debug"
+                fi
+                $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run metrics-search.dsl
+                
                 # wait agent collect metrics
                 for i in $(seq 60); do sleep 1 && printf .; done; echo
                 echo "Check metrics count and search metrics"
