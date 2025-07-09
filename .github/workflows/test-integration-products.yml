@@ -251,6 +251,7 @@ jobs:
               timeout-minutes: 5
               run: |
                 echo "Running integration test at $PWD ..."
+                sudo chmod -R 777 "$HOME/easysearch/logs" && ls -al "$HOME/easysearch/logs"
                 tail -n 100 "$HOME/easysearch/logs/easysearch.log"
 
                 HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
