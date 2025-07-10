@@ -158,9 +158,7 @@ setup_agent() {
       else
         GENERATED_METRICS_TASKS=false
         sed -i "s/managed:.*/managed: true/g" agent.yml
-        if grep -q "#MANAGED: false" $INGEST_CONFIG; then
-          rm -rf $INGEST_CONFIG
-        fi
+        [ -e $INGEST_CONFIG ] && rm -rf $INGEST_CONFIG
         log "Adding node configuration and enable remote config manage with agent.yml."
       fi
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
