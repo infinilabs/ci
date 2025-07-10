@@ -244,9 +244,10 @@ jobs:
                   -e "JAVA_OPTS=-Xms2g -Xmx2g" \
                   -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
                   -e METRICS_WITH_AGENT=true \
-                  -e METRICS_CONFIG_SERVER=http://host.docker.internal:9000 \
+                  -e METRICS_CONFIG_SERVER=http://127.0.0.1:9000 \
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   -v $HOME/easysearch/data:/app/easysearch/data \
+                  --network host \
                   infinilabs/easysearch:$VER
                 # Wait for easysearch to start
                 sleep 60
