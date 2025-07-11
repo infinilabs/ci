@@ -172,6 +172,14 @@ setup_agent() {
         log "Adding node configuration and enable remote config manage with agent.yml."
       fi
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
+      if [ -n "$CONFIG_SERVER_TOKEN" ]; then
+        cat <<-EOF >> agent.yml
+  manager:
+    basic_auth: 
+      username: "$CLUSTER_ID"
+      password: "$CONFIG_SERVER_TOKEN"
+EOF
+      fi
       cat <<-EOF >> agent.yml
   always_register_after_restart: true
   allow_generated_metrics_tasks: $GENERATED_METRICS_TASKS
@@ -229,7 +237,7 @@ EOF
   fi
 
   if [ ! -f "$AGENT_START_SCRIPT" ]; then
-    log "Copying agent start script from /app/tpl/*.sh to $AGENT_DIR."
+    log "Copying agent start script to $AGENT_DIR."
     cp -rf /app/tpl/*.sh "$AGENT_DIR"
   fi
 
@@ -292,7 +300,7 @@ start_supervisor_if_agent_enabled() {
 
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
-      log "Agent supervisor config '$AGENT_SUPERVISOR_CONFIG' found. Supervisor is enabled to manage the agent."
+      log "Supervisor is enabled to manage the agent."
       # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
         log "Supervisord process not running. Starting supervisord..."
