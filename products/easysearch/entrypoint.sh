@@ -42,7 +42,7 @@ execute_core_initial_script() {
 # This function now incorporates the check for /app/easysearch/data being empty.
 # This function is called only when the *primary* initialization marker is not found.
 perform_initial_setup() {
-  log "Initialization marker '$INITIALIZED_MARKER' not found. Determining setup action..."
+  log "Initialization marker not found. Determining setup action..."
 
   # --- Check if the data directory is empty or not ---
   if [ -z "$(ls -A "$DATA_DIR")" ]; then # Use $DATA_DIR and quotes for safety
@@ -52,7 +52,7 @@ perform_initial_setup() {
       log "Core initialization script completed successfully."
       # --- Create the initialization marker file after successful execution ---
       touch "$INITIALIZED_MARKER"
-      log "Initialization marker '$INITIALIZED_MARKER' created."
+      log "Initialization marker created."
       return 0
     else
       # If core script fails when /data is empty
@@ -61,11 +61,11 @@ perform_initial_setup() {
     fi
   else
     # The case where $DATA_DIR is not empty but the marker file is not found
-    log "$DATA_DIR directory is NOT empty, but initialization marker '$INITIALIZED_MARKER' was NOT found."
+    log "$DATA_DIR directory is NOT empty, but initialization marker was NOT found."
     log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
     touch "$INITIALIZED_MARKER"
     if [ $? -eq 0 ]; then
-      log "Initialization marker '$INITIALIZED_MARKER' created."
+      log "Initialization marker created."
       return 0 # Indicate setup assumed complete, continue with the rest of the script
       # No need to exit 1 here, as we are assuming it's a valid state.
     else
@@ -185,7 +185,7 @@ EOF
     fi
   
     # Initialize agent keystore and adjust yml/tpl files (runs only once based on marker)
-    log "Checking agent keystore initialization marker '$AGENT_KEYSTORE_MARKER'."
+    log "Checking agent keystore initialization marker."
     if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
       log "Agent keystore initialization marker not found. Starting keystore setup."
       if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
@@ -195,7 +195,7 @@ EOF
           echo "infini_agent" | ./agent keystore add --stdin agent_user
           if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
           log "Adding agent_passwd to keystore."
-          echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd
+          echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd > /dev/null
           if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
         fi
         
@@ -329,7 +329,7 @@ trap "exit 0" SIGINT SIGTERM
 log "Checking for initial setup marker."
 if [ ! -f "$INITIALIZED_MARKER" ]; then
   # If marker not found, determine if it's a clean start or non-clean start
-  log "Initialization marker '$INITIALIZED_MARKER' not found."
+  log "Initialization marker not found."
   
   if [ -z "$(ls -A "$DATA_DIR")" ]; then
     log "$DATA_DIR directory is empty. Proceeding with initial setup process."
@@ -339,13 +339,13 @@ if [ ! -f "$INITIALIZED_MARKER" ]; then
       exit 1
     fi
   else
-    log "$DATA_DIR directory is NOT empty, but initialization marker '$INITIALIZED_MARKER' was NOT found."
+    log "$DATA_DIR directory is NOT empty, but initialization marker was NOT found."
     # In this non-clean start scenario, assume initialization was done previously and create the marker.
     # This prevents re-running the core script if data already exists.
     log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
     touch "$INITIALIZED_MARKER"
     if [ $? -eq 0 ]; then
-      log "Initialization marker '$INITIALIZED_MARKER' created."
+      log "Initialization marker created."
       # Continue with the rest of the script, assuming setup is complete.
     else
        log "ERROR: Failed to create initialization marker when $DATA_DIR was not empty! Entrypoint will exit."
@@ -354,7 +354,7 @@ if [ ! -f "$INITIALIZED_MARKER" ]; then
   fi
 else
   # If marker is found, skip the entire initial setup process.
-  log "Initialization marker '$INITIALIZED_MARKER' found. Skipping initial setup."
+  log "Initialization marker found. Skipping initial setup."
 fi
 
 
