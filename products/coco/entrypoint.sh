@@ -40,7 +40,7 @@ setup_coco() {
     chown -R ezs:ezs $WORK_DIR
     log "Added ES_PASSWORD to keystore and changed ownership."
   else
-    log "Keystore is already for Coco."
+    log "Keystore is already for coco."
   fi
   
   if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] ; then
@@ -55,17 +55,19 @@ setup_coco() {
 # --- Root-only functions ---
 
 setup_supervisor() {
-  if [ ! -f /etc/supervisor/conf.d/coco.conf ]; then
-    mkdir -p /etc/supervisor/conf.d
-    echo_supervisord_conf > /etc/supervisor/supervisord.conf
-    sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = /etc/supervisor/conf.d/*.conf|' /etc/supervisor/supervisord.conf
-    cat /app/tpl/coco.conf > /etc/supervisor/conf.d/coco.conf
-    log "Created Supervisor configuration for Coco at /etc/supervisor/conf.d/coco.conf"
+  if [ ! -f $COCO_DIR/supervisor/conf.d/coco.conf ]; then
+    mkdir -p $COCO_DIR/supervisor/conf.d
+    echo_supervisord_conf > $COCO_DIR/supervisor/supervisord.conf
+    # Set the user and enable includes
+    sed -i "/\[supervisord\]/a user = root" $COCO_DIR/supervisor/supervisord.conf
+    sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = conf.d/*.conf|' $COCO_DIR/supervisor/supervisord.conf
+    cat /app/tpl/coco.conf > $COCO_DIR/supervisor/conf.d/coco.conf
+    log "Created Supervisor configuration for Coco at $COCO_DIR/supervisor/conf.d/coco.conf"
   fi
 
   if ! supervisorctl status > /dev/null 2>&1; then
     log "Starting Supervisor..."
-    /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    /usr/bin/supervisord -c $COCO_DIR/supervisor/supervisord.conf
     log "Supervisor started successfully."
   fi
 

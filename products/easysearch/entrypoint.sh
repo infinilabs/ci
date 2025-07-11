@@ -17,7 +17,7 @@ CFG_DIR="$APP_DIR/config"
 AGENT_DIR="$DATA_DIR/agent"
 AGENT_START_SCRIPT="$AGENT_DIR/start-agent.sh"
 INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
-AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
+AGENT_SUPERVISOR_CONFIG="$AGENT_DIR/supervisor/conf.d/agent.conf"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
 AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
@@ -173,6 +173,7 @@ setup_agent() {
       fi
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       if [ -n "$CONFIG_SERVER_TOKEN" ]; then
+        sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
         cat <<-EOF >> agent.yml
   manager:
     basic_auth: 
@@ -259,16 +260,17 @@ EOF
 
      log "Setting up supervisor config for agent at $AGENT_SUPERVISOR_CONFIG."
      # Ensure supervisor directory exists
-     mkdir -p /etc/supervisor/conf.d
+     mkdir -p $AGENT_DIR/supervisor/conf.d
      if [ $? -ne 0 ]; then log "ERROR: Failed to create supervisor config directory."; return 1; fi
 
      # Generate default supervisord config if it doesn't exist (only needed once globally for supervisor)
-     if [ ! -f /etc/supervisor/supervisord.conf ]; then
-       log "Supervisord main config /etc/supervisor/supervisord.conf not found. Generating default."
-       echo_supervisord_conf > /etc/supervisor/supervisord.conf
+     if [ ! -f $AGENT_DIR/supervisor/supervisord.conf ]; then
+       log "Supervisord main config $AGENT_DIR/supervisor/supervisord.conf not found. Generating default."
+       echo_supervisord_conf > $AGENT_DIR/supervisor/supervisord.conf
        if [ $? -ne 0 ]; then log "ERROR: Failed to generate supervisord.conf."; return 1; fi
-       # Enable includes in supervisord.conf
-       sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = /etc/supervisor/conf.d/*.conf|' /etc/supervisor/supervisord.conf
+       # Set the user and enable includes
+       sed -i "/\[supervisord\]/a user = root" $COCO_DIR/supervisor/supervisord.conf
+       sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = $AGENT_DIR/supervisor/conf.d/*.conf|' $AGENT_DIR/supervisor/supervisord.conf
        if [ $? -ne 0 ]; then log "ERROR: Failed to set up supervisord.conf includes."; return 1; fi
        log "Supervisord main config setup complete."
      fi
@@ -304,11 +306,11 @@ start_supervisor_if_agent_enabled() {
       # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
         log "Supervisord process not running. Starting supervisord..."
-        # Need to start supervisord as ezs user. Its config /etc/supervisor/supervisord.conf must be readable by ezs.
+        # Need to start supervisord as ezs user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by ezs.
         # The agent.conf should be readable by ezs.
         # The logs dir for supervisord should be writable by ezs.
         # Assuming necessary permissions are set by the Dockerfile or the root setup_agent phase.
-        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
+        /usr/bin/supervisord -c $AGENT_DIR/supervisor/supervisord.conf &
         # Wait a moment for supervisord to start and read configs
         # log "Waiting 1 second for supervisord to start..." # Uncomment if needed
         sleep 1
