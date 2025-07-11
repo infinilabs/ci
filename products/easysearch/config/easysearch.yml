@@ -3,7 +3,7 @@ node.name: node-1
 network.host: 0.0.0.0
 http.port: 9200
 transport.port: 9300
-bootstrap.memory_lock: true
+bootstrap.memory_lock: false
 bootstrap.system_call_filter: false
 
 cluster.initial_master_nodes: ["node-1"]
