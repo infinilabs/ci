@@ -31,6 +31,10 @@ setup_coco() {
   done
 
   cd $COCO_DIR
+  if [ ! -f ./start-coco.sh ]; then
+    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
+  fi
+  
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD >/dev/null
     chown -R ezs:ezs $WORK_DIR
@@ -56,13 +60,13 @@ setup_supervisor() {
     echo_supervisord_conf > /etc/supervisor/supervisord.conf
     sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = /etc/supervisor/conf.d/*.conf|' /etc/supervisor/supervisord.conf
     cat /app/tpl/coco.conf > /etc/supervisor/conf.d/coco.conf
-    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
-    log "Created Supervisor configuration and start script for coco."
+    log "Created Supervisor configuration for Coco at /etc/supervisor/conf.d/coco.conf"
   fi
 
   if ! supervisorctl status > /dev/null 2>&1; then
     log "Starting Supervisor..."
     /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    log "Supervisor started successfully."
   fi
 
   return 0

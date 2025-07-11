@@ -15,12 +15,13 @@ DATA_DIR="$APP_DIR/data"
 LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
 AGENT_DIR="$DATA_DIR/agent"
+AGENT_START_SCRIPT="$AGENT_DIR/start-agent.sh"
 INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
 AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
 AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
-AGENT_SUPERVISOR_MARKER="/etc/supervisor/conf.d/.agent_supervisor_configured"
+AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_configured"
 
 # Ensure data directory exists, even if mount is empty
 log "Ensuring data directory exists: $DATA_DIR"
@@ -227,6 +228,11 @@ EOF
     fi
   fi
 
+  if [ ! -f "$AGENT_START_SCRIPT" ]; then
+    log "Copying agent start script from /app/tpl/*.sh to $AGENT_DIR."
+    cp -rf /app/tpl/*.sh "$AGENT_DIR"
+  fi
+
   # Ensure agent directory is owned by ezs after all root operations
   log "Ensuring final agent directory ownership is ezs:ezs."
   # Use absolute path for robustness.
@@ -260,10 +266,9 @@ EOF
      fi
      
      # Copy agent supervisor config and start shell
-     log "Copying agent supervisor config template from /app/tpl/agent.conf to $AGENT_SUPERVISOR_CONFIG."
+     log "Copying agent supervisor config template to $AGENT_SUPERVISOR_CONFIG."
      cat /app/tpl/agent.conf > "$AGENT_SUPERVISOR_CONFIG"
-     log "Copying agent supervisor scripts from /app/tpl/*.sh to $AGENT_DIR."
-     cp -rf /app/tpl/*.sh "$AGENT_DIR"
+     
      if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent supervisor config."; return 1; fi
      log "Agent supervisor config created at $AGENT_SUPERVISOR_CONFIG."
 
@@ -284,9 +289,8 @@ EOF
 # It starts supervisord as the current user (ezs).
 start_supervisor_if_agent_enabled() {
   log "Checking if Supervisor should be started based on Agent configuration."
-  # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
-  AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 
+  # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
       log "Agent supervisor config '$AGENT_SUPERVISOR_CONFIG' found. Supervisor is enabled to manage the agent."
       # Check if supervisord is already running as the current user (ezs)
