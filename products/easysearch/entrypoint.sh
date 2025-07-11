@@ -269,8 +269,8 @@ EOF
        echo_supervisord_conf > $AGENT_DIR/supervisor/supervisord.conf
        if [ $? -ne 0 ]; then log "ERROR: Failed to generate supervisord.conf."; return 1; fi
        # Set the user and enable includes
-       sed -i "/\[supervisord\]/a user = root" $COCO_DIR/supervisor/supervisord.conf
-       sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = $AGENT_DIR/supervisor/conf.d/*.conf|' $AGENT_DIR/supervisor/supervisord.conf
+       sed -i "/\[supervisord\]/a user = root" $AGENT_DIR/supervisor/supervisord.conf
+       sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = conf.d/*.conf|' $AGENT_DIR/supervisor/supervisord.conf
        if [ $? -ne 0 ]; then log "ERROR: Failed to set up supervisord.conf includes."; return 1; fi
        log "Supervisord main config setup complete."
      fi
