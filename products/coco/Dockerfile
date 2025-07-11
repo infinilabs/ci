@@ -7,7 +7,8 @@ WORKDIR /app/easysearch
 
 # 启动项与配置文件
 ADD entrypoint.sh /sbin
-ADD config/coco /app/tpl
+ADD config/supervisor /app/tpl
+ADD config/scripts /app/tpl
 
 # 安装 Coco
 ADD --chown=ezs:ezs coco-$TARGETARCH /app/coco

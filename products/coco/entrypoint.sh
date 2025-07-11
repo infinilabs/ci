@@ -56,11 +56,15 @@ setup_supervisor() {
     echo_supervisord_conf > /etc/supervisor/supervisord.conf
     sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = /etc/supervisor/conf.d/*.conf|' /etc/supervisor/supervisord.conf
     cat /app/tpl/coco.conf > /etc/supervisor/conf.d/coco.conf
+    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
+    log "Created Supervisor configuration and start script for coco."
   fi
 
   if ! supervisorctl status > /dev/null 2>&1; then
+    log "Starting Supervisor..."
     /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
   fi
+
   return 0
 }
 

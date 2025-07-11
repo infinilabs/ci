@@ -7,7 +7,9 @@ WORKDIR /app/easysearch
 
 # Agent 与 配置项
 ADD entrypoint.sh /sbin
-ADD config/agent /app/tpl
+ADD config/agent/ /app/tpl/
+ADD config/supervisor/ /app/tpl/
+ADD config/scripts/ /app/tpl/
 
 # 安装 Agent
 ADD --chown=ezs:ezs agent-$TARGETARCH /app/agent

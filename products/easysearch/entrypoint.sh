@@ -14,8 +14,13 @@ APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
 LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
+AGENT_DIR="$DATA_DIR/agent"
+INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
+AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
+AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
+AGENT_SUPERVISOR_MARKER="/etc/supervisor/conf.d/.agent_supervisor_configured"
 
 # Ensure data directory exists, even if mount is empty
 log "Ensuring data directory exists: $DATA_DIR"
@@ -74,8 +79,6 @@ perform_initial_setup() {
 # This function is called when Agent is configured via environment variables.
 setup_agent() {
   log "Agent setup process requested."
-  AGENT_DIR="$DATA_DIR/agent"
-  INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
 
   # Ensure agent directory exists and has correct permissions (Consider if this should also be part of initial setup)
   # If agent files are part of the initial artifact, this check might be less critical on every start.
@@ -89,7 +92,6 @@ setup_agent() {
     chown -R ezs:ezs "$AGENT_DIR"
      if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent directory."; return 1; fi
   fi
-
 
   # Check and create agent's data and config directories (agent's internal directories)
   log "Checking agent subdirectories data/config under $AGENT_DIR..."
@@ -109,7 +111,6 @@ setup_agent() {
   log "Changing current directory to $AGENT_DIR."
   cd "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to change directory to $AGENT_DIR."; return 1; fi
-
 
   # Process METRICS_CONFIG_SERVER variable and update agent.yml
   log "Configuring agent based on METRICS_CONFIG_SERVER variable..."
@@ -183,8 +184,6 @@ EOF
     fi
   
     # Initialize agent keystore and adjust yml/tpl files (runs only once based on marker)
-    AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
-
     log "Checking agent keystore initialization marker '$AGENT_KEYSTORE_MARKER'."
     if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
       log "Agent keystore initialization marker not found. Starting keystore setup."
@@ -239,12 +238,10 @@ EOF
   # This should also ideally happen only once or when the agent is intended to be managed.
   # Place it after all agent file/keystore setup.
   # Add a marker here if you want to control when this step runs (e.g., only if agent is enabled and setup succeeds)
-  AGENT_SUPERVISOR_MARKER="/etc/supervisor/conf.d/.agent_supervisor_configured" # New marker
 
   log "Checking agent supervisor config marker '$AGENT_SUPERVISOR_MARKER'."
   if [ ! -f "$AGENT_SUPERVISOR_MARKER" ]; then
      log "Agent supervisor config marker not found. Starting supervisor configuration."
-     AGENT_SUPERVISOR_CONFIG="/etc/supervisor/conf.d/agent.conf"
 
      log "Setting up supervisor config for agent at $AGENT_SUPERVISOR_CONFIG."
      # Ensure supervisor directory exists
@@ -262,9 +259,11 @@ EOF
        log "Supervisord main config setup complete."
      fi
      
-     # Copy agent supervisor config
+     # Copy agent supervisor config and start shell
      log "Copying agent supervisor config template from /app/tpl/agent.conf to $AGENT_SUPERVISOR_CONFIG."
      cat /app/tpl/agent.conf > "$AGENT_SUPERVISOR_CONFIG"
+     log "Copying agent supervisor scripts from /app/tpl/*.sh to $AGENT_DIR."
+     cp -rf /app/tpl/*.sh "$AGENT_DIR"
      if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent supervisor config."; return 1; fi
      log "Agent supervisor config created at $AGENT_SUPERVISOR_CONFIG."
 
