@@ -65,6 +65,13 @@ setup_supervisor() {
     log "Created Supervisor configuration for Coco at $COCO_DIR/supervisor/conf.d/coco.conf"
   fi
 
+  if [ -f $COCO_DIR/supervisor/supervisord.conf ]; then
+    if [ ! -f /etc/supervisord.conf ]; then
+      ln -sf $COCO_DIR/supervisor/supervisord.conf /etc/supervisord.conf
+      log "Linked Supervisor configuration to /etc/supervisord.conf"
+    fi
+  fi
+
   if ! supervisorctl status > /dev/null 2>&1; then
     log "Starting Supervisor..."
     /usr/bin/supervisord -c $COCO_DIR/supervisor/supervisord.conf
