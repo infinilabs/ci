@@ -60,15 +60,16 @@ jobs:
           AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Attempting to download from $RELEASE_URL via proxy..."
           for t in amd64 arm64; do
+            mkdir -p /tmp/agent-$t
             AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
             for f in stable snapshot; do
               echo "Checking if $AGENT_FILENAME exists at $RELEASE_URL/agent/$f/$AGENT_FILENAME"
-              curl -v -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME
               if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
                 echo "Downloading $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
-                wget --verbose -O /dev/null $RELEASE_URL/agent/$f/$AGENT_FILENAME
+                wget $RELEASE_URL/agent/$f/$AGENT_FILENAME -P /tmp/agent-$t
               fi
             done
+            ls /tmp/agent*
           done
 
       - name: Setup ${{ env.PNAME }} env
