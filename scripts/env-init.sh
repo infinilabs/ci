@@ -63,6 +63,7 @@ env_init() {
 		retry-connrefused = on
 		waitretry = 5
 		quiet = on
+        timestamping = on
 	EOF
     log_success "Global HTTP client settings configured."
 
