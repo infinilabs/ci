@@ -303,6 +303,12 @@ start_supervisor_if_agent_enabled() {
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
       log "Supervisor is enabled to manage the agent."
+      if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
+        if [ ! -f /etc/supervisord.conf ]; then
+          ln -sf $AGENT_DIR/supervisor/supervisord.conf /etc/supervisord.conf
+          log "Linked Supervisor configuration to /etc/supervisord.conf"
+        fi
+      fi
       # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
         log "Supervisord process not running. Starting supervisord..."
