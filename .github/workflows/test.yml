@@ -55,7 +55,8 @@ jobs:
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
-          no_proxy: "localhost,127.0.1,::1"
+          HTTP_PROXY: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          HTTPS_RPXY: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
         run: |
           AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Attempting to download from $RELEASE_URL via proxy..."
