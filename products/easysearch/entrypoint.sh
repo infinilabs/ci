@@ -308,7 +308,7 @@ start_supervisor_if_agent_enabled() {
         if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
           if [ ! -f /etc/supervisord.conf ]; then
             ln -sf $AGENT_DIR/supervisor/supervisord.conf /etc/supervisord.conf
-            log "Linked Supervisor configuration to /etc/supervisord.conf"
+            log "Linked supervisor configuration to /etc/supervisord.conf"
           fi
         fi
         log "Supervisord process not running. Starting supervisord..."

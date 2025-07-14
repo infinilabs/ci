@@ -70,7 +70,7 @@ setup_supervisor() {
     if [ -f $COCO_DIR/supervisor/supervisord.conf ]; then
       if [ ! -f /etc/supervisord.conf ]; then
         ln -sf $COCO_DIR/supervisor/supervisord.conf /etc/supervisord.conf
-        log "Linked Supervisor configuration to /etc/supervisord.conf"
+        log "Linked supervisor configuration to /etc/supervisord.conf"
       fi
     fi
     /usr/bin/supervisord -c /etc/supervisord.conf
