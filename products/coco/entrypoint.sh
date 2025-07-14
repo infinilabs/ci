@@ -69,11 +69,11 @@ setup_supervisor() {
     log "Starting Supervisor..."
     if [ -f $COCO_DIR/supervisor/supervisord.conf ]; then
       if [ ! -f /etc/supervisord.conf ]; then
-        ln -sf $COCO_DIR/supervisor/supervisord.conf /etc/supervisord.conf
+        ln -sf $COCO_DIR/supervisor /etc
         log "Linked supervisor configuration to /etc/supervisord.conf"
       fi
     fi
-    /usr/bin/supervisord -c /etc/supervisord.conf
+    /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     log "Supervisor started successfully."
   fi
 
