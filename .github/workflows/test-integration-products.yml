@@ -227,7 +227,12 @@ jobs:
                   LOG_LEVEL=info
                 fi
                 exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
-            
+            - name: Run connect in background
+              run: |
+                connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+                echo "Connect started with pid $!"
+                sleep 5
+
             - name: Run easysearch docker
               if: ${{ !inputs.USE_DOWNLOAD }}
               run: |

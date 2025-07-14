@@ -238,7 +238,7 @@ jobs:
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
-          sleep 15
+          sleep 5
 
       - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         timeout-minutes: 30
@@ -447,7 +447,8 @@ jobs:
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
-          sleep 15
+          sleep 5
+
       - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -754,7 +755,7 @@ jobs:
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
-          sleep 15
+          sleep 5
 
       - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
         env:

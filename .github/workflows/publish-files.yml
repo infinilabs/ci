@@ -288,7 +288,7 @@ jobs:
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
-          sleep 15
+          sleep 5
 
       - name: Deploy ${{ matrix.product }} with ${{ matrix.target }} files
         if: ${{ matrix.product == 'console' && matrix.target == 'linux-amd64' }}
