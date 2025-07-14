@@ -25,6 +25,7 @@ env:
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
 
 on:
   workflow_dispatch:
@@ -49,6 +50,23 @@ jobs:
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
+
+      - name: Wget proxy test
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
+        run: |
+          AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          echo "Attempting to download from $RELEASE_URL via proxy..."
+          for t in amd64 arm64; do
+            AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
+            for f in stable snapshot; do
+              if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
+                wget --verbose -O /dev/null $RELEASE_URL/agent/$f/$AGENT_FILENAME
+              fi
+            done
+          done
 
       - name: Setup ${{ env.PNAME }} env
         run: |
