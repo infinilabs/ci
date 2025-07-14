@@ -239,6 +239,7 @@ jobs:
                 sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -R 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
                 docker pull infinilabs/easysearch:$VER
                 docker run -d --name easysearch \
+                  --network host \
                   -p 9200:9200 -p 9300:9300 \
                   -e cluster.name=easysearch \
                   -e "JAVA_OPTS=-Xms2g -Xmx2g" \
@@ -247,7 +248,6 @@ jobs:
                   -e METRICS_CONFIG_SERVER=http://127.0.0.1:9000 \
                   -v $HOME/easysearch/logs:/app/easysearch/logs \
                   -v $HOME/easysearch/data:/app/easysearch/data \
-                  --network host \
                   infinilabs/easysearch:$VER
                 # Wait for easysearch to start
                 sleep 60
@@ -267,7 +267,9 @@ jobs:
                   echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
                   sleep 5
                 done
-
+                echo "Port $PORT is open on $HOST. Proceeding with tests..."
+                echo
+                echo "Checking easysearch status at $ES_ENDPOINT with $ES_USERNAME:$ES_PASSWORD..."
                 curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
                 
             - name: Run loadgen api test for console initialize
