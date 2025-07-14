@@ -424,8 +424,20 @@ jobs:
                   cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
                     echo "Error found in $PRODUCT logs!"
-                    grep -iE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
-                    exit 1
+                    LOG_FILES="$WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log"
+                    REAL_ERRORS=$(grep -iE "Error" $LOG_FILES \
+                      | grep -iv 'HeapDumpOnOutOfMemoryError' \
+                      | grep -iv 'ErrorFile=logs/hs_err_pid')
+                    
+                    if [ -n "$REAL_ERRORS" ]; then
+                      echo "Error found in $PRODUCT logs! (Excluding known JVM messages)"
+                      echo "--- Filtered Errors ---"
+                      echo "$REAL_ERRORS"
+                      echo "-----------------------"
+                      exit 1
+                    else
+                      echo "No unexpected errors found. OK."
+                    fi
                   fi
 
             - name: Check easysearch logs
@@ -734,8 +746,20 @@ jobs:
                   cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
                     echo "Error found in $PRODUCT logs!"
-                    grep -iE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
-                    exit 1
+                    LOG_FILES="$WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log"
+                    REAL_ERRORS=$(grep -iE "Error" $LOG_FILES \
+                      | grep -iv 'HeapDumpOnOutOfMemoryError' \
+                      | grep -iv 'ErrorFile=logs/hs_err_pid')
+                    
+                    if [ -n "$REAL_ERRORS" ]; then
+                      echo "Error found in $PRODUCT logs! (Excluding known JVM messages)"
+                      echo "--- Filtered Errors ---"
+                      echo "$REAL_ERRORS"
+                      echo "-----------------------"
+                      exit 1
+                    else
+                      echo "No unexpected errors found. OK."
+                    fi
                   fi
 
             - name: Check easysearch logs
