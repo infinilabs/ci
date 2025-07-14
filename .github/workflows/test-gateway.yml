@@ -21,12 +21,12 @@ on:
         description: 'Easysearch Version'
         required: false
         type: string
-        default: '1.13.2'
+        default: '1.14.0'
       PRODUCT_VERSION:
         description: 'Products Version'
         required: false
         type: string
-        default: '1.29.7'
+        default: '1.29.8'
       RUN_INSTALL_TEST:
         description: 'Run Products Install Test?'
         required: false
