@@ -22,8 +22,8 @@ on:
         required: false
         type: string
         default: '1.13.2'
-      NOT_USE_EZS_DOCKER:
-        description: 'Easysearch Docker(Not Use)'
+      USE_DOWNLOAD:
+        description: 'Download Easysearch'
         required: false
         type: boolean
         default: false
@@ -154,7 +154,7 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
-              if: ${{ inputs.NOT_USE_EZS_DOCKER }}
+              if: ${{ inputs.USE_DOWNLOAD }}
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -224,7 +224,7 @@ jobs:
                 exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
             
             - name: Run easysearch docker
-              if: ${{ !inputs.NOT_USE_EZS_DOCKER }}
+              if: ${{ !inputs.USE_DOWNLOAD }}
               run: |
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
