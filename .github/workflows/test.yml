@@ -55,14 +55,14 @@ jobs:
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
-          HTTP_PROXY: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
-          HTTPS_RPXY: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
         run: |
           AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Attempting to download from $RELEASE_URL via proxy..."
           for t in amd64 arm64; do
             AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
             for f in stable snapshot; do
+              echo "Checking if $AGENT_FILENAME exists at $RELEASE_URL/agent/$f/$AGENT_FILENAME"
+              curl -v -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME
               if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
                 echo "Downloading $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
                 wget --verbose -O /dev/null $RELEASE_URL/agent/$f/$AGENT_FILENAME
