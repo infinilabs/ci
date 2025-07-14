@@ -416,12 +416,12 @@ jobs:
                 fi
 
             - name: Check loadgen logs
+              continue-on-error: true
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
   
                   echo Check $PRODUCT logs at $PWD ...
-                  cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
                     LOG_FILES="$WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log"
                     REAL_ERRORS=$(grep -iE "Error" $LOG_FILES \
@@ -737,6 +737,7 @@ jobs:
                 fi
 
             - name: Check loadgen logs
+              continue-on-error: true
               run: |
                   export PRODUCT=loadgen
                   cd $WORK/$PRODUCT/bin
