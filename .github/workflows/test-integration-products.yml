@@ -423,7 +423,6 @@ jobs:
                   echo Check $PRODUCT logs at $PWD ...
                   cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
-                    echo "Error found in $PRODUCT logs!"
                     LOG_FILES="$WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log"
                     REAL_ERRORS=$(grep -iE "Error" $LOG_FILES \
                       | grep -iv 'HeapDumpOnOutOfMemoryError' \
@@ -745,7 +744,6 @@ jobs:
                   echo Check $PRODUCT logs at $PWD ...
                   cat $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log
                   if grep -qiE "Error" $WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log; then
-                    echo "Error found in $PRODUCT logs!"
                     LOG_FILES="$WORK/$PRODUCT/bin/log/$PRODUCT/nodes/*/$PRODUCT.log"
                     REAL_ERRORS=$(grep -iE "Error" $LOG_FILES \
                       | grep -iv 'HeapDumpOnOutOfMemoryError' \
