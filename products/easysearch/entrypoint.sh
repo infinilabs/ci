@@ -303,20 +303,20 @@ start_supervisor_if_agent_enabled() {
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
       log "Supervisor is enabled to manage the agent."
-      if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
-        if [ ! -f /etc/supervisord.conf ]; then
-          ln -sf $AGENT_DIR/supervisor/supervisord.conf /etc/supervisord.conf
-          log "Linked Supervisor configuration to /etc/supervisord.conf"
-        fi
-      fi
       # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
+        if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
+          if [ ! -f /etc/supervisord.conf ]; then
+            ln -sf $AGENT_DIR/supervisor/supervisord.conf /etc/supervisord.conf
+            log "Linked Supervisor configuration to /etc/supervisord.conf"
+          fi
+        fi
         log "Supervisord process not running. Starting supervisord..."
         # Need to start supervisord as ezs user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by ezs.
         # The agent.conf should be readable by ezs.
         # The logs dir for supervisord should be writable by ezs.
         # Assuming necessary permissions are set by the Dockerfile or the root setup_agent phase.
-        /usr/bin/supervisord -c $AGENT_DIR/supervisor/supervisord.conf &
+        /usr/bin/supervisord -c /etc/supervisord.conf &
         # Wait a moment for supervisord to start and read configs
         # log "Waiting 1 second for supervisord to start..." # Uncomment if needed
         sleep 1
