@@ -11,6 +11,7 @@ env:
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
   PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
 
 on:
   schedule:
@@ -155,6 +156,10 @@ jobs:
 
             - name: Install and run easysearch
               if: ${{ inputs.USE_DOWNLOAD }}
+              env:
+                http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+                https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+                no_proxy: "localhost,127.0.1,::1"
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
@@ -509,6 +514,10 @@ jobs:
               run: java -version && which java
 
             - name: Install and run easysearch
+              env:
+                http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+                https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+                no_proxy: "localhost,127.0.1,::1"
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')

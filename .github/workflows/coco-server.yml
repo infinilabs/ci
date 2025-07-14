@@ -10,6 +10,7 @@ env:
   PNPM_VERSION: 'latest'
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
   
 on:
   push:
@@ -442,7 +443,16 @@ jobs:
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
 
-      - name: Preper for Easysearch Docker
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
+      - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
@@ -740,7 +750,17 @@ jobs:
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
 
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 15
+
       - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
@@ -822,12 +842,6 @@ jobs:
                 [ -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
           done
-
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 15
 
       - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         timeout-minutes: 30

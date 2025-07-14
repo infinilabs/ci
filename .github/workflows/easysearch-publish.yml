@@ -31,6 +31,7 @@ env:
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
   AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
@@ -221,6 +222,10 @@ jobs:
           fi
 
       - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build

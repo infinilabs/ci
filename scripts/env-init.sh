@@ -171,6 +171,12 @@ env_init() {
         fi
     fi
 
+    if [[ -n "$PROXY_RELEASE_INFINILABS" ]]; then
+        log_info "🌍  Setting up etc hosts for infinilabs release..."
+        echo "$PROXY_RELEASE_INFINILABS" | sudo tee -a /etc/hosts
+        log_success "Added custom host entry."
+    fi
+
     echo ""
     log_success "🎉 Environment initialization finished successfully!"
 }
