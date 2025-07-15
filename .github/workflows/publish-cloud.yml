@@ -150,6 +150,47 @@ jobs:
           fi
           node -v && npm -v && cnpm -v
 
+      - name: Setting version for operator and gateway
+        run: |
+            set -eo pipefail
+
+            echo "Fetching latest versions..."
+            operator_ver="${{ vars.PUBLISH_OPERATOR_VERSION || '0.7.7' }}"
+            latest_json=$(curl -sSL "$RELEASE_URL/.latest")
+
+            if [ -z "$latest_json" ] || ! echo "$latest_json" | jq . > /dev/null 2>&1; then
+              echo "Warning: Failed to fetch or parse .latest from $RELEASE_URL. Using fallback versions."
+              easysearch_ver="1.14.0"
+              gateway_ver="1.29.7"
+            else
+              easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"1.14.0\"")
+              gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.29.7\"")
+            fi
+            
+            echo "--- Using Versions ---"
+            echo "Operator Version:   $operator_ver"
+            echo "Easysearch Version: $easysearch_ver"
+            echo "Gateway Version:    $gateway_ver"
+            echo "----------------------"
+
+            FILE_PATH="$WORK/$PNAME/web/src/pages/Infra/Inventory/Kubernetes/App/Config/BaseSetting.jsx"
+
+            if [ -f "$FILE_PATH" ]; then
+              echo "Updating versions in $FILE_PATH..."
+
+              awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" '
+                /name: "infinilabs\/(easysearch|runtime)-operator"/ { print; getline; sub(/tag: ".*"/, "tag: \"" op_ver "\""); print; next }
+                /APP_CLOUD_GATEWAY_DEFAULT/,/^\};/ && /name: "infinilabs\/gateway"/ { print; getline; sub(/tag: ".*"/, "tag: \"" gw_ver "\""); print; next }
+                /easysearch: \{/,/^\s*\},/ && /versions:/ { sub(/version: ".*"/, "version: \"" es_ver "\"") }
+                /gateway: \{/,/^\s*\},/ && /versions:/ { sub(/version: ".*"/, "version: \"" gw_ver "\"") }
+                { print }
+              ' "$FILE_PATH" > "$FILE_PATH.tmp" && mv "$FILE_PATH.tmp" "$FILE_PATH"
+
+              echo "Successfully updated $FILE_PATH."
+            else
+              echo "File $FILE_PATH does not exist, skipping version update."
+            fi
+
       - name: Preper ${{ env.PNAME }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
         run: |
