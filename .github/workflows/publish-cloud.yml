@@ -150,7 +150,7 @@ jobs:
           fi
           node -v && npm -v && cnpm -v
 
-      - name: Setting version for operator and gateway
+      - name: Update versions with ${{ env.PNAME }} default settings
         run: |
             set -eo pipefail
 
@@ -174,9 +174,10 @@ jobs:
             echo "----------------------"
 
             FILE_PATH="$WORK/$PNAME/web/src/pages/Infra/Inventory/Kubernetes/App/Config/BaseSetting.jsx"
+            FILE_NAME=$(basename "$FILE_PATH")
 
             if [ -f "$FILE_PATH" ]; then
-              echo "Updating versions in $FILE_PATH..."
+              echo "Updating versions in $FILE_NAME..."
 
               awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" '
                 /name: "infinilabs\/(easysearch|runtime)-operator"/ { print; getline; sub(/tag: ".*"/, "tag: \"" op_ver "\""); print; next }
@@ -186,7 +187,8 @@ jobs:
                 { print }
               ' "$FILE_PATH" > "$FILE_PATH.tmp" && mv "$FILE_PATH.tmp" "$FILE_PATH"
 
-              echo "Successfully updated $FILE_PATH."
+              grep -E "ver|tag" "$FILE_PATH" | sed 's/^[ \t]*//'
+              echo "Successfully updated $FILE_NAME."
             else
               echo "File $FILE_PATH does not exist, skipping version update."
             fi
