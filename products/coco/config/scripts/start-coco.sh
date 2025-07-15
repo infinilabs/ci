@@ -1,14 +1,16 @@
 #!/bin/bash
-
-# start-coco.sh
+# check if Easysearch is available on port 9200
+# timeout after 300 seconds
+# sleep for 5 seconds between checks
+# if Easysearch is not available after 300 seconds, exit with error
+# if Easysearch is available, sleep for 30 seconds to allow it to fully start
+elapsed=0
+interval=15
+timeout=300
+waiting=30
+target="coco"
 
 echo "Waiting for Easysearch on 127.0.0.1:9200..."
-
-# 循环检查端口，直到可用。添加超时机制以防无限等待。
-# 设置一个总的超时时间，例如 5 分钟 (300 秒)
-timeout=300
-elapsed=0
-interval=5
 
 while ! nc -z 127.0.0.1 9200; do
   if [ $elapsed -ge $timeout ]; then
@@ -20,8 +22,9 @@ while ! nc -z 127.0.0.1 9200; do
   elapsed=$((elapsed + interval))
 done
 
-echo "Easysearch is up! Starting coco..."
+# Wait for an additional period to ensure Easysearch is fully ready
+sleep $waiting && echo "Wait $waiting secs for easysearch ready! Starting $target..."
 
-# 使用 exec 来让 coco 进程替换掉 bash 进程。
-# 这样 supervisor 就可以直接管理 coco 进程的 PID。
-cd /app/easysearch/data/coco && exec ./coco
+# use exec to replace the bash process
+# so that supervisor can manage the process directly
+cd /app/easysearch/data/$target && exec ./$target
