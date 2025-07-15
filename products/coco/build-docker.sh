@@ -9,7 +9,7 @@ mkdir -p $DEST
 cd $WORK
 
 for t in amd64 arm64; do
-  mkdir -p $WORK/{$PNAME-$t,$DNAME-$t}
+  mkdir -p $WORK/{$PNAME-$t,$DNAME-$t,plugins-$t}
   EZS_FILE=$DNAME-$EZS_VER-linux-$t.tar.gz
   for f in stable snapshot; do
     DOWNLOAD_URL=$RELEASE_URL/$DNAME/$f/$EZS_FILE
@@ -54,7 +54,18 @@ for t in amd64 arm64; do
     plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p ..."
-      echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install $p
+      # easyearch version is x.y.z-build_number but plugin version only need x.y.z
+      if [[ "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+          PLUGIN_VER="${BASH_REMATCH[1]}"
+          PLUGIN_FILE="$p-$PLUGIN_VER.zip"
+      fi
+      DOWNLOAD_URL=$RELEASE_URL/$DNAME/stable/plugins/$p/$PLUGIN_FILE
+      echo "Check $DOWNLOAD_URL"
+      if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
+        echo "Download $PLUGIN_FILE from $DOWNLOAD_URL"
+        wget $DOWNLOAD_URL -O $WORK/plugins-$t/$p/$PLUGIN_FILE
+      fi
+      echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$WORK/plugins-$t/$p/$p-$VERSION.zip > /dev/null 2>&1
     done
   fi
 done

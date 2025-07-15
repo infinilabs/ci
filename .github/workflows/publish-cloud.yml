@@ -35,7 +35,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish cloud docker version'
         required: false
-        default: "0.7.2"
+        default: "0.7.7"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
