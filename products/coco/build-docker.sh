@@ -5,7 +5,7 @@ PLUGINS=$GITHUB_WORKSPACE/plugins
 WORK=$GITHUB_WORKSPACE/products/$PNAME
 
 echo "Prepar for build $PNAME docker files"
-mkdir -p $DEST
+mkdir -p $DEST && mkdir -p $PLUGINS
 
 cd $WORK
 
@@ -59,13 +59,20 @@ for t in amd64 arm64; do
           PLUGIN_VER="${BASH_REMATCH[1]}"
           PLUGIN_FILE="$p-$PLUGIN_VER.zip"
       fi
+      # Download the plugin file
       DOWNLOAD_URL=$RELEASE_URL/$DNAME/stable/plugins/$p/$PLUGIN_FILE
       if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
         echo "Download $PLUGIN_FILE from $DOWNLOAD_URL"
         mkdir -p $PLUGINS/plugins-$t/$p
         wget $DOWNLOAD_URL -O $PLUGINS/plugins-$t/$p/$PLUGIN_FILE
       fi
-      echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$PLUGINS/plugins-$t/$p/$p-$VERSION.zip > /dev/null 2>&1
+      # Check if the plugin file exists
+      if [[ -e $PLUGINS/plugins-$t/$p/$PLUGIN_FILE ]]; then
+        echo "Installing plugin $p from $PLUGINS/plugins-$t/$p/$PLUGIN_FILE"
+        echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$PLUGINS/plugins-$t/$p/$PLUGIN_FILE
+      else
+        echo "Error: $PLUGINS/plugins-$t/$p/$PLUGIN_FILE not found, skip install plugin $p."
+      fi
     done
   fi
 done
