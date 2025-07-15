@@ -16,7 +16,7 @@ for t in amd64 arm64; do
     DOWNLOAD_URL=$RELEASE_URL/$DNAME/$f/$EZS_FILE
     if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
       echo "Download $EZS_FILE from $DOWNLOAD_URL"
-      wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
+      [ ! -e $DEST/$EZS_FILE ] && wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
     fi
   done
   # Check if the file exists and is not empty
