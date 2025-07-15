@@ -194,7 +194,7 @@ jobs:
           #Deploy docker
           CNAME=manager
           DNAME=${{ matrix.component }}-operator-controller-$CNAME
-          echo "kubectl -n infini-system set image deployments.apps/$DNAME $CNAME=${{env.REPO_NAME}}:${{ env.TAG }}" >> /tmp/update_image.sh
+          echo "kubectl -n infini set image deployments.apps/$DNAME $CNAME=${{env.REPO_NAME}}:${{ env.TAG }}" >> /tmp/update_image.sh
           echo "Deploy ${{ matrix.component }} to k8s staging at $(date +'%m-%d %H:%M:%S')"
           ssh staging 'bash -s' < /tmp/update_image.sh
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
