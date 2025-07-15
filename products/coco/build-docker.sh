@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DEST=$GITHUB_WORKSPACE/dest
+PLUGINS=$GITHUB_WORKSPACE/plugins
 WORK=$GITHUB_WORKSPACE/products/$PNAME
 
 echo "Prepar for build $PNAME docker files"
@@ -9,11 +10,10 @@ mkdir -p $DEST
 cd $WORK
 
 for t in amd64 arm64; do
-  mkdir -p $WORK/{$PNAME-$t,$DNAME-$t,plugins-$t}
+  mkdir -p $WORK/{$PNAME-$t,$DNAME-$t}
   EZS_FILE=$DNAME-$EZS_VER-linux-$t.tar.gz
   for f in stable snapshot; do
     DOWNLOAD_URL=$RELEASE_URL/$DNAME/$f/$EZS_FILE
-    echo "Check $DOWNLOAD_URL"
     if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
       echo "Download $EZS_FILE from $DOWNLOAD_URL"
       wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
@@ -60,12 +60,12 @@ for t in amd64 arm64; do
           PLUGIN_FILE="$p-$PLUGIN_VER.zip"
       fi
       DOWNLOAD_URL=$RELEASE_URL/$DNAME/stable/plugins/$p/$PLUGIN_FILE
-      echo "Check $DOWNLOAD_URL"
       if curl -o /dev/null -s -w %{http_code} $DOWNLOAD_URL | grep -q 200; then
         echo "Download $PLUGIN_FILE from $DOWNLOAD_URL"
-        wget $DOWNLOAD_URL -O $WORK/plugins-$t/$p/$PLUGIN_FILE
+        mkdir -p $PLUGINS/plugins-$t/$p
+        wget $DOWNLOAD_URL -O $PLUGINS/plugins-$t/$p/$PLUGIN_FILE
       fi
-      echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$WORK/plugins-$t/$p/$p-$VERSION.zip > /dev/null 2>&1
+      echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$PLUGINS/plugins-$t/$p/$p-$VERSION.zip > /dev/null 2>&1
     done
   fi
 done
