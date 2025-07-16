@@ -137,8 +137,9 @@ jobs:
     - name: Check compiled products
       run: |
         echo Check compiled products
+        mkdir -p $WORK/bin
         for p in gateway loadgen; do
-          cd $WORK/$p && ls -al $WORK/$p/bin && echo "PATH=$WORK/$p/bin/bin:\$PATH" >> $GITHUB_ENV
+          cd $WORK/$p && cp -rf $WORK/$p/bin/* $WORK/bin
         done
 
     - name: Run easysearch docker
