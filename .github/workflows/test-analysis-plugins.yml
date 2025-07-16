@@ -35,7 +35,7 @@ jobs:
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
-        
+
       - name: Get Date One Day Ago for Schedule
         id: get_date_schedule
         if: ${{ github.event_name == 'schedule' }}
@@ -88,7 +88,7 @@ jobs:
             local product_name="$1"; local repo_url="$2"; local version_prefix="$3"; local version_regex="$4";
             local current_matrix="$FINAL_MATRIX_ENTRIES" # Use the global accumulator
             echo "Fetching $product_name releases since $SINCE_DATE_SCHEDULE..."
-            RELEASES_PAYLOAD=$(curl -H "Authorization: Bearer $GH_TOKEN" "$repo_url?per_page=50")
+            RELEASES_PAYLOAD=$(curl -H "Authorization: Bearer $GH_TOKEN" "$repo_url?per_page=10")
             RECENT_VERSIONS_FOUND=$(echo "$RELEASES_PAYLOAD" \
               | jq -r --arg since_date "$SINCE_DATE_SCHEDULE" --arg prefix "$version_prefix" --arg regex "$version_regex" '[.[] | 
                 select(.prerelease==false and .draft==false and (.published_at >= $since_date) and (.tag_name | startswith($prefix)) and (.tag_name | test($regex))) 
