@@ -1,0 +1,165 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "Coco-AI",
+  "version": "../package.json",
+  "identifier": "rs.coco.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Coco AI",
+        "url": "/ui",
+        "height": 590,
+        "width": 680,
+        "decorations": false,
+        "minimizable": false,
+        "maximizable": false,
+        "skipTaskbar": true,
+        "resizable": false,
+        "acceptFirstMouse": true,
+        "shadow": true,
+        "transparent": true,
+        "fullscreen": false,
+        "center": false,
+        "visible": false,
+        "windowEffects": {
+          "effects": [],
+          "radius": 6
+        },
+        "visibleOnAllWorkspaces": true,
+        "alwaysOnTop": true
+      },
+      {
+        "label": "settings",
+        "title": "Coco AI Settings",
+        "url": "/ui/settings",
+        "width": 1000,
+        "minWidth": 1000,
+        "height": 700,
+        "minHeight": 700,
+        "center": true,
+        "transparent": true,
+        "maximizable": false,
+        "skipTaskbar": false,
+        "dragDropEnabled": false,
+        "hiddenTitle": true,
+        "visible": false,
+        "windowEffects": {
+          "effects": ["sidebar"],
+          "state": "active"
+        }
+      },
+      {
+        "label": "check",
+        "title": "Coco AI Update",
+        "url": "/ui/check",
+        "width": 340,
+        "minWidth": 340,
+        "height": 260,
+        "minHeight": 260,
+        "center": false,
+        "transparent": true,
+        "maximizable": false,
+        "skipTaskbar": false,
+        "dragDropEnabled": false,
+        "hiddenTitle": true,
+        "visible": false,
+        "windowEffects": {
+          "effects": ["sidebar"],
+          "state": "active"
+        }
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": ["**/*"],
+          "requireLiteralLeadingDot": false
+        }
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": ["nsis", "dmg", "app", "appimage", "deb", "rpm"],
+    "category": "Utility",
+    "shortDescription": "Coco AI",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png",
+      "icons/Square30x30Logo.png",
+      "icons/Square44x44Logo.png",
+      "icons/Square71x71Logo.png",
+      "icons/Square89x89Logo.png",
+      "icons/Square107x107Logo.png",
+      "icons/Square142x142Logo.png",
+      "icons/Square150x150Logo.png",
+      "icons/Square284x284Logo.png",
+      "icons/Square310x310Logo.png",
+      "icons/StoreLogo.png"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.12",
+      "hardenedRuntime": true,
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 180
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 180
+        }
+      }
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    },
+    "resources": ["assets/**/*", "icons"]
+  },
+  "plugins": {
+    "features": {
+      "protocol": ["all"]
+    },
+    "window": {},
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlDRjNDRUU0NTdBMzdCRTMKUldUamU2Tlg1TTd6bkUwZWM0d2Zjdk0wdXJmendWVlpMMmhKN25EcmprYmIydnJ3dmFUME9QYXkK",
+      "endpoints": [
+        "https://release.infinilabs.com/coco/app/.latest.json?target={{target}}&arch={{arch}}&current_version={{current_version}}"
+      ]
+    },
+    "websocket": {},
+    "shell": {},
+    "globalShortcut": {},
+    "deep-link": {
+      "schema": "coco",
+      "mobile": [
+        {
+          "host": "app.infini.cloud",
+          "pathPrefix": ["/open"]
+        }
+      ],
+      "desktop": {
+        "schemes": ["coco"]
+      }
+    },
+    "os": {}
+  }
+}
