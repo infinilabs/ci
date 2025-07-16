@@ -52,7 +52,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Wget proxy test
+      - name: Download agent files with proxy
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -64,12 +64,12 @@ jobs:
             for f in stable snapshot; do
               if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
                 if [ ! -e /tmp/agent-$t/$AGENT_FILENAME ]; then
+                  echo "Downloading $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
                   wget $RELEASE_URL/agent/$f/$AGENT_FILENAME -P /tmp/agent-$t
-                  echo "Downloaded $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
                 fi
               fi
             done
-            ls /tmp/agent*
+            ls /tmp/agent*/agent* || echo "No agent files found"
           done
 
       - name: Get github release versions
@@ -80,12 +80,7 @@ jobs:
         run: |
           fetch_versions() {
             # $1: repo slug (e.g., "owner/repo") and $2: version regex
-            local auth_header=""
-            if [[ -n "$GH_TOKEN" ]]; then
-              auth_header="-H \"Authorization: Bearer $GH_TOKEN\""
-              curl ${auth_header} "$GITHUB_API_URL/repos/$1/releases?per_page=10"
-            fi
-            curl ${auth_header} "$GITHUB_API_URL/repos/$1/releases?per_page=10" \
+            curl -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$1/releases?per_page=10" \
               | jq -r --arg regex "$2" '
                   .[] | 
                   select(
@@ -95,6 +90,9 @@ jobs:
                   ) | 
                   .tag_name'
           }
+
+          curl -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/elastic/$TNAME/releases?per_page=10"
+
           if [[ $TNAME == "elasticsearch" ]] ; then
             echo "Fetching versions for $TNAME..."
             LATEST_VERSION=$(fetch_versions "elastic/$TNAME" "^v[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
