@@ -341,22 +341,11 @@ jobs:
                   -name "*.deb" -o \
                   -name "*.rpm" -o \
                   -name "*.exe" -o \
+                  -name "*.msi" -o \
                   -name "*.gz" -o \
                   -name "*.sig" -o \
                   -name "*.AppImage" \
               \)
-
-      - name: Upload upgrade assets to OSS with ${{ matrix.target }}
-        uses: infinilabs/oss-upload@v0
-        with:
-          region: oss-cn-shanghai
-          access-key-id: ${{ secrets.OSS_AK }}
-          access-key-secret: ${{ secrets.OSS_SK }}
-          bucket: ${{ secrets.OSS_BK }}
-          secure: false
-          local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
-          file-pattern: '**/*.{AppImage,sig,exe,gz}'
-          remote-dir: "${{ env.OSS_PATH }}/${{ env.UPGRADE }}"
 
       - name: Upload assets to OSS with ${{ matrix.target }}
         uses: infinilabs/oss-upload@v0
@@ -367,7 +356,7 @@ jobs:
           bucket: ${{ secrets.OSS_BK }}
           secure: true
           local-folder: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle
-          file-pattern: '**/*.{exe,dmg,deb,rpm}'
+          file-pattern: '**/*.{exe,dmg,deb,rpm,msi}'
           repack-version: "${{ env.VERSION }}"
           remote-dir: ${{ env.OSS_PATH }}
 
