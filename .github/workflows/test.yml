@@ -91,8 +91,6 @@ jobs:
                   .tag_name'
           }
 
-          curl -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/elastic/$TNAME/releases?per_page=10"
-
           if [[ $TNAME == "elasticsearch" ]] ; then
             echo "Fetching versions for $TNAME..."
             LATEST_VERSION=$(fetch_versions "elastic/$TNAME" "^v[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
@@ -101,7 +99,7 @@ jobs:
             LATEST_VERSION=$(fetch_versions "$TNAME-project/$TNAME" "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
-
+          cat /tmp/all_versions
           # filter versions
           > /tmp/versions
           if [[ $TNAME == "elasticsearch" ]] ; then
