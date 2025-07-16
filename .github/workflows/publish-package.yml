@@ -68,24 +68,22 @@ jobs:
       - name: Generate build matrix
         id: set-matrix
         run: |
-          all_builds='{
-            "include": [
-              {"platform": "macos-latest", "target": "aarch64-apple-darwin", "arch": "aarch64"},
-              {"platform": "macos-latest", "target": "x86_64-apple-darwin", "arch": "amd64"},
-              {"platform": "windows-latest", "target": "x86_64-pc-windows-msvc", "arch": "x64"},
-              {"platform": "windows-latest", "target": "i686-pc-windows-msvc", "arch": "x86"},
-              {"platform": "windows-latest", "target": "aarch64-pc-windows-msvc", "arch": "arm64"},
-              {"platform": "ubuntu-22.04", "target": "x86_64-unknown-linux-gnu", "arch": "amd64"},
-              {"platform": "ubuntu-22.04-arm", "target": "aarch64-unknown-linux-gnu", "arch": "arm64"}
-            ]
-          }'
+          all_builds='[
+            {"platform": "macos-latest", "target": "aarch64-apple-darwin", "arch": "aarch64"},
+            {"platform": "macos-latest", "target": "x86_64-apple-darwin", "arch": "amd64"},
+            {"platform": "windows-latest", "target": "x86_64-pc-windows-msvc", "arch": "x64"},
+            {"platform": "windows-latest", "target": "i686-pc-windows-msvc", "arch": "x86"},
+            {"platform": "windows-latest", "target": "aarch64-pc-windows-msvc", "arch": "arm64"},
+            {"platform": "ubuntu-22.04", "target": "x86_64-unknown-linux-gnu", "arch": "amd64"},
+            {"platform": "ubuntu-22.04-arm", "target": "aarch64-unknown-linux-gnu", "arch": "arm64"}
+          ]'
 
           platform_choice="${{ github.event.inputs.PUBLISH_PLATFORM }}"
 
           if [[ "$platform_choice" == "all" ]]; then
-            filtered_matrix=$(echo "$all_builds")
+            filtered_matrix=$(echo "$all_builds" | jq -c '.')
           else
-            filtered_matrix=$(echo "$all_builds" | jq --arg choice "$platform_choice" '{include: .include | map(select(.platform | startswith($choice)))}')
+            filtered_matrix=$(echo "$all_builds" | jq -c --arg choice "$platform_choice" 'map(select(.platform | startswith($choice)))')
           fi
           
           echo "matrix=$filtered_matrix" >> $GITHUB_OUTPUT
