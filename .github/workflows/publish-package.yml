@@ -213,17 +213,19 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-            pnpm tauri build --target ${{ matrix.target }} --config src-tauri/tauri.microsoftstore.conf.json
+            pnpm tauri build --target ${{ matrix.target }} --no-bundle
+            pnpm tauri bundle --config --config src-tauri/tauri.microsoftstore.conf.json
           else
             if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
               echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
             if [[ "${{ matrix.platform }}" =~ ^windows.* ]]; then
               ( cd src-tauri && cargo add --path ../pizza/lib/engine --features query_string_parser,persistence )
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine --config src-tauri/tauri.microsoftstore.conf.json
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
+              pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
             else
               #make add-dep-pizza-engine
               ( cd src-tauri && cargo add --path ../pizza/lib/engine --features query_string_parser,persistence )
-              pnpm run tauri build --target ${{ matrix.target }} --features use_pizza_engine
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
             fi
           fi
 
