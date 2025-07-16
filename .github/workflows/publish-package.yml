@@ -218,7 +218,7 @@ jobs:
           else
             if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
               echo "Building for Ubuntu with target: ${{ matrix.target }} will at snap package step"
-            if [[ "${{ matrix.platform }}" =~ ^windows.* ]]; then
+            elif [[ "${{ matrix.platform }}" =~ ^windows.* ]]; then
               ( cd src-tauri && cargo add --path ../pizza/lib/engine --features query_string_parser,persistence )
               pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --no-bundle
               pnpm tauri bundle --config src-tauri/tauri.microsoftstore.conf.json
