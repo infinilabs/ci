@@ -30,14 +30,20 @@ jobs:
       # or '[]' if no tests are to be run.
       matrix_json: ${{ steps.generate_matrix.outputs.matrix_json_string }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+        
       - name: Get Date One Day Ago for Schedule
         id: get_date_schedule
         if: ${{ github.event_name == 'schedule' }}
         run: |
           if [[ "$(uname)" == "Darwin" ]]; then
-            echo "seven_days_ago_utc=$(date -u -v-3d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "days_ago=$(date -u -v-3d +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           else
-            echo "seven_days_ago_utc=$(date -u -d '3 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+            echo "days_ago=$(date -u -d '3 days ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           fi
           cat $GITHUB_OUTPUT
       
@@ -47,7 +53,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_PRODUCT: ${{ inputs.PRODUCT }}
           INPUT_MANUAL_VERSION: ${{ inputs.MANUAL_VERSION }}
-          SINCE_DATE_SCHEDULE: ${{ steps.get_date_schedule.outputs.seven_days_ago_utc }}
+          SINCE_DATE_SCHEDULE: ${{ steps.get_date_schedule.outputs.days_ago }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           FINAL_MATRIX_ENTRIES="[]"
@@ -158,6 +164,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
 
       - name: Display Matrix Combination
         run: |
