@@ -7,7 +7,7 @@ cd "$GITHUB_WORKSPACE/$PNAME"
 
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
 if [[ "$BUILD_TYPE"=="schedule" ]]; then
-  SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 }')
+  SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 }')
 else
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
 fi

@@ -119,7 +119,7 @@ jobs:
             fi
             else
             BUILD_NUMBER="$(date +%Y%m%d)"
-            DYNAMIC_VERSION=$(echo "${{ vars.PUBLISH_OPERATOR_VERSION }}" | awk -F. -v OFS=. '{ $3 = $3 + 1; print $1, $2, $3 "_NIGHTLY" }')
+            DYNAMIC_VERSION=$(echo "${{ vars.PUBLISH_OPERATOR_VERSION }}" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 "_NIGHTLY" }')
             echo TAG="${DYNAMIC_VERSION}-$BUILD_NUMBER" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV

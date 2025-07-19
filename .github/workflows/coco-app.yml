@@ -189,7 +189,7 @@ jobs:
           if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             tauri_version="$current_version"
           else
-            tauri_version="$major.$minor.$((patch + 1))"
+            tauri_version="$major.$((minor + 1)).0"
           fi
           version="$tauri_version-SNAPSHOT-$build_number"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -409,12 +409,12 @@ jobs:
                 if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
                   current_version="$current_version-SNAPSHOT"
                   if [[ -z "${{ inputs.PUBLISH_VERSION }}" ]]; then
-                    current_version="$major.$minor.$((patch + 1))-SNAPSHOT"
+                    current_version="$major.$((minor + 1)).0-SNAPSHOT"
                   fi
                   pure_version="$current_version-$build_number"
                 else
-                  current_version="$major.$minor.$((patch + 1))-SNAPSHOT"
-                  nightly_version="$major.$minor.$((patch + 1))-SNAPSHOT"
+                  current_version="$major.$((minor + 1)).0-SNAPSHOT"
+                  nightly_version="$major.$((minor + 1)).0-SNAPSHOT"
                   pure_version="$current_version-$build_number"
                   #build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
                 fi
