@@ -201,6 +201,30 @@ jobs:
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
+      - name: Preper coco server enterprise dependencies
+        continue-on-error: true
+        run: |
+            echo "Publish enterprise version"
+            # init license and enterprise plugins
+            git clone git@github.com:infinilabs/license $WORK/license
+            git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
+            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+
+      - name: Preper coco server go mod
+        continue-on-error: true
+        run: |
+          # change dep for enterprise
+          cd $WORK/framework && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          echo "Go mod edit and tidy framework with license finished at $PWD"
+          cd $WORK/framework && OFFLINE_BUILD=true make config
+          echo "Config framework with license finished at $PWD"
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make update-vfs update-plugins
+          echo "Config $PNAME with update-vfs update-plugins finished at $PWD"
+          cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
+          echo "Go mod edit and tidy $PNAME with license finished at $PWD"
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make config
+          echo "Config $PNAME with license finished at $PWD"
+
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
           # build web
@@ -209,13 +233,16 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
-          echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
-          mkdir -p $WORK/$PNAME/.public/widgets/searchbox
-          cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
+          for w in fullscreen searchbox; do
+            echo "Build $PNAME widgets $w start..."
+            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
+
+            # check build files
+            ls -lrht $WORK/$PNAME/.public/widgets/$w
+          done
+
           
-          # check build files
-          ls -lrht $WORK/$PNAME/.public/widgets/searchbox
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
@@ -411,13 +438,14 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
-          echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
-          mkdir -p $WORK/$PNAME/.public/widgets/searchbox
-          cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
-          
-          # check build files
-          ls -lrht $WORK/$PNAME/.public/widgets/searchbox
+          for w in fullscreen searchbox; do
+            echo "Build $PNAME widgets $w start..."
+            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
+
+            # check build files
+            ls -lrht $WORK/$PNAME/.public/widgets/$w
+          done
           # Only build docker
           if [[ "${{ inputs.ONLY_DOCKER }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
@@ -697,13 +725,14 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
-          echo "Build $PNAME widgets start..."
-          cd $WORK/$PNAME/web/widgets/searchbox && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
-          mkdir -p $WORK/$PNAME/.public/widgets/searchbox
-          cp -rf index.html dist/index.{css,js} $WORK/$PNAME/.public/widgets/searchbox
-          
-          # check build files
-          ls -lrht $WORK/$PNAME/.public/widgets/searchbox
+          for w in fullscreen searchbox; do
+            echo "Build $PNAME widgets $w start..."
+            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
+
+            # check build files
+            ls -lrht $WORK/$PNAME/.public/widgets/$w
+          done
 
       - name: Preper coco server go mod
         continue-on-error: true

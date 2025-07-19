@@ -45,6 +45,9 @@ jobs:
     - name: Checkout code (includes ${{ env.TEST_SCRIPT_NAME }})
       uses: actions/checkout@v4
 
+    - name: Setup bootstrap
+      uses: ./containers/bootstrap
+
     - name: Verify Docker availability
       shell: bash
       run: |
