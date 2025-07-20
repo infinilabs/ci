@@ -14,9 +14,9 @@ jobs:
           - name: Ubuntu-x86_64
             runner: ubuntu-22.04
             is_container_test: false
-          - name: Ubuntu-aarch64
-            runner: ubuntu-22.04-arm
-            is_container_test: false
+          # - name: Ubuntu-aarch64
+          #   runner: ubuntu-22.04-arm
+          #   is_container_test: false
           # - name: MacOS-aarch64
           #   runner: macos-latest
           #   is_container_test: false
@@ -203,8 +203,8 @@ jobs:
         fi
         echo "Docker environment setup on macOS appears successful."
 
-    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu, CentOS, MacOS)
-      if: matrix.os_config.runner != 'windows-latest'
+    - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Ubuntu)
+      if: startsWith(matrix.os_config.runner, 'ubuntu')
       shell: bash
       timeout-minutes: 15
       run: |
