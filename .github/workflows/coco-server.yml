@@ -32,16 +32,6 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false      
-      ONLY_ENTERPRISE:
-        description: 'Publish Enterprise <Only>'
-        required: false
-        type: boolean
-        default: false
-      ONLY_DOCKER:
-        description: 'Publish Docker <Only>'
-        required: false
-        type: boolean
         default: false
       ONLY_STAGING:
         description: 'Publish Staging <Only>'
@@ -242,7 +232,7 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-          
+          TARGETS="linux-amd64"
           # build all targets
           for tag in $TARGETS; do
             go mod tidy && OFFLINE_BUILD=true make build-$tag
@@ -250,6 +240,7 @@ jobs:
 
       - name: Build coco server check
         run: |
+          TARGETS="linux-amd64"
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
@@ -283,6 +274,7 @@ jobs:
 
   publish:
     name: Publish coco server files and docker
+    if: ${{ inputs.ONLY_STAGING == false }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -446,10 +438,6 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
-          # Only build docker
-          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" ]]; then
-            TARGETS="linux-amd64 linux-arm64"            
-          fi
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
@@ -457,9 +445,6 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" ]]; then
-            TARGETS="linux-amd64 linux-arm64"            
-          fi
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
@@ -525,7 +510,6 @@ jobs:
           push: true
 
       - name: Archive coco server files
-        if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
@@ -544,7 +528,6 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload coco server files
-        if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
           for tag in $TARGETS; do
@@ -560,7 +543,7 @@ jobs:
 
   publish-enterprise:
     name: Publish coco server enterprise files and docker
-    if: ${{ inputs.ONLY_STAGING == false || inputs.ONLY_ENTERPRISE == true }}
+    if: ${{ inputs.ONLY_STAGING == false }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -753,7 +736,7 @@ jobs:
         continue-on-error: true
         run: |
           # Only build docker
-          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
+          if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
 
@@ -765,7 +748,7 @@ jobs:
 
       - name: Build coco server check
         run: |
-          if [[ "${{ inputs.ONLY_DOCKER }}" == "true" || "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
+          if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
             TARGETS="linux-amd64 linux-arm64"            
           fi
           for tag in $TARGETS; do
@@ -784,6 +767,32 @@ jobs:
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
+
+      - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
+          else
+            echo "No $PNAME binary found"
+          fi
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+
+      - name: Deploy files to production with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            ssh cocoprod "coco_upgrade ${VERSION}-${BUILD_NUMBER}"
+          else
+            echo "No $PNAME binary found"
+          fi
+          echo "Finished deploying $PNAME to cocoprod at $(date +'%m-%d %H:%M:%S')"
 
       - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
         env:
@@ -833,7 +842,6 @@ jobs:
           push: true
 
       - name: Archive coco server files
-        if: ${{ inputs.ONLY_DOCKER != true }}
         run: |
           cd $WORK/$PNAME/bin
           if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
@@ -855,7 +863,6 @@ jobs:
           ls -lrt $WORK/$PNAME$ENT-$VERSION-*.*
                       
       - name: Upload coco server files with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-        if: ${{ inputs.ONLY_DOCKER != true }}
         run: | 
           cd $WORK
           if [[ "${{ env.PUBLISH_ENTERPRISE }}" == "true" ]]; then
@@ -871,32 +878,6 @@ jobs:
                 [ -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME$ENT-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
           done
-
-      - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-        timeout-minutes: 30
-        continue-on-error: true
-        run: |
-          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
-            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
-          else
-            echo "No $PNAME binary found"
-          fi
-          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-
-      - name: Deploy files to production with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
-        timeout-minutes: 30
-        continue-on-error: true
-        run: |
-          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            ssh cocoprod "coco_upgrade ${VERSION}-${BUILD_NUMBER}"
-          else
-            echo "No $PNAME binary found"
-          fi
-          echo "Finished deploying $PNAME to cocoprod at $(date +'%m-%d %H:%M:%S')"
 
   notify_on_failure:
     runs-on: ubuntu-latest
