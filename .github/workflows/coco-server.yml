@@ -41,7 +41,7 @@ on:
 
 jobs:
   publish-staging:
-    name: Publish coco server to staging
+    name: Publish coco server enterprise to staging
     if: ${{ inputs.ONLY_STAGING == true }}
     runs-on: ubuntu-latest
     env:
@@ -215,7 +215,7 @@ jobs:
           cd $WORK/$PNAME && OFFLINE_BUILD=true make config
           echo "Config $PNAME with license finished at $PWD"
 
-      - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
+      - name: Build coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}} and easysearch ${{ env.EZS_VER }}
         run: |
           # build web
           echo "Build $PNAME web start..."
