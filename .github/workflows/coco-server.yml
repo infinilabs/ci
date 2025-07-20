@@ -34,7 +34,7 @@ on:
         type: boolean
         default: true
       ONLY_STAGING:
-        description: 'Publish Staging <Only>'
+        description: 'Publish Enterprise <Only>'
         required: false
         type: boolean
         default: true
@@ -232,11 +232,7 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-          TARGETS="linux-amd64"
-          # build all targets
-          for tag in $TARGETS; do
-            OFFLINE_BUILD=true make build-$tag
-          done
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make build-linux-amd64
 
       - name: Build coco server check
         run: |
