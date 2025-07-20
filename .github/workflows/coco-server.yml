@@ -232,7 +232,9 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-          cd $WORK/$PNAME && OFFLINE_BUILD=true make build-linux-amd64
+          cd $WORK/$PNAME
+          go mod tidy
+          OFFLINE_BUILD=true make build-linux-amd64
 
       - name: Build coco server check
         run: |
@@ -737,7 +739,7 @@ jobs:
           fi
 
           # build all targets
-          cd $WORK/$PNAME
+          cd $WORK/$PNAME && go mod tidy
           for tag in $TARGETS; do
             OFFLINE_BUILD=true make build-$tag
           done
