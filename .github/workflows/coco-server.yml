@@ -199,7 +199,7 @@ jobs:
             git clone git@github.com:infinilabs/license $WORK/license
             git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
-      - name: Build coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER}}
+      - name: Build coco server enterprise web
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -215,6 +215,7 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
+
       - name: Preper coco server enterprise go mod
         continue-on-error: true
         run: |
@@ -418,8 +419,7 @@ jobs:
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-
-      - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
+      - name: Build coco server enterprise web
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -435,9 +435,13 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
+
+      - name: Preper coco server go mod
+        run: |
+          cd $WORK/$PNAME 
           # build all targets
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            make build-$tag
           done
 
       - name: Build coco server check
@@ -738,7 +742,7 @@ jobs:
           fi
 
           # build all targets
-          cd $WORK/$PNAME && go mod tidy
+          cd $WORK/$PNAME
           for tag in $TARGETS; do
             OFFLINE_BUILD=true make build-$tag
           done
