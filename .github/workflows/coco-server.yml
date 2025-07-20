@@ -23,21 +23,21 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: ""
+        default: "0.7.0"
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: ""
+        default: "1.14.0-2226"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false
+        default: true
       ONLY_STAGING:
         description: 'Publish Staging <Only>'
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   publish-staging:
