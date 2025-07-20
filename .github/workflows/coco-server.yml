@@ -235,7 +235,8 @@ jobs:
           TARGETS="linux-amd64"
           # build all targets
           for tag in $TARGETS; do
-            go mod tidy && OFFLINE_BUILD=true make build-$tag
+            go mod tidy
+            OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build coco server check
@@ -743,7 +744,8 @@ jobs:
           # build all targets
           cd $WORK/$PNAME
           for tag in $TARGETS; do
-            go mod tidy && OFFLINE_BUILD=true make build-$tag
+            go mod tidy
+            OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build coco server check
