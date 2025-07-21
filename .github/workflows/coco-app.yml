@@ -45,7 +45,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false
+        default: true
 jobs:
   build-app:
     env:
@@ -273,26 +273,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-            if [[ "${{ matrix.platform }}" =~ ^window.* ]]; then
-              echo "Build with pizza engine at ${{matrix.platform}} with ${{ matrix.target }}"
-              if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
-                pnpm tauri build --target ${{ matrix.target }}
-              else
-                #make add-dep-pizza-engine
-                ( cd src-tauri && cargo add --path ../../pizza/lib/engine --features query_string_parser,persistence )
-                pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
-              fi
-            fi
-
-            if [[ "${{ matrix.platform }}" =~ ^ubuntu.* ]]; then
-              echo "Build with pizza engine at ${{matrix.platform}} with ${{ matrix.target }}"
-              #make add-dep-pizza-engine
-              ( cd src-tauri && cargo add --path ../../pizza/lib/engine --features query_string_parser,persistence )
-              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine --bundles deb rpm
-            fi
-
-            if [[ "${{ matrix.platform }}" =~ ^macos.* ]]; then
-              echo "Build with pizza engine at ${{matrix.platform}} with ${{ matrix.target }}"
+            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            echo "Build without pizza engine at i686-pc-windows-msvc target"
+            pnpm tauri build --target ${{ matrix.target }}
+            else
+              echo "Build with pizza engine at ${{ matrix.target }}"
               #make add-dep-pizza-engine
               ( cd src-tauri && cargo add --path ../../pizza/lib/engine --features query_string_parser,persistence )
               pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
@@ -314,17 +299,16 @@ jobs:
 
           puer_version="$(echo "$VERSION" | sed 's/-.*//')"
           version="$VERSION"
-          if [[ -d "$base_dir" ]]; then    
-            find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
-              if [[ "$file" == *"$version"* ]]; then
-                echo "Skipping '$file', already contains the full version"
-                continue
-              fi
-              new_file="${file/$puer_version/${version}}"
-              echo "Renaming '$file' to '$new_file'"
-              mv "$file" "$new_file"
-            done
-          fi
+
+          find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+            if [[ "$file" == *"$version"* ]]; then
+              echo "Skipping '$file', already contains the full version"
+              continue
+            fi
+            new_file="${file/$puer_version/${version}}"
+            echo "Renaming '$file' to '$new_file'"
+            mv "$file" "$new_file"
+          done
           # Delete the ubuntu files
           if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
             find "$bundle_dir" \
