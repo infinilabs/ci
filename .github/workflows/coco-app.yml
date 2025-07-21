@@ -314,16 +314,17 @@ jobs:
 
           puer_version="$(echo "$VERSION" | sed 's/-.*//')"
           version="$VERSION"
-
-          find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
-            if [[ "$file" == *"$version"* ]]; then
-              echo "Skipping '$file', already contains the full version"
-              continue
-            fi
-            new_file="${file/$puer_version/${version}}"
-            echo "Renaming '$file' to '$new_file'"
-            mv "$file" "$new_file"
-          done
+          if [[ -d "$base_dir" ]]; then    
+            find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+              if [[ "$file" == *"$version"* ]]; then
+                echo "Skipping '$file', already contains the full version"
+                continue
+              fi
+              new_file="${file/$puer_version/${version}}"
+              echo "Renaming '$file' to '$new_file'"
+              mv "$file" "$new_file"
+            done
+          fi
           # Delete the ubuntu files
           if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
             find "$bundle_dir" \
