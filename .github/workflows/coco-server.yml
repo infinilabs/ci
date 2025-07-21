@@ -261,6 +261,9 @@ jobs:
         continue-on-error: true
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            # prepare staging server
+            echo "Prepare staging server for $PNAME at $(date +'%m-%d %H:%M:%S')"
+            ssh staging "mkdir -p /opt/coco/server/update && rm -rf /opt/coco/server/update/*"
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
@@ -774,6 +777,9 @@ jobs:
         continue-on-error: true
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            # prepare staging server
+            echo "Prepare staging server for $PNAME at $(date +'%m-%d %H:%M:%S')"
+            ssh staging "mkdir -p /opt/coco/server/update && rm -rf /opt/coco/server/update/*"
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
