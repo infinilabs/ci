@@ -32,12 +32,12 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: true
+        default: false
       ONLY_STAGING:
-        description: 'Publish Enterprise <Only>'
+        description: 'Publish Enterprise <Only Dev>'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   publish-staging:

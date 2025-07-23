@@ -77,7 +77,17 @@ EOF
 
 if [[ "$PRE_UPGRADE_PATH" == *"SNAPSHOT"* ]]; then
   PRE_UPGRADE_PATH="${PRE_UPGRADE_PATH%/*}"
+else
+  # Release also upload snapshot .latest.json
+  SNAPSHOT_UPGRADE_PATH="${PRE_UPGRADE_PATH%/*}"
+  (
+    TMP_DIR=$(mktemp -d)
+    cd "$TMP_DIR" && sed -i "s/stable/snapshot/g" .latest.json
+    echo "Uploading .latest.json to OSS $SNAPSHOT_UPGRADE_PATH"
+    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$SNAPSHOT_UPGRADE_PATH" -f .latest.json
+  )
 fi
 # Upload the JSON file to OSS
 echo "Uploading .latest.json to OSS $PRE_UPGRADE_PATH"
 oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$PRE_UPGRADE_PATH" -f .latest.json
+
