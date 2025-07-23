@@ -82,6 +82,7 @@ else
   SNAPSHOT_UPGRADE_PATH="${PRE_UPGRADE_PATH%/*}"
   (
     TMP_DIR=$(mktemp -d)
+    cp .latest.json "$TMP_DIR/.latest.json"
     cd "$TMP_DIR" && sed -i "s/stable/snapshot/g" .latest.json
     echo "Uploading .latest.json to OSS $SNAPSHOT_UPGRADE_PATH"
     oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k "$SNAPSHOT_UPGRADE_PATH" -f .latest.json
