@@ -204,13 +204,13 @@ jobs:
           # build web
           echo "Build $PNAME web start..."
           cd $WORK/$PNAME/web
-          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
+          pnpm install --frozen-lockfile --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
           for w in fullscreen searchbox; do
             cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet
+            pnpm install --registry=https://registry.npmjs.com --quiet .
             echo "Build $PNAME widgets $w with tsup"
             mkdir -p dist && pnpm exec tsup --silent
             echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
@@ -437,7 +437,7 @@ jobs:
           for w in fullscreen searchbox; do
             cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet
+            pnpm install --registry=https://registry.npmjs.com --quiet .
             echo "Build $PNAME widgets $w with tsup"
             mkdir -p dist && pnpm exec tsup --silent
             echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
@@ -723,7 +723,7 @@ jobs:
           for w in fullscreen searchbox; do
             cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet
+            pnpm install --registry=https://registry.npmjs.com --quiet .
             echo "Build $PNAME widgets $w with tsup"
             mkdir -p dist && pnpm exec tsup --silent
             echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
