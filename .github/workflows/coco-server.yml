@@ -203,7 +203,7 @@ jobs:
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
+          cd $WORK/$PNAME/web
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
@@ -422,11 +422,11 @@ jobs:
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Build coco server enterprise web
+      - name: Build coco server web
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
+          cd $WORK/$PNAME/web
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
@@ -708,7 +708,7 @@ jobs:
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web && sed -i '/prepare/d' package.json
+          cd $WORK/$PNAME/web
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
