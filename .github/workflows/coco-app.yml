@@ -132,7 +132,7 @@ jobs:
             fi
           fi
 
-          version="$current_version-STABLE-$build_number"
+          version="$current_version-$build_number"
           echo "Build $PNAME with $version"
           if ${{ matrix.platform == 'macos-latest' }}; then
             echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"

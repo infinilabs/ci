@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Process PURE_VERSION
+base_version="${PURE_VERSION%%-*}"
+build_number="${PURE_VERSION##*-}"
+PURE_VERSION="${base_version}-${build_number}"
+
 # Check variables
 echo "PRE_UPGRADE_PATH: $PRE_UPGRADE_PATH"
 echo "UPGRADE_PATH: $UPGRADE_PATH"
