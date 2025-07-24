@@ -207,9 +207,14 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
+          pnpm add -D tsup -w
           for w in fullscreen searchbox; do
+            cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            pnpm install --registry=https://registry.npmjs.com --quiet
+            echo "Build $PNAME widgets $w with tsup"
+            mkdir -p dist && pnpm exec tsup --silent
+            echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
             mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
 
             # check build files
@@ -430,9 +435,14 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
+          pnpm add -D tsup -w
           for w in fullscreen searchbox; do
+            cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            pnpm install --registry=https://registry.npmjs.com --quiet
+            echo "Build $PNAME widgets $w with tsup"
+            mkdir -p dist && pnpm exec tsup --silent
+            echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
             mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
 
             # check build files
@@ -712,9 +722,14 @@ jobs:
           pnpm install --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
           # build widgets
+          pnpm add -D tsup -w
           for w in fullscreen searchbox; do
+            cd $WORK/$PNAME/web/widgets/$w 
             echo "Build $PNAME widgets $w start..."
-            cd $WORK/$PNAME/web/widgets/$w && pnpm install --registry=https://registry.npmjs.com --quiet && mkdir -p dist && pnpm exec tsup --silent
+            pnpm install --registry=https://registry.npmjs.com --quiet
+            echo "Build $PNAME widgets $w with tsup"
+            mkdir -p dist && pnpm exec tsup --silent
+            echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
             mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
 
             # check build files
