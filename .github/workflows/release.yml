@@ -347,21 +347,24 @@ jobs:
 
       - name: Create Commit Message for ${{ matrix.product }}
         if: ${{ inputs.OPERATION == 'PR' }}
+        id: commit_and_push
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           if [[ -n $(git status --porcelain) ]]; then
             echo "✅ Changes detected. Proceeding with commit and push..."
             git commit -m "$PR_MESSAGE"     
             git push origin "$PR_BRANCH"
+            echo "changes_pushed=true" >> $GITHUB_OUTPUT
           else
             echo "🤷 No changes detected. Skipping commit and push."
+            echo "changes_pushed=false" >> $GITHUB_OUTPUT
           fi
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
             git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
           fi
 
       - name: Create Github Pull Request for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && matrix.product != 'easysearch' }}
+        if: ${{ inputs.OPERATION == 'PR' && steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product != 'easysearch' }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }} 
         run: |
@@ -382,7 +385,7 @@ jobs:
                   --label "automated"
 
       - name: Create Pull Request for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && matrix.product == 'easysearch' }}
+        if: ${{ inputs.OPERATION == 'PR' && steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
         uses: infinilabs/gitea-pr@v0
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
