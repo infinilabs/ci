@@ -143,14 +143,14 @@ jobs:
       - name: Check ${{ env.PNAME }} go toolchain
         run: go version
 
-      - name: Set up  with ${{ env.PNAME }} nodejs toolchain
+      - name: Set up with ${{ env.PNAME }} nodejs toolchain
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'npm'
           cache-dependency-path: "**/package.json"
 
-      - name: Check  with ${{ env.PNAME }} nodejs toolchain
+      - name: Check with ${{ env.PNAME }} nodejs toolchain
         run: |
           if ! command -v cnpm >/dev/null 2>&1; then
             npm install -g rimraf
@@ -276,6 +276,40 @@ jobs:
           find $WORK/$PNAME/bin -name "*.go" -delete
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
+      
+      - name: Archive ${{ env.PNAME }} files
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        run: |
+          cd $WORK/$PNAME/bin
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            EXT=$TAG
+            [[ "$p1" == "win" ]] && EXT="$TAG.exe"
+
+            echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+            if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+              zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            else
+              tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            fi
+          done
+          ls -lrt $WORK/$PNAME-$VERSION-*.*
+                      
+      - name: Upload ${{ env.PNAME }} files
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        run: | 
+          cd $WORK
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
+            if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+            else
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+            fi
+          done
 
       - name: Set up qemu with ${{ env.PNAME }}
         uses: docker/setup-qemu-action@v3
