@@ -65,6 +65,7 @@ jobs:
             REF_TYPE="tag"
             git checkout $LATEST_TAG
             REF_NAME=$(git describe --tags --exact-match HEAD)
+            echo "Checked out $LATEST_TAG and set REF_NAME to $REF_NAME"
           fi
           
           if [[ "${REF_TYPE}" == "branch" ]]; then
@@ -113,6 +114,7 @@ jobs:
         working-directory: ${{ env.PNAME }}
         run: |
           (cd docs && OUTPUT=$(pwd)/../../docs-output make docs-build docs-place-redirect)
+          echo "Documentation built successfully with $BRANCH"
 
       - name: Commit and Push Changes to Docs Repo
         working-directory: docs-output
@@ -124,6 +126,7 @@ jobs:
             git add .
             git commit -m "Rebuild $PRODUCT_NAME docs for version $VERSION"
             git push origin main
+            echo "Changes committed and pushed to docs repo."
           else
             echo "No changes to commit."
           fi
