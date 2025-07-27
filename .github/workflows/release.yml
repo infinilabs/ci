@@ -46,11 +46,11 @@ on:
       PUBLISH_COCO_APP_VERSION:
         description: 'Publish Coco App Version'
         required: false
-        default: "0.7.0"
+        default: "0.7.1"
       PUBLISH_COCO_VERSION:
         description: 'Publish Coco Server Version'
         required: false
-        default: "0.7.0"
+        default: "0.7.1"
       EASYSEARCH_PUBLISH:
           description: 'Easysearch'
           required: false
