@@ -49,7 +49,7 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME
           echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
 
-      - name: Set Variables Based on Ref
+      - name: Set Variables Based for ${{ env.PNAME }} on Ref
         id: vars
         working-directory: ${{ env.PNAME }}
         run: |
@@ -61,7 +61,9 @@ jobs:
           SEMVER_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
 
           LATEST_TAG=$(git describe --tags --abbrev=0)
-          if curl -o /dev/null -s -w %{http_code} $DOCS_URL/$PNAME/$LATEST_TAG | grep -q 404; then
+          REAL_DOCS_URL="$DOCS_URL/$PNAME/$LATEST_TAG"
+          echo "Latest tag is $LATEST_TAG with docs URL $REAL_DOCS_URL"
+          if curl -o /dev/null -s -w %{http_code} $REAL_DOCS_URL | grep -q 404; then
             REF_TYPE="tag"
             git checkout $LATEST_TAG
             REF_NAME=$(git describe --tags --exact-match HEAD)
