@@ -50,8 +50,8 @@ jobs:
         echo WORKBASE=$WORKBASE >> $GITHUB_ENV
         echo WORK=$WORK >> $GITHUB_ENV
         echo ES_USERNAME=admin >> $GITHUB_ENV
-        echo ES_PASSWORD=admin >> $GITHUB_ENV
-        echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=admin >> $GITHUB_ENV
+        echo ES_PASSWORD=OOUkdUwGnYIB35VMJCXmzQ== >> $GITHUB_ENV
+        echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=OOUkdUwGnYIB35VMJCXmzQ== >> $GITHUB_ENV
         echo ES_ENDPOINT=https://127.0.0.1:9200 >> $GITHUB_ENV
         echo GW_ENDPOINT=https://127.0.0.1:8000 >> $GITHUB_ENV
         echo VERSION=1.0.0 >> $GITHUB_ENV

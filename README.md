@@ -22,5 +22,3 @@
 *   **`Products Files Publish`**: Manually publishes files for `Agent`, `Console`, `Gateway`, and `Loadgen`.
 *   **`Products Integration Test`**: Automatically compiles and tests source code for `Agent`, `Console`, `Gateway`, and `Loadgen`; allows manual triggering of tests against specific downloaded/installed versions.
 *   **`Products Release Notes and Tag`**: Used for releases; updates Release Notes, creates Git tags, and updates the `.latest` configuration.
-
-> EASYSEARCH_INITIAL_ADMIN_PASSWORD=d3f41t_p4ss@infini-l4bs bin/initialize.sh -s
