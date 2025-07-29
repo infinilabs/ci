@@ -3,10 +3,10 @@ env:
   ES_SCHEMA: "https"
   ES_ENDPOINT: "https://127.0.0.1:9200"
   ES_USERNAME: "admin"
-  ES_PASSWORD: "admin"
+  ES_PASSWORD: "fcb9ecc20a4255ff88cb6ce6ae2c9679"
   CONSOLE_ENDPOINT: "http://127.0.0.1:9000"
   CONSOLE_USERNAME: "admin"
-  CONSOLE_PASSWORD: "admin"
+  CONSOLE_PASSWORD: "fcb9ecc20a4255ff88cb6ce6ae2c9679"
   GATEWAY_ENDPOINT: "http://127.0.0.1:2900"
   AGENT_ENDPOINT: "http://127.0.0.1:2920"
 runner:
