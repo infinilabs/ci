@@ -39,7 +39,7 @@ on:
       EZS_VERSION:
         description: 'Easysearch version'
         required: false
-        default: "1.14.0"
+        default: "1.14.1"
       GATEWAY_VERSION:
         description: 'Gateway version'
         required: false
@@ -168,10 +168,10 @@ jobs:
 
             if [ -z "$latest_json" ] || ! echo "$latest_json" | jq . > /dev/null 2>&1; then
               echo "Warning: Failed to fetch or parse .latest from $RELEASE_URL. Using fallback versions."
-              easysearch_ver="1.14.0"
-              gateway_ver="1.29.7"
+              easysearch_ver="1.14.1"
+              gateway_ver="1.29.8"
             else
-              easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"1.14.0\"")
+              easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"1.14.1\"")
               gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.29.7\"")
             fi
 
