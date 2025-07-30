@@ -100,10 +100,12 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   if [ -f $WORK/$PNAME/$DNAME ]; then
     echo "Repackaged file at $WORK/$PNAME/$DNAME"
-    # 文件上传
+    # Check if only docker image is to be published
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo "Publish Docker <Only> image no need to upload with $DNAME"
     else
+      # Upload to OSS if not only docker image and log the upload time with +8 zone
+      echo "Upload $DNAME to OSS at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
       if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
       else
