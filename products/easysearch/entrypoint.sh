@@ -25,7 +25,7 @@ AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_configured"
 
 # Ensure data directory exists, even if mount is empty
 log "Ensuring data directory exists: $DATA_DIR"
-mkdir -p "$DATA_DIR"
+mkdir -p {"$DATA_DIR","$LOGS_DIR"} && chown -R ezs:ezs {"$DATA_DIR","$LOGS_DIR"}
 if [ $? -ne 0 ]; then log "ERROR: Failed to create data directory."; exit 1; fi
 
 # --- Function to perform the core initialization script execution ---
