@@ -24,9 +24,17 @@ AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
 AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_configured"
 
 # Ensure data directory exists, even if mount is empty
-log "Ensuring data directory exists: $DATA_DIR"
-mkdir -p {"$DATA_DIR","$LOGS_DIR"} && chown -R ezs:ezs {"$DATA_DIR","$LOGS_DIR"}
-if [ $? -ne 0 ]; then log "ERROR: Failed to create data directory."; exit 1; fi
+log "Ensuring data directory exists: $DATA_DIR and $LOGS_DIR"
+for d in "$DATA_DIR" "$LOGS_DIR"; do
+    if [ ! -d "$d" ]; then
+        log "Creating directory: $d"
+        mkdir -p "$d"
+        if [ "$(id -u)" = '0' ]; then
+            chown -R ezs:ezs "$d"
+            if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for $d."; exit 1; fi
+        fi
+    fi
+done
 
 # --- Function to perform the core initialization script execution ---
 # This is the part that runs bin/initialize.sh -s
