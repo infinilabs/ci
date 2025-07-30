@@ -201,7 +201,8 @@ jobs:
         run: |
           echo "Setting up test environment variables..."
           PROTOCOL_VAR="http"
-          CURL_OPTS_VAR="-s --fail --connect-timeout 10 --max-time 30"
+          # Set default CURL options when use -no-rc to avoid .curlrc issues
+          CURL_OPTS_VAR="-q -s --fail --connect-timeout 10 --max-time 30"
           AUTH_OPTS_VAR=""
           CURRENT_USER_VAR=""
 

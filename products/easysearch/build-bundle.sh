@@ -87,8 +87,10 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
-      echo y | $WORK/$PNAME/bin/$PNAME-plugin install file:///$DEST/plugins/$p/$p-$VERSION.zip > /dev/null 2>&1
+      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip
     done
+    echo "Checked the installed plugins for $PNAME-$VERSION."
+    ls -lrt $WORK/$PNAME/plugins
   fi
 
   # 重新打包

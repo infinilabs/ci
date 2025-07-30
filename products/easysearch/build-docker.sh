@@ -55,7 +55,7 @@ for t in amd64 arm64; do
     plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
-      echo y | $WORK/$PNAME-$t/bin/$PNAME-plugin install file:///$DEST/plugins/$p/$p-$VERSION.zip > /dev/null 2>&1
+      $WORK/$PNAME-$t/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip
     done
   fi
 done
