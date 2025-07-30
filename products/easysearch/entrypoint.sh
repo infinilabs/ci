@@ -23,6 +23,27 @@ INITIALIZED_MARKER="$DATA_DIR/.initialized"
 AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
 AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_configured"
 
+# Function to check if the script is running as root
+is_root() {
+  [ "$(id -u)" = '0' ]
+}
+
+# Function to change ownership of directories
+change_ownership() {
+  if is_root; then
+    for opt_dir in "$DATA_DIR" "$LOGS_DIR" "$CFG_DIR"; do
+      [ -d "$opt_dir" ] || mkdir -p "$opt_dir"
+      if [ "$(stat -c %U "$opt_dir")" != "ezs" ] || [ "$(stat -c %G "$opt_dir")" != "ezs" ]; then
+        log "Changing ownership of $opt_dir to ezs:ezs."
+        chown -R ezs:ezs "$opt_dir"
+        if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
+      else
+        log "$opt_dir is already owned by ezs."
+      fi
+    done
+  fi
+}
+
 # --- Function to perform the core initialization script execution ---
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
@@ -341,10 +362,15 @@ log "Checking for initial setup marker."
 if [ ! -f "$INITIALIZED_MARKER" ]; then
   # If marker not found, determine if it's a clean start or non-clean start
   log "Initialization marker not found."
-  
+
+  # Ensure directories exist and have correct ownership
+  is_root && change_ownership
+
+  # Check if $DATA_DIR is empty or not
   if [ -z "$(ls -A "$DATA_DIR")" ]; then
     log "$DATA_DIR directory is empty. Proceeding with initial setup process."
-    perform_initial_setup # Call the initial setup function which executes core script and creates marker
+    # Call the initial setup function which executes core script and creates marker
+    perform_initial_setup
     if [ $? -ne 0 ]; then
       log "Initial setup function failed. Entrypoint will exit."
       exit 1
@@ -371,16 +397,9 @@ fi
 
 # --- Switch to non-root user if running as root ---
 # This block remains as is, it ensures the rest of the script runs as 'ezs' user
-if [ "$(id -u)" = '0' ]; then
-  # Ensure the data directory has the correct ownership before switching user
-  log "Running as root. Checking $DATA_DIR directory ownership."
-  # Check if ownership needs changing before attempting
-  if [ "$(stat -c %U "$DATA_DIR")" != "ezs" ] || [ "$(stat -c %G "$DATA_DIR")" != "ezs" ]; then # Check both user and group
-    log "Changing ownership of $DATA_DIR to ezs:ezs."
-    chown -R ezs:ezs "$DATA_DIR" "$LOGS_DIR" "$CFG_DIR"
-    if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $DATA_DIR."; exit 1; fi
-  fi
-  
+if is_root; then
+  # Change ownership of directories before switching user
+  change_ownership
   # Conditionally setup the agent *before* switching user (as it needs root for supervisor config)
   if [ "${METRICS_WITH_AGENT}" == "true"  ] && [ -n "${METRICS_CONFIG_SERVER}" ]; then
     log "Agent setup requested based on environment variables."
