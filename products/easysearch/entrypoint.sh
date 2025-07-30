@@ -23,11 +23,6 @@ INITIALIZED_MARKER="$DATA_DIR/.initialized"
 AGENT_KEYSTORE_MARKER="$AGENT_DIR/.agent_keystore_initialized"
 AGENT_SUPERVISOR_MARKER="$AGENT_DIR/.agent_supervisor_configured"
 
-# Ensure data directory exists, even if mount is empty
-log "Ensuring data directory exists: $DATA_DIR"
-mkdir -p "$DATA_DIR"
-if [ $? -ne 0 ]; then log "ERROR: Failed to create data directory."; exit 1; fi
-
 # --- Function to perform the core initialization script execution ---
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
@@ -45,7 +40,7 @@ perform_initial_setup() {
   log "Initialization marker not found. Determining setup action..."
 
   # --- Check if the data directory is empty or not ---
-  if [ -z "$(ls -A "$DATA_DIR")" ]; then # Use $DATA_DIR and quotes for safety
+  if [ ! -d "$DATA_DIR" ] || [ -z "$(ls -A "$DATA_DIR")" ]; then
     log "$DATA_DIR directory is empty. Proceeding with core initialization script."
     execute_core_initial_script # Call the function to execute the script
     if [ $? -eq 0 ]; then

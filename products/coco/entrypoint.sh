@@ -94,8 +94,14 @@ if [ "$(id -u)" = '0' ]; then
       export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-$RANDOM_PASSWORD"
       log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
     else
-      log "Error generating random password. Using default 'coco-server'."
-      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server"
+      RANDOM_PASSWORD=$(openssl rand -base64 12)
+      if [ -n "$RANDOM_PASSWORD" ]; then
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-$RANDOM_PASSWORD"
+        log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
+      else
+        log "Error generating random password. Using default coco-server-default-password."
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-default-password"
+      fi
     fi
   fi
   # for ezs init
