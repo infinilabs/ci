@@ -73,24 +73,28 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     unzip -q $JNAME
   fi
 
-  #plugin install
+  #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
     plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
-      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip >/dev/null
+      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip >/dev/null 2>&1
     done
-    echo "Checked the installed plugins for $PNAME-$VERSION."
-    ls -lrt $WORK/$PNAME/plugins
+
+    # for debug
+    echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
   fi
+
+  # Copy the JDK to the expected location
   if [[ "$USER_GRAALVM" == "true" ]]; then
     mv graalvm* $WORK/$PNAME/jdk
   else
     mv zulu* $WORK/$PNAME/jdk
   fi
 
-  echo "Check current files"
-  ls -lrt  $WORK/$PNAME
+  # for debug
+  # echo "Check current files" && ls -lrt  $WORK/$PNAME
+
   # 重新打包
   if [ "${DNAME##*.}" == "gz" ]; then
     tar -zcf $DNAME *
@@ -105,7 +109,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
       echo "Publish Docker <Only> image no need to upload with $DNAME"
     else
       # Upload to OSS if not only docker image and log the upload time with +8 zone
-      echo "Upload $DNAME to OSS at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+      echo "$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S') INFO Upload $DNAME to OSS"
       if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
       else

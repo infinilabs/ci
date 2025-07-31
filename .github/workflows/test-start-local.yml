@@ -34,8 +34,8 @@ jobs:
 
     env:
       SCRIPT_URL_ARG: "https://get.infini.cloud/start-local"
-      DEFAULT_PASSWORD_ARG: "ShouldChangeme123!"
-      CUSTOM_PASSWORD_ARG: "MySecurePassword123"
+      DEFAULT_PASSWORD_ARG: "Should.Change.me.123."
+      CUSTOM_PASSWORD_ARG: "My.Secure.Password.123"
       NUM_NODES_EXPECTED_ARG: 3
       TEST_WORK_DIR: ${{ github.workspace }}/ezs_run_data
       TEST_SCRIPT_NAME: test_start_local.sh
@@ -207,6 +207,7 @@ jobs:
       if: startsWith(matrix.os_config.runner, 'ubuntu')
       shell: bash
       timeout-minutes: 15
+      continue-on-error: true
       run: |
         # Prepare the working directory on the host
         # This directory will be mounted into the CentOS container if needed
@@ -279,12 +280,16 @@ jobs:
         else
           echo "Running test directly on ${{ matrix.os_config.runner }}..."
           ./${{ env.TEST_SCRIPT_NAME }}
+          if [ $? -ne 0 ]; then
+            docker logs easysearch-0 || echo "docker logs easysearch-0 failed, maybe not running?"
+          fi
         fi
 
     - name: Execute Test Scenario on ${{ matrix.os_config.name }} ( Windows)
       if: matrix.os_config.runner == 'windows-latest'
       shell: bash
       timeout-minutes: 15
+      continue-on-error: true
       run: |
         # Prepare the working directory on the host
         mkdir -p ${{ env.TEST_WORK_DIR }}

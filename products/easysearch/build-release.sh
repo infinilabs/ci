@@ -88,7 +88,7 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-    echo Check if $f exists
+    echo && echo Check if plugin $p exists
     URL=$RELEASE_URL/$PNAME/stable/plugins/$p/$f.sha512
     if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
       if [ "$onceclean" == "true" ]; then
@@ -99,7 +99,7 @@ for p in ${plugins[@]}; do
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo "Publish Docker <Only> image no need to upload with $p"
     else
-      echo Upload $f to oss
+      echo Upload plugin $p to oss
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
     fi
