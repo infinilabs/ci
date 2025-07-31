@@ -126,13 +126,13 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
     
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health..."
-      
+      sleep 30 # Additional wait to ensure service is ready after port open
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -s -w "%{http_code}" \
+      http_code=$(curl -v -s -w "%{http_code}" \
                    -u "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
-                   -o "${body_file}")
+                   -o "${body_file}" 2>/dev/null)
       curl_exit_code=$?
 
       if [ $curl_exit_code -eq 0 ] && [[ "$http_code" == "200" ]]; then
@@ -190,7 +190,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
       health_http_code=$(curl -s -w "%{http_code}" \
                              -u "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
-                             -o "${health_body_file}")
+                             -o "${health_body_file}" 2>/dev/null)
       health_curl_exit_code=$?
 
       if [ $health_curl_exit_code -eq 0 ] && [[ "$health_http_code" == "200" ]]; then
@@ -201,7 +201,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
           nodes_http_code=$(curl -s -w "%{http_code}" \
                                  -u "admin:${CUSTOM_PASSWORD}" \
                                  "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
-                                 -o "${nodes_body_file}")
+                                 -o "${nodes_body_file}" 2>/dev/null)
           nodes_curl_exit_code=$?
 
           if [ $nodes_curl_exit_code -eq 0 ] && [[ "$nodes_http_code" == "200" ]];
