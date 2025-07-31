@@ -180,6 +180,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
   health_body_file="custom_health_body.tmp"
   nodes_body_file="custom_nodes_body.tmp"
+  analyze_body_file="custom_analyze_body.tmp"
 
   while [ $elapsed -lt $timeout_seconds ]; do
     log_info "Attempting check for custom Easysearch (${elapsed}s / ${timeout_seconds}s)..."
@@ -204,8 +205,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
                                  -o "${nodes_body_file}" 2>/dev/null)
           nodes_curl_exit_code=$?
 
-          if [ $nodes_curl_exit_code -eq 0 ] && [[ "$nodes_http_code" == "200" ]];
-          then
+          if [ $nodes_curl_exit_code -eq 0 ] && [[ "$nodes_http_code" == "200" ]]; then
             # _cat/nodes?format=json returns a JSON array
             actual_nodes_in_cluster=$(jq 'length' "${nodes_body_file}")
             if [ "$actual_nodes_in_cluster" -eq "${NUM_NODES_EXPECTED}" ]; then
@@ -221,6 +221,37 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
             if [ -f "${nodes_body_file}" ]; then cat "${nodes_body_file}" || log_info "Could not cat nodes body file."; else echo "(No body from _cat/nodes)"; fi
           fi
           rm -f "${nodes_body_file}" # Clean up nodes temp file for this iteration
+
+          analyze_http_code=$(curl -s -w "%{http_code}" \
+                                       -u "admin:${CUSTOM_PASSWORD}" \
+                                       -H "Content-Type: application/json" \
+                                       -X POST \
+                                       --data '{"analyzer": "ik_smart", "text": "中华人民共和国国歌"}' \
+                                       "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_analyze" \
+                                       -o "${analyze_body_file}" 2>/dev/null)
+          analyze_curl_exit_code=$?
+          if [ $analyze_curl_exit_code -eq 0 ] && [[ "$analyze_http_code" == "200" ]]; then
+            # Temporarily disable exit-on-error for jq
+            set +e
+            jq -e '.tokens[] | select(.token == "国歌")' "${analyze_body_file}" > /dev/null
+            jq_exit_code=$?
+            set -e
+
+            if [ $jq_exit_code -eq 0 ]; then
+              log_info "✅ Analyzer 'ik_smart' is working correctly. Found token '国歌'."
+              log_info "Cluster is fully ready and plugin is verified!"
+              cluster_ready_and_nodes_verified=true
+              rm -f "${analyze_body_file}"
+              break # Exit the main while loop, success!
+            else
+              log_info "Analyzer API returned 200 OK, but the token '国歌' was not found in the response. Analyzer output:"
+              cat "${analyze_body_file}" || log_info "Could not cat analyze body file."
+            fi
+          else
+            log_info "Failed to test analyzer plugin. curl exit: $analyze_curl_exit_code, HTTP code: $analyze_http_code. Body (if any):"
+            if [ -f "${analyze_body_file}" ]; then cat "${analyze_body_file}" || log_info "Could not cat analyze body file."; else echo "(No body from _analyze)"; fi
+          fi
+          rm -f "${analyze_body_file}" # Clean up analyze temp file
         else
           log_info "Port open, HTTP 200 for health, but status not green. jq exit: $?. Health API output:"
           cat "${health_body_file}" || log_info "Could not cat health body file."
