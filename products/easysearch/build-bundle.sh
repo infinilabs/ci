@@ -72,7 +72,17 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   else
     unzip -q $JNAME
   fi
- 
+
+  #plugin install
+  if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
+    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
+    for p in ${plugins[@]}; do
+      echo "Installing plugin $p-$VERSION ..."
+      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip >/dev/null
+    done
+    echo "Checked the installed plugins for $PNAME-$VERSION."
+    ls -lrt $WORK/$PNAME/plugins
+  fi
   if [[ "$USER_GRAALVM" == "true" ]]; then
     mv graalvm* $WORK/$PNAME/jdk
   else
@@ -81,18 +91,6 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   echo "Check current files"
   ls -lrt  $WORK/$PNAME
-
-  #plugin install
-  if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
-    for p in ${plugins[@]}; do
-      echo "Installing plugin $p-$VERSION ..."
-      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip
-    done
-    echo "Checked the installed plugins for $PNAME-$VERSION."
-    ls -lrt $WORK/$PNAME/plugins
-  fi
-
   # 重新打包
   if [ "${DNAME##*.}" == "gz" ]; then
     tar -zcf $DNAME *
