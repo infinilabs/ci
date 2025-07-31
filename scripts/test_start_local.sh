@@ -111,7 +111,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   log_info "Default Password: (hidden for security, using variable)"
 
   # Execute the 'up' command using start-local.sh
-  curl "${SCRIPT_URL}" | sh -s -- up
+  curl "${SCRIPT_URL}" | sh -s -- up --password "${DEFAULT_PASSWORD}"
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh up' command failed"; fi
 
   log_info "Initial sleep for 60s after 'up' to allow service full initialization..." && sleep 60
@@ -126,12 +126,9 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health..."
 
-      curl -v -u "admin:${DEFAULT_PASSWORD}" \
-           "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json"
-
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -v -s -w "%{http_code}" \
+      http_code=$(curl -s -w "%{http_code}" \
                    -u "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
                    -o "${body_file}" 2>/dev/null)
@@ -212,7 +209,6 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
             if [ "$actual_nodes_in_cluster" -eq "${NUM_NODES_EXPECTED}" ]; then
               log_info "Custom Easysearch node count matches: $actual_nodes_in_cluster."
               cluster_ready_and_nodes_verified=true
-              break # Exit while loop
             else
               log_info "Custom Easysearch health green, but node count $actual_nodes_in_cluster (expected ${NUM_NODES_EXPECTED}). Nodes API output:"
               cat "${nodes_body_file}" || log_info "Could not cat nodes body file."
@@ -241,6 +237,8 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
             if [ $jq_exit_code -eq 0 ]; then
               log_info "✅ Analyzer 'ik_smart' is working correctly. Found token '国歌'."
               log_info "Cluster is fully ready and plugin is verified!"
+              rm -f "${analyze_body_file}"
+              break # Exit the loop since everything is ready
             else
               log_info "Analyzer API returned 200 OK, but the token '国歌' was not found in the response. Analyzer output:"
               cat "${analyze_body_file}" || log_info "Could not cat analyze body file."
