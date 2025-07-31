@@ -207,7 +207,6 @@ jobs:
       if: startsWith(matrix.os_config.runner, 'ubuntu')
       shell: bash
       timeout-minutes: 15
-      continue-on-error: true
       run: |
         # Prepare the working directory on the host
         # This directory will be mounted into the CentOS container if needed
@@ -289,7 +288,6 @@ jobs:
       if: matrix.os_config.runner == 'windows-latest'
       shell: bash
       timeout-minutes: 15
-      continue-on-error: true
       run: |
         # Prepare the working directory on the host
         mkdir -p ${{ env.TEST_WORK_DIR }}
