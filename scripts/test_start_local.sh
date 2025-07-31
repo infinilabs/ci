@@ -129,9 +129,8 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
       
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -no-rc --connect-timeout 15 --retry 1 --retry-delay 5 \
-                   -s -w "%{http_code}" \
-                   -ku "admin:${DEFAULT_PASSWORD}" \
+      http_code=$(curl -s -w "%{http_code}" \
+                   -u "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
                    -o "${body_file}")
       curl_exit_code=$?
@@ -188,9 +187,8 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health for custom Easysearch..."
       
-      health_http_code=$(curl -no-rc --connect-timeout 10 --retry 2 --retry-delay 3 \
-                             -s -w "%{http_code}" \
-                             -ku "admin:${CUSTOM_PASSWORD}" \
+      health_http_code=$(curl -s -w "%{http_code}" \
+                             -u "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}")
       health_curl_exit_code=$?
@@ -200,9 +198,8 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
         if jq -e '.status == "green"' "${health_body_file}" > /dev/null; then
           log_info "Custom Easysearch health is green. Checking node count..."
 
-          nodes_http_code=$(curl -no-rc --connect-timeout 10 --retry 2 --retry-delay 3 \
-                                 -s -w "%{http_code}" \
-                                 -ku "admin:${CUSTOM_PASSWORD}" \
+          nodes_http_code=$(curl -s -w "%{http_code}" \
+                                 -u "admin:${CUSTOM_PASSWORD}" \
                                  "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
                                  -o "${nodes_body_file}")
           nodes_curl_exit_code=$?
