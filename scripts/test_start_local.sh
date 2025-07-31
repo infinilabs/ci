@@ -126,7 +126,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
     
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health..."
-      sleep 30 # Additional wait to ensure service is ready after port open
+      sleep 30 && echo "Waiting for service to stabilize after port open..."
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
       http_code=$(curl -v -s -w "%{http_code}" \
@@ -186,8 +186,8 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
 
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health for custom Easysearch..."
-      
-      health_http_code=$(curl -s -w "%{http_code}" \
+      sleep 30 && echo "Waiting for service to stabilize after port open..."
+      health_http_code=$(curl -v -s -w "%{http_code}" \
                              -u "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}" 2>/dev/null)
