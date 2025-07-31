@@ -113,8 +113,8 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   # Execute the 'up' command using start-local.sh
   curl "${SCRIPT_URL}" | sh -s -- up
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh up' command failed"; fi
-  
-  log_info "Initial sleep for 30s after 'up' to allow service full initialization..." && sleep 30
+
+  log_info "Initial sleep for 60s after 'up' to allow service full initialization..." && sleep 60
 
   log_info "Waiting for default Easysearch (port ${PORT_TO_CHECK} and health, max ${CHECK_TIMEOUT}s)..."
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
@@ -125,10 +125,13 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
     
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health..."
-      
+
+      curl -v -u "admin:${DEFAULT_PASSWORD}" \
+           "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json"
+
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -v -no-rc -s -w "%{http_code}" \
+      http_code=$(curl -v -s -w "%{http_code}" \
                    -u "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
                    -o "${body_file}" 2>/dev/null)
@@ -174,7 +177,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
 
   curl "${SCRIPT_URL}" | sh -s -- up --nodes "${NUM_NODES_EXPECTED}" --password "${CUSTOM_PASSWORD}"
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Custom 'start-local.sh up' command failed"; fi
-
+  log_info "Initial sleep for 60s after 'up' to allow service full initialization..." && sleep 60
   log_info "Waiting for custom Easysearch (port ${PORT_TO_CHECK}, ${NUM_NODES_EXPECTED} nodes, max ${CHECK_TIMEOUT}s)..."
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; cluster_ready_and_nodes_verified=false
   health_body_file="custom_health_body.tmp"
@@ -186,7 +189,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
 
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health for custom Easysearch..."
-      health_http_code=$(curl -no-rc -s -w "%{http_code}" \
+      health_http_code=$(curl -s -w "%{http_code}" \
                              -u "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}" 2>/dev/null)
@@ -197,7 +200,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
         if jq -e '.status == "green"' "${health_body_file}" > /dev/null; then
           log_info "Custom Easysearch health is green. Checking node count..."
 
-          nodes_http_code=$(curl -no-rc -s -w "%{http_code}" \
+          nodes_http_code=$(curl -s -w "%{http_code}" \
                                  -u "admin:${CUSTOM_PASSWORD}" \
                                  "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
                                  -o "${nodes_body_file}" 2>/dev/null)
@@ -222,7 +225,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
 
           # Now test the analyzer plugin
           log_info "Testing analyzer plugin 'ik_smart' with a sample text..."
-          analyze_http_code=$(curl -no-rc -s -w "%{http_code}" \
+          analyze_http_code=$(curl -s -w "%{http_code}" \
                                        -u "admin:${CUSTOM_PASSWORD}" \
                                        -H "Content-Type: application/json" \
                                        -X POST \
@@ -232,17 +235,12 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
           analyze_curl_exit_code=$?
           if [ $analyze_curl_exit_code -eq 0 ] && [[ "$analyze_http_code" == "200" ]]; then
             # Temporarily disable exit-on-error for jq
-            set +e
             jq -e '.tokens[] | select(.token == "国歌")' "${analyze_body_file}" > /dev/null
             jq_exit_code=$?
-            set -e
 
             if [ $jq_exit_code -eq 0 ]; then
               log_info "✅ Analyzer 'ik_smart' is working correctly. Found token '国歌'."
               log_info "Cluster is fully ready and plugin is verified!"
-              cluster_ready_and_nodes_verified=true
-              rm -f "${analyze_body_file}"
-              break # Exit the main while loop, success!
             else
               log_info "Analyzer API returned 200 OK, but the token '国歌' was not found in the response. Analyzer output:"
               cat "${analyze_body_file}" || log_info "Could not cat analyze body file."
