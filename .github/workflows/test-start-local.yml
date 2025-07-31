@@ -34,8 +34,8 @@ jobs:
 
     env:
       SCRIPT_URL_ARG: "https://get.infini.cloud/start-local"
-      DEFAULT_PASSWORD_ARG: "Should.Change.me.123."
-      CUSTOM_PASSWORD_ARG: "My.Secure.Password.123"
+      DEFAULT_PASSWORD_ARG: "Should_Change_me_123"
+      CUSTOM_PASSWORD_ARG: "My_Secure_Password_123"
       NUM_NODES_EXPECTED_ARG: 3
       TEST_WORK_DIR: ${{ github.workspace }}/ezs_run_data
       TEST_SCRIPT_NAME: test_start_local.sh

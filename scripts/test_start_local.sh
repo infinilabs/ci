@@ -114,8 +114,7 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
   curl "${SCRIPT_URL}" | sh -s -- up
   if [ $? -ne 0 ]; then cleanup_and_exit_failure "Default 'start-local.sh up' command failed"; fi
   
-  log_info "Initial sleep for 20s after 'up' to allow service full initialization..."
-  sleep 20
+  log_info "Initial sleep for 30s after 'up' to allow service full initialization..." && sleep 30
 
   log_info "Waiting for default Easysearch (port ${PORT_TO_CHECK} and health, max ${CHECK_TIMEOUT}s)..."
   timeout_seconds=${CHECK_TIMEOUT}; interval=10; elapsed=0; service_ready=false
@@ -126,10 +125,10 @@ if [[ "${SCENARIO_TO_RUN}" == "default-run" ]]; then
     
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health..."
-      sleep 30 && echo "Waiting for service to stabilize after port open..."
+      
       # If port is open, then attempt curl for health check
       # Using http, assuming start-local.sh defaults to HTTP unless explicitly configured for HTTPS
-      http_code=$(curl -v -s -w "%{http_code}" \
+      http_code=$(curl -v -no-rc -s -w "%{http_code}" \
                    -u "admin:${DEFAULT_PASSWORD}" \
                    "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health" \
                    -o "${body_file}" 2>/dev/null)
@@ -187,8 +186,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
 
     if is_port_open "${HOST_TO_CHECK}" "${PORT_TO_CHECK}"; then
       log_info "Port ${PORT_TO_CHECK} on ${HOST_TO_CHECK} is open. Checking service health for custom Easysearch..."
-      sleep 30 && echo "Waiting for service to stabilize after port open..."
-      health_http_code=$(curl -v -s -w "%{http_code}" \
+      health_http_code=$(curl -no-rc -s -w "%{http_code}" \
                              -u "admin:${CUSTOM_PASSWORD}" \
                              "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cluster/health?format=json" \
                              -o "${health_body_file}" 2>/dev/null)
@@ -199,7 +197,7 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
         if jq -e '.status == "green"' "${health_body_file}" > /dev/null; then
           log_info "Custom Easysearch health is green. Checking node count..."
 
-          nodes_http_code=$(curl -s -w "%{http_code}" \
+          nodes_http_code=$(curl -no-rc -s -w "%{http_code}" \
                                  -u "admin:${CUSTOM_PASSWORD}" \
                                  "https://${HOST_TO_CHECK}:${PORT_TO_CHECK}/_cat/nodes?format=json" \
                                  -o "${nodes_body_file}" 2>/dev/null)
@@ -222,7 +220,9 @@ elif [[ "${SCENARIO_TO_RUN}" == "custom-run" ]]; then
           fi
           rm -f "${nodes_body_file}" # Clean up nodes temp file for this iteration
 
-          analyze_http_code=$(curl -s -w "%{http_code}" \
+          # Now test the analyzer plugin
+          log_info "Testing analyzer plugin 'ik_smart' with a sample text..."
+          analyze_http_code=$(curl -no-rc -s -w "%{http_code}" \
                                        -u "admin:${CUSTOM_PASSWORD}" \
                                        -H "Content-Type: application/json" \
                                        -X POST \
