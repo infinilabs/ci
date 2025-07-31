@@ -39,7 +39,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Package Version'
         required: false
-        default: "0.6.0"
+        default: "0.7.1"
       PUBLISH_BUILD_NUMBER:
         description: 'Publish Package Build Number'
         required: false
