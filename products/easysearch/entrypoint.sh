@@ -14,6 +14,7 @@ APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
 LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
+NODES_DIR="$DATA_DIR/nodes"
 AGENT_DIR="$DATA_DIR/agent"
 AGENT_START_SCRIPT="$AGENT_DIR/start-agent.sh"
 INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
@@ -37,8 +38,6 @@ change_ownership() {
         log "Changing ownership of $opt_dir to ezs:ezs."
         chown -R ezs:ezs "$opt_dir"
         if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
-      else
-        log "$opt_dir is already owned by ezs."
       fi
     done
   fi
@@ -60,33 +59,33 @@ execute_core_initial_script() {
 perform_initial_setup() {
   log "Initialization marker not found. Determining setup action..."
 
-  # --- Check if the data directory is empty or not ---
-  if [ ! -d "$DATA_DIR" ] || [ -z "$(ls -A "$DATA_DIR")" ]; then
-    log "$DATA_DIR directory is empty. Proceeding with core initialization script."
+  # --- Check if the data/nodes directory is empty or not ---
+  if [ ! -d "$NODES_DIR" ] || [ -z "$(ls -A "$NODES_DIR")" ]; then
+    log "$NODES_DIR directory is empty. Proceeding with core initialization script."
     execute_core_initial_script # Call the function to execute the script
     if [ $? -eq 0 ]; then
       log "Core initialization script completed successfully."
       # --- Create the initialization marker file after successful execution ---
-      touch "$INITIALIZED_MARKER"
+      [ ! -e "$INITIALIZED_MARKER" ] && touch "$INITIALIZED_MARKER"
       log "Initialization marker created."
       return 0
     else
-      # If core script fails when /data is empty
-      log "ERROR: Core initialization script failed when $DATA_DIR was empty!"
+      # If core script fails when data/nodes is empty
+      log "ERROR: Core initialization script failed when $NODES_DIR was empty!"
       return 1
     fi
   else
-    # The case where $DATA_DIR is not empty but the marker file is not found
-    log "$DATA_DIR directory is NOT empty, but initialization marker was NOT found."
-    log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
-    touch "$INITIALIZED_MARKER"
+    # The case where $NODES_DIR is not empty but the marker file is not found
+    log "$NODES_DIR directory is NOT empty, but initialization marker was NOT found."
+    log "WARNING: $NODES_DIR directory appears to contain data. "
+    [ ! -e "$INITIALIZED_MARKER" ] && touch "$INITIALIZED_MARKER"
     if [ $? -eq 0 ]; then
       log "Initialization marker created."
       return 0 # Indicate setup assumed complete, continue with the rest of the script
       # No need to exit 1 here, as we are assuming it's a valid state.
     else
-       # If creating marker fails when /data is not empty
-       log "ERROR: Failed to create initialization marker when $DATA_DIR was not empty! Entrypoint will exit."
+       # If creating marker fails when data/nodes is not empty
+       log "ERROR: Failed to create initialization marker when $NODES_DIR was not empty! Entrypoint will exit."
        return 1
     fi
   fi
@@ -243,7 +242,7 @@ EOF
         fi
         
         # Create keystore initialized marker
-        touch "$AGENT_KEYSTORE_MARKER"
+        [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER"
         log "Agent keystore initialization complete."
       else
          log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
@@ -299,7 +298,7 @@ EOF
      log "Agent supervisor config created at $AGENT_SUPERVISOR_CONFIG."
 
      # Create the supervisor config marker
-     touch "$AGENT_SUPERVISOR_MARKER"
+     [ ! -e "$AGENT_SUPERVISOR_MARKER" ] && touch "$AGENT_SUPERVISOR_MARKER"
      log "Agent supervisor configuration marked complete."
   else
     log "Agent supervisor config marker '$AGENT_SUPERVISOR_MARKER' found. Skipping supervisor configuration."
@@ -366,9 +365,9 @@ if [ ! -f "$INITIALIZED_MARKER" ]; then
   # Ensure directories exist and have correct ownership
   is_root && change_ownership
 
-  # Check if $DATA_DIR is empty or not
-  if [ -z "$(ls -A "$DATA_DIR")" ]; then
-    log "$DATA_DIR directory is empty. Proceeding with initial setup process."
+  # Check if $NODES_DIR is empty or not, the $DATA_DIR maybe have `lost+found` folder
+  if [ ! -d "$NODES_DIR" ] || [ -z "$(ls -A "$NODES_DIR")" ]; then
+    log "$NODES_DIR directory is empty. Proceeding with initial setup process."
     # Call the initial setup function which executes core script and creates marker
     perform_initial_setup
     if [ $? -ne 0 ]; then
@@ -376,16 +375,16 @@ if [ ! -f "$INITIALIZED_MARKER" ]; then
       exit 1
     fi
   else
-    log "$DATA_DIR directory is NOT empty, but initialization marker was NOT found."
+    log "$NODES_DIR directory is NOT empty, but initialization marker was NOT found."
     # In this non-clean start scenario, assume initialization was done previously and create the marker.
     # This prevents re-running the core script if data already exists.
-    log "WARNING: $DATA_DIR directory appears to contain data. Assuming initialization was performed previously and creating marker."
-    touch "$INITIALIZED_MARKER"
+    log "WARNING: $NODES_DIR directory appears to contain data."
+    [ ! -e "$INITIALIZED_MARKER" ] && touch "$INITIALIZED_MARKER"
     if [ $? -eq 0 ]; then
       log "Initialization marker created."
       # Continue with the rest of the script, assuming setup is complete.
     else
-       log "ERROR: Failed to create initialization marker when $DATA_DIR was not empty! Entrypoint will exit."
+       log "ERROR: Failed to create initialization marker when $NODES_DIR was not empty! Entrypoint will exit."
        exit 1
     fi
   fi
