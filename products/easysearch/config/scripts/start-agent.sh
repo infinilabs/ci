@@ -1,30 +1,88 @@
 #!/bin/bash
-# check if Easysearch is available on port 9200
-# timeout after 300 seconds
-# sleep for 5 seconds between checks
-# if Easysearch is not available after 300 seconds, exit with error
-# if Easysearch is available, sleep for 30 seconds to allow it to fully start
-elapsed=0
-interval=15
-timeout=300
-waiting=30
-target="agent"
+#
+# This script waits for the EasySearch service to become available,
+# then acquires a process lock and starts the agent application.
+# It is designed to be robust, configurable, and easy to read.
+#
 
-echo "Waiting for Easysearch on 127.0.0.1:9200..."
+# --- Configuration ---
+readonly EASYSEARCH_HOST="127.0.0.1"
+readonly EASYSEARCH_PORT="9200"
+readonly TIMEOUT_SECONDS=300
+readonly CHECK_INTERVAL_SECONDS=15
+readonly POST_READY_WAIT_SECONDS=30
 
-while ! nc -z 127.0.0.1 9200; do
-  if [ $elapsed -ge $timeout ]; then
-    echo "Timeout: Easysearch not available after ${timeout} seconds. Exiting."
-    exit 1
+readonly TARGET_NAME="agent"
+readonly WORKING_DIR="/app/easysearch/data/${TARGET_NAME}"
+# Define the parent directory where the dynamic node lock files are located.
+readonly NODES_DIR="${WORKING_DIR}/data/${TARGET_NAME}/nodes"
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# --- Helper Functions ---
+
+log() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [INFO] [start-agent] $*"
+}
+
+die() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] [start-agent] $*" >&2
+  exit 1
+}
+
+# --- Main Logic ---
+
+# 1. Wait for EasySearch to be available.
+log "Waiting for EasySearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
+elapsed_time=0
+while ! nc -z "${EASYSEARCH_HOST}" "${EASYSEARCH_PORT}" 2>/dev/null; do
+  if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
+    die "Timeout reached. EasySearch not available after ${TIMEOUT_SECONDS} seconds."
   fi
-  echo "Easysearch not ready, sleeping for ${interval}s..."
-  sleep $interval
-  elapsed=$((elapsed + interval))
+  
+  log "EasySearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
+  sleep "${CHECK_INTERVAL_SECONDS}"
+  elapsed_time=$((elapsed_time + CHECK_INTERVAL_SECONDS))
 done
+log "EasySearch is available."
 
-# Wait for an additional period to ensure Easysearch is fully ready
-sleep $waiting && echo "Wait $waiting secs for easysearch ready! Starting $target..."
+# 2. Wait an additional period for the service to stabilize.
+log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for EasySearch to fully initialize..."
+sleep "${POST_READY_WAIT_SECONDS}"
 
-# use exec to replace the bash process
-# so that supervisor can manage the process directly
-cd /app/easysearch/data/$target && exec ./$target
+# 3. Check for and handle existing lock file in the dynamic node path.
+log "Searching for lock file in ${NODES_DIR}..."
+
+# Use 'find' to locate the .lock file. This is safer than using a raw glob (*).
+# We search for a file, not a directory, and only one level deep.
+lock_file=$(find "${NODES_DIR}" -mindepth 2 -maxdepth 2 -type f -name ".lock" | head -n 1)
+
+if [ -n "${lock_file}" ]; then
+  log "Found lock file: ${lock_file}"
+  pid=$(cat "${lock_file}")
+  
+  # Check if the PID is a valid number and if the process exists.
+  # Note: In this context, we might not know the exact process name,
+  # so a simple PID check is what the original script did.
+  if [ -n "$pid" ] && [ "$pid" -eq "$pid" ] 2>/dev/null && ps -p "$pid" > /dev/null 2>&1; then
+    die "A process (PID ${pid}) associated with the lock file is already running. Exiting."
+  else
+    log "Found stale or invalid lock file (PID ${pid}). Removing it."
+    rm -f "${lock_file}"
+  fi
+else
+  log "No existing lock file found. Proceeding with startup."
+fi
+
+# 4. Change to the working directory.
+log "Changing directory to ${WORKING_DIR}."
+cd "${WORKING_DIR}" || die "Failed to change directory to ${WORKING_DIR}."
+
+# 5. Start the agent process.
+log "Starting agent process..."
+
+# We don't create a lock file here because the agent process itself is expected
+# to create its own .lock file inside the nodes/*/ directory upon startup.
+# The 'exec' command replaces the current shell, which is crucial for supervisord.
+exec "./${TARGET_NAME}"
