@@ -215,24 +215,6 @@ EOF
         if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
       fi
       
-      SCHEMA=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $1}')
-      ADDRESS=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $2}')
-      if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ] && [ -z "$GENERATED_METRICS_TASKS" ] ; then
-        log "Updating system ingest config based on endpoint."
-        # Use sed carefully, ensure patterns match and replacements are correct
-        # Using regex anchors ^ and $ to match the whole line for replacement is safer
-        sed -i "s/^  schema: https$/  schema: $SCHEMA/;s/^  address: 127.0.0.1:9200$/  address: $ADDRESS/" "$INGEST_CONFIG"
-        if [ $? -ne 0 ]; then log "ERROR: Failed to update ingest config schema/address."; return 1; fi
-
-        sed -i "s/ingest/infini_ingest/;s/passwd/$EASYSEARCH_INITIAL_INGEST_PASSWORD/" "$INGEST_CONFIG"
-        if [ $? -ne 0 ]; then log "ERROR: Failed to update ingest user/password."; return 1; fi
-
-        sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
-        if [ $? -ne 0 ]; then log "ERROR: Failed to update metrics queue in ingest config."; return 1; fi
-      else
-        [ -n "$GENERATED_METRICS_TASKS" ] && log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
-      fi
-      
       # Create keystore initialized marker
       [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER"
       log "Agent keystore initialization complete."
