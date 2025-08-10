@@ -12,18 +12,18 @@ set -uo pipefail # -u: treat unset variables as error, -o pipefail: pipe fails i
          # For now, error handling is done with explicit checks.
 
 # --- Script Configuration ---
-PNAME="${PNAME:-cloud}"                                  # Product name (can be overridden by env var)
-APP_EXECUTABLE_NAME="${PNAME}-linux-amd64"               # Name of the application executable
+PNAME="${PNAME:-cloud}"                                # Product name (can be overridden by env var)
+APP_EXECUTABLE_NAME="${PNAME}-linux-amd64"             # Name of the application executable
 
 # Default paths and URLs (can be overridden by env vars or logic below)
-DEFAULT_WORK_PATH="/nvme/staging/$PNAME/$PNAME"                   # Default base for WORK_PATH
-DEFAULT_RELEASE_URL="$$RELEASE_URL"              # Default base URL for releases
+DEFAULT_WORK_PATH="/nvme/dev/$PNAME"                   # Default base for WORK_PATH
+DEFAULT_RELEASE_URL="${RELEASE_URL}"                   # Default base URL for releases
 
 # These are relative to WORK_PATH or absolute if overridden
 UPDATE_DIR_NAME="update"                               # Subdirectory for download/extraction within WORK_PATH
 DEFAULT_APP_VERSION="0.3.1-2028"                       # Default application version for local reference
 MAX_BACKUPS=3                                          # Number of recent backups to keep
-DEFAULT_SERVICE_NAME="coco-cloud-server"               # Default: no specific service name to control
+DEFAULT_SERVICE_NAME="infini-cloud-server"               # Default: no specific service name to control
 
 # --- Initialize variables from environment or use defaults ---
 WORK_PATH="${WORK_PATH:-$DEFAULT_WORK_PATH}"
