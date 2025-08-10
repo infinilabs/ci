@@ -160,7 +160,6 @@ setup_agent() {
 
   # --- Multi-tenant mode configuration ---
   if [ -n "${TENANT_ID}" ] && [ -n "${CLUSTER_ID}" ]; then
-    
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
     if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
       log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
@@ -176,16 +175,7 @@ setup_agent() {
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
     if ! grep -q "node:" agent.yml; then # agent.yml relative to $AGENT_DIR
-      if [ -n "$ALLOW_GENERATED_METRICS_TASKS" ]; then
-        GENERATED_METRICS_TASKS=true
-        sed -i "s/managed:.*/managed: false/g" agent.yml
-        log "Adding node configuration and disable remote config manage with agent.yml."
-      else
-        GENERATED_METRICS_TASKS=false
-        sed -i "s/managed:.*/managed: true/g" agent.yml
-        [ -e $INGEST_CONFIG ] && rm -rf $INGEST_CONFIG
-        log "Adding node configuration and enable remote config manage with agent.yml."
-      fi
+      [ -e $INGEST_CONFIG ] && rm -rf $INGEST_CONFIG && log "Removed existing ingest config file $INGEST_CONFIG."
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       if [ -n "$CONFIG_SERVER_TOKEN" ]; then
         sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
@@ -198,7 +188,7 @@ EOF
       fi
       cat <<-EOF >> agent.yml
   always_register_after_restart: true
-  allow_generated_metrics_tasks: $GENERATED_METRICS_TASKS
+  allow_generated_metrics_tasks: true
 node:
   major_ip_pattern: ".*"
   labels:
@@ -225,7 +215,7 @@ EOF
         
         SCHEMA=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $1}')
         ADDRESS=$(echo "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" |awk -F"://" '{print $2}')
-        if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ] && [ -n "$ALLOW_GENERATED_METRICS_TASKS" ]; then
+        if [ -n "$SCHEMA" ] && [ -n "$ADDRESS" ]; then
           log "Updating system ingest config based on endpoint."
           # Use sed carefully, ensure patterns match and replacements are correct
           # Using regex anchors ^ and $ to match the whole line for replacement is safer
@@ -238,7 +228,7 @@ EOF
           sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
           if [ $? -ne 0 ]; then log "ERROR: Failed to update metrics queue in ingest config."; return 1; fi
         else
-          [ -n "$ALLOW_GENERATED_METRICS_TASKS" ] && log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
+          log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
         fi
         
         # Create keystore initialized marker
