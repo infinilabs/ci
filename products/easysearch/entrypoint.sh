@@ -160,22 +160,24 @@ setup_agent() {
 
   # --- Multi-tenant mode configuration ---
   if [ -n "${TENANT_ID}" ] && [ -n "${CLUSTER_ID}" ]; then
+
+    GENERATED_METRICS_TASKS=true
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
     if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
       log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
-      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password"
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
     fi
 
     log "Copying agent config templates."
     # Ensure /app/tpl exists and contains necessary files
     # Use absolute paths or ensure correct relative path from current directory ($AGENT_DIR)
-    cp -rf /app/tpl/{*.yml,*.tpl} "$CFG_DIR" # Use quotes for safety
+    cp -rf /app/tpl/{*.yml,*.tpl} "$CFG_DIR"
     if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent config templates."; return 1; fi
 
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
-    if ! grep -q "node:" agent.yml; then # agent.yml relative to $AGENT_DIR
-      [ -e $INGEST_CONFIG ] && rm -rf $INGEST_CONFIG && log "Removed existing ingest config file $INGEST_CONFIG."
+    if ! grep -q "node:" agent.yml; then
+      [ -e $INGEST_CONFIG ] && rm -rf $INGEST_CONFIG
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       if [ -n "$CONFIG_SERVER_TOKEN" ]; then
         sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
@@ -188,7 +190,7 @@ EOF
       fi
       cat <<-EOF >> agent.yml
   always_register_after_restart: true
-  allow_generated_metrics_tasks: true
+  allow_generated_metrics_tasks: $GENERATED_METRICS_TASKS
 node:
   major_ip_pattern: ".*"
   labels:
@@ -228,7 +230,7 @@ EOF
           sed -i -E 's/([-:]) metrics/\1 tenant-metrics/g' "$INGEST_CONFIG"
           if [ $? -ne 0 ]; then log "ERROR: Failed to update metrics queue in ingest config."; return 1; fi
         else
-          log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
+          [ -n "$GENERATED_METRICS_TASKS" ] && log "WARNING: EASYSEARCH_INITIAL_SYSTEM_ENDPOINT not in expected format 'schema://address'. Skipping ingest config update."
         fi
         
         # Create keystore initialized marker
