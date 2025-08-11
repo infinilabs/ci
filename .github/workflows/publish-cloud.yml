@@ -359,6 +359,8 @@ jobs:
         if: ${{ inputs.PUBLISH_RELEASE }}
         timeout-minutes: 30
         continue-on-error: true
+        env:
+          RELEASE_URL: ${{ vars.RELEASE_URL }}
         run: |
           #Deploy docker
           echo "kubectl -n infini set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION" >> /tmp/update_image.sh
