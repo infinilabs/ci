@@ -17,7 +17,7 @@ APP_EXECUTABLE_NAME="${PNAME}-linux-amd64"             # Name of the application
 
 # Default paths and URLs (can be overridden by env vars or logic below)
 DEFAULT_WORK_PATH="/nvme/dev/$PNAME"                   # Default base for WORK_PATH
-DEFAULT_RELEASE_URL="${RELEASE_URL}"                   # Default base URL for releases
+DEFAULT_RELEASE_URL=""                                 # Default base URL for releases
 
 # These are relative to WORK_PATH or absolute if overridden
 UPDATE_DIR_NAME="update"                               # Subdirectory for download/extraction within WORK_PATH
@@ -28,7 +28,7 @@ DEFAULT_SERVICE_NAME="infini-cloud-server"               # Default: no specific 
 # --- Initialize variables from environment or use defaults ---
 WORK_PATH="${WORK_PATH:-$DEFAULT_WORK_PATH}"
 RELEASE_URL="${RELEASE_URL:-$DEFAULT_RELEASE_URL}"
-BASE_URL="$RELEASE_URL/$PNAME" # Constructed base URL for downloads
+BASE_URL="$RELEASE_URL/$PNAME"
 SERVICE_NAME_TO_CONTROL="${SERVICE_NAME_TO_CONTROL:-$DEFAULT_SERVICE_NAME}"
 
 # --- Flags and Variables from CLI parsing ---
