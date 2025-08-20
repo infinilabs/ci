@@ -35,7 +35,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish cloud docker version'
         required: false
-        default: "0.7.60"
+        default: "0.9.0"
       EZS_VERSION:
         description: 'Easysearch version'
         required: false
