@@ -51,7 +51,7 @@ for t in amd64 arm64; do
 
   #plugin install
   if [ -z "$(ls -A $WORK/$DNAME-$t/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai)
+    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p ..."
       # easyearch version is x.y.z-build_number but plugin version only need x.y.z
