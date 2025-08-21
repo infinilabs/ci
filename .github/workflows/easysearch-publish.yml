@@ -98,25 +98,6 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Set up with pnpm toolchain
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Set up nodejs toolchain
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: "**/**/web/pnpm-lock.yaml"
-
-      - name: Check nodejs toolchain
-        run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            npm install -g pnpm
-          fi
-          node -v && npm -v && pnpm -v
-
       - name: Set up gradle
         run: |
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
@@ -152,6 +133,24 @@ jobs:
             echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
           fi
       
+      - name: Set up with pnpm toolchain
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up nodejs toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Check nodejs toolchain
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+          node -v && npm -v && pnpm -v
       - name: Cache Gradle packages and jdks
         uses: actions/cache@v4
         with:
