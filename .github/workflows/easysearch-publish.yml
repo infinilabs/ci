@@ -108,7 +108,7 @@ jobs:
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: "**/pnpm-lock.yaml"
+          cache-dependency-path: "**/**/web/pnpm-lock.yaml"
 
       - name: Check nodejs toolchain
         run: |
