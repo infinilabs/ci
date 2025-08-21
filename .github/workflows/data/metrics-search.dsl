@@ -60,6 +60,11 @@ GET $[[env.ES_ENDPOINT]]/.infini_configs/_doc/system_ingest_config_yml
 #   _ctx.response.status: 200
 # }
 
+POST $[[env.ES_ENDPOINT]]/.infini_metrics/_refresh
+# assert: {
+#   _ctx.response.status: 200
+# }
+
 GET $[[env.ES_ENDPOINT]]/.infini_metrics/_count
 {"query":{"term":{"metadata.name":{"value":"shard_stats"}}}}
 # assert: {
@@ -78,11 +83,16 @@ POST $[[env.ES_ENDPOINT]]/.infini_metrics/_search
 #   _ctx.response.status: 200
 # }
 
+POST $[[env.ES_ENDPOINT]]/.infini_logs/_refresh
+# assert: {
+#   _ctx.response.status: 200
+# }
+
 POST $[[env.ES_ENDPOINT]]/.infini_logs/_count
 {"query":{"bool":{"must":[{"term":{"agent.id":{"value":"$[[agent_id]]"}}}]}}}
 # assert: {
 #   _ctx.response.status: 200,
-#   _ctx.response.body_json.count: >=0
+#   _ctx.response.body_json.count: >=1
 # }
 
 POST $[[env.ES_ENDPOINT]]/.infini_metrics/_count

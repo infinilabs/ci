@@ -58,12 +58,14 @@ jobs:
               run: |
                 export WORKBASE=$HOME/go/src
                 export WORK=$WORKBASE/infini.sh
+                export ES_PASSWORD=INFINILabs_Test_CI_2025
+                export EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2025
 
                 echo WORKBASE=$WORKBASE >> $GITHUB_ENV
                 echo WORK=$WORK >> $GITHUB_ENV
                 echo ES_USERNAME=admin >> $GITHUB_ENV
-                echo ES_PASSWORD=INFINILabs_Test_CI_2025 >> $GITHUB_ENV
-                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2025 >> $GITHUB_ENV
+                echo ES_PASSWORD=$ES_PASSWORD >> $GITHUB_ENV
+                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD >> $GITHUB_ENV
                 echo ES_ENDPOINT=https://127.0.0.1:9200 >> $GITHUB_ENV
                 echo GW_ENDPOINT=https://127.0.0.1:8000 >> $GITHUB_ENV
                 echo VERSION=1.0.0 >> $GITHUB_ENV
@@ -325,22 +327,6 @@ jobs:
                   LOG_LEVEL=info
                 fi
                 exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
-
-            - name: Run loadgen test for gateway
-              run: |
-                  export PRODUCT=loadgen
-                  cd $WORK/$PRODUCT/bin
-                  sed -i -e "/ES_USERNAME:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USERNAME:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
-                  sed -i -e "/ES_PASSWORD:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASSWORD:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
-                  sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$GW_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
-                  
-                  echo Running integration test at $PWD ...
-                  $WORK/$PRODUCT/bin/$PRODUCT -d 10
-                  # Check indices created
-                  if command -v curl >/dev/null 2>&1; then
-                    curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
-                  fi
-
             - name: Run loadgen api test for runtime registry
               run: |
                 export PRODUCT=loadgen
@@ -351,14 +337,27 @@ jobs:
                   RUN_CMD="$RUN_CMD -debug"
                 fi
                 $RUN_CMD -config $WORK/$PRODUCT/bin/$PRODUCT-api.yml -run runtime-registry.dsl
-
+            - name: Run loadgen test for gateway
+              run: |
+                  export PRODUCT=loadgen
+                  cd $WORK/$PRODUCT/bin
+                  sed -i -e "/ES_USERNAME:/ s|\(.*\: \).*|\\1$ES_USERNAME|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_USERNAME:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_PASSWORD:/ s|\(.*\: \).*|\\1$ES_PASSWORD|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_PASSWORD:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  sed -i -e "/ES_ENDPOINT:/ s|\(.*\: \).*|\\1$GW_ENDPOINT|g" $WORK/$PRODUCT/bin/$PRODUCT.yml && grep "ES_ENDPOINT:"  $WORK/$PRODUCT/bin/$PRODUCT.yml
+                  
+                  echo Running integration test at $PWD ...
+                  $WORK/$PRODUCT/bin/$PRODUCT -d 120 -C 10
+                  # Check indices created
+                  if command -v curl >/dev/null 2>&1; then
+                    curl -u $ES_USERNAME:$ES_PASSWORD "$ES_ENDPOINT/_cat/indices?v&h=h,s,i,p,r,dc,dd,cds,ss&s=i:asc"
+                  fi
             - name: Run loadgen api test for metrics search
               run: |
                 export PRODUCT=loadgen
                 cd $WORK/$PRODUCT/bin
 
                 # wait agent collect metrics
-                for i in $(seq 60); do sleep 1 && printf .; done; echo
+                for i in $(seq 360); do sleep 1 && printf .; done; echo
 
                 RUN_CMD=$WORK/$PRODUCT/bin/$PRODUCT
                 if [[ "${{ inputs.DEBUG_LOG }}" == "true" ]]; then
