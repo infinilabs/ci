@@ -305,9 +305,9 @@ jobs:
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
             echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p ".${PNAME}" -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
             else
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p ".${PNAME}" -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
             fi
           done
 
