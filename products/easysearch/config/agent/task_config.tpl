@@ -12,8 +12,8 @@ elasticsearch:
     discovery:
       enabled: false
     basic_auth:
-      username: $[[CLUSTER_USERNAME]]
-      password: $[[CLUSTER_PASSWORD]]
+      username: "$[[CLUSTER_USERNAME]]"
+      password: "$[[CLUSTER_PASSWORD]]"
     traffic_control:
       enabled: true
       max_qps_per_node: 100
