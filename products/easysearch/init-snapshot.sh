@@ -51,7 +51,7 @@ sed -i "s/^[# ]*easysearch *[=].*/easysearch     = $SNAPSHOT_VERSION/" "buildSrc
 sed -i "s/^#*build_snapshot *=.*/build_snapshot = true/" "buildSrc/version.properties"
 
 # 12. Check PUBLISH_JVER
-echo "Checking for published version: $JVER"
+echo "Checking for publishing version: $JVER"
 grep -w "$JVER" "$FVER"
 echo 
 
