@@ -5,7 +5,7 @@ cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成快照版本号
 
-BASE_VERSION=$(echo "$PUBLISHED_VERSION" | awk -F- '{print $1}')
+BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}')
 echo "Snapshot build $BUILD_TYPE with base version is $BASE_VERSION"
 if [[ "$BUILD_TYPE" == "schedule" ]]; then
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 }')
@@ -37,7 +37,7 @@ if ! grep -q "public static final Version $JVER " "$FVER"; then
   snapshot_version_line="    public static final Version $JVER = new Version($id, org.apache.lucene.util.Version.LUCENE_$LUCENE_VERSION);"
 
   # 8. 找到已发布的版本定义，并在其下一行插入快照版本定义
-  PUBLISH_JVER=$(echo "$BASE_VERSION" | tr '.' '_' | awk '{print "V_"$0}')
+  PUBLISH_JVER=$(echo "$PUBLISHED_VERSION" | tr '.' '_' | awk '{print "V_"$0}')
   sed -i "/public static final Version $PUBLISH_JVER /a\\$snapshot_version_line" "$FVER"
 fi
 
