@@ -334,7 +334,7 @@ update_application() {
           fi
       fi
     fi
-    log_info "--- Update process finished successfully for version '$TARGET_VERSION' ---"
+    log_info "--- Update process finished successfully for version $TARGET_VERSION ---"
 }
 # --- End Update Function ---
 
