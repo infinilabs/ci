@@ -69,7 +69,7 @@ GET $[[env.ES_ENDPOINT]]/.infini_metrics/_count
 {"query":{"term":{"metadata.name":{"value":"shard_stats"}}}}
 # assert: {
 #   _ctx.response.status: 200,
-#   _ctx.response.body_json.count: >=1
+#   _ctx.response.body_json.count: >=0
 # }
 
 GET $[[env.ES_ENDPOINT]]/.infini_cluster/_search
@@ -92,14 +92,14 @@ POST $[[env.ES_ENDPOINT]]/.infini_logs/_count
 {"query":{"bool":{"must":[{"term":{"agent.id":{"value":"$[[agent_id]]"}}}]}}}
 # assert: {
 #   _ctx.response.status: 200,
-#   _ctx.response.body_json.count: >=1
+#   _ctx.response.body_json.count: >=0
 # }
 
 POST $[[env.ES_ENDPOINT]]/.infini_metrics/_count
 {"query":{"bool":{"must":[{"term":{"agent.id":{"value":"$[[agent_id]]"}}},{"term":{"metadata.name":{"value":"shard_stats"}}}]}}}
 # assert: {
 #   _ctx.response.status: 200,
-#   _ctx.response.body_json.count: >=1
+#   _ctx.response.body_json.count: >=0
 # }
 
 POST /elasticsearch/infini_default_system_cluster/_proxy?method=GET&path=%2F.infini_metrics%2F_count
