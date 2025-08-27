@@ -50,4 +50,9 @@ sed -i "s/^[# ]*easysearch *[=].*/easysearch     = $SNAPSHOT_VERSION/" "buildSrc
 # 11. 取消注释并设置 build_snapshot = true
 sed -i "s/^#*build_snapshot *=.*/build_snapshot = true/" "buildSrc/version.properties"
 
+# 12. Check PUBLISH_JVER
+echo "Checking for published version: $PUBLISH_JVER"
+grep -w "$PUBLISH_JVER" "$FVER"
+echo 
+
 echo "Snapshot version update $SNAPSHOT_VERSION complete."
