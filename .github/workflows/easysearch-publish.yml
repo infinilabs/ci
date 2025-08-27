@@ -127,7 +127,8 @@ jobs:
             echo "Publish release version with ${{ github.event_name }}"
           else
             export BUILD_TYPE="${{ github.event_name }}"
-            echo "Build type is $BUILD_TYPE and PUBLISH_VERSION is $PUBLISH_VERSION"
+            export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
+            echo "Build type is $BUILD_TYPE and PUBLISH_VERSION is $PUBLISH_VERSION and PUBLISHED_VERSION is $PUBLISHED_VERSION"
             $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
             if [[ "$BUILD_TYPE" == "schedule" ]]; then
               STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')

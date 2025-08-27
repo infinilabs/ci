@@ -5,7 +5,7 @@ cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成快照版本号
 
-BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}')
+BASE_VERSION=$(echo "$PUBLISHED_VERSION" | awk -F- '{print $1}')
 echo "Snapshot build $BUILD_TYPE with base version is $BASE_VERSION"
 if [[ "$BUILD_TYPE" == "schedule" ]]; then
   SNAPSHOT_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 }')
