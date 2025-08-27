@@ -21,7 +21,7 @@ DEFAULT_RELEASE_URL=""                                 # Default base URL for re
 
 # These are relative to WORK_PATH or absolute if overridden
 UPDATE_DIR_NAME="update"                               # Subdirectory for download/extraction within WORK_PATH
-DEFAULT_APP_VERSION="0.3.1-2028"                       # Default application version for local reference
+DEFAULT_APP_VERSION="0.0.1-0001"                       # Default application version for local reference
 MAX_BACKUPS=3                                          # Number of recent backups to keep
 DEFAULT_SERVICE_NAME="infini-cloud-server"               # Default: no specific service name to control
 
@@ -135,11 +135,10 @@ elif [ "$REMOTE_UPDATE_FLAG" = true ]; then
     IS_NIGHTLY_BUILD=true
     VERSION_EXPLICITLY_PROVIDED=true
     log_info "Using nightly version for --remote: $TARGET_VERSION"
-else # Local update, no -v specified
-    TARGET_VERSION="$DEFAULT_APP_VERSION" # Use default for reference or if needed by local logic
+else 
     IS_NIGHTLY_BUILD=false
     VERSION_EXPLICITLY_PROVIDED=false # Not explicitly provided for download target
-    log_info "Local update mode. Version for reference: $TARGET_VERSION. Will use files in '$UPDATE_DIR_NAME'."
+    log_info "Local update mode. Will use files in '$UPDATE_DIR_NAME'."
 fi
 
 # Final check if a version was determined, critical for remote updates
