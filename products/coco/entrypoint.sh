@@ -7,6 +7,12 @@ log() {
   fi
 }
 
+generate_safe_password() {
+  local length=${1:-16}
+  local char_set='A-Za-z0-9._-=+:,@#%^?~'
+  LC_ALL=C tr -dc "$char_set" < /dev/urandom | head -c "$length"
+}
+
 setup_coco() {
   local WORK_DIR=/app/easysearch/data
   local COCO_DIR=$WORK_DIR/coco
@@ -49,6 +55,9 @@ setup_coco() {
     log "$COCO_DIR is already owned by ezs."
   fi
 
+  [ ! -d /opt/coco ] && mkdir -p /opt/coco
+  [ ! -d /opt/coco/server ] && ln -s /app/easysearch/data/coco /opt/coco/server
+
   return 0
 }
 
@@ -87,20 +96,20 @@ trap "exit 0" SIGINT SIGTERM
 
 if [ "$(id -u)" = '0' ]; then
   if [ -z "${EASYSEARCH_INITIAL_ADMIN_PASSWORD}" ]; then
-    log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Generating a random 16-character password..."
-    RANDOM_PASSWORD=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 16)
-    
+    log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Generating a random 20-character password..."
+    RANDOM_PASSWORD=$(generate_safe_password 16)
+
     if [ -n "$RANDOM_PASSWORD" ]; then
-      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-$RANDOM_PASSWORD"
+      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-$RANDOM_PASSWORD"
       log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
     else
-      RANDOM_PASSWORD=$(openssl rand -base64 12)
+      RANDOM_PASSWORD=$(openssl rand -base64 16)
       if [ -n "$RANDOM_PASSWORD" ]; then
-        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-$RANDOM_PASSWORD"
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-$RANDOM_PASSWORD"
         log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
       else
-        log "Error generating random password. Using default coco-server-default-password."
-        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="coco-server-default-password"
+        log "Error generating random password. Using default Coco-Server-Default-Password-0001."
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-Default-Password-0001"
       fi
     fi
   fi
