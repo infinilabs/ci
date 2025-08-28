@@ -25,6 +25,10 @@ done
 # Wait for an additional period to ensure Easysearch is fully ready
 sleep $waiting && echo "Wait $waiting secs for easysearch ready! Starting $target..."
 
+if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)" ]; then
+  chown -R ezs:ezs $COCO_DIR
+fi
+
 # use exec to replace the bash process
 # so that supervisor can manage the process directly
 cd /app/easysearch/data/$target && exec ./$target
