@@ -49,7 +49,7 @@ setup_coco() {
     log "Keystore is already for coco."
   fi
   
-  if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] ; then
+  if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)" ]; then
     chown -R ezs:ezs $COCO_DIR
   else
     log "$COCO_DIR is already owned by ezs."
