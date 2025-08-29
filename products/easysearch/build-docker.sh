@@ -31,9 +31,11 @@ for t in amd64 arm64; do
   #下载对应架构的 agent 并解压
   AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
   for f in stable snapshot; do
-    if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
-      echo "Download $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
-      [ ! -e $WORK/$AGENT_FILENAME ] && wget $RELEASE_URL/agent/$f/$AGENT_FILENAME
+    URL=$RELEASE_URL/agent/$f/$AGENT_FILENAME
+    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL")
+    if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
+      echo "Download $AGENT_FILENAME from $URL"
+      [ ! -e $WORK/$AGENT_FILENAME ] && wget "$URL" -O $WORK/$AGENT_FILENAME
     fi
   done
 

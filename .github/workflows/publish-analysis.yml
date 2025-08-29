@@ -191,7 +191,8 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL")
+            if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -343,7 +344,8 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL")
+            if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else
@@ -499,7 +501,8 @@ jobs:
           while IFS= read -r ver; do
             # Check published history
             URL=$RELEASE_URL/$PNAME/stable/$TNAME-$PNAME-$ver.zip
-            if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+            HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL")
+            if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
               if [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]]; then
                 echo "Version $ver already published, overwrite..."
               else

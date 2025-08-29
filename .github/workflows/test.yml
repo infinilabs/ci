@@ -103,9 +103,11 @@ jobs:
             mkdir -p /tmp/agent-$t
             AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
             for f in stable snapshot; do
-              if curl -o /dev/null -s -w %{http_code} $RELEASE_URL/agent/$f/$AGENT_FILENAME | grep -q 200; then
+              DOWNLOAD_URL=$RELEASE_URL/agent/$f/$AGENT_FILENAME
+              HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL")
+              if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
                 if [ ! -e /tmp/agent-$t/$AGENT_FILENAME ]; then
-                  echo "Downloading $AGENT_FILENAME from $RELEASE_URL/agent/$f/$AGENT_FILENAME"
+                  echo "Downloading $AGENT_FILENAME from $DOWNLOAD_URL"
                   wget $RELEASE_URL/agent/$f/$AGENT_FILENAME -P /tmp/agent-$t
                 fi
               fi
