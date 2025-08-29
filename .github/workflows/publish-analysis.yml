@@ -115,6 +115,9 @@ jobs:
             LATEST_VERSION=$(fetch_versions "$TNAME-project/$TNAME" "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
+
+          echo "The jdk version is $JAVA_VERSION and the latest version is $LATEST_VERSION"
+
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
 
           # filter versions
@@ -161,6 +164,9 @@ jobs:
             LATEST_VERSION=$(fetch_versions "$TNAME-project/$TNAME" "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
             echo "$LATEST_VERSION" > /tmp/all_versions
           fi
+
+          echo "The jdk version is $JAVA_VERSION and the latest version is $LATEST_VERSION"
+          
           [[ "${{ matrix.product }}" == "${{ inputs.REPUBLISH_TNAME }}" && -n "${{ inputs.REPUBLISH_VERSION }}" ]] && echo "${{ inputs.REPUBLISH_VERSION }}" > /tmp/all_versions
 
           # filter versions
