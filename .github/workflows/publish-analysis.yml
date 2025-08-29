@@ -200,7 +200,7 @@ jobs:
                 echo "Version $ver already published, overwrite..."
               else
                 echo "Version $ver already published, skipping..."
-                break
+                continue
               fi
             fi
             # Build when not publish
@@ -352,7 +352,7 @@ jobs:
                 echo "Version $ver already published, overwrite..."
               else
                 echo "Version $ver already published, skipping..."
-                break
+                continue
               fi
             fi
             # Build when not publish
@@ -508,7 +508,7 @@ jobs:
                 echo "Version $ver already published, overwrite..."
               else
                 echo "Version $ver already published, skipping..."
-                break
+                continue
               fi
             fi
             # Build when not publish
