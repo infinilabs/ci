@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This script waits for the EasySearch service to become available,
-# then acquires a process lock and starts the agent application.
+# then acquires a process lock and starts the application.
 # It is designed to be robust, configurable, and easy to read.
 #
 
@@ -23,11 +23,11 @@ set -e
 # --- Helper Functions ---
 
 log() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [INFO] [start-agent] $*"
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [INFO] [start-${TARGET_NAME}] $*"
 }
 
 die() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] [start-agent] $*" >&2
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] [start-${TARGET_NAME}] $*" >&2
   exit 1
 }
 
@@ -75,14 +75,20 @@ else
   log "No existing lock file found. Proceeding with startup."
 fi
 
-# 4. Change to the working directory.
+
+# 4. Check permissions and ownership
+if [ "$(stat -c %U $WORKING_DIR)" != "ezs" ] || [ -n "$(find "$NODES_DIR" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)" ]; then
+  chown -R ezs:ezs $WORKING_DIR
+fi
+
+# 5. Change to the working directory.
 log "Changing directory to ${WORKING_DIR}."
 cd "${WORKING_DIR}" || die "Failed to change directory to ${WORKING_DIR}."
 
-# 5. Start the agent process.
-log "Starting agent process..."
+# 6. Start the process.
+log "Starting ${TARGET_NAME} process..."
 
-# We don't create a lock file here because the agent process itself is expected
+# We don't create a lock file here because the process itself is expected
 # to create its own .lock file inside the nodes/*/ directory upon startup.
 # The 'exec' command replaces the current shell, which is crucial for supervisord.
 exec "./${TARGET_NAME}"
