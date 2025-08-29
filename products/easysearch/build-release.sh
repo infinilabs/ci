@@ -94,8 +94,10 @@ for p in ${plugins[@]}; do
       if [ "$onceclean" == "true" ]; then
         curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
         onceclean=false
+        echo "Flushed plugin $p"
       fi
     fi
+
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo "Publish Docker <Only> image no need to upload with $p"
     else

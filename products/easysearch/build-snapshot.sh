@@ -59,6 +59,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
+onceclean=true
 plugins=(sql jieba analysis-hanlp analysis-icu analysis-ik analysis-pinyin analysis-stconvert index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
 for p in ${plugins[@]}; do
   f=$DEST/plugins/$p/$p-$VERSION.zip
@@ -75,9 +76,24 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-    echo Upload $p to oss
-    sha512sum $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
-    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip -k $PNAME/snapshot/plugins/$p
-    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $p-$VERSION-SNAPSHOT.zip.sha512 -k $PNAME/snapshot/plugins/$p
+    echo && echo Check if plugin $p exists
+    URL=$RELEASE_URL/$PNAME/snapshot/plugins/$p/$f.sha512
+    if curl -I "$URL" | grep "HTTP/1.[01] 200" >/dev/null; then
+      if [ "$onceclean" == "true" ]; then
+        curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
+        onceclean=false
+        echo "Flushed plugin $p"
+      fi
+    fi
+
+    if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+      echo "Publish Docker <Only> image no need to upload with $p"
+    else
+      echo Upload $p to oss
+      sha512sum $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
+      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip -k $PNAME/snapshot/plugins/$p
+      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $p-$VERSION-SNAPSHOT.zip.sha512 -k $PNAME/snapshot/plugins/$p
+    fi
   fi
+  
 done
