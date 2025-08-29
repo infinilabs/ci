@@ -91,7 +91,7 @@ jobs:
           mvn -v
 
       - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
-        if: contains(["11","17"],${{inputs.JAVA_VERSION}})
+        if: ${{ contains(fromJSON('["11", "17"]'), inputs.JAVA_VERSION) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_API_URL: https://api.github.com
@@ -140,7 +140,7 @@ jobs:
           cat /tmp/versions
 
       - name: Set build ${{ matrix.plugins }} for ${{ matrix.product }} versions
-        if: contains(["21","23"],${{inputs.JAVA_VERSION}})
+        if: ${{ contains(fromJSON('["21", "23"]'), inputs.JAVA_VERSION) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_API_URL: https://api.github.com
