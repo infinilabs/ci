@@ -14,7 +14,7 @@ for t in amd64 arm64; do
   EZS_FILE=$DNAME-$EZS_VER-linux-$t.tar.gz
   for f in stable snapshot; do
     DOWNLOAD_URL=$RELEASE_URL/$DNAME/$f/$EZS_FILE
-    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL")
+    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL" || true)
     if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
       echo "Download $EZS_FILE from $DOWNLOAD_URL"
       [ ! -e $DEST/$EZS_FILE ] && wget $DOWNLOAD_URL -O $DEST/$EZS_FILE
@@ -62,7 +62,7 @@ for t in amd64 arm64; do
       fi
       # Download the plugin file
       DOWNLOAD_URL=$RELEASE_URL/$DNAME/stable/plugins/$p/$PLUGIN_FILE
-      HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL")
+      HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL" || true)
       if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
         echo "Download $PLUGIN_FILE from $DOWNLOAD_URL"
         mkdir -p $PLUGINS/plugins-$t/$p

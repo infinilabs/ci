@@ -32,7 +32,7 @@ for t in amd64 arm64; do
   AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
   for f in stable snapshot; do
     URL=$RELEASE_URL/agent/$f/$AGENT_FILENAME
-    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL")
+    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL" || true)
     if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
       echo "Download $AGENT_FILENAME from $URL"
       [ ! -e $WORK/$AGENT_FILENAME ] && wget "$URL" -O $WORK/$AGENT_FILENAME
