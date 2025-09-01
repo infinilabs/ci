@@ -76,15 +76,10 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-    echo && echo Check if plugin $p exists
-    URL=$RELEASE_URL/$PNAME/snapshot/plugins/$p/$f.sha512
-    HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL" || true)
-    if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ || "$HTTP_STATUS" =~ ^4[0-9]{2}$ ]]; then
-      if [ "$onceclean" == "true" ]; then
-        curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
-        onceclean=false
-        echo "Flushed plugin $p"
-      fi
+    echo && echo Check if plugin $p exists and clean cache
+    if [ "$onceclean" == "true" ]; then
+      curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
+      onceclean=false && echo "Flushed plugin cache $p"
     fi
 
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
