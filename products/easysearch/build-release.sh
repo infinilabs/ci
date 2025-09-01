@@ -103,3 +103,9 @@ for p in ${plugins[@]}; do
     fi
   fi
 done
+
+echo
+for x in snapshot stable; do
+  curl -o /dev/null -w "%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/$x/
+done
+echo
