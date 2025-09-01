@@ -79,7 +79,7 @@ for p in ${plugins[@]}; do
     echo && echo Check if plugin $p exists
     URL=$RELEASE_URL/$PNAME/snapshot/plugins/$p/$f.sha512
     HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL" || true)
-    if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
+    if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ || "$HTTP_STATUS" =~ ^4[0-9]{2}$ ]]; then
       if [ "$onceclean" == "true" ]; then
         curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
         onceclean=false
