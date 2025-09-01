@@ -63,7 +63,7 @@ jobs:
           LATEST_TAG=$(git describe --tags --abbrev=0)
           REAL_DOCS_URL="$DOCS_URL/$PNAME/$LATEST_TAG"
           # Use the -q option to prevent curl from reading the .curlrc file which default option -f return exited code 22
-          HTTP_STATUS=$(curl -no-rc -o /dev/null -s -w "%{http_code}" "$REAL_DOCS_URL" 2>/dev/null)
+          HTTP_STATUS=$(curl -no-rc -o /dev/null -s -w "%{http_code}" "$REAL_DOCS_URL" 2>/dev/null || true)
           echo "Latest tag is $LATEST_TAG with docs URL $REAL_DOCS_URL returned HTTP status $HTTP_STATUS"
           if [[ "$HTTP_STATUS" -eq 404 ]]; then
             REF_TYPE="tag"
