@@ -100,10 +100,13 @@ for p in ${plugins[@]}; do
       echo Upload plugin $p to oss
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
+      # refresh plugin cache page
+      curl -o /dev/null -w "%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/stable/plugins/$p/
     fi
   fi
 done
 
+# refresh snapshot and stable cache page
 echo
 for x in snapshot stable; do
   curl -o /dev/null -w "%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/$x/
