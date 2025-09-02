@@ -51,7 +51,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: false
-        default: ""
+        default: "1.15.0"
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
         required: false
