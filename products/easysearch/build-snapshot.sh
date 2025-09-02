@@ -59,7 +59,6 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
-onceclean=true
 plugins=(sql jieba analysis-hanlp analysis-icu analysis-ik analysis-pinyin analysis-stconvert index-management ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
 for p in ${plugins[@]}; do
   f=$DEST/plugins/$p/$p-$VERSION.zip
@@ -76,11 +75,6 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-    if [ "$onceclean" == "true" ]; then
-      curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
-      onceclean=false && echo "Flushed plugin cache only once ..."
-    fi
-
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo "Publish Docker <Only> image no need to upload with $p"
     else
@@ -88,16 +82,17 @@ for p in ${plugins[@]}; do
       sha512sum $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip -k $PNAME/snapshot/plugins/$p
       oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $p-$VERSION-SNAPSHOT.zip.sha512 -k $PNAME/snapshot/plugins/$p
-      # refresh plugin cache page
-      curl -o /dev/null -w "%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/snapshot/plugins/$p/
     fi
   fi
   
 done
 
-# refresh snapshot and stable cache page
+# Refresh snapshot and stable cache page
 echo
-for x in snapshot stable; do
-  echo "Refresh plugin cache for $x" && curl -o /dev/null -w "\t%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/$x/
-done
+if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+  echo "Publish Docker <Only> image no need to flush cache"
+else
+  curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
+  echo "Flushed plugin cache and page cache ..."
+fi
 echo
