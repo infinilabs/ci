@@ -88,10 +88,9 @@ for p in ${plugins[@]}; do
   sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
 
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-    echo && echo Check if plugin $p exists and clean cache
     if [ "$onceclean" == "true" ]; then
       curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$VERSION" > /dev/null
-      onceclean=false && echo "Flushed plugin cache $p"
+      onceclean=false && echo "Flushed plugin cache only once ..."
     fi
 
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
@@ -109,6 +108,6 @@ done
 # refresh snapshot and stable cache page
 echo
 for x in snapshot stable; do
-  curl -o /dev/null -w "%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/$x/
+  echo "Refresh plugin cache for $x" && curl -o /dev/null -w "\t%{http_code}\t" -H 'x-reset-cache: true' $RELEASE_URL/$PNAME/$x/
 done
 echo
