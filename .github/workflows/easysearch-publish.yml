@@ -166,6 +166,10 @@ jobs:
             ${{ github.workspace }}/jdks
           key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
 
+      - name: Prepare for build dependency with ${{ env.STEP_VERSION}}
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME && gradle installMavenDep
+
       - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
         run: |
           echo "Build $PNAME start..."
