@@ -168,7 +168,7 @@ jobs:
 
       - name: Prepare for build dependency with ${{ env.STEP_VERSION}}
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && gradle installMavenDep
+          cd $GITHUB_WORKSPACE/$PNAME && echo #gradle installMavenDep
 
       - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
         run: |
