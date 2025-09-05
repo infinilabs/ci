@@ -92,7 +92,7 @@ echo
 if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
   echo "Publish Docker <Only> image no need to flush cache"
 else
-  ssh staging "curl -H 'X-Token: $TOKEN' '$RELEASE_URL/_flush?versions=$VERSION-SNAPSHOT' > /dev/null"
+  ssh staging "curl -s -H 'X-Token: $TOKEN' '$RELEASE_URL/_flush?versions=$VERSION-SNAPSHOT' > /dev/null"
   echo "Flushed plugin cache and page cache ..."
 fi
 echo
