@@ -78,7 +78,8 @@ fi
 
 # 4. Check permissions and ownership
 if [ "$(stat -c %U $WORKING_DIR)" != "ezs" ] || [ -n "$(find "$NODES_DIR" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)" ]; then
-  chown -R ezs:ezs $WORKING_DIR
+  su root -c "chown -R ezs:ezs $WORKING_DIR"
+  echo "The ks owner fixed when start out container"
 fi
 
 # 5. Change to the working directory.
