@@ -30,7 +30,7 @@ on:
       PUBLISH_VERSIOIN:
         description: 'Publish version'
         required: true
-        default: "1.0.0"
+        default: "1.2.0"
 
 jobs:
 
