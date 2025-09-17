@@ -34,7 +34,7 @@ on:
         type: boolean
         default: false
       ONLY_PUBLISH_ENTERPRISE:
-        description: 'PUBLISH Enterprise'
+        description: 'Publish Enterprise'
         required: false
         type: boolean
         default: false
