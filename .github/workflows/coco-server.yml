@@ -46,7 +46,7 @@ on:
 
 jobs:
   deploy-staging:
-    name: Publish coco server enterprise to staging
+    name: Deploy coco server to staging
     if: ${{ inputs.ONLY_DEPLOY_STAGING == true }}
     runs-on: ubuntu-latest
     env:
