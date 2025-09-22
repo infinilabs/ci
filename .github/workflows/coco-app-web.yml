@@ -50,7 +50,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Checkout coco app repository
+      - name: Checkout ${{ env.SEARCHCHAT-REPO-NAME }} repository
         uses: actions/checkout@v4
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.SEARCHCHAT-REPO-NAME }}
@@ -151,7 +151,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Checkout coco app repository
+      - name: Checkout ${{ inputs.PUBLISH_COMPONENT }} repository
         uses: actions/checkout@v4
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ inputs.PUBLISH_COMPONENT }}
