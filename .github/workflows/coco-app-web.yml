@@ -44,6 +44,7 @@ jobs:
     if: ${{ inputs.PUBLISH_COMPONENT == 'search-chat' }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
+      PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
       VITE_LOG_LEVEL: 'warn'
     runs-on: ubuntu-latest
     steps:
@@ -64,13 +65,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       
-      - name: Set version for ${{ inputs.PUBLISH_COMPONENT }}
+      - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.WEBCLI-REPO-NAME }}
         env: 
           NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
           source $GITHUB_WORKSPACE/scripts/version_greater.sh
-          latest=$(npm view @infinilabs/ui-web-cli version)
+          latest=$(npm view @infinilabs/${{ env.PUBLISH_COMPONENT }} version)
 
           # Extract x.y.z using a regular expression
           if [[ -n "$PUBLISH_VERSION" ]]; then
@@ -145,18 +146,19 @@ jobs:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
+      PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
       VITE_LOG_LEVEL: 'warn'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Checkout ${{ inputs.PUBLISH_COMPONENT }} repository
+      - name: Checkout ${{ env.PUBLISH_COMPONENT }} repository
         uses: actions/checkout@v4
         with: 
-          repository: ${{ vars.GIT_REPO }}/${{ inputs.PUBLISH_COMPONENT }}
+          repository: ${{ vars.GIT_REPO }}/${{ env.PUBLISH_COMPONENT }}
           ref: main
-          path: ${{ inputs.PUBLISH_COMPONENT }}
+          path: ${{ env.PUBLISH_COMPONENT }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Setup node
@@ -165,13 +167,13 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Set version for ${{ inputs.PUBLISH_COMPONENT }}
-        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+      - name: Set version for ${{ env.PUBLISH_COMPONENT }}
+        working-directory: ${{ env.PUBLISH_COMPONENT }}
         env: 
           NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
           source $GITHUB_WORKSPACE/scripts/version_greater.sh
-          latest=$(npm view @infinilabs/search-chat version)
+          latest=$(npm view @infinilabs/${{ env.PUBLISH_COMPONENT }} version)
 
           # Extract x.y.z using a regular expression
           if [[ -n "$PUBLISH_VERSION" ]]; then
@@ -224,11 +226,11 @@ jobs:
           cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Install dependencies and build web
-        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+        working-directory: ${{ env.PUBLISH_COMPONENT }}
         run: pnpm install
           
       - name: Build for publish with ${{ env.VERSION }}
-        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+        working-directory: ${{ env.PUBLISH_COMPONENT }}
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
