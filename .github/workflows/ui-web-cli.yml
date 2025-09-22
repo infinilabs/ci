@@ -1,0 +1,182 @@
+# GitHub Actions 工作流名称
+name: Publish UI Web CLI NPM Package
+
+# 默认运行环境配置
+defaults:
+  run:
+    shell: bash
+
+# 环境变量配置
+env:
+  CI: false                                    # 禁用 CI 模式，避免某些工具的严格检查
+  REPO-NAME: "ui-web-cli"                     # 目标仓库名称
+  NODEJS_VERSION: 20                          # Node.js 版本
+  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}   # NPM 发布令牌
+
+# 触发条件：手动触发工作流
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: '发布 NPM 版本 (格式: x.y.z)'
+        required: false
+        default: ""
+      MAJOR_VERSION:
+        description: '更新主版本号 (递增 x)'
+        type: boolean
+        required: false
+        default: false
+      MINOR_VERSION:
+        description: '更新次版本号 (递增 y)'
+        type: boolean
+        required: false
+        default: false
+      PATCH_VERSION:
+        description: '更新补丁版本号 (递增 z)'
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  # 构建和发布 Web CLI 包的任务
+  build-web-cli:
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}   # 从输入获取发布版本
+      VITE_LOG_LEVEL: 'warn'                          # 设置 Vite 日志级别
+    runs-on: ubuntu-latest                             # 运行在 Ubuntu 最新版本
+    
+    steps:
+      # 步骤1: 检出当前仓库（CI 配置仓库）
+      - name: 检出 CI 仓库
+        uses: actions/checkout@v4
+
+      # 步骤2: 检出目标项目仓库
+      - name: 检出 UI Web CLI 项目仓库
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}  # 从变量获取组织/仓库名
+          ref: main                                              # 检出主分支
+          path: ${{ env.REPO-NAME }}                            # 检出到指定目录
+
+      # 步骤3: 设置 Node.js 环境
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}      # 使用指定的 Node.js 版本
+          registry-url: 'https://registry.npmjs.org'   # 设置 NPM 注册表地址
+
+      # 步骤4: 设置版本号
+      - name: 设置 UI Web CLI 包版本
+        working-directory: ${{ env.REPO-NAME }}         # 在项目目录中执行
+        env: 
+          NPM_CONFIG_UPDATE_NOTIFIER: false             # 禁用 NPM 更新通知
+        run: |
+          # 引入版本比较函数
+          source $GITHUB_WORKSPACE/scripts/version_greater.sh
+          
+          # 获取当前已发布的最新版本
+          latest=$(npm view @infinilabs/ui-web-cli version)
+
+          # 处理版本号逻辑
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            # 如果手动指定了版本号，验证格式并检查是否大于当前版本
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              # 比较版本，确保新版本大于已发布版本
+              if ! version_greater "$current_version" "$latest"; then
+                echo "错误: 当前版本 $current_version 不大于最新版本 $latest" >&2
+                exit 1
+              fi
+            else
+              echo "错误: 版本号格式无效，期望格式为 X.Y.Z" >&2
+              exit 1
+            fi
+          else
+            # 如果没有手动指定版本，基于最新版本自动递增
+            if [[ -n "$latest" ]]; then
+              # 解析版本号的各个部分
+              major=$(echo "$latest" | cut -d '.' -f 1)
+              minor=$(echo "$latest" | cut -d '.' -f 2)
+              patch=$(echo "$latest" | cut -d '.' -f 3)
+
+              # 根据输入参数递增相应的版本号
+              if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
+                major=$((major + 1))
+                minor=0
+                patch=0
+              elif [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
+                minor=$((minor + 1))
+                patch=0
+              elif [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
+                patch=$((patch + 1))
+              fi
+              current_version="$major.$minor.$patch"
+            else
+              # 如果没有已发布版本，使用默认版本
+              current_version="1.0.0"
+            fi
+          fi
+          
+          version="$current_version"
+          
+          # 更新 package.json 中的版本号
+          sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+          
+          # 验证版本更新是否成功
+          grep -o "\"version\": *\"[^\"]*\"" package.json
+          echo "准备发布的版本: $version"
+          
+          # 将版本号设置为环境变量，供后续步骤使用
+          echo "VERSION=$version" >> $GITHUB_ENV
+
+      # 步骤5: 设置 pnpm 包管理器
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest                               # 使用最新版本的 pnpm
+
+      # 步骤6: 同步 Node.js 版本并设置缓存
+      - name: 同步 Node.js 版本并设置缓存
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}       # 确保 Node.js 版本一致
+          cache: 'pnpm'                                 # 启用 pnpm 缓存
+          cache-dependency-path: "**/pnpm-lock.yaml"   # 指定缓存依赖文件路径
+
+      # 步骤7: 安装项目依赖
+      - name: 安装项目依赖
+        working-directory: ${{ env.REPO-NAME }}
+        run: pnpm install                               # 使用 pnpm 安装依赖
+
+      # 步骤8: 构建并发布包
+      - name: 构建并发布 UI Web CLI 包 ${{ env.VERSION }}
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"     # 增加 Node.js 内存限制，防止构建时内存不足
+        run: |
+          # 构建项目
+          pnpm run build
+          
+          # 发布到 NPM（公开访问）
+          npm publish --access public
+
+  # 失败通知任务
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [build-web-cli]                              # 依赖于构建任务
+    if: failure()                                       # 仅在前面的任务失败时运行
+    
+    steps:
+      # 检出代码以获取通知脚本
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      # 发送飞书通知
+      - name: 发送飞书失败通知
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}  # 飞书机器人 Webhook 地址
+          REPO_NAME: ${{ github.repository }}                    # 仓库名称
+          WORKFLOW_NAME: ${{ github.workflow }}                  # 工作流名称
+          RUN_ID: ${{ github.run_id }}                          # 运行 ID
+          ACTOR: ${{ github.triggering_actor }}                 # 触发用户
+          SERVER_URL: ${{ github.server_url }}                  # GitHub 服务器地址
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh        # 执行飞书通知脚本
