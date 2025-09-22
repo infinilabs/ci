@@ -101,7 +101,7 @@ jobs:
           echo "setting up env with ${{ matrix.component }}"
           # check if the env is set
           if [[ "${{ matrix.component }}" == "easysearch" ]]; then
-            echo PNAME=k8s-$IMAGE_TYPE >> $GITHUB_ENV
+            echo PNAME=$IMAGE_TYPE-operator >> $GITHUB_ENV
             echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
             echo PNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
