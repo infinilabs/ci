@@ -4,13 +4,21 @@ defaults:
     shell: bash
 env:
   CI: false
-  REPO-NAME: "coco-app"
+  SEARCHCHAT-REPO-NAME: "coco-app"
   NODEJS_VERSION: 20
   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 on:
   workflow_dispatch:
     inputs:
+      PUBLISH_COMPONENT:
+        description: 'Component to publish'
+        type: choice
+        options:
+          - ui-web-cli
+          - search-chat
+        required: true
+        default: search-chat
       PUBLISH_VERSION:
         description: 'Publish NPM Version (Format: x.y.z)'
         required: false
@@ -32,7 +40,8 @@ on:
         default: true
 
 jobs:
-  build-web:
+  build-search-chat:
+    if: ${{ inputs.PUBLISH_COMPONENT == 'search-chat' }}
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
       VITE_LOG_LEVEL: 'warn'
@@ -44,9 +53,9 @@ jobs:
       - name: Checkout coco app repository
         uses: actions/checkout@v4
         with: 
-          repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
+          repository: ${{ vars.GIT_REPO }}/${{ env.SEARCHCHAT-REPO-NAME }}
           ref: main
-          path: ${{ env.REPO-NAME }}
+          path: ${{ env.SEARCHCHAT-REPO-NAME }}
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -55,13 +64,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       
-      - name: Set version for search-chat
-        working-directory: ${{ env.REPO-NAME }}
+      - name: Set version for ${{ inputs.PUBLISH_COMPONENT }}
+        working-directory: ${{ env.WEBCLI-REPO-NAME }}
         env: 
           NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
           source $GITHUB_WORKSPACE/scripts/version_greater.sh
-          latest=$(npm view @infinilabs/search-chat version)
+          latest=$(npm view @infinilabs/ui-web-cli version)
 
           # Extract x.y.z using a regular expression
           if [[ -n "$PUBLISH_VERSION" ]]; then
@@ -103,7 +112,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Enable web adapter
-        working-directory: ${{ env.REPO-NAME }}
+        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
         run: |
           TARGET_FILE="src/utils/platformAdapter.ts"
           # Enable Web Adapter and disable Tauri Adapter
@@ -121,16 +130,108 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - name: Install app dependencies and build web
-        working-directory: ${{ env.REPO-NAME }}
+      - name: Install dependencies and build web
+        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
         run: pnpm install
           
-      - name: Build app with ${{ env.VERSION }}
-        working-directory: ${{ env.REPO-NAME }}
+      - name: Build for publish with ${{ env.VERSION }}
+        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           pnpm run build:web && cd out/search-chat && npm publish --access public
+
+  build-web-cli:
+    if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
+      VITE_LOG_LEVEL: 'warn'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout coco app repository
+        uses: actions/checkout@v4
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ inputs.PUBLISH_COMPONENT }}
+          ref: main
+          path: ${{ inputs.PUBLISH_COMPONENT }}
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Set version for ${{ inputs.PUBLISH_COMPONENT }}
+        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+        env: 
+          NPM_CONFIG_UPDATE_NOTIFIER: false
+        run: |
+          source $GITHUB_WORKSPACE/scripts/version_greater.sh
+          latest=$(npm view @infinilabs/search-chat version)
+
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              # compare with latest version, must be greater than latest version
+              if ! version_greater "$current_version" "$latest"; then
+                echo "Error: Current version $current_version is not greater than latest version $latest" >&2
+                exit 1
+              fi
+            else
+              echo "Error: Invalid version string format. Expected X.Y.Z." >&2
+              exit 1
+            fi
+          else
+            if [[ -n "$latest" ]]; then
+              major=$(echo "$latest" | cut -d '.' -f 1)
+              minor=$(echo "$latest" | cut -d '.' -f 2)
+              patch=$(echo "$latest" | cut -d '.' -f 3)
+
+              # Increment the version based on the inputs
+              if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
+                major=$(echo "$latest" | awk -F. -v OFS=. '{$1++; print $1}')
+              fi
+              if [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
+                minor=$(echo "$latest" | awk -F. -v OFS=. '{$2++; print $2}')
+              fi
+              if [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
+                patch=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $3}')
+              fi
+              current_version="$major.$minor.$patch"
+            fi
+          fi
+          version="$current_version"
+          sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+          # Extract the build number from the version string
+          grep -oP "version: *\"[^\"]*\"" package.json
+          echo "Current version to publish: $version"
+          echo "VERSION=$version" >> $GITHUB_ENV
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install dependencies and build web
+        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+        run: pnpm install
+          
+      - name: Build for publish with ${{ env.VERSION }}
+        working-directory: ${{ inputs.PUBLISH_COMPONENT }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+        run: |
+          pnpm run build && npm publish --access public
 
   notify_on_failure:
     runs-on: ubuntu-latest
