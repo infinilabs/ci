@@ -208,7 +208,7 @@ jobs:
           version="$current_version"
           sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
           # Extract the build number from the version string
-          grep -oP "version: *\"[^\"]*\"" package.json
+          grep -oP "\"version\": *\"[^\"]*\"" package.json
           echo "Current version to publish: $version"
           echo "VERSION=$version" >> $GITHUB_ENV
 
