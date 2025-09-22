@@ -157,6 +157,7 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/${{ inputs.PUBLISH_COMPONENT }}
           ref: main
           path: ${{ inputs.PUBLISH_COMPONENT }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Setup node
         uses: actions/setup-node@v4
