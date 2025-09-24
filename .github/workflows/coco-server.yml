@@ -285,7 +285,7 @@ jobs:
 
   publish:
     name: Publish coco server files and docker
-    if: ${{ inputs.PUBLISH_RELEASE == true }}
+    if: ${{ github.event_name == 'schedule' || inputs.PUBLISH_RELEASE == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -561,7 +561,7 @@ jobs:
 
   publish-enterprise:
     name: Publish coco server enterprise files and docker
-    if: ${{ inputs.ONLY_PUBLISH_ENTERPRISE == true }}
+    if: ${{ github.event_name == 'schedule' || inputs.ONLY_PUBLISH_ENTERPRISE == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
