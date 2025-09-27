@@ -139,6 +139,17 @@ jobs:
             git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
 
+      - name: Update GitHub release version
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          VERSION=${{ inputs.PUBLISH_VERSIOIN }}
+          if [[ ! -z "$VERSION" && "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Updating GitHub release version to $VERSION"
+            gh variable set PUBLISH_OPERATOR_VERSION --body "$VERSION"
+          fi
+
       - name: Set up qemu for ${{ matrix.component }}-${{env.IMAGE_TYPE}}
         uses: docker/setup-qemu-action@v3
 
@@ -172,19 +183,7 @@ jobs:
           tags: |
             ${{ env.REPO_NAME }}:${{env.TAG}}
             ${{ steps.tags.outputs.RELEASE_TAG }}
-          push: true
-
-      - name: Update GitHub release version
-        if: ${{ inputs.PUBLISH_RELEASE }}
-        env:
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: |
-          VERSION=${{ inputs.PUBLISH_VERSIOIN }}
-          if [[ ! -z "$VERSION" && "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "Updating GitHub release version to $VERSION"
-            gh variable set PUBLISH_OPERATOR_VERSION --body "$VERSION"
-          fi
-          
+          push: true        
 
       - name: Deploy operator to staging k8s
         if: ${{ inputs.PUBLISH_RELEASE }}
