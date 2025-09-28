@@ -244,10 +244,10 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils libtracker-sparql-3.0-dev
       - name: Install dependencies (Windows only)
-        if: startsWith(matrix.platform, 'windows-latest')
+        if: startsWith(matrix.platform, 'windows')
         shell: bash
         run: winget install LLVM.LLVM --silent --accept-package-agreements --accept-source-agreements
-        
+
       - name: Check Rust toolchain
         working-directory: ${{ env.REPO-NAME }}/src-tauri
         run: rustup toolchain list
