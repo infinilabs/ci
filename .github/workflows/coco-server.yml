@@ -526,6 +526,7 @@ jobs:
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
             ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
+          no-cache: true
 
       - name: Archive coco server files
         run: |
