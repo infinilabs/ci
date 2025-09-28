@@ -138,13 +138,13 @@ jobs:
           elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
             VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
             if [[ -z "$VERSION" ]]; then
-              echo "Please input the framework version"
+              echo "Please input the Coco app version"
               exit 1
             fi
           elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
             VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
             if [[ -z "$VERSION" ]]; then
-              echo "Please input the framework version"
+              echo "Please input the Coco server version"
               exit 1
             fi
           else
