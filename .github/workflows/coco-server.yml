@@ -313,6 +313,17 @@ jobs:
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout framework code
         uses: actions/checkout@v4
         with: 
@@ -526,8 +537,8 @@ jobs:
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
             ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Archive coco server files
         run: |
@@ -867,8 +878,8 @@ jobs:
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
             ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Archive coco server files
         run: |
