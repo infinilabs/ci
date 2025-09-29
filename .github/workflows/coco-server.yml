@@ -313,7 +313,8 @@ jobs:
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
-      - name: Free Disk Space (Ubuntu)
+      - name: Free Disk Space
+        if: ${{ false }}
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
