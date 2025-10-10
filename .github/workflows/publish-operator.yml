@@ -148,7 +148,7 @@ jobs:
 
       - name: Checkout ${{ matrix.component }}-${{env.IMAGE_TYPE}} repo
         run: |
-          if [[ "${{ matrix.component }}" == "easysearch" ]]; then
+          if [[ "${{ matrix.component }}" == "easysearch" || "${{ matrix.component }}" == "elasticsearch" ]]; then
             git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
             git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
