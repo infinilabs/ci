@@ -12,14 +12,9 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      PUBLISH_EASYSEARCH:
-        description: 'Publish easysearch'
+      PUBLISH_SEARCH:
+        description: 'Publish easysearch & elasticsearch'
         required: false
-        type: boolean
-        default: true
-      PUBLISH_ELASTICSEARCH:
-        description: 'Publish elasticsearch'
-        required: true
         type: boolean
         default: true
       PUBLISH_RUNTIME:
@@ -41,8 +36,6 @@ jobs:
 
   setup:
     runs-on: ubuntu-latest
-    env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
     outputs:
       components: ${{ steps.set-components.outputs.components }}
     steps:
@@ -51,49 +44,40 @@ jobs:
         run: |
           # check publish version x.y.z
           
-          # Check version format if triggered by workflow_dispatch
+          # check inputs must search or runtime or both
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ ! "${{ inputs.PUBLISH_VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "::error::Invalid version format. Expected x.y.z, but got ${{ inputs.PUBLISH_VERSION }}"
+              echo "Invalid version format. Expected x.y.z"
               exit 1
             fi
+            # check if the inputs are set
+            if [[ "${{ inputs.PUBLISH_SEARCH }}" == 'true' ]] && [[ "${{ inputs.PUBLISH_RUNTIME }}" == 'true' ]]; then
+              COMPONENTS="search,runtime"
+            elif [[ "${{ inputs.PUBLISH_SEARCH }}" == 'true' ]]; then
+              COMPONENTS="search"
+            elif [[ "${{ inputs.PUBLISH_RUNTIME }}" == 'true' ]]; then
+              COMPONENTS="runtime"
+            else
+              echo "No components to build"
+              exit 1
+            fi
+          else
+            COMPONENTS="search,runtime"
           fi
-
-          COMPONENTS=""
-          # Set components based on inputs or schedule event
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.PUBLISH_EASYSEARCH }}" == 'true' ]]; then
-            COMPONENTS="${COMPONENTS},easysearch"
-          fi
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.PUBLISH_ELASTICSEARCH }}" == 'true' ]]; then
-            COMPONENTS="${COMPONENTS},elasticsearch"
-          fi
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.PUBLISH_RUNTIME }}" == 'true' ]]; then
-            COMPONENTS="${COMPONENTS},runtime"
-          fi
-
-          # Remove leading comma
-          COMPONENTS=$(echo $COMPONENTS | sed 's/^,//')
-
-          if [[ -z "$COMPONENTS" ]]; then
-            echo "::warning::No components selected to build."
-          fi
-          
-          echo "Components to build: $COMPONENTS"
           echo "components=$(echo $COMPONENTS | jq -Rc 'split(",")')" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   publish:
     needs: setup
-    if: needs.setup.outputs.components != '[""]'
     name: Publish ${{ matrix.component }} Docker Image
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         component: ${{ fromJson(needs.setup.outputs.components) }}
 
     env:
       IMAGE_TYPE: operator
+      STAGING_NAMESPACE: "default"
       LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
       LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
       SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
@@ -117,13 +101,9 @@ jobs:
         run: |
           echo "setting up env with ${{ matrix.component }}"
           # check if the env is set
-          if [[ "${{ matrix.component }}" == "easysearch" || "${{ matrix.component }}" == "elasticsearch" ]]; then
-            echo PNAME=search-$IMAGE_TYPE >> $GITHUB_ENV
-            echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
-          elif [[ "${{ matrix.component }}" == "runtime" ]]; then
-            echo PNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
-            echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
-          fi
+          echo PNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
+          echo TNAME=${{ matrix.component }}-$IMAGE_TYPE >> $GITHUB_ENV
+          
           # setting build number
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             RUN_NUMBER=${{ github.run_number }}
@@ -141,8 +121,8 @@ jobs:
           fi
           cat $GITHUB_ENV
 
-      - name: Run connect in background (easysearch only)
-        if: matrix.component == 'easysearch'
+      - name: Run connect in background (search only)
+        if: matrix.component == 'search'
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
@@ -150,14 +130,14 @@ jobs:
 
       - name: Checkout ${{ matrix.component }}-${{env.IMAGE_TYPE}} repo
         run: |
-          if [[ "${{ matrix.component }}" == "easysearch" || "${{ matrix.component }}" == "elasticsearch" ]]; then
+          if [[ "${{ matrix.component }}" == "search" ]]; then
             git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
             git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
 
       - name: Update GitHub release version
-        if: github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == 'true'
+        if: ${{ inputs.PUBLISH_RELEASE }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
@@ -180,14 +160,44 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker build meta with ${{ matrix.component }}-${{env.IMAGE_TYPE}}
-        id: tags
+        id: meta
         working-directory: ${{ github.workspace }}/${{ env.PNAME }}
         run: |
           # make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
-          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
-            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.TNAME }}:${{ inputs.PUBLISH_VERSION }}" >> "$GITHUB_OUTPUT"
+          TAGS_OUTPUT=""
+          
+          # Define a helper function to generate tags for a given target name (TNAME)
+          generate_tags_for() {
+            local tname=$1
+            local repo_name="${{ vars.DOCKER_REPO }}/${tname}"
+            
+            # 1. Add the unique build tag
+            TAGS_OUTPUT="${TAGS_OUTPUT}${repo_name}:${{ env.TAG }}\n"
+            
+            # 2. Add the stable release tag if this is a release build
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+              TAGS_OUTPUT="${TAGS_OUTPUT}${repo_name}:${{ inputs.PUBLISH_VERSION }}\n"
+            fi
+          }
+          
+          if [[ "${{ matrix.component }}" == 'search' ]]; then
+            # If component is 'search', call the function for both vendors
+            generate_tags_for "easysearch-${{env.IMAGE_TYPE}}"
+            generate_tags_for "elasticsearch-${{env.IMAGE_TYPE}}"
+          else
+            # For 'runtime' or any other single component, call the function once
+            local tname="${{ matrix.component }}-${{env.IMAGE_TYPE}}"
+            generate_tags_for "$tname"
           fi
+          
+          echo "--- Generated Tags ---"
+          echo -e "$TAGS_OUTPUT"
+          echo "--------------------"
+          
+          # Set the multi-line output for the next step
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$TAGS_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Docker build and push ${{ matrix.component }}-${{env.IMAGE_TYPE}} with ${{env.REPO_NAME}}:${{env.TAG}}
         uses: docker/build-push-action@v6
@@ -197,23 +207,46 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          tags: |
-            ${{ env.REPO_NAME }}:${{env.TAG}}
-            ${{ steps.tags.outputs.RELEASE_TAG }}
-          push: true        
+          tags: ${{ steps.meta.outputs.tags }}
+          push: true
 
       - name: Deploy operator to staging k8s
         if: ${{ inputs.PUBLISH_RELEASE }}
-        timeout-minutes: 30
+        timeout-minutes: 10
         continue-on-error: true
         run: |
-          #Deploy docker
-          CNAME=manager
-          DNAME=${{ matrix.component }}-operator-controller-$CNAME
-          echo "kubectl -n infini set image deployments.apps/$DNAME $CNAME=${{env.REPO_NAME}}:${{ env.TAG }}" >> /tmp/update_image.sh
-          echo "Deploy ${{ matrix.component }} to k8s staging at $(date +'%m-%d %H:%M:%S')"
-          ssh staging 'bash -s' < /tmp/update_image.sh
-          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+          deploy_component() {
+            local component_name=$1
+            local repo_name=$2
+            local tag=$3
+            local deployment_name=""
+
+            if [[ "$component_name" == "runtime" ]]; then
+              deployment_name="runtime-operator-controller-manager"
+            else
+              deployment_name="${component_name}-controller-manager"
+            fi
+            
+            echo "--- Deploying ${component_name} ---"
+            echo "Updating deployment '${deployment_name}' with image '${repo_name}:${tag}'"
+
+            cat << EOF > /tmp/update_image.sh
+            #!/bin/bash
+            set -ex
+            kubectl -n ${{ env.STAGING_NAMESPACE }} set image deployments.apps/${deployment_name} manager=${repo_name}:${tag}
+            EOF
+            ssh staging 'bash -s' < /tmp/update_image.sh
+            echo "Finished deploying ${component_name}."
+            echo "-------------------------"
+          }
+
+          if [[ "${{ matrix.component }}" == 'search' ]]; then
+            deploy_component "easysearch" "${{ vars.DOCKER_REPO }}/easysearch-operator" "${{ env.TAG }}"
+            deploy_component "elasticsearch" "${{ vars.DOCKER_REPO }}/elasticsearch-operator" "${{ env.TAG }}"
+          else
+            local tname="${{ matrix.component }}-operator"
+            deploy_component "${{ matrix.component }}" "${{ vars.DOCKER_REPO }}/${tname}" "${{ env.TAG }}"
+          fi
 
   notify_on_failure:
     runs-on: ubuntu-latest
