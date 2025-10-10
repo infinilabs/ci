@@ -32,7 +32,7 @@ on:
         type: boolean
         required: false
         default: true        
-      PUBLISH_VERSIOIN:
+      PUBLISH_VERSION:
         description: 'Publish version'
         required: true
         default: "1.5.0"
@@ -41,6 +41,8 @@ jobs:
 
   setup:
     runs-on: ubuntu-latest
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
     outputs:
       components: ${{ steps.set-components.outputs.components }}
     steps:
@@ -128,9 +130,9 @@ jobs:
             OFFSET=${{ vars.OFFSET }}
             BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
             if [[ "${{ inputs.PUBLISH_RELEASE }}" == 'true' ]]; then
-              echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-$BUILD_NUMBER" >> $GITHUB_ENV
+              echo TAG="${{ inputs.PUBLISH_VERSION }}-$BUILD_NUMBER" >> $GITHUB_ENV
             else
-              echo TAG="${{ inputs.PUBLISH_VERSIOIN }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
+              echo TAG="${{ inputs.PUBLISH_VERSION }}-SNAPSHOT-$BUILD_NUMBER" >> $GITHUB_ENV
             fi
             else
             BUILD_NUMBER="$(date +%Y%m%d)"
@@ -159,7 +161,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: |
-          VERSION=${{ inputs.PUBLISH_VERSIOIN }}
+          VERSION=${{ inputs.PUBLISH_VERSION }}
           if [[ ! -z "$VERSION" && "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             echo "Updating GitHub release version to $VERSION"
             gh variable set PUBLISH_OPERATOR_VERSION --body "$VERSION"
@@ -184,7 +186,7 @@ jobs:
           # make docker-buildx PLATFORMS="linux/amd64,linux/arm64" IMG="$REPO_NAME:$TAG"
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.TNAME }} >> $GITHUB_ENV
           if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
-            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.TNAME }}:${{ inputs.PUBLISH_VERSIOIN }}" >> "$GITHUB_OUTPUT"
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.TNAME }}:${{ inputs.PUBLISH_VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Docker build and push ${{ matrix.component }}-${{env.IMAGE_TYPE}} with ${{env.REPO_NAME}}:${{env.TAG}}
