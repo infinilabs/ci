@@ -186,8 +186,7 @@ jobs:
             generate_tags_for "elasticsearch-${{env.IMAGE_TYPE}}"
           else
             # For 'runtime' or any other single component, call the function once
-            local tname="${{ matrix.component }}-${{env.IMAGE_TYPE}}"
-            generate_tags_for "$tname"
+            generate_tags_for "${{ matrix.component }}-${{env.IMAGE_TYPE}}"
           fi
           
           echo "--- Generated Tags ---"
@@ -241,11 +240,10 @@ jobs:
           }
 
           if [[ "${{ matrix.component }}" == 'search' ]]; then
-            deploy_component "easysearch" "${{ vars.DOCKER_REPO }}/easysearch-operator" "${{ env.TAG }}"
-            deploy_component "elasticsearch" "${{ vars.DOCKER_REPO }}/elasticsearch-operator" "${{ env.TAG }}"
+            deploy_component "easysearch" "${{ vars.DOCKER_REPO }}/easysearch-${{env.IMAGE_TYPE}}" "${{ env.TAG }}"
+            deploy_component "elasticsearch" "${{ vars.DOCKER_REPO }}/elasticsearch-${{env.IMAGE_TYPE}}" "${{ env.TAG }}"
           else
-            local tname="${{ matrix.component }}-operator"
-            deploy_component "${{ matrix.component }}" "${{ vars.DOCKER_REPO }}/${tname}" "${{ env.TAG }}"
+            deploy_component "${{ matrix.component }}" "${{ vars.DOCKER_REPO }}/${{ matrix.component }}-${{env.IMAGE_TYPE}}" "${{ env.TAG }}"
           fi
 
   notify_on_failure:
