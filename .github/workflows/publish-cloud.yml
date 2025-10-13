@@ -199,21 +199,65 @@ jobs:
             if [ -f "$FILE_PATH" ]; then
               echo "Updating versions in $FILE_NAME..."
 
+              # This awk script uses a state machine logic to be more robust.
+              # It now handles the elasticsearch-operator in addition to the others.
               awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" '
-                /name: "infinilabs\/(easysearch|runtime)-operator"/ { print; getline; sub(/tag: ".*"/, "tag: \"" op_ver "\""); print; next }
-                /APP_CLOUD_GATEWAY_DEFAULT/,/^\};/ && /name: "infinilabs\/gateway"/ { print; getline; sub(/tag: ".*"/, "tag: \"" gw_ver "\""); print; next }
-                /easysearch: \{/,/^\s*\},/ && /versions:/ { sub(/version: ".*"/, "version: \"" es_ver "\"") }
-                /gateway: \{/,/^\s*\},/ && /versions:/ { sub(/version: ".*"/, "version: \"" gw_ver "\"") }
+                # Set a flag when entering a main configuration block.
+                /export const APP_EASYSEARCH_DEFAULT/    { in_es_block = 1 }
+                /export const APP_RUNTIME_DEFAULT/       { in_rt_block = 1 }
+                /export const APP_CLOUD_GATEWAY_DEFAULT/ { in_gw_block = 1 }
+                /export const APP_ELASTICSEARCH_DEFAULT/ { in_els_block = 1 }
+
+                # Reset all flags when a block ends with `};`.
+                /^\};/ {
+                  in_es_block = 0
+                  in_rt_block = 0
+                  in_gw_block = 0
+                  in_els_block = 0
+                }
+
+                # Rule 1: Update ALL operator tags (easysearch, runtime, elasticsearch).
+                # This rule has been expanded to include the elasticsearch-operator.
+                (in_es_block || in_rt_block || in_els_block) && /name: "infinilabs\/(easysearch|runtime|elasticsearch)-operator"/ {
+                  change_next_tag = 1
+                  # All operators are assumed to use the same version variable `op_ver`.
+                  next_tag_value = op_ver
+                }
+                
+                # Rule 2: Update the tag for APP_CLOUD_GATEWAY_DEFAULT.
+                in_gw_block && /name: "infinilabs\/gateway"/ {
+                  change_next_tag = 1
+                  next_tag_value = gw_ver
+                }
+
+                # If the temporary flag is set and the current line contains "tag:", perform the substitution.
+                change_next_tag && /tag:/ {
+                  # Use [^"]* for non-greedy matching to the first closing quote.
+                  sub(/tag: "[^"]*"/, "tag: \"" next_tag_value "\"")
+                  change_next_tag = 0 # Reset the flag once the tag is updated.
+                }
+
+                # Rule 3: Update easysearch version.
+                in_es_block && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" es_ver "\"")
+                }
+                
+                # Rule 4: Update runtime gateway version.
+                in_rt_block && /gateway:/ && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" gw_ver "\"")
+                }
+                
+                # Default action: print the current line (whether it was modified or not).
                 { print }
               ' "$FILE_PATH" > "$FILE_PATH.tmp" && mv "$FILE_PATH.tmp" "$FILE_PATH"
 
-              grep -E "ver|tag" "$FILE_PATH" | sed 's/^[ \t]*//'
+              grep -E "version:|tag:" "$FILE_PATH" | sed 's/^[ \t]*//'
               echo "Successfully updated $FILE_NAME."
             else
-              echo "File $FILE_PATH does not exist, skipping version update."
+                echo "File $FILE_PATH does not exist, skipping version update."
             fi
 
-      - name: Preper ${{ env.PNAME }} build code
+      - name: Prepare ${{ env.PNAME }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
