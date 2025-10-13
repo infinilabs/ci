@@ -66,10 +66,15 @@ jobs:
 
       
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
-        working-directory: ${{ env.WEBCLI-REPO-NAME }}
         env: 
           NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
+          if [[ ${{inputs.PUBLISH_COMPONENT}} != "search-chat" ]]; then
+            cd $GITHUB_WORKSPACE/${{ env.SEARCHCHAT-REPO-NAME }}
+          else
+            cd $GITHUB_WORKSPACE/${{ env.PUBLISH_COMPONENT }}
+          fi
+          
           source $GITHUB_WORKSPACE/scripts/version_greater.sh
           latest=$(npm view @infinilabs/${{ env.PUBLISH_COMPONENT }} version)
 
