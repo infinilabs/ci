@@ -216,7 +216,7 @@ EOF
       fi
       
       # Create keystore initialized marker
-      [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER"
+      [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER" && rm -rf /tmp/nodes
       log "Agent keystore initialization complete."
     else
         log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
