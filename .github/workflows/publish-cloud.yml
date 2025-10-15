@@ -297,7 +297,10 @@ jobs:
       - name: Build ${{ env.PNAME }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # build web
-          cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
+          cd $WORK/$PNAME/web && cnpm install --quiet --no-progress
+          find node_modules -name "*monaco-editor/loader*"
+          echo "=== Build web with $PWD ==="
+          cnpm run build --quiet
           if [[ ! -d $WORK/$PNAME/.public ]]; then
             echo "Build $PNAME web failed"
             exit 1
