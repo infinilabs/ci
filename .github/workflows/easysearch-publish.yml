@@ -93,13 +93,25 @@ jobs:
           sleep 5
 
       - name: Set up java toolchain
+        if: ${{ startsWith(env.PUBLISH_VERSION, '2.') }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION_17 }}
+
+      - name: Set up java toolchain
+        if: ${{ startsWith(env.PUBLISH_VERSION, '1.') }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
-
       - name: Set up gradle
         run: |
+          # Determine target gradle version
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            GRADLE_VERSION="6.9.4"
+            echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION"
+          fi
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
             wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
