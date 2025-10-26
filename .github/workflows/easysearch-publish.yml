@@ -97,7 +97,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.JAVA_VERSION_15 }}
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up java toolchain
         if: ${{ startsWith(env.PUBLISH_VERSION, '1.') }}
