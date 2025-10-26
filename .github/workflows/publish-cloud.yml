@@ -298,7 +298,7 @@ jobs:
         run: |
           # build web
           cd $WORK/$PNAME/web && cnpm install --quiet --no-progress
-          find node_modules -name "*monaco-editor/loader*"
+          find node_modules -name "*monaco-editor*"
           echo "=== Build web with $PWD ==="
           cnpm run build --quiet
           if [[ ! -d $WORK/$PNAME/.public ]]; then

@@ -44,7 +44,7 @@ fi
 # Create the base JSON structure
 cat > .latest.json <<EOF
 {
-  "version": "${PURE_VERSION}",
+  "version": "${VERSION}",
   "notes": "",
   "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')",
   "platforms": {

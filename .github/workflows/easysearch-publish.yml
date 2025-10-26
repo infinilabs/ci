@@ -109,7 +109,15 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo and set build version
         run: |
-          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          # Determine target branch
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            BRANCH="main"
+            echo "PUBLISH_VERSION=$PUBLISH_VERSION → using default branch: $BRANCH"
+          else
+            BRANCH="1.x"
+            echo "PUBLISH_VERSION=$PUBLISH_VERSION → using legacy branch: $BRANCH"
+          fi
+          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           # for build init
           if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
