@@ -86,6 +86,16 @@ jobs:
           fi
           echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
 
+          # Set GRADLE version and BRANCH based on PUBLISH_VERSION
+          BRANCH="1.x"
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            BRANCH="main"
+            GRADLE_VERSION="6.9.4"
+            echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+            echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+            echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
+          fi
+
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
@@ -93,25 +103,13 @@ jobs:
           sleep 5
 
       - name: Set up java toolchain
-        if: ${{ startsWith(env.PUBLISH_VERSION, '2.') }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Set up java toolchain
-        if: ${{ startsWith(env.PUBLISH_VERSION, '1.') }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
       - name: Set up gradle
         run: |
-          # Determine target gradle version
-          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
-            GRADLE_VERSION="6.9.4"
-            echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION"
-          fi
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
             wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
@@ -121,14 +119,6 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo and set build version
         run: |
-          # Determine target branch
-          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
-            BRANCH="main"
-            echo "PUBLISH_VERSION=$PUBLISH_VERSION → using default branch: $BRANCH"
-          else
-            BRANCH="1.x"
-            echo "PUBLISH_VERSION=$PUBLISH_VERSION → using legacy branch: $BRANCH"
-          fi
           git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           # for build init
