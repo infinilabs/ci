@@ -35,11 +35,11 @@ on:
       PUBLISH_VERSION:
         description: 'Publish cloud docker version'
         required: false
-        default: "1.5.0"
+        default: "1.6.0"
       EZS_VERSION:
         description: 'Easysearch version'
         required: false
-        default: "1.16.0"
+        default: "1.15.0"
       GATEWAY_VERSION:
         description: 'Gateway version'
         required: false
