@@ -15,7 +15,7 @@ ARG JDK_TAG
 
 # Install necessary tools for downloading and archiving.
 RUN dnf clean all && \
-    dnf install -y --setopt install_weak_deps=False curl tar gzip
+    dnf install -y --allowerasing --setopt install_weak_deps=False curl tar gzip
 
 WORKDIR /tmp
 
@@ -91,7 +91,8 @@ ARG TARGETARCH
 WORKDIR /
 
 # Install base OS tools and dependencies.
-RUN dnf install -y --setopt install_weak_deps=False \
+RUN dnf clean all && \
+    dnf install -y --allowerasing --setopt install_weak_deps=False \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip
 
 # Create a non-root user and group for the application.
