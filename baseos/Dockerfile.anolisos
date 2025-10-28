@@ -21,9 +21,9 @@ WORKDIR /tmp
 
 # Download the correct JDK based on JDK_TAG, generate the minimal JRE, and package it.
 RUN set -eux; \
-    # --- Conditional Logic to set Download URL and JDK Directory ---
     DOWNLOAD_URL=""; \
     # Determine the correct architecture string for download URLs.
+    # Note: GraalVM and Zulu use slightly different architecture names.
     case "${TARGETARCH}" in \
         "amd64") ZULU_ARCH="x86_64"; GRAAL_ARCH="x64"; ;; \
         "arm64") ZULU_ARCH="aarch64"; GRAAL_ARCH="aarch64"; ;; \
@@ -34,20 +34,22 @@ RUN set -eux; \
     echo "Preparing to build JRE for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
         "jdk-21") \
-            echo "Selecting GraalVM for JDK 21..."; \
-            GRAAL_VERSION="21.0.4"; \
-            DOWNLOAD_URL="https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAAL_VERSION}/graalvm-community-jdk-${GRAAL_VERSION}_linux-${GRAAL_ARCH}_bin.tar.gz"; \
+            # Using the official Oracle GraalVM download link for JDK 21.
+            echo "Selecting Oracle GraalVM for JDK 21..."; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${GRAAL_ARCH}_bin.tar.gz"; \
             ;; \
         "jdk-17") \
+            # Using updated, verified Zulu JDK 17 link.
             echo "Selecting Zulu OpenJDK for JDK 17..."; \
-            ZULU_VERSION_NUM="17.0.10"; \
-            ZULU_VERSION="17.48.15"; \
+            ZULU_VERSION_NUM="17.0.17"; \
+            ZULU_VERSION="17.62.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
             ;; \
         "jdk-11") \
+            # Using updated, verified Zulu JDK 11 link.
             echo "Selecting Zulu OpenJDK for JDK 11..."; \
-            ZULU_VERSION_NUM="11.0.23"; \
-            ZULU_VERSION="11.72.19"; \
+            ZULU_VERSION_NUM="11.0.29"; \
+            ZULU_VERSION="11.84.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
             ;; \
         *) \
@@ -57,15 +59,14 @@ RUN set -eux; \
     esac; \
     \
     # --- Common Steps: Download, Extract, jlink, Package ---
-    # Download and extract the selected JDK.
     echo "Downloading JDK from ${DOWNLOAD_URL}"; \
     curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}"; \
     tar -xzf jdk.tar.gz; \
     rm jdk.tar.gz; \
-    JDK_DIR=$(ls -d ./*jdk* | head -n 1); \
+    # Find the extracted directory name, which can vary between providers.
+    JDK_DIR=$(ls -d ./*jdk* ./*graalvm* | head -n 1); \
     \
-    # Run jlink to create a custom JRE with only the specified modules.
-    echo "Creating minimal JRE with jlink..."; \
+    echo "Creating minimal JRE with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
         --add-modules java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.internal.vm.compiler.management,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.internal.vm.compiler,jdk.jlink,jdk.zipfs \
         --output jre-minimal \
@@ -74,9 +75,7 @@ RUN set -eux; \
         --no-header-files \
         --compress=2; \
     \
-    # Package the resulting minimal JRE into a tarball for the next build stage.
     tar -czf /jre-minimal.tar.gz jre-minimal; \
-    # Clean up the temporary directory.
     rm -rf /tmp/*;
 
 
