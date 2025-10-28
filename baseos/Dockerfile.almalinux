@@ -13,7 +13,7 @@ RUN dnf install -y --setopt install_weak_deps=False \
 RUN mkdir -p /app/easysearch \
     && groupadd -r -g 602 ezs \
     && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app ezs \
-    && usermod -c "INFINI Easysearch Running User" ezs
+    && usermod -c "INFINI Easysearch Operator" ezs
 
 # 安装 supervisor
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
