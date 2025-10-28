@@ -99,7 +99,6 @@ RUN mkdir -p /app/easysearch \
 
 # Install Supervisor for process management.
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
-    && ln -s /usr/local/bin/* /usr/bin \
     && supervisord -v
 
 COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
