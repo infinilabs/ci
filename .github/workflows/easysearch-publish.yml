@@ -91,10 +91,10 @@ jobs:
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
             GRADLE_VERSION="6.9.4"
-            echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
-            echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-            echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
           fi
+          echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
 
       - name: Run connect in background
         run: |
