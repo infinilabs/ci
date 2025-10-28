@@ -21,7 +21,9 @@ RUN cd /app/agent && ln -s agent-* agent
 
 # 安装 Elasticsearch
 ADD --chown=elasticsearch:elasticsearch elasticsearch-$TARGETARCH /usr/share/elasticsearch
-RUN cd /usr/share/elasticsearch && ln -s /usr/local/jdk .
+RUN cd /usr/share/elasticsearch && \
+    rm -rf ./jdk && \
+    ln -s /usr/local/jdk .
 
 # 最终阶段
 FROM scratch AS prod

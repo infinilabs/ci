@@ -61,6 +61,11 @@ jobs:
       - name: Repackage and bundle for publish with ${{ env.PUBLISH_VERSION}}
         run: |
           IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+          if [ -z "$DYNAMIC_BUILD_NUMBER" ]; then
+            RUN_NUMBER=${{ github.run_number }}
+            OFFSET=${{ vars.OFFSET }}
+            DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+          fi
           DYNAMIC_BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
           export VERSION=$DYNAMIC_VERSION
@@ -73,7 +78,7 @@ jobs:
 
           echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
 
-      - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
+      - name: Build for docker version ${{ env.VERSION }} with agent version ${{ env.AGENT_VERSION }}
         run: |
           echo "Build docker for $PNAME start..."
           #prepare docker build
