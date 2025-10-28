@@ -1,4 +1,4 @@
-name: Publish Multi-Arch BaseOS Image
+name: Publish BaseOS Docker Image
 
 defaults:
   run:
@@ -31,7 +31,7 @@ on:
 
 jobs:
   multi-arch:
-    name: Publish Multi-Arch BaseOS With Selected JDK ${{ inputs.IMAGE_TAG }}
+    name: Publish BaseOS Docker Image With ${{ inputs.IMAGE_TAG }}
     env:
       IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
       IMAGE_BASE: ${{ inputs.IMAGE_BASE }}
