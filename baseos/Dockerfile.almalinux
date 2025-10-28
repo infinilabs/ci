@@ -25,8 +25,8 @@ RUN set -eux; \
     # Determine the correct architecture string for download URLs.
     # Note: GraalVM and Zulu use slightly different architecture names.
     case "${TARGETARCH}" in \
-        "amd64") ZULU_ARCH="x86_64"; GRAAL_ARCH="x64"; ;; \
-        "arm64") ZULU_ARCH="aarch64"; GRAAL_ARCH="aarch64"; ;; \
+        "amd64") JDK_ARCH="x64"; ;; \
+        "arm64") JDK_ARCH="aarch64"; ;; \
         *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1; ;; \
     esac; \
     \
@@ -36,21 +36,21 @@ RUN set -eux; \
         "jdk-21") \
             # Using the official Oracle GraalVM download link for JDK 21.
             echo "Selecting Oracle GraalVM for JDK 21..."; \
-            DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${GRAAL_ARCH}_bin.tar.gz"; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
             ;; \
         "jdk-17") \
             # Using updated, verified Zulu JDK 17 link.
             echo "Selecting Zulu OpenJDK for JDK 17..."; \
             ZULU_VERSION_NUM="17.0.17"; \
             ZULU_VERSION="17.62.17"; \
-            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
+            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
             ;; \
         "jdk-11") \
             # Using updated, verified Zulu JDK 11 link.
             echo "Selecting Zulu OpenJDK for JDK 11..."; \
             ZULU_VERSION_NUM="11.0.29"; \
             ZULU_VERSION="11.84.17"; \
-            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
+            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
             ;; \
         *) \
             echo "Unsupported JDK_TAG: ${JDK_TAG}"; \
