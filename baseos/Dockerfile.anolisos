@@ -89,17 +89,16 @@ WORKDIR /
 # Install base OS tools and dependencies.
 RUN yum clean all && \
     yum install -y --allowerasing --setopt=install_weak_deps=False \
-    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python3-pip
+    epel-release && \
+    yum install -y --allowerasing --setopt=install_weak_deps=False \
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip supervisor \
+    && supervisord -v
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
     && groupadd -r -g 602 ezs \
     && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app ezs \
     && usermod -c "INFINI Easysearch Operator" ezs
-
-# Install Supervisor for process management.
-RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
-    && supervisord -v
 
 COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
 
