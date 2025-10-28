@@ -10,7 +10,7 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      IMAGE_TAG:
+      JDK_TAG:
         description: 'Image Tag'
         required: true
         type: choice
@@ -31,9 +31,9 @@ on:
 
 jobs:
   multi-arch:
-    name: Publish BaseOS Docker Image With ${{ inputs.IMAGE_TAG }}
+    name: Publish BaseOS Docker Image With ${{ inputs.JDK_TAG }}
     env:
-      IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
+      JDK_TAG: ${{ inputs.JDK_TAG }}
       IMAGE_BASE: ${{ inputs.IMAGE_BASE }}
     runs-on: ubuntu-latest
     steps:
@@ -44,6 +44,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
 
       - name: Set up qemu
         uses: docker/setup-qemu-action@v3
@@ -66,7 +67,7 @@ jobs:
           file: ${{ github.workspace }}/baseos/Dockerfile.${{ env.IMAGE_BASE }}
           target: prod
           build-args: |
-            JDK_TAG=${{ env.IMAGE_TAG }}
+            JDK_TAG=${{ env.JDK_TAG }}
           platforms: |
             linux/amd64
             linux/arm64

@@ -1,6 +1,6 @@
 # =========================================================================
 # Stage 1: jdk-builder
-# Purpose: Create a minimal, custom Java Runtime Environment (JRE) using jlink.
+# Purpose: Create a minimal, custom Java Runtime Environment (jdk) using jlink.
 # This stage uses a build argument (JDK_TAG) to conditionally download the
 # correct JDK: GraalVM for jdk-21, and Zulu OpenJDK for others.
 # =========================================================================
@@ -19,7 +19,7 @@ RUN dnf clean all && \
 
 WORKDIR /tmp
 
-# Download the correct JDK based on JDK_TAG, generate the minimal JRE, and package it.
+# Download the correct JDK based on JDK_TAG, generate the minimal jdk, and package it.
 RUN set -eux; \
     DOWNLOAD_URL=""; \
     # Determine the correct architecture string for download URLs.
@@ -31,7 +31,7 @@ RUN set -eux; \
     esac; \
     \
     # Select the JDK distribution based on the JDK_TAG build argument.
-    echo "Preparing to build JRE for tag: ${JDK_TAG}"; \
+    echo "Preparing to build jdk for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
         "jdk-21") \
             # Using the official Oracle GraalVM download link for JDK 21.
@@ -66,16 +66,16 @@ RUN set -eux; \
     # Find the extracted directory name, which can vary between providers.
     JDK_DIR=$(ls -d ./*jdk* ./*graalvm* | head -n 1); \
     \
-    echo "Creating minimal JRE with jlink from ${JDK_DIR}..."; \
+    echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
         --add-modules java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.internal.vm.compiler.management,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.internal.vm.compiler,jdk.jlink,jdk.zipfs \
-        --output jre-minimal \
+        --output jdk-minimal \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
         --compress=2; \
     \
-    tar -czf /jre-minimal.tar.gz jre-minimal; \
+    tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
 
 
@@ -105,14 +105,14 @@ RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-ve
     && ln -s /usr/local/bin/* /usr/bin \
     && supervisord -v
 
-# Copy the custom JRE tarball from the 'jdk-builder' stage.
-COPY --from=jdk-builder /jre-minimal.tar.gz /tmp/jre-minimal.tar.gz
+# Copy the custom jdk tarball from the 'jdk-builder' stage.
+COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
 
-# Extract the JRE and set appropriate ownership.
+# Extract the jdk and set appropriate ownership.
 RUN mkdir -p /usr/local/jdk \
-    && tar -xzf /tmp/jre-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
+    && tar -xzf /tmp/jdk-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
     && chown -R ezs:ezs /usr/local/jdk \
-    && rm /tmp/jre-minimal.tar.gz
+    && rm /tmp/jdk-minimal.tar.gz
 
 # Add executables from the build context (the 'deps' dir).
 # The "deps/" prefix is NOT needed here.
@@ -175,7 +175,7 @@ RUN find /etc/systemd/system \
 FROM scratch AS prod
 
 # Add metadata labels to the image.
-LABEL description="A custom linux OS from almalinux with a custom JRE."
+LABEL description="A custom linux OS from almalinux with a custom jdk."
 LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
 
 # Copy the entire root filesystem from the 'builder' stage.

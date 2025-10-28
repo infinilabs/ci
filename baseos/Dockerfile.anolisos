@@ -1,8 +1,7 @@
 # =========================================================================
 # Stage 1: jdk-builder
-# Purpose: Create a minimal, custom Java Runtime Environment (JRE) using jlink.
-# This stage uses a build argument (JDK_TAG) to conditionally download the
-# correct JDK: GraalVM for jdk-21, and Zulu OpenJDK for others.
+# Purpose: Create a minimal, custom Java Runtime Environment (jdk) using jlink.
+# This stage is based on Anolis OS 8 and uses 'yum' for package management.
 # =========================================================================
 FROM openanolis/anolisos:8 AS jdk-builder
 
@@ -10,16 +9,16 @@ FROM openanolis/anolisos:8 AS jdk-builder
 ARG TARGETARCH
 
 # ARG JDK_TAG receives the build argument from the 'docker/build-push-action'.
-# Its value will be 'jdk-11', 'jdk-17', 'jdk-21', etc.
 ARG JDK_TAG
 
+# --- CORRECTED to use 'yum' ---
 # Install necessary tools for downloading and archiving.
-RUN dnf clean all && \
-    dnf install -y --allowerasing --setopt install_weak_deps=False curl tar gzip
+RUN yum clean all && \
+    yum install -y --allowerasing --setopt=install_weak_deps=False curl tar gzip
 
 WORKDIR /tmp
 
-# Download the correct JDK based on JDK_TAG, generate the minimal JRE, and package it.
+# Download the correct JDK based on JDK_TAG, generate the minimal jdk, and package it.
 RUN set -eux; \
     DOWNLOAD_URL=""; \
     # Determine the correct architecture string for download URLs.
@@ -31,7 +30,7 @@ RUN set -eux; \
     esac; \
     \
     # Select the JDK distribution based on the JDK_TAG build argument.
-    echo "Preparing to build JRE for tag: ${JDK_TAG}"; \
+    echo "Preparing to build jdk for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
         "jdk-21") \
             # Using the official Oracle GraalVM download link for JDK 21.
@@ -66,23 +65,21 @@ RUN set -eux; \
     # Find the extracted directory name, which can vary between providers.
     JDK_DIR=$(ls -d ./*jdk* ./*graalvm* | head -n 1); \
     \
-    echo "Creating minimal JRE with jlink from ${JDK_DIR}..."; \
+    echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
         --add-modules java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.internal.vm.compiler.management,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.internal.vm.compiler,jdk.jlink,jdk.zipfs \
-        --output jre-minimal \
+        --output jdk-minimal \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
         --compress=2; \
     \
-    tar -czf /jre-minimal.tar.gz jre-minimal; \
+    tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
 
 
 # =========================================================================
 # Stage 2: builder
-# Purpose: Prepare the main filesystem layer. The ADD/COPY paths in this stage
-# are relative to the build context, which is the 'deps' directory.
 # =========================================================================
 FROM openanolis/anolisos:8 AS builder
 
@@ -90,9 +87,9 @@ ARG TARGETARCH
 WORKDIR /
 
 # Install base OS tools and dependencies.
-RUN dnf clean all && \
-    dnf install -y --allowerasing --setopt install_weak_deps=False \
-    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip
+RUN yum clean all && \
+    yum install -y --allowerasing --setopt=install_weak_deps=False \
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python3-pip
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
@@ -105,46 +102,33 @@ RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-ve
     && ln -s /usr/local/bin/* /usr/bin \
     && supervisord -v
 
-# Copy the custom JRE tarball from the 'jdk-builder' stage.
-COPY --from=jdk-builder /jre-minimal.tar.gz /tmp/jre-minimal.tar.gz
+COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
 
-# Extract the JRE and set appropriate ownership.
 RUN mkdir -p /usr/local/jdk \
-    && tar -xzf /tmp/jre-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
+    && tar -xzf /tmp/jdk-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
     && chown -R ezs:ezs /usr/local/jdk \
-    && rm /tmp/jre-minimal.tar.gz
+    && rm /tmp/jdk-minimal.tar.gz
 
-# Add executables from the build context (the 'deps' dir).
-# The "deps/" prefix is NOT needed here.
 ADD $TARGETARCH/bin/* /sbin
-
-# Add shell and environment configurations.
 RUN echo "alias ll='ls -l'" >> /root/.bashrc \
     && cp -rf /root/.bash* /app \
     && chown ezs:ezs /app/.bash*
-
-# Add system configuration files from the build context.
 ADD etc/ezs.sh /etc/profile.d
 ADD etc/limits.conf /etc/security
 ADD etc/70-infini.conf /etc/sysctl.d
-
-# Add custom OS initialization script and run it.
 COPY initOS.sh /tmp
+# Add custom OS initialization script and run it.
 RUN chmod 755 /tmp/initOS.sh \
     && /tmp/initOS.sh --from anolisos
-
-# Update journald configuration.
 COPY etc/journald.conf /tmp
 RUN cat /tmp/journald.conf >> /etc/systemd/journald.conf
 
 # --- Cleanup ---
-# This section aggressively removes files and packages not needed in the final runtime image
-# to minimize its size.
-RUN dnf clean all \
-    && dnf autoremove \
-    && rm -rf /var/cache/dnf \
+RUN yum clean all \
+    && yum autoremove -y \
+    && rm -rf /var/cache/yum \
     && rm -rf /etc/yum.repos.d/*.repo \
-    && rpm -e yum dnf \
+    && rpm -e yum dnf || true \
     && rm -rf /usr/lib/.build-id \
     && find /var/log -type f -delete \
     && find / -name "rpm" -print0 | xargs -0 -I {} echo "rm -rf {}" >> /tmp/del.sh \
@@ -156,7 +140,6 @@ RUN dnf clean all \
     && find /usr/share/zoneinfo -type f ! -name 'UTC' ! -name 'GMT' ! -name 'UCT' ! -name 'Universal' ! -name 'Zulu' -delete \
     && find /usr/share/zoneinfo -type d -empty -delete
 
-# Remove unnecessary systemd units to further reduce size.
 RUN find /etc/systemd/system \
 /lib/systemd/system \
 /usr/lib/systemd/system \
@@ -170,19 +153,12 @@ RUN find /etc/systemd/system \
 
 # =========================================================================
 # Stage 3: prod
-# Purpose: Create the final, minimal production image from scratch.
 # =========================================================================
 FROM scratch AS prod
 
 # Add metadata labels to the image.
-LABEL description="A custom linux OS from anolisos with a custom JRE."
+LABEL description="A custom linux OS from anolisos with a custom jdk."
 LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
-
-# Copy the entire root filesystem from the 'builder' stage.
 COPY --from=builder / /
-
-# Set the default working directory.
 WORKDIR /
-
-# Set the default command to run when a container is started.
 CMD ["/bin/bash"]
