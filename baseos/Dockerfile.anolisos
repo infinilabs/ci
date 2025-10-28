@@ -1,51 +1,144 @@
-FROM openanolis/anolisos:23 as builder
+# =========================================================================
+# Stage 1: jdk-builder
+# Purpose: Create a minimal, custom Java Runtime Environment (JRE) using jlink.
+# This stage uses a build argument (JDK_TAG) to conditionally download the
+# correct JDK: GraalVM for jdk-21, and Zulu OpenJDK for others.
+# =========================================================================
+FROM openanolis/anolisos:8 AS jdk-builder
 
+# ARG TARGETARCH is automatically provided by Docker Buildx (e.g., "amd64", "arm64").
 ARG TARGETARCH
 
-# 指定工作目录
+# ARG JDK_TAG receives the build argument from the 'docker/build-push-action'.
+# Its value will be 'jdk-11', 'jdk-17', 'jdk-21', etc.
+ARG JDK_TAG
+
+# Install necessary tools for downloading and archiving.
+RUN dnf install -y --setopt install_weak_deps=False curl tar gzip
+
+WORKDIR /tmp
+
+# Download the correct JDK based on JDK_TAG, generate the minimal JRE, and package it.
+RUN set -eux; \
+    # --- Conditional Logic to set Download URL and JDK Directory ---
+    DOWNLOAD_URL=""; \
+    # Determine the correct architecture string for download URLs.
+    case "${TARGETARCH}" in \
+        "amd64") ZULU_ARCH="x86_64"; GRAAL_ARCH="x64"; ;; \
+        "arm64") ZULU_ARCH="aarch64"; GRAAL_ARCH="aarch64"; ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1; ;; \
+    esac; \
+    \
+    # Select the JDK distribution based on the JDK_TAG build argument.
+    echo "Preparing to build JRE for tag: ${JDK_TAG}"; \
+    case "${JDK_TAG}" in \
+        "jdk-21") \
+            echo "Selecting GraalVM for JDK 21..."; \
+            GRAAL_VERSION="21.0.4"; \
+            DOWNLOAD_URL="https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAAL_VERSION}/graalvm-community-jdk-${GRAAL_VERSION}_linux-${GRAAL_ARCH}_bin.tar.gz"; \
+            ;; \
+        "jdk-17") \
+            echo "Selecting Zulu OpenJDK for JDK 17..."; \
+            ZULU_VERSION_NUM="17.0.10"; \
+            ZULU_VERSION="17.48.15"; \
+            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
+            ;; \
+        "jdk-11") \
+            echo "Selecting Zulu OpenJDK for JDK 11..."; \
+            ZULU_VERSION_NUM="11.0.23"; \
+            ZULU_VERSION="11.72.19"; \
+            DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${ZULU_ARCH}.tar.gz"; \
+            ;; \
+        *) \
+            echo "Unsupported JDK_TAG: ${JDK_TAG}"; \
+            exit 1; \
+            ;; \
+    esac; \
+    \
+    # --- Common Steps: Download, Extract, jlink, Package ---
+    # Download and extract the selected JDK.
+    echo "Downloading JDK from ${DOWNLOAD_URL}"; \
+    curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}"; \
+    tar -xzf jdk.tar.gz; \
+    rm jdk.tar.gz; \
+    JDK_DIR=$(ls -d ./*jdk* | head -n 1); \
+    \
+    # Run jlink to create a custom JRE with only the specified modules.
+    echo "Creating minimal JRE with jlink..."; \
+    ./${JDK_DIR}/bin/jlink \
+        --add-modules java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.internal.vm.compiler.management,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.internal.vm.compiler,jdk.jlink,jdk.zipfs \
+        --output jre-minimal \
+        --strip-debug \
+        --no-man-pages \
+        --no-header-files \
+        --compress=2; \
+    \
+    # Package the resulting minimal JRE into a tarball for the next build stage.
+    tar -czf /jre-minimal.tar.gz jre-minimal; \
+    # Clean up the temporary directory.
+    rm -rf /tmp/*;
+
+
+# =========================================================================
+# Stage 2: builder
+# Purpose: Prepare the main filesystem layer. The ADD/COPY paths in this stage
+# are relative to the build context, which is the 'deps' directory.
+# =========================================================================
+FROM openanolis/anolisos:8 AS builder
+
+ARG TARGETARCH
 WORKDIR /
 
-# 操作命令
+# Install base OS tools and dependencies.
 RUN dnf install -y --setopt install_weak_deps=False \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip
 
-# 操作用户    
+# Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
     && groupadd -r -g 602 ezs \
     && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app ezs \
-    && usermod -c "INFINI Easysearch Running User" ezs
+    && usermod -c "INFINI Easysearch Operator" ezs
 
-# 安装 supervisor
+# Install Supervisor for process management.
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
     && ln -s /usr/local/bin/* /usr/bin \
     && supervisord -v
 
-# 配置可执行文件
+# Copy the custom JRE tarball from the 'jdk-builder' stage.
+COPY --from=jdk-builder /jre-minimal.tar.gz /tmp/jre-minimal.tar.gz
+
+# Extract the JRE and set appropriate ownership.
+RUN mkdir -p /usr/local/jdk \
+    && tar -xzf /tmp/jre-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
+    && chown -R ezs:ezs /usr/local/jdk \
+    && rm /tmp/jre-minimal.tar.gz
+
+# Add executables from the build context (the 'deps' dir).
+# The "deps/" prefix is NOT needed here.
 ADD $TARGETARCH/bin/* /sbin
 
-# 配置jdk
-ADD --chown=ezs:ezs $TARGETARCH/jdk-$TARGETARCH.tar.gz /usr/local
-
-# 环境配置
+# Add shell and environment configurations.
 RUN echo "alias ll='ls -l'" >> /root/.bashrc \
     && cp -rf /root/.bash* /app \
     && chown ezs:ezs /app/.bash*
 
-# 更新配置文件
+# Add system configuration files from the build context.
 ADD etc/ezs.sh /etc/profile.d
 ADD etc/limits.conf /etc/security
 ADD etc/70-infini.conf /etc/sysctl.d
 
-# 更新系统信息
+# Add custom OS initialization script and run it.
 COPY initOS.sh /tmp
 RUN chmod 755 /tmp/initOS.sh \
-    && /tmp/initOS.sh --from anolis
+    && /tmp/initOS.sh --from anolisos
 
-# 更新日志配置
+# Update journald configuration.
 COPY etc/journald.conf /tmp
 RUN cat /tmp/journald.conf >> /etc/systemd/journald.conf
 
-# 清理资源
+# --- Cleanup ---
+# This section aggressively removes files and packages not needed in the final runtime image
+# to minimize its size.
 RUN dnf clean all \
     && dnf autoremove \
     && rm -rf /var/cache/dnf \
@@ -62,7 +155,7 @@ RUN dnf clean all \
     && find /usr/share/zoneinfo -type f ! -name 'UTC' ! -name 'GMT' ! -name 'UCT' ! -name 'Universal' ! -name 'Zulu' -delete \
     && find /usr/share/zoneinfo -type d -empty -delete
 
-# remove unnecessary units
+# Remove unnecessary systemd units to further reduce size.
 RUN find /etc/systemd/system \
 /lib/systemd/system \
 /usr/lib/systemd/system \
@@ -73,16 +166,22 @@ RUN find /etc/systemd/system \
 -not -name '*systemd-user-sessions*' \
 -exec rm -rvf {} \;
 
-# 最终阶段
+
+# =========================================================================
+# Stage 3: prod
+# Purpose: Create the final, minimal production image from scratch.
+# =========================================================================
 FROM scratch AS prod
 
-LABEL description="A customer linux os from almalinux with jdk 21."
+# Add metadata labels to the image.
+LABEL description="A custom linux OS from anolisos with a custom JRE."
 LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
 
-# 从构建阶段拷贝文件到最终镜像
+# Copy the entire root filesystem from the 'builder' stage.
 COPY --from=builder / /
 
-# 设置工作目录
+# Set the default working directory.
 WORKDIR /
 
+# Set the default command to run when a container is started.
 CMD ["/bin/bash"]

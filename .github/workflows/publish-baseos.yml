@@ -1,0 +1,67 @@
+name: Build Multi-Arch BaseOS Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      IMAGE_TAG:
+        description: 'Image Tag'
+        required: true
+        type: choice
+        options:
+          - 'jdk-11'
+          - 'jdk-17'
+          - 'jdk-21'
+        default: 'jdk-17'
+      IMAGE_BASE:
+        description: 'Base Image'
+        required: true
+        type: choice
+        options:
+          - 'almalinux'
+          - 'anolisos'
+        default: 'almalinux'
+
+env:
+  IMAGE_REPO: infinilabs/baseos
+
+jobs:
+  multi-arch:
+    name: Build and Push Multi-Arch BaseOS Image
+    env:
+      IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
+      IMAGE_BASE: ${{ inputs.IMAGE_BASE }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up qemu
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+        #with:
+        #  buildkitd-flags: --debug
+
+      - name: Login to dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker Build and push with ${{ env.IMAGE_TAG }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/deps
+          file: ${{ github.workspace }}/baseos/Dockerfile.${{ env.IMAGE_BASE }}
+          target: prod
+          build-args: |
+            JDK_TAG=${{ env.IMAGE_TAG }}
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.IMAGE_REPO }}:${{ env.IMAGE_TAG }}
+          push: true
+          provenance: false
+          #no-cache: true
