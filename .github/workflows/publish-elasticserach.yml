@@ -103,7 +103,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-oss >> $GITHUB_ENV
-          echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-oss:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
 
       - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
