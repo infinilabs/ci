@@ -47,7 +47,7 @@ change_ownership() {
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
   if [ ! -f "$APP_DIR/bin/initialize.sh" ]; then
-    log "ERROR: Core initialization script bin/initialize.sh not found,skipping execution."
+    log "Core initialization script bin/initialize.sh not found,skipping execution."
   else
     log "Executing core initialization script: bin/initialize.sh -s"
     # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
@@ -167,9 +167,9 @@ setup_agent() {
 
     GENERATED_METRICS_TASKS=true
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
-    if [ -z "${ELASTICSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
-      log "WARNING: ELASTICSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
-      ELASTICSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
+    if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
+      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
     fi
 
     log "Copying agent config templates."
@@ -208,14 +208,14 @@ EOF
   log "Checking agent keystore initialization marker."
   if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
     log "Agent keystore initialization marker not found. Starting keystore setup."
-    if [ -n "$ELASTICSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$ELASTICSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
+    if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] || [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
       # Execute agent commands relative to current directory ($AGENT_DIR)
       if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]; then
         log "Adding agent_user to keystore."
         echo "infini_agent" | ./agent keystore add --stdin agent_user
         if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
         log "Adding agent_passwd to keystore."
-        echo "$ELASTICSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd > /dev/null
+        echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd > /dev/null
         if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
       fi
       
@@ -223,7 +223,7 @@ EOF
       [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER" && rm -rf /tmp/nodes
       log "Agent keystore initialization complete."
     else
-        log "WARNING: Required variables for agent keystore initialization (ELASTICSEARCH_INITIAL_AGENT_PASSWORD and ELASTICSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
+        log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD or EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
     fi
   else
     log "Agent keystore initialization marker found. Skipping keystore setup."

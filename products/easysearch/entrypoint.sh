@@ -47,7 +47,7 @@ change_ownership() {
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
   if [ ! -f "$APP_DIR/bin/initialize.sh" ]; then
-    log "ERROR: Core initialization script bin/initialize.sh not found,skipping execution."
+    log "Core initialization script bin/initialize.sh not found,skipping execution."
   else
     log "Executing core initialization script: bin/initialize.sh -s"
     # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
@@ -168,7 +168,7 @@ setup_agent() {
     GENERATED_METRICS_TASKS=true
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
     if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
-      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
+      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
       EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
     fi
 
@@ -208,7 +208,7 @@ EOF
   log "Checking agent keystore initialization marker."
   if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
     log "Agent keystore initialization marker not found. Starting keystore setup."
-    if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
+    if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] || [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
       # Execute agent commands relative to current directory ($AGENT_DIR)
       if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]; then
         log "Adding agent_user to keystore."
@@ -223,7 +223,7 @@ EOF
       [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER" && rm -rf /tmp/nodes
       log "Agent keystore initialization complete."
     else
-        log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
+        log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD or EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
     fi
   else
     log "Agent keystore initialization marker found. Skipping keystore setup."
