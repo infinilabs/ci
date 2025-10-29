@@ -6,14 +6,14 @@
 #
 
 # --- Configuration ---
-readonly EASYSEARCH_HOST="127.0.0.1"
-readonly EASYSEARCH_PORT="9200"
+readonly ELASTICSEARCH_HOST="127.0.0.1"
+readonly ELASTICSEARCH_PORT="9200"
 readonly TIMEOUT_SECONDS=300
 readonly CHECK_INTERVAL_SECONDS=15
 readonly POST_READY_WAIT_SECONDS=30
 
 readonly TARGET_NAME="agent"
-readonly WORKING_DIR="/app/elasticsearch/data/${TARGET_NAME}"
+readonly WORKING_DIR="/app/easysearch/data/${TARGET_NAME}"
 # Define the parent directory where the dynamic node lock files are located.
 readonly NODES_DIR="${WORKING_DIR}/data/${TARGET_NAME}/nodes"
 
@@ -34,9 +34,9 @@ die() {
 # --- Main Logic ---
 
 # 1. Wait for Elasticsearch to be available.
-log "Waiting for Elasticsearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
+log "Waiting for Elasticsearch to become available at ${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
 elapsed_time=0
-while ! nc -z "${EASYSEARCH_HOST}" "${EASYSEARCH_PORT}" 2>/dev/null; do
+while ! nc -z "${ELASTICSEARCH_HOST}" "${ELASTICSEARCH_PORT}" 2>/dev/null; do
   if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
     die "Timeout reached. Elasticsearch not available after ${TIMEOUT_SECONDS} seconds."
   fi

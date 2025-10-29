@@ -3,7 +3,7 @@ FROM infinilabs/baseos:jdk-17 AS builder
 ARG TARGETARCH
 
 # 切换到工作目录
-WORKDIR /app/elasticsearch
+WORKDIR /app/easysearch
 
 # Agent 与 配置项
 ADD entrypoint.sh /sbin
@@ -16,8 +16,8 @@ ADD --chown=ezs:ezs agent-$TARGETARCH /app/agent
 RUN cd /app/agent && ln -s agent-* agent
 
 # 安装 Elasticsearch
-ADD --chown=ezs:ezs elasticsearch-$TARGETARCH /app/elasticsearch
-RUN cd /app/elasticsearch && \
+ADD --chown=ezs:ezs elasticsearch-$TARGETARCH /app/easysearch
+RUN cd /app/easysearch && \
     rm -rf ./jdk && \
     ln -s /usr/local/jdk .
 
@@ -31,13 +31,13 @@ LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
 COPY --from=builder / /
 
 # 环境变量
-ENV PATH=/sbin:/app/elasticsearch/jdk/bin:/app/elasticsearch/bin:$PATH
+ENV PATH=/sbin:/app/easysearch/jdk/bin:/app/easysearch/bin:$PATH
 
 # 切换到工作目录
-WORKDIR /app/elasticsearch
+WORKDIR /app/easysearch
 
 # 权限处理
-RUN chown -R ezs:ezs /app/elasticsearch
+RUN chown -R ezs:ezs /app/easysearch
 
 EXPOSE 9200 9300
 

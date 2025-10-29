@@ -10,7 +10,7 @@ log() {
   echo "[$timestamp][INFO ][$(basename "$0")] $*"
 }
 # Define data directory
-APP_DIR="/app/elasticsearch"
+APP_DIR="/app/easysearch"
 DATA_DIR="$APP_DIR/data"
 LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
@@ -58,7 +58,7 @@ execute_core_initial_script() {
 
 
 # --- Function to perform initial setup (runs only once based on marker file) ---
-# This function now incorporates the check for /app/elasticsearch/data being empty.
+# This function now incorporates the check for /app/easysearch/data being empty.
 # This function is called only when the *primary* initialization marker is not found.
 perform_initial_setup() {
   log "Initialization marker not found. Determining setup action..."

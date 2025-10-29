@@ -35,7 +35,7 @@ jobs:
     name: Publish Elasticsearch Docker Image
     runs-on: ubuntu-latest
     env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
       AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
