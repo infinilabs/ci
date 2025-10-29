@@ -1,4 +1,4 @@
-name: Publish Elasticsearch Docker 
+name: Publish Elasticsearch Docker Image
 
 defaults:
   run:
@@ -32,7 +32,7 @@ on:
 
 jobs:
   publish:
-    name: Publish elasticsearch files and docker
+    name: Publish Elasticsearch Docker Image
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
