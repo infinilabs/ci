@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script waits for the EasySearch service to become available,
+# This script waits for the Easysearch service to become available,
 # then acquires a process lock and starts the application.
 # It is designed to be robust, configurable, and easy to read.
 #
@@ -33,22 +33,22 @@ die() {
 
 # --- Main Logic ---
 
-# 1. Wait for EasySearch to be available.
-log "Waiting for EasySearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
+# 1. Wait for Easysearch to be available.
+log "Waiting for Easysearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
 elapsed_time=0
 while ! nc -z "${EASYSEARCH_HOST}" "${EASYSEARCH_PORT}" 2>/dev/null; do
   if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
-    die "Timeout reached. EasySearch not available after ${TIMEOUT_SECONDS} seconds."
+    die "Timeout reached. Easysearch not available after ${TIMEOUT_SECONDS} seconds."
   fi
   
-  log "EasySearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
+  log "Easysearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
   sleep "${CHECK_INTERVAL_SECONDS}"
   elapsed_time=$((elapsed_time + CHECK_INTERVAL_SECONDS))
 done
-log "EasySearch is available."
+log "Easysearch is available."
 
 # 2. Wait an additional period for the service to stabilize.
-log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for EasySearch to fully initialize..."
+log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for Easysearch to fully initialize..."
 sleep "${POST_READY_WAIT_SECONDS}"
 
 # 3. Check for and handle existing lock file in the dynamic node path.

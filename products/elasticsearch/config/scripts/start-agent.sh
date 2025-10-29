@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script waits for the EasySearch service to become available,
+# This script waits for the Elasticsearch service to become available,
 # then acquires a process lock and starts the application.
 # It is designed to be robust, configurable, and easy to read.
 #
@@ -13,7 +13,7 @@ readonly CHECK_INTERVAL_SECONDS=15
 readonly POST_READY_WAIT_SECONDS=30
 
 readonly TARGET_NAME="agent"
-readonly WORKING_DIR="/usr/share/elasticsearch/data/${TARGET_NAME}"
+readonly WORKING_DIR="/app/elasticsearch/data/${TARGET_NAME}"
 # Define the parent directory where the dynamic node lock files are located.
 readonly NODES_DIR="${WORKING_DIR}/data/${TARGET_NAME}/nodes"
 
@@ -33,22 +33,22 @@ die() {
 
 # --- Main Logic ---
 
-# 1. Wait for EasySearch to be available.
-log "Waiting for EasySearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
+# 1. Wait for Elasticsearch to be available.
+log "Waiting for Elasticsearch to become available at ${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
 elapsed_time=0
 while ! nc -z "${EASYSEARCH_HOST}" "${EASYSEARCH_PORT}" 2>/dev/null; do
   if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
-    die "Timeout reached. EasySearch not available after ${TIMEOUT_SECONDS} seconds."
+    die "Timeout reached. Elasticsearch not available after ${TIMEOUT_SECONDS} seconds."
   fi
   
-  log "EasySearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
+  log "Elasticsearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
   sleep "${CHECK_INTERVAL_SECONDS}"
   elapsed_time=$((elapsed_time + CHECK_INTERVAL_SECONDS))
 done
-log "EasySearch is available."
+log "Elasticsearch is available."
 
 # 2. Wait an additional period for the service to stabilize.
-log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for EasySearch to fully initialize..."
+log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for Elasticsearch to fully initialize..."
 sleep "${POST_READY_WAIT_SECONDS}"
 
 # 3. Check for and handle existing lock file in the dynamic node path.
@@ -77,10 +77,10 @@ fi
 
 
 # 4. Check permissions and ownership
-KS="$(find "$NODES_DIR" -type f -name ks -not -user "elasticsearch" -print -quit 2>/dev/null)"
-if [ "$(stat -c %U $WORKING_DIR)" != "elasticsearch" ] || [ -n "$KS" ]; then
+KS="$(find "$NODES_DIR" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)"
+if [ "$(stat -c %U $WORKING_DIR)" != "ezs" ] || [ -n "$KS" ]; then
   log "Fixing permissions for ks file(s) and working directory..."
-  chown -R elasticsearch:elasticsearch "$WORKING_DIR" || die "Failed to change ownership for working directory."
+  chown -R ezs:ezs "$WORKING_DIR" || die "Failed to change ownership for working directory."
 fi
 
 # 5. Change to the working directory.
@@ -93,4 +93,4 @@ log "Starting ${TARGET_NAME} process..."
 # We don't create a lock file here because the process itself is expected
 # to create its own .lock file inside the nodes/*/ directory upon startup.
 # The 'exec' command replaces the current shell, which is crucial for supervisord.
-exec gosu elasticsearch "./${TARGET_NAME}"
+exec gosu ezs "./${TARGET_NAME}"

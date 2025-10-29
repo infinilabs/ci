@@ -46,10 +46,14 @@ change_ownership() {
 # --- Function to perform the core initialization script execution ---
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
+  if [ ! -f "$APP_DIR/bin/initialize.sh" ]; then
+    log "ERROR: Core initialization script bin/initialize.sh not found,skipping execution."
+  else
     log "Executing core initialization script: bin/initialize.sh -s"
     # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
     gosu ezs bash bin/initialize.sh -s
     return $? # Return the exit status of the gosu command
+  fi
 }
 
 
@@ -403,6 +407,6 @@ fi
 # This is the main process flow for the 'ezs' user.
 
 # --- Execute the main command passed to the process ---
-# This is typically the command to start the main EasySearch process.
+# This is typically the command to start the main Easysearch process.
 log "Executing main process command: $@"
 exec "$@"

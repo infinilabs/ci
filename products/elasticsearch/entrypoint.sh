@@ -10,7 +10,7 @@ log() {
   echo "[$timestamp][INFO ][$(basename "$0")] $*"
 }
 # Define data directory
-APP_DIR="/usr/share/elasticsearch"
+APP_DIR="/app/elasticsearch"
 DATA_DIR="$APP_DIR/data"
 LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
@@ -34,9 +34,9 @@ change_ownership() {
   if is_root; then
     for opt_dir in "$DATA_DIR" "$LOGS_DIR" "$CFG_DIR"; do
       [ -d "$opt_dir" ] || mkdir -p "$opt_dir"
-      if [ "$(stat -c %U "$opt_dir")" != "elasticsearch" ] || [ "$(stat -c %G "$opt_dir")" != "elasticsearch" ]; then
-        log "Changing ownership of $opt_dir to elasticsearch:elasticsearch."
-        chown -R elasticsearch:elasticsearch "$opt_dir"
+      if [ "$(stat -c %U "$opt_dir")" != "ezs" ] || [ "$(stat -c %G "$opt_dir")" != "ezs" ]; then
+        log "Changing ownership of $opt_dir to ezs:ezs."
+        chown -R ezs:ezs "$opt_dir"
         if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
       fi
     done
@@ -46,15 +46,19 @@ change_ownership() {
 # --- Function to perform the core initialization script execution ---
 # This is the part that runs bin/initialize.sh -s
 execute_core_initial_script() {
+  if [ ! -f "$APP_DIR/bin/initialize.sh" ]; then
+    log "ERROR: Core initialization script bin/initialize.sh not found,skipping execution."
+  else
     log "Executing core initialization script: bin/initialize.sh -s"
     # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
-    gosu elasticsearch bash bin/initialize.sh -s
+    gosu ezs bash bin/initialize.sh -s
     return $? # Return the exit status of the gosu command
+  fi
 }
 
 
 # --- Function to perform initial setup (runs only once based on marker file) ---
-# This function now incorporates the check for /usr/share/elasticsearch/data being empty.
+# This function now incorporates the check for /app/elasticsearch/data being empty.
 # This function is called only when the *primary* initialization marker is not found.
 perform_initial_setup() {
   log "Initialization marker not found. Determining setup action..."
@@ -104,8 +108,8 @@ setup_agent() {
     log "Agent directory not found. Copying agent files from /app/agent to $DATA_DIR."
     cp -rf /app/agent "$DATA_DIR"
     if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent files."; return 1; fi
-    log "Setting ownership of agent directory $AGENT_DIR to elasticsearch:elasticsearch."
-    chown -R elasticsearch:elasticsearch "$AGENT_DIR"
+    log "Setting ownership of agent directory $AGENT_DIR to ezs:ezs."
+    chown -R ezs:ezs "$AGENT_DIR"
      if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent directory."; return 1; fi
   fi
 
@@ -117,8 +121,8 @@ setup_agent() {
       log "Creating agent subdirectory: $AGENT_SUBDIR"
       mkdir -p "$AGENT_SUBDIR"
       if [ $? -ne 0 ]; then log "ERROR: Failed to create agent subdirectory '$AGENT_SUBDIR'."; return 1; fi
-      log "Setting ownership of agent subdirectory $AGENT_SUBDIR to elasticsearch:elasticsearch."
-      chown elasticsearch:elasticsearch "$AGENT_SUBDIR"
+      log "Setting ownership of agent subdirectory $AGENT_SUBDIR to ezs:ezs."
+      chown ezs:ezs "$AGENT_SUBDIR"
        if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent subdirectory '$AGENT_SUBDIR'."; return 1; fi
     fi
   done
@@ -163,9 +167,9 @@ setup_agent() {
 
     GENERATED_METRICS_TASKS=true
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
-    if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
-      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
-      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
+    if [ -z "${ELASTICSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
+      log "WARNING: ELASTICSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password 'infini_password'."
+      ELASTICSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
     fi
 
     log "Copying agent config templates."
@@ -204,22 +208,22 @@ EOF
   log "Checking agent keystore initialization marker."
   if [ ! -f "$AGENT_KEYSTORE_MARKER" ]; then
     log "Agent keystore initialization marker not found. Starting keystore setup."
-    if [ -n "$EASYSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$EASYSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
+    if [ -n "$ELASTICSEARCH_INITIAL_AGENT_PASSWORD" ] && [ -n "$ELASTICSEARCH_INITIAL_SYSTEM_ENDPOINT" ]; then
       # Execute agent commands relative to current directory ($AGENT_DIR)
       if [ -z "$(./agent keystore list | grep -Eo agent_user)" ]; then
         log "Adding agent_user to keystore."
         echo "infini_agent" | ./agent keystore add --stdin agent_user
         if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_user to keystore."; return 1; fi
         log "Adding agent_passwd to keystore."
-        echo "$EASYSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd > /dev/null
+        echo "$ELASTICSEARCH_INITIAL_AGENT_PASSWORD" | ./agent keystore add --stdin agent_passwd > /dev/null
         if [ $? -ne 0 ]; then log "ERROR: Failed to add agent_passwd to keystore."; return 1; fi
       fi
       
       # Create keystore initialized marker
-      [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER"
+      [ ! -e "$AGENT_KEYSTORE_MARKER" ] && touch "$AGENT_KEYSTORE_MARKER" && rm -rf /tmp/nodes
       log "Agent keystore initialization complete."
     else
-        log "WARNING: Required variables for agent keystore initialization (EASYSEARCH_INITIAL_AGENT_PASSWORD and EASYSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
+        log "WARNING: Required variables for agent keystore initialization (ELASTICSEARCH_INITIAL_AGENT_PASSWORD and ELASTICSEARCH_INITIAL_SYSTEM_ENDPOINT) are not fully set. Skipping keystore keystore setup."
     fi
   else
     log "Agent keystore initialization marker found. Skipping keystore setup."
@@ -230,10 +234,10 @@ EOF
     cp -rf /app/tpl/*.sh "$AGENT_DIR"
   fi
 
-  # Ensure agent directory is owned by elasticsearch after all root operations
-  log "Ensuring final agent directory ownership is elasticsearch:elasticsearch."
+  # Ensure agent directory is owned by ezs after all root operations
+  log "Ensuring final agent directory ownership is ezs:ezs."
   # Use absolute path for robustness.
-  chown -R elasticsearch:elasticsearch "$AGENT_DIR"
+  chown -R ezs:ezs "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to set final ownership for agent directory."; return 1; fi
 
   # --- Supervisor configuration for the agent ---
@@ -283,15 +287,15 @@ EOF
 
 
 # --- Function to conditionally start Supervisor ---
-# This function is called in the elasticsearch user block if Agent was configured.
-# It starts supervisord as the current user (elasticsearch).
+# This function is called in the ezs user block if Agent was configured.
+# It starts supervisord as the current user (ezs).
 start_supervisor_if_agent_enabled() {
   log "Checking if Supervisor should be started based on Agent configuration."
 
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
       log "Supervisor is enabled to manage the agent."
-      # Check if supervisord is already running as the current user (elasticsearch)
+      # Check if supervisord is already running as the current user (ezs)
       if ! supervisorctl status > /dev/null 2>&1; then
         if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
           if [ ! -f /etc/supervisord.conf ]; then
@@ -300,9 +304,9 @@ start_supervisor_if_agent_enabled() {
           fi
         fi
         log "Supervisord process not running. Starting supervisord..."
-        # Need to start supervisord as elasticsearch user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by elasticsearch.
-        # The agent.conf should be readable by elasticsearch.
-        # The logs dir for supervisord should be writable by elasticsearch.
+        # Need to start supervisord as ezs user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by ezs.
+        # The agent.conf should be readable by ezs.
+        # The logs dir for supervisord should be writable by ezs.
         # Assuming necessary permissions are set by the Dockerfile or the root setup_agent phase.
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
         # Wait a moment for supervisord to start and read configs
@@ -368,7 +372,7 @@ fi
 
 
 # --- Switch to non-root user if running as root ---
-# This block remains as is, it ensures the rest of the script runs as 'elasticsearch' user
+# This block remains as is, it ensures the rest of the script runs as 'ezs' user
 if is_root; then
   # Change ownership of directories before switching user
   change_ownership
@@ -389,20 +393,20 @@ if is_root; then
   # After initial setup and agent setup, we can start the supervisor if needed
   # This is done after the agent setup to ensure the config files are in place
   # and the agent process can be managed by supervisord.
-  # This should be called after the agent setup and before switching to the 'elasticsearch' user.
+  # This should be called after the agent setup and before switching to the 'ezs' user.
   # Supervisor startup requires root permissions.
   start_supervisor_if_agent_enabled
 
-  log "Switching user to 'elasticsearch' and executing the rest of the entrypoint..."
-  # Re-execute the entrypoint script as the 'elasticsearch' user
-  exec gosu elasticsearch "$0" "$@"
+  log "Switching user to 'ezs' and executing the rest of the entrypoint..."
+  # Re-execute the entrypoint script as the 'ezs' user
+  exec gosu ezs "$0" "$@"
 fi
 
-# --- Code below this line runs as the 'elasticsearch' user ---
+# --- Code below this line runs as the 'ezs' user ---
 
-# This is the main process flow for the 'elasticsearch' user.
+# This is the main process flow for the 'ezs' user.
 
 # --- Execute the main command passed to the process ---
-# This is typically the command to start the main EasySearch process.
+# This is typically the command to start the main Elasticsearch process.
 log "Executing main process command: $@"
 exec "$@"
