@@ -126,8 +126,11 @@ for arch in amd64 arm64; do
 
   echo "Extracting Agent for $arch..."
   mkdir -p "$AGENT_EXTRACT_DIR"
-  tar -zxf "$AGENT_FILE_PATH" -C "$AGENT_EXTRACT_DIR" --strip-components=1
-
+  tar -zxf "$AGENT_FILE_PATH" -C "$AGENT_EXTRACT_DIR"
+  
+  echo "Checking $WORK_DIR files after extraction:"
+  ls -lrt "$WORK_DIR"
+  
   # --- C. Configure Elasticsearch ---
   echo "Configuring Elasticsearch for $arch..."
   # Required modification for running in Docker
