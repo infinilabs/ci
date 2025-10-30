@@ -135,6 +135,7 @@ jobs:
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
             git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
+          (cd $GITHUB_WORKSPACE/$PNAME && git log -1 --format=%H)
 
       - name: Update GitHub release version
         if: ${{ inputs.PUBLISH_RELEASE }}
