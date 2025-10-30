@@ -90,9 +90,11 @@ jobs:
           BRANCH="1.x"
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
-            GRADLE_VERSION="6.9.4"
+            GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
+            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
           fi
           echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
           echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
 
