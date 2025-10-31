@@ -275,7 +275,10 @@ tidy:
 	go mod tidy
 
 lint: config
-	#curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "Installing golangci-lint..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v2.1.6; \
+	fi
 	golangci-lint run
 	@$(MAKE) restore-generated-file
 
@@ -344,7 +347,6 @@ config: init format update-vfs update-generated-file update-plugins
 	@mkdir -p $(OUTPUT_DIR)
 	@cp $(APP_CONFIG) $(OUTPUT_DIR)
 	(cd ../framework/  && make update-plugins) || true # build plugins in framework
-	@if [ "$(GOMODULE)" = "true" ]; then echo "GOMODULE is true, running go mod tidy."; go mod tidy; fi
 
 update-license-header:
 	licensure --in-place -p
