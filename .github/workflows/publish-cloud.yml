@@ -308,7 +308,7 @@ jobs:
           # build all targets
           cd $WORK/$PNAME && OFFLINE_BUILD=true make init-enterprise-plugin config update-vfs update-plugins
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && make build-$tag
+            cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build ${{ env.PNAME }} check
