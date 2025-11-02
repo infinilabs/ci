@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@v4
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
-          ref: cloud
+          ref: main
           path: framework
 
       - name: Checkout framework vendor code
