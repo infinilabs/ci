@@ -199,7 +199,7 @@ jobs:
             version="$tauri_version-SNAPSHOT-$build_number"
           fi
           if ${{ matrix.platform == 'macos-latest' }}; then
-            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
             sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
             sed -i '' "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
           elif ${{ matrix.platform == 'windows-latest' }}; then
