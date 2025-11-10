@@ -169,7 +169,7 @@ setup_agent() {
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
     if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
       log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
-      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_Passw0rd"
     fi
 
     log "Copying agent config templates."
@@ -181,9 +181,9 @@ setup_agent() {
     # Add node configuration if not present (agent.yml relative)
     log "Checking for existing node config in agent.yml."
     if ! grep -q "node:" agent.yml; then
+      sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       if [ -n "$CONFIG_SERVER_TOKEN" ]; then
-        sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
         cat <<-EOF >> agent.yml
   manager:
     basic_auth: 
@@ -199,6 +199,26 @@ node:
   labels:
     tenant_id: "$TENANT_ID"
     cluster_id: "$CLUSTER_ID"
+EOF
+      if [ $? -ne 0 ]; then log "ERROR: Failed to add node config to agent.yml."; return 1; fi
+    fi
+  else
+    GENERATED_METRICS_TASKS=true
+    log "Single-tenant mode detected. Applying default agent configuration."
+    if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
+      log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_Passw0rd"
+    fi
+    # Add node configuration if not present (agent.yml relative)
+    log "Checking for existing node config in agent.yml."
+    if ! grep -q "node:" agent.yml; then
+      sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
+      # Use <<-EOF for multi-line append to avoid issues with quotes/variables
+      cat <<-EOF >> agent.yml
+  always_register_after_restart: true
+  allow_generated_metrics_tasks: true
+node:
+  major_ip_pattern: ".*"
 EOF
       if [ $? -ne 0 ]; then log "ERROR: Failed to add node config to agent.yml."; return 1; fi
     fi

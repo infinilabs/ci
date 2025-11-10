@@ -169,7 +169,7 @@ setup_agent() {
     log "Tenant ID and Cluster ID set. Applying multi-tenant agent configuration."
     if [ -z "${EASYSEARCH_INITIAL_AGENT_PASSWORD}" ]; then
       log "WARNING: EASYSEARCH_INITIAL_AGENT_PASSWORD is not set. Using default agent password."
-      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_password_$(date +%s)"
+      EASYSEARCH_INITIAL_AGENT_PASSWORD="infini_Passw0rd"
     fi
 
     log "Copying agent config templates."
