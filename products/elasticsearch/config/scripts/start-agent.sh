@@ -1,18 +1,13 @@
 #!/bin/bash
 #
-# This script waits for the Easysearch service to become available,
+# This script waits for the Elasticsearch service to become available,
 # then acquires a process lock and starts the application.
 # It is designed to be robust, configurable, and easy to read.
 #
 
 # --- Configuration ---
-readonly EASYSEARCH_HOST="127.0.0.1"
-readonly EASYSEARCH_PORT="9200"
-readonly EASYSEARCH_PROTOCOL="https"
-readonly EASYSEARCH_CACERT="/app/easysearch/config/ca.crt"
-readonly EASYSEARCH_ADMIN_CERT="/app/easysearch/config/admin.crt"
-readonly EASYSEARCH_ADMIN_KEY="/app/easysearch/config/admin.key"
-
+readonly ELASTICSEARCH_HOST="127.0.0.1"
+readonly ELASTICSEARCH_PORT="9200"
 readonly TIMEOUT_SECONDS=300
 readonly CHECK_INTERVAL_SECONDS=15
 readonly POST_READY_WAIT_SECONDS=30
@@ -38,36 +33,22 @@ die() {
 
 # --- Main Logic ---
 
-# 1. Wait for Easysearch to be available and healthy using a secure curl command.
-log "Checking for required TLS certificates..."
-for f in "${EASYSEARCH_CACERT}" "${EASYSEARCH_ADMIN_CERT}" "${EASYSEARCH_ADMIN_KEY}"; do
-  if [ ! -f "$f" ]; then
-    die "Required certificate file not found: $f"
-  fi
-done
-log "TLS certificates found."
-
-log "Waiting for Easysearch to become available at ${EASYSEARCH_PROTOCOL}://${EASYSEARCH_HOST}:${EASYSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
+# 1. Wait for Elasticsearch to be available.
+log "Waiting for Elasticsearch to become available at ${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT} (timeout: ${TIMEOUT_SECONDS}s)..."
 elapsed_time=0
-
-# The curl command uses -f to fail on HTTP errors (like 4xx or 5xx) and returns a non-zero exit code.
-# A non-zero exit code will also be returned on connection errors (e.g., connection refused).
-# We loop until the command succeeds (returns exit code 0).
-# Stdout is redirected to /dev/null as we only care about the success/failure of the command.
-while ! curl -s -f --cacert "${EASYSEARCH_CACERT}" --cert "${EASYSEARCH_ADMIN_CERT}" --key "${EASYSEARCH_ADMIN_KEY}" "${EASYSEARCH_PROTOCOL}://${EASYSEARCH_HOST}:${EASYSEARCH_PORT}/_cluster/health?local=true" > /dev/null; do
+while ! nc -z "${ELASTICSEARCH_HOST}" "${ELASTICSEARCH_PORT}" 2>/dev/null; do
   if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
-    die "Timeout reached. Easysearch not available or not healthy after ${TIMEOUT_SECONDS} seconds."
+    die "Timeout reached. Elasticsearch not available after ${TIMEOUT_SECONDS} seconds."
   fi
   
-  log "Easysearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
+  log "Elasticsearch not ready, sleeping for ${CHECK_INTERVAL_SECONDS}s..."
   sleep "${CHECK_INTERVAL_SECONDS}"
   elapsed_time=$((elapsed_time + CHECK_INTERVAL_SECONDS))
 done
-log "Easysearch is available and reports a healthy status."
-
+log "Elasticsearch is available."
 
 # 2. Wait an additional period for the service to stabilize.
-log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for Easysearch to fully initialize..."
+log "Waiting an additional ${POST_READY_WAIT_SECONDS}s for Elasticsearch to fully initialize..."
 sleep "${POST_READY_WAIT_SECONDS}"
 
 # 3. Check for and handle existing lock file in the dynamic node path.
