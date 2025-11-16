@@ -9,9 +9,8 @@
 readonly EASYSEARCH_HOST="127.0.0.1"
 readonly EASYSEARCH_PORT="9200"
 readonly EASYSEARCH_PROTOCOL="https"
-readonly EASYSEARCH_CACERT="/app/easysearch/config/ca.crt"
-readonly EASYSEARCH_ADMIN_CERT="/app/easysearch/config/admin.crt"
-readonly EASYSEARCH_ADMIN_KEY="/app/easysearch/config/admin.key"
+readonly EASYSERACH_CONFIG_DIR="/app/easysearch/config"
+readonly MOUNTED_CERTS_DIR="$EASYSERACH_CONFIG_DIR/admin-certs"
 
 readonly TIMEOUT_SECONDS=300
 readonly CHECK_INTERVAL_SECONDS=15
@@ -21,6 +20,10 @@ readonly TARGET_NAME="agent"
 readonly WORKING_DIR="/app/easysearch/data/${TARGET_NAME}"
 # Define the parent directory where the dynamic node lock files are located.
 readonly NODES_DIR="${WORKING_DIR}/data/${TARGET_NAME}/nodes"
+
+EASYSEARCH_CACERT="$EASYSERACH_CONFIG_DIR/ca.crt"
+EASYSEARCH_ADMIN_CERT="$EASYSERACH_CONFIG_DIR/admin.crt"
+EASYSEARCH_ADMIN_KEY="$EASYSERACH_CONFIG_DIR/admin.key"
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
@@ -35,6 +38,14 @@ die() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] [start-${TARGET_NAME}] $*" >&2
   exit 1
 }
+
+# --- Use mounted TLS certificates to verify Easysearch ---
+if [ -d "$MOUNTED_CERTS_DIR" ] && [ -f "$MOUNTED_CERTS_DIR/ca.crt" ] && [ -f "$MOUNTED_CERTS_DIR/admin.crt" ] && [ -f "$MOUNTED_CERTS_DIR/admin.key" ]; then
+  log "Using mounted TLS certificates from $MOUNTED_CERTS_DIR"
+  EASYSEARCH_CACERT="$MOUNTED_CERTS_DIR/ca.crt"
+  EASYSEARCH_ADMIN_CERT="$MOUNTED_CERTS_DIR/admin.crt"
+  EASYSEARCH_ADMIN_KEY="$MOUNTED_CERTS_DIR/admin.key"
+fi
 
 # --- Main Logic ---
 
