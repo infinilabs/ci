@@ -7,6 +7,7 @@ set -euo pipefail
 
 # --- Configuration ---
 # Get versions from environment variables, with defaults for local testing.
+OSS="${EZS_OSS:-true}"
 ES_VERSION_FULL="${EZS_VER:-7.10.2-1}"
 AGENT_VERSION_FULL="${AGENT_VERSION:-1.29.8-2197}"
 PNAME="${PNAME:-elasticsearch}" # Product name from environment
@@ -27,12 +28,14 @@ WORK_DIR="${GITHUB_WORKSPACE:-.}/products/$PNAME"
 DOWNLOAD_DIR="${GITHUB_WORKSPACE:-.}/dest"
 
 # --- Script Start ---
-echo "======== Preparing Build Environment ========"
+echo "================ Preparing Build Environment ================"
+echo "Product Name:          $PNAME"
+echo "Elasticsearch OSS:     $OSS"
 echo "Elasticsearch Version: $ES_VERSION_FULL"
 echo "Agent Version:         $AGENT_VERSION_FULL"
 echo "Base Work Directory:   $WORK_DIR"
 echo "Download Cache Dir:    $DOWNLOAD_DIR"
-echo "============================================="
+echo "============================================================="
 
 # Ensure necessary directories exist
 mkdir -p "$WORK_DIR" "$DOWNLOAD_DIR"
@@ -89,7 +92,8 @@ for arch in amd64 arm64; do
   esac
 
   # --- A. Download and Extract Elasticsearch ---
-  ES_FILENAME="${PNAME}-oss-${ES_VERSION_BASE}-linux-${es_arch}.tar.gz"
+  
+  ES_FILENAME="${PNAME}-${OSS:+oss-}${ES_VERSION_BASE}-linux-${es_arch}.tar.gz"
   ES_URL="${ES_BASE_URL}/${ES_FILENAME}"
   ES_FILE_PATH="$DOWNLOAD_DIR/$ES_FILENAME"
   ES_EXTRACT_DIR="$WORK_DIR/${PNAME}-${arch}"

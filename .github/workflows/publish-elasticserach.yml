@@ -25,6 +25,11 @@ on:
           - "7.10.2"
         required: true
         default: "7.10.2"
+      PUBLISH_OSS:
+        description: 'Publish OSS Version'
+        required: true
+        type: boolean
+        default: true
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
         required: true
@@ -36,6 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
+      PUBLISH_OSS: ${{ inputs.PUBLISH_OSS }}
       AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
@@ -83,7 +89,7 @@ jobs:
           echo "Build docker for $PNAME start..."
           #prepare docker build
           chmod 755 $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
-          EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          EZS_OSS=$PUBLISH_OSS EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
 
       - name: Set up qemu
         uses: docker/setup-qemu-action@v3
@@ -102,8 +108,8 @@ jobs:
       - name: Docker build meta with ${{ env.PNAME }}
         id: tags
         run: |
-          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-oss >> $GITHUB_ENV
-          echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-oss:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME${PUBLISH_OSS:+-oss} >> $GITHUB_ENV
+          echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME${PUBLISH_OSS:+-oss}:$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6

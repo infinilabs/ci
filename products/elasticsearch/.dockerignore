@@ -1,4 +1,3 @@
 Dockerfile
 build-*.sh
 gradle/
-config/elasticsearch.yml
