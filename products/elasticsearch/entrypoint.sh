@@ -16,8 +16,9 @@ LOGS_DIR="$APP_DIR/logs"
 CFG_DIR="$APP_DIR/config"
 NODES_DIR="$DATA_DIR/nodes"
 AGENT_DIR="$DATA_DIR/agent"
+AGENT_CFG_DIR="$AGENT_DIR/config"
 AGENT_START_SCRIPT="$AGENT_DIR/start-agent.sh"
-INGEST_CONFIG="$CFG_DIR/system_ingest_config.yml"
+INGEST_CONFIG="$AGENT_CFG_DIR/system_ingest_config.yml"
 AGENT_SUPERVISOR_CONFIG="$AGENT_DIR/supervisor/conf.d/agent.conf"
 # Define marker file path
 INITIALIZED_MARKER="$DATA_DIR/.initialized"
@@ -175,7 +176,7 @@ setup_agent() {
     log "Copying agent config templates."
     # Ensure /app/tpl exists and contains necessary files
     # Use absolute paths or ensure correct relative path from current directory ($AGENT_DIR)
-    cp -rf /app/tpl/*.tpl "$CFG_DIR"
+    cp -rf /app/tpl/*.tpl "$AGENT_CFG_DIR/"
     if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent config templates."; return 1; fi
 
     # Add node configuration if not present (agent.yml relative)
