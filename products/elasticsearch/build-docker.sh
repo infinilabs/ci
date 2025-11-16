@@ -92,8 +92,8 @@ for arch in amd64 arm64; do
   esac
 
   # --- A. Download and Extract Elasticsearch ---
-  
-  ES_FILENAME="${PNAME}-${OSS:+oss-}${ES_VERSION_BASE}-linux-${es_arch}.tar.gz"
+  SUFFIX=$([[ "$OSS" == "true" ]] && echo "oss-" || echo "")
+  ES_FILENAME="${PNAME}-${SUFFIX}${ES_VERSION_BASE}-linux-${es_arch}.tar.gz"
   ES_URL="${ES_BASE_URL}/${ES_FILENAME}"
   ES_FILE_PATH="$DOWNLOAD_DIR/$ES_FILENAME"
   ES_EXTRACT_DIR="$WORK_DIR/${PNAME}-${arch}"
