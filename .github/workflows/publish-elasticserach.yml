@@ -33,7 +33,7 @@ on:
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
         required: true
-        default: "1.29.8"
+        default: "1.30.0"
 
 jobs:
   publish:

@@ -9,7 +9,7 @@ set -euo pipefail
 # Get versions from environment variables, with defaults for local testing.
 OSS="${EZS_OSS:-true}"
 ES_VERSION_FULL="${EZS_VER:-7.10.2-1}"
-AGENT_VERSION_FULL="${AGENT_VERSION:-1.29.8-2197}"
+AGENT_VERSION_FULL="${AGENT_VERSION:-1.30.0-2197}"
 PNAME="${PNAME:-elasticsearch}" # Product name from environment
 
 # The IK plugin URL only needs the base version (e.g., 7.10.2), not the build number.
