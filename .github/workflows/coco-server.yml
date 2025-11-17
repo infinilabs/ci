@@ -13,11 +13,6 @@ env:
   PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
   
 on:
-  push:
-    tags:
-      - 'release*'  
-  schedule:
-    - cron: '30 16 * * *'    
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
@@ -27,7 +22,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: "1.15.6-2450"
+        default: "1.15.3-2373"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -37,7 +32,7 @@ on:
         description: 'Publish Enterprise'
         required: false
         type: boolean
-        default: false
+        default: true
       ONLY_DEPLOY_STAGING:
         description: 'Deploy Enterprise <Only Dev>'
         required: false
