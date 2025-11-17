@@ -157,7 +157,7 @@ jobs:
           fi
           node -v && npm -v && pnpm -v
 
-      - name: Preper coco server enterprise build code
+      - name: Prepare coco server enterprise build code
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
@@ -192,7 +192,7 @@ jobs:
           echo EOL=$EOL_DATE >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Preper coco server enterprise dependencies
+      - name: Prepare coco server enterprise dependencies
         continue-on-error: true
         run: |
             echo "Publish enterprise version"
@@ -200,6 +200,7 @@ jobs:
             git clone git@github.com:infinilabs/license $WORK/license
             git clone git@github.com:infinilabs/coco-server-enterprise-plugins.git $WORK/$PNAME/plugins/enterprise
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+      
       - name: Build coco server enterprise web
         run: |
           # build web
@@ -221,7 +222,7 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-      - name: Preper coco server enterprise go mod
+      - name: Prepare coco server enterprise go mod
         continue-on-error: true
         run: |
           # change dep for enterprise
@@ -402,7 +403,7 @@ jobs:
           fi
           node -v && npm -v && pnpm -v
 
-      - name: Preper coco server build code
+      - name: Prepare coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
@@ -459,7 +460,7 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-      - name: Preper coco server go mod
+      - name: Build coco server go mod
         run: |
           cd $WORK/$PNAME 
           # build all targets
@@ -486,7 +487,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
+      - name: Prepare for Easysearch Docker with ${{ env.EZS_VER }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -687,7 +688,7 @@ jobs:
           fi
           node -v && npm -v && pnpm -v
 
-      - name: Preper coco server build code
+      - name: Prepare coco server build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
@@ -747,7 +748,7 @@ jobs:
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
 
-      - name: Preper coco server enterprise go mod
+      - name: Prepare coco server enterprise go mod
         continue-on-error: true
         run: |
           # change dep for enterprise
@@ -827,7 +828,7 @@ jobs:
           fi
           echo "Finished deploying $PNAME to cocoprod at $(date +'%m-%d %H:%M:%S')"
 
-      - name: Preper for Easysearch Docker with ${{ env.EZS_VER }}
+      - name: Prepare for Easysearch Docker with ${{ env.EZS_VER }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"

@@ -189,7 +189,7 @@ jobs:
           fi
           node -v && npm -v && cnpm -v
 
-      - name: Preper ${{ matrix.product }} build code
+      - name: Prepare ${{ matrix.product }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
