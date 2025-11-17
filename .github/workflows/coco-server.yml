@@ -22,7 +22,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: "1.15.3-2373"
+        default: "1.15.6-2450"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
