@@ -333,7 +333,7 @@ jobs:
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without easysearch
         uses: docker/build-push-action@v6
         with:
-          context: ${{ github.workspace }}/products/${{ env.PNAME }}/enterprise
+          context: ${{ github.workspace }}/${{ env.PNAME }}/bin
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/enterprise/Dockerfile
           target: prod
           platforms: |
