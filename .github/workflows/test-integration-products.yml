@@ -241,10 +241,11 @@ jobs:
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
                 if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                  // x.y.z or x.y.z-build_number pattern
+                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$' ]]; then
                     VER=$EZS_VERSION
                   else
-                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                    echo "EZS_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
                 echo "Using easysearch docker image with $VER ..."
