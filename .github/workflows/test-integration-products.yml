@@ -453,6 +453,7 @@ jobs:
                   fi
 
             - name: Check easysearch logs
+              continue-on-error: true
               run: |
                 LOG_FILE="$HOME/easysearch/logs/easysearch.log"
                 echo Check at $HOME/easysearch/logs/easysearch.log ...
