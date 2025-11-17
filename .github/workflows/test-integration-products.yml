@@ -470,6 +470,7 @@ jobs:
                     exit 1
                   fi
                 else
+                  echo "Initialization pattern found in logs."
                   INITIALIZED_LINE_NUMBER=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f1)
                   MATCHED_INIT_LINE_CONTENT=$(echo "$INIT_MATCH_LINE_INFO" | cut -d: -f2-)
 
