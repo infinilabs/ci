@@ -321,7 +321,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Docker build meta with ${{ env.PNAME }}
+      - name: Docker build meta with ${{ env.PNAME }} enterprise
         id: ent-tags
         run: |
           echo ENT_REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-enterprise >> $GITHUB_ENV
