@@ -19,21 +19,18 @@ on:
     inputs:
       PUBLISH_VERSION:
         description: 'Publish Version'
-        type: choice
-        options:
-          - "7.10.0"
-          - "7.10.2"
         required: true
         default: "7.10.2"
+      
+      PUBLISH_AGENT_VERSION:
+        description: 'Publish With Agent Version'
+        required: true
+        default: "1.30.0"
       PUBLISH_OSS:
         description: 'Publish OSS Version'
         required: true
         type: boolean
         default: true
-      PUBLISH_AGENT_VERSION:
-        description: 'Publish With Agent Version'
-        required: true
-        default: "1.30.0"
 
 jobs:
   publish:

@@ -24,15 +24,15 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "0.9.0"
+      PUBLISH_EASYSEARCH_VERSION:
+        description: 'Publish Release Easysearch Version'
+        required: false
+        default: "1.15.6-2450"
       PUBLISH_WITH_EASYSEARCH:
         description: 'Publish With Easysearch'
         required: false
         type: boolean
         default: true
-      PUBLISH_EASYSEARCH_VERSION:
-        description: 'Publish Release Easysearch Version'
-        required: false
-        default: "1.15.6-2450"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
