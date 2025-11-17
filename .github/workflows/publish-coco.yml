@@ -72,6 +72,7 @@ jobs:
 
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
+        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == 'true' }}
         with:
           tool-cache: false
           android: true
