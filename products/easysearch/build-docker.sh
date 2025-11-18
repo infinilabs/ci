@@ -29,7 +29,6 @@ for t in amd64 arm64; do
   fi
 
   # Download Agent from stable or snapshot channel
-  DOWNLOAD_SUCCESS=false
   AGENT_FILENAME="agent-$AGENT_VERSION-linux-$t.tar.gz"
   AGENT_FILE_PATH="$WORK/$AGENT_FILENAME"
 
@@ -38,28 +37,20 @@ for t in amd64 arm64; do
     HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$URL" || true)
 
     if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
-      echo "Found $AGENT_FILENAME at $URL. Starting download..."
-      # Attempt to download with retries 3 times
-      for attempt in {1..3}; do
-        echo "Attempt $attempt to download $AGENT_FILENAME from $URL"
-        if wget "$URL" -O "$AGENT_FILE_PATH" --tries=1 --timeout=30; then
+      echo "Found $AGENT_FILENAME at $URL. Starting download with retries..."
+      if wget --tries=3 --wait=5 --timeout=30 "$URL" -O "$AGENT_FILE_PATH"; then
           echo "Download of $AGENT_FILENAME successful."
-          DOWNLOAD_SUCCESS=true
           break
-        else
-          echo "Attempt $attempt failed. Retrying in 5 seconds..."
-          sleep 5
-        fi
-      done
-
-      if [[ "$DOWNLOAD_SUCCESS" == true ]]; then
-        break
+      else
+          echo "Failed to download $AGENT_FILENAME from $URL after 3 attempts."
       fi
+    else
+      echo "$AGENT_FILENAME not found in $f channel, status code: $HTTP_STATUS"
     fi
   done
 
-  # Check if download was successful before extraction
-  if [[ "$DOWNLOAD_SUCCESS" == true ]] && [[ -f "$AGENT_FILE_PATH" ]]; then
+  # Check if the agent file was downloaded successfully
+  if [[ -f "$AGENT_FILE_PATH" ]]; then
     echo -e "Extracting file \nfrom $AGENT_FILE_PATH \nto $WORK/agent-$t"
     tar -zxf "$AGENT_FILE_PATH" -C "$WORK/agent-$t"
     rm -rf "$AGENT_FILE_PATH"
