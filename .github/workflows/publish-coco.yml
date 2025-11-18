@@ -4,6 +4,7 @@ defaults:
     shell: bash
 env:
   PNAME: coco
+  INCREMENT: 600
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -180,7 +181,7 @@ jobs:
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
-              RUN_NUMBER=${{ github.run_number }}
+              RUN_NUMBER=$(( ${{ github.run_number }} + ${{ env.INCREMENT }} ))
               OFFSET=${{ vars.OFFSET }}
               DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
               DYNAMIC_VERSION="$PUBLISH_VERSION"
