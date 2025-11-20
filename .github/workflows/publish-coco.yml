@@ -39,6 +39,11 @@ on:
         required: false
         type: boolean
         default: false
+      ONLY_DEPLOY_STAGING:
+        description: 'Deploy Enterprise <Only Dev>'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   publish:
@@ -265,10 +270,29 @@ jobs:
           ls -lrt $WORK/$PNAME/bin
 
       - name: Run connect in background
+        if: ${{ inputs.ONLY_DEPLOY_STAGING == true || inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
+
+      - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
+        if: ${{ inputs.ONLY_DEPLOY_STAGING == true }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
+            # prepare staging server
+            echo "Prepare staging server for $PNAME at $(date +'%m-%d %H:%M:%S')"
+            ssh staging "mkdir -p /opt/coco/server/update && rm -rf /opt/coco/server/update/*"
+            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
+          else
+            echo "No $PNAME binary found"
+          fi
+          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"    
 
       - name: Prepare for Easysearch Docker with ${{ env.EZS_VER }}
         if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
