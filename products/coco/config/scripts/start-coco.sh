@@ -54,7 +54,7 @@ elapsed_time=0
 # A non-zero exit code will also be returned on connection errors (e.g., connection refused).
 # We loop until the command succeeds (returns exit code 0).
 # Stdout is redirected to /dev/null as we only care about the success/failure of the command.
-while ! curl -s -f --cacert "${EASYSEARCH_CACERT}" --cert "${EASYSEARCH_ADMIN_CERT}" --key "${EASYSEARCH_ADMIN_KEY}" "${EASYSEARCH_PROTOCOL}://${EASYSEARCH_HOST}:${EASYSEARCH_PORT}/_cluster/health?local=true" > /dev/null; do
+while ! curl -sfk --cacert "${EASYSEARCH_CACERT}" --cert "${EASYSEARCH_ADMIN_CERT}" --key "${EASYSEARCH_ADMIN_KEY}" "${EASYSEARCH_PROTOCOL}://${EASYSEARCH_HOST}:${EASYSEARCH_PORT}/_cluster/health?local=true" > /dev/null; do
   if [ "${elapsed_time}" -ge "${TIMEOUT_SECONDS}" ]; then
     die "Timeout reached. Easysearch not available or not healthy after ${TIMEOUT_SECONDS} seconds."
   fi
