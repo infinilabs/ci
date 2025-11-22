@@ -17,11 +17,14 @@ PNAME="${PNAME:-elasticsearch}" # Product name from environment
 ES_VERSION_BASE=${ES_VERSION_FULL%%-*}
 
 # Download Source URLs
-ES_BASE_URL="https://artifacts.elastic.co/downloads/elasticsearch"
+ES_URL="https://artifacts.elastic.co/downloads"
+ES_BASE_URL="${ES_URL}/elasticsearch"
+ES_PLUGIN_BASE_URL="${ES_URL}/elasticsearch-plugins"
 # Use RELEASE_URL from GitHub Actions environment, with a fallback.
 RELEASE_URL_BASE="${RELEASE_URL:-https://release.infinilabs.com}"
 AGENT_BASE_URL="${RELEASE_URL_BASE}/agent"
 IK_PLUGIN_URL="${RELEASE_URL_BASE}/analysis-ik/stable/elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
+S3_PLUGIN_URL="${ES_PLUGIN_BASE_URL}/repository-s3/repository-s3-${ES_VERSION_BASE}.zip"
 
 # Directories
 WORK_DIR="${GITHUB_WORKSPACE:-.}/products/$PNAME"
@@ -71,12 +74,17 @@ download_file() {
 # --- Main Logic ---
 
 # 1. Download the IK plugin (shared by all architectures)
+echo "--- Preparing shared plugins ---"
 IK_PLUGIN_FILENAME="elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
 IK_PLUGIN_PATH="$DOWNLOAD_DIR/$IK_PLUGIN_FILENAME"
-echo "--- Preparing shared plugins ---"
 download_file "$IK_PLUGIN_URL" "$IK_PLUGIN_PATH"
 
-# 2. Process each architecture
+# 2. Download the S3 repository plugin (shared by all architectures)
+S3_PLUGIN_FILENAME="repository-s3-${ES_VERSION_BASE}.zip"
+S3_PLUGIN_PATH="$DOWNLOAD_DIR/$S3_PLUGIN_FILENAME"
+download_file "$S3_PLUGIN_URL" "$S3_PLUGIN_PATH"
+
+# 3. Process each architecture
 for arch in amd64 arm64; do
   echo -e "\n--- Processing architecture: $arch ---"
 
@@ -152,8 +160,13 @@ for arch in amd64 arm64; do
   # --- D. Install Plugins ---
   echo "Installing plugin: analysis-ik"
   # Use --batch for non-interactive installation
-  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$IK_PLUGIN_PATH"
+  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$IK_PLUGIN_PATH" 
 
+  echo "Installing plugin: repository-s3"
+  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$S3_PLUGIN_PATH"
+
+  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" list
+  
   echo "--- Finished processing architecture: $arch ---"
 done
 
