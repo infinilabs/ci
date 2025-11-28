@@ -43,7 +43,7 @@ on:
         description: 'Deploy Enterprise <Only Dev>'
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   publish:
