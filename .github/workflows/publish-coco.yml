@@ -48,7 +48,6 @@ on:
 jobs:
   publish:
     name: Publish coco server files and docker
-    if: ${{ github.event_name == 'schedule' || inputs.PUBLISH_RELEASE == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
