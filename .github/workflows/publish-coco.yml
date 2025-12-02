@@ -269,14 +269,14 @@ jobs:
           ls -lrt $WORK/$PNAME/bin
 
       - name: Run connect in background
-        if: ${{ inputs.ONLY_DEPLOY_STAGING == true || inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{ github.event_name == 'schedule' || inputs.ONLY_DEPLOY_STAGING == true || inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 
       - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
-        if: ${{ inputs.ONLY_DEPLOY_STAGING == true }}
+        if: ${{ github.event_name == 'schedule' || inputs.ONLY_DEPLOY_STAGING == true }}
         timeout-minutes: 30
         continue-on-error: true
         run: |
@@ -294,7 +294,7 @@ jobs:
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"    
 
       - name: Prepare for Easysearch Docker with ${{ env.EZS_VER }}
-        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{  github.event_name == 'schedule' || inputs.PUBLISH_WITH_EASYSEARCH == true }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -321,7 +321,7 @@ jobs:
 
       - name: Docker build meta with ${{ env.PNAME }}
         id: tags
-        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{  github.event_name == 'schedule' || inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
           if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
@@ -330,7 +330,7 @@ jobs:
           
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v6
-        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{  github.event_name == 'schedule' ||inputs.PUBLISH_WITH_EASYSEARCH == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
