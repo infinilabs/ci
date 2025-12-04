@@ -181,7 +181,7 @@ jobs:
       run: |
         if [[ -f $PNAME.zip ]]; then
           echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
-          scp -r $PNAME.zip staging:/opt
+          rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $PNAME.zip staging:/opt
           echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
           ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
         else

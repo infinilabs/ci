@@ -297,7 +297,7 @@ jobs:
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
+            rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
