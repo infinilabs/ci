@@ -277,7 +277,7 @@ jobs:
 
       - name: Deploy files to staging with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} and easysearch ${{ env.EZS_VER }}
         if: ${{ github.event_name == 'schedule' || inputs.ONLY_DEPLOY_STAGING == true }}
-        timeout-minutes: 30
+        timeout-minutes: 60
         continue-on-error: true
         run: |
           if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
@@ -285,7 +285,7 @@ jobs:
             echo "Prepare staging server for $PNAME at $(date +'%m-%d %H:%M:%S')"
             ssh staging "mkdir -p /opt/coco/server/update && rm -rf /opt/coco/server/update/*"
             echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            scp -r $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
+            rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/opt/coco/server/update
             echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
             ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
           else
