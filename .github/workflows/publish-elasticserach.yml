@@ -25,7 +25,7 @@ on:
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
         required: true
-        default: "1.30.0-2278"
+        default: "1.30.0-2302"
       PUBLISH_OSS:
         description: 'Publish OSS Version'
         required: true
