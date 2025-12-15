@@ -281,6 +281,17 @@ jobs:
         if: ${{ ! inputs.ONLY_DOCKER }}
         run: |
           cd $WORK/$PNAME/bin
+
+          EXTRA_FILES=""
+          if [[ "$PNAME" == "loadgen" ]]; then
+            echo "Collecting .dsl files for loadgen examples..."
+            mkdir -p examples
+            find $WORK/$PNAME -type f -name "*.dsl" -exec cp {} examples/ \;
+            if [ "$(ls -A examples)" ]; then
+               EXTRA_FILES="examples"
+            fi
+          fi
+
           for tag in $TARGETS; do
             IFS='-' read -r p1 p2 <<< "$tag"
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
@@ -288,10 +299,11 @@ jobs:
             [[ "$p1" == "win" ]] && EXT="$TAG.exe"
 
             echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+            BASE_FILES="$PNAME-$EXT $PNAME.yml LICENSE NOTICE config"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-              zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+              zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $BASE_FILES $EXTRA_FILES
             else
-              tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+              tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $BASE_FILES $EXTRA_FILES
             fi
           done
           ls -lrt $WORK/$PNAME-$VERSION-*.*
