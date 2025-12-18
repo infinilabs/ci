@@ -178,7 +178,8 @@ jobs:
             else
               jq_easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"2.0.0\"")
               jq_gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.30.0\"")
-              jq_cocoserver_ver=$(echo "$latest_json" | jq -r ".coco-server // \"0.9.0\"")
+              jq_cocoserver_ver=$(echo "$latest_json" | jq -r '."coco-server" // "0.9.0"')
+
               easysearch_ver="${jq_easysearch_ver%%-*}"
               gateway_ver="${jq_gateway_ver%%-*}"
               cocoserver_ver="${jq_cocoserver_ver%%-*}"
