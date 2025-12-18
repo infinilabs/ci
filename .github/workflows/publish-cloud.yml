@@ -44,6 +44,10 @@ on:
         description: 'Gateway version'
         required: false
         default: "1.30.0"
+      COCOSERVER_VERSION:
+        description: 'CocoServer version'
+        required: false
+        default: "0.9.2"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -168,13 +172,16 @@ jobs:
 
             if [ -z "$latest_json" ] || ! echo "$latest_json" | jq . > /dev/null 2>&1; then
               echo "Warning: Failed to fetch or parse .latest from $RELEASE_URL. Using fallback versions."
-              easysearch_ver="1.15.0"
+              easysearch_ver="2.0.0"
               gateway_ver="1.30.0"
+              cocoserver_ver="0.9.0"
             else
-              jq_easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"1.14.0\"")
+              jq_easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"2.0.0\"")
               jq_gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.30.0\"")
+              jq_cocoserver_ver=$(echo "$latest_json" | jq -r ".coco-server // \"0.9.0\"")
               easysearch_ver="${jq_easysearch_ver%%-*}"
               gateway_ver="${jq_gateway_ver%%-*}"
+              cocoserver_ver="${jq_cocoserver_ver%%-*}"
             fi
 
             # process the input versions
@@ -186,12 +193,17 @@ jobs:
               echo "Overriding Gateway version: $gateway_ver -> ${{ inputs.GATEWAY_VERSION }}"
               gateway_ver="${{ inputs.GATEWAY_VERSION }}"
             fi
+            if [[ -n "${{ inputs.COCOSERVER_VERSION }}" ]]; then
+              echo "Overriding CocoServer version: $cocoserver_ver -> ${{ inputs.COCOSERVER_VERSION }}"
+              cocoserver_ver="${{ inputs.COCOSERVER_VERSION }}"
+            fi
             
-            echo "--- Using Versions ---"
+            echo "-------------- Using Versions --------------"
             echo "Operator Version:   $operator_ver"
             echo "Easysearch Version: $easysearch_ver"
             echo "Gateway Version:    $gateway_ver"
-            echo "----------------------"
+            echo "CocoServer Version: $cocoserver_ver"
+            echo "--------------------------------------------"
 
             FILE_PATH="$WORK/$PNAME/web/src/pages/Infra/Inventory/Kubernetes/App/Config/BaseSetting.jsx"
             FILE_NAME=$(basename "$FILE_PATH")
@@ -201,12 +213,13 @@ jobs:
 
               # This awk script uses a state machine logic to be more robust.
               # It now handles the elasticsearch-operator in addition to the others.
-              awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" '
+              awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" -v cocoserver_ver="$cocoserver_ver" '
                 # Set a flag when entering a main configuration block.
                 /export const APP_EASYSEARCH_DEFAULT/    { in_es_block = 1 }
                 /export const APP_RUNTIME_DEFAULT/       { in_rt_block = 1 }
                 /export const APP_CLOUD_GATEWAY_DEFAULT/ { in_gw_block = 1 }
                 /export const APP_ELASTICSEARCH_DEFAULT/ { in_els_block = 1 }
+                /export const APP_COCOSERVER_DEFAULT/ { in_cc_block = 1 }
 
                 # Reset all flags when a block ends with `};`.
                 /^\};/ {
@@ -214,6 +227,7 @@ jobs:
                   in_rt_block = 0
                   in_gw_block = 0
                   in_els_block = 0
+                  in_cc_block = 0
                 }
 
                 # Rule 1: Update ALL operator tags (easysearch, runtime, elasticsearch).
@@ -243,10 +257,15 @@ jobs:
                 }
                 
                 # Rule 4: Update runtime gateway version.
-                in_rt_block && /gateway:/ && /versions:/ {
+                in_rt_block && /versions:/ {
                   sub(/version: "[^"]*"/, "version: \"" gw_ver "\"")
                 }
                 
+                # Rule 5: Update cocoserver version.
+                in_cc_block && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" cocoserver_ver "\"")
+                }
+
                 # Default action: print the current line (whether it was modified or not).
                 { print }
               ' "$FILE_PATH" > "$FILE_PATH.tmp" && mv "$FILE_PATH.tmp" "$FILE_PATH"
