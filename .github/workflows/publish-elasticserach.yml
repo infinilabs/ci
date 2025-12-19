@@ -54,6 +54,14 @@ jobs:
             AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           fi
           echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
+          # Setup JDK for plugin install
+          MAJOR_VERSION=$(echo "$ES_VERSION_BASE" | cut -d'.' -f1)
+          if [ "$MAJOR_VERSION" -ge 8 ]; then
+            JAVA_VERSION=17
+          elif [ "$MAJOR_VERSION" -ge 9 ]; then
+            JAVA_VERSION=21
+          fi
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
 
       - name: Set up java toolchain
         uses: actions/setup-java@v4
