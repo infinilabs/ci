@@ -40,6 +40,12 @@ echo "Base Work Directory:   $WORK_DIR"
 echo "Download Cache Dir:    $DOWNLOAD_DIR"
 echo "============================================================="
 
+# Extract major version for potential future use 
+MAJOR_VERSION=$(echo "$ES_VERSION_BASE" | cut -d'.' -f1)
+if [ "$MAJOR_VERSION" -lt 8 ]; then
+  NEED_S3_PLUGIN=true
+fi
+
 # Ensure necessary directories exist
 mkdir -p "$WORK_DIR" "$DOWNLOAD_DIR"
 cd "$WORK_DIR"
@@ -79,10 +85,15 @@ IK_PLUGIN_FILENAME="elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
 IK_PLUGIN_PATH="$DOWNLOAD_DIR/$IK_PLUGIN_FILENAME"
 download_file "$IK_PLUGIN_URL" "$IK_PLUGIN_PATH"
 
-# 2. Download the S3 repository plugin (shared by all architectures)
-S3_PLUGIN_FILENAME="repository-s3-${ES_VERSION_BASE}.zip"
-S3_PLUGIN_PATH="$DOWNLOAD_DIR/$S3_PLUGIN_FILENAME"
-download_file "$S3_PLUGIN_URL" "$S3_PLUGIN_PATH"
+# 2. Download the S3 repository plugin (shared by all architectures) if needed
+if [ "$NEED_S3_PLUGIN" = true ]; then
+  echo "Elasticsearch version $ES_VERSION_BASE requires the S3 repository plugin."
+  S3_PLUGIN_FILENAME="repository-s3-${ES_VERSION_BASE}.zip"
+  S3_PLUGIN_PATH="$DOWNLOAD_DIR/$S3_PLUGIN_FILENAME"
+  download_file "$S3_PLUGIN_URL" "$S3_PLUGIN_PATH"
+else
+  echo "Elasticsearch version $ES_VERSION_BASE includes built-in S3 support; skipping download of S3 plugin."
+fi
 
 # 3. Process each architecture
 for arch in amd64 arm64; do
@@ -162,9 +173,14 @@ for arch in amd64 arm64; do
   # Use --batch for non-interactive installation
   "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$IK_PLUGIN_PATH" 
 
-  echo "Installing plugin: repository-s3"
-  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$S3_PLUGIN_PATH"
-
+  if [ "$NEED_S3_PLUGIN" = true ]; then
+    echo "Installing plugin: repository-s3"
+    "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$S3_PLUGIN_PATH"
+  else
+    echo "Skipping S3 plugin installation for Elasticsearch version $ES_VERSION_BASE."
+  fi
+  
+  echo "Installed plugins for $arch:"
   "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" list
   
   echo "--- Finished processing architecture: $arch ---"
