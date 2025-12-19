@@ -34,7 +34,7 @@ on:
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.3.0" 
+          default: "1.4.0" 
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
