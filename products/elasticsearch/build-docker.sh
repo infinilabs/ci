@@ -8,6 +8,7 @@ set -euo pipefail
 # --- Configuration ---
 # Get versions from environment variables, with defaults for local testing.
 OSS="${EZS_OSS:-true}"
+NEED_S3_PLUGIN=false
 ES_VERSION_FULL="${EZS_VER:-7.10.2-1}"
 AGENT_VERSION_FULL="${AGENT_VERSION:-1.30.0-2197}"
 PNAME="${PNAME:-elasticsearch}" # Product name from environment
@@ -179,7 +180,7 @@ for arch in amd64 arm64; do
   else
     echo "Skipping S3 plugin installation for Elasticsearch version $ES_VERSION_BASE."
   fi
-  
+
   echo "Installed plugins for $arch:"
   "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" list
   
