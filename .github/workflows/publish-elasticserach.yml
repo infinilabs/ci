@@ -49,19 +49,41 @@ jobs:
         
       - name: Set up and check env
         run: |
-          mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
+          mkdir -p "$GITHUB_WORKSPACE/{dest,jdks}"
+          
+          # Optional: auto-fetch AGENT_VERSION if pattern matches
           if [[ "${{ env.AGENT_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
+            AGENT_VERSION=$(curl -s "${{ env.RELEASE_URL }}/.latest" | jq -r ".${{ env.DNAME }}")
+          else
+            AGENT_VERSION="${{ env.AGENT_VERSION }}"
           fi
-          echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
-          # Setup JDK for plugin install
+          echo "AGENT_VERSION=$AGENT_VERSION" >> "$GITHUB_ENV"
+
+          # Ensure ES_VERSION_BASE is set
+          if [ -z "${ES_VERSION_BASE}" ]; then
+            echo "ERROR: ES_VERSION_BASE is not set!" >&2
+            exit 1
+          fi
+
           MAJOR_VERSION=$(echo "$ES_VERSION_BASE" | cut -d'.' -f1)
-          if [ "$MAJOR_VERSION" -ge 8 ]; then
-            JAVA_VERSION=17
-          elif [ "$MAJOR_VERSION" -ge 9 ]; then
-            JAVA_VERSION=21
+
+          # Validate MAJOR_VERSION is a number
+          if ! [[ "$MAJOR_VERSION" =~ ^[0-9]+$ ]]; then
+            echo "ERROR: MAJOR_VERSION '$MAJOR_VERSION' is not a valid integer!" >&2
+            exit 1
           fi
-          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+
+          if [ "$MAJOR_VERSION" -ge 9 ]; then
+            JAVA_VERSION=21
+          elif [ "$MAJOR_VERSION" -ge 8 ]; then
+            JAVA_VERSION=17
+          elif [ "$MAJOR_VERSION" -ge 7 ]; then
+            JAVA_VERSION=11
+          else
+            JAVA_VERSION=8
+          fi
+
+          echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
 
       - name: Set up java toolchain
         uses: actions/setup-java@v4
