@@ -84,7 +84,9 @@ jobs:
           else
             JAVA_VERSION=8
           fi
-
+          if [ "$JAVA_VERSION" -ge 21 ]; then
+            echo "JDK_EXT=.jdk21" >> "$GITHUB_ENV"
+          fi
           echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
 
       - name: Set up java toolchain
@@ -146,7 +148,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
-          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile${{env.JDK_EXT}}
           target: prod
           platforms: |
             linux/amd64
