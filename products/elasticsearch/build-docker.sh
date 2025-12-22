@@ -12,6 +12,7 @@ NEED_S3_PLUGIN=false
 ES_VERSION_FULL="${EZS_VER:-7.10.2-1}"
 AGENT_VERSION_FULL="${AGENT_VERSION:-1.30.0-2197}"
 PNAME="${PNAME:-elasticsearch}" # Product name from environment
+JAVA_HOME="${JAVA_HOME:-}"
 
 # The IK plugin URL only needs the base version (e.g., 7.10.2), not the build number.
 # This removes the shortest suffix starting with a hyphen (e.g., "-1").
@@ -36,6 +37,7 @@ echo "================ Preparing Build Environment ================"
 echo "Product Name:          $PNAME"
 echo "Elasticsearch OSS:     $OSS"
 echo "Elasticsearch Version: $ES_VERSION_FULL"
+echo "JAVA_HOME:            ${JAVA_HOME:-<not set>}"
 echo "Agent Version:         $AGENT_VERSION_FULL"
 echo "Base Work Directory:   $WORK_DIR"
 echo "Download Cache Dir:    $DOWNLOAD_DIR"
@@ -173,7 +175,7 @@ for arch in amd64 arm64; do
     ES_JAVA_HOME="$JAVA_HOME"
     echo "Using JAVA_HOME from environment: $ES_JAVA_HOME"
   fi
-  
+
   # --- D. Install Plugins ---
   echo "Installing plugin: analysis-ik"
   # Use --batch for non-interactive installation
