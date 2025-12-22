@@ -171,9 +171,9 @@ for arch in amd64 arm64; do
       echo "WARNING: Custom config file not found at $CUSTOM_CONFIG_PATH. Using default."
   fi
 
-  if [ -n "${JAVA_HOME:-}" ]; then
-    ES_JAVA_HOME="$JAVA_HOME"
-    echo "Using JAVA_HOME from environment: $ES_JAVA_HOME"
+  if [ ! -z "${JAVA_HOME:-}" ]; then
+    export ES_JAVA_HOME="$JAVA_HOME"
+    echo "Using ES_JAVA_HOME from environment: $ES_JAVA_HOME"
   fi
 
   # --- D. Install Plugins ---
