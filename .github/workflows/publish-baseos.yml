@@ -18,6 +18,7 @@ on:
           - 'jdk-11'
           - 'jdk-17'
           - 'jdk-21'
+          - 'jdk-25'
         default: 'jdk-17'
       IMAGE_BASE:
         description: 'Base Image'
