@@ -118,7 +118,8 @@ jobs:
           echo "Build docker for $PNAME start..."
           #prepare docker build
           chmod 755 $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
-          EZS_OSS=$PUBLISH_OSS EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
+          echo "Building docker image for $PNAME with OSS=$PUBLISH_OSS, VERSION=$VERSION, BUILD_NUMBER=$BUILD_NUMBER with JAVA_HOME=$JAVA_HOME"
+          JAVA_HOME=$JAVA_HOME EZS_OSS=$PUBLISH_OSS EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
 
       - name: Set up qemu
         uses: docker/setup-qemu-action@v3
