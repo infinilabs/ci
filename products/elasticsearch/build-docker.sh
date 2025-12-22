@@ -117,9 +117,6 @@ for arch in amd64 arm64; do
   ES_URL="${ES_BASE_URL}/${ES_FILENAME}"
   ES_FILE_PATH="$DOWNLOAD_DIR/$ES_FILENAME"
   ES_EXTRACT_DIR="$WORK_DIR/${PNAME}-${arch}"
-  if [ -n "${JAVA_HOME:-}" ]; then
-    ES_JAVA_HOME="$JAVA_HOME"
-  fi
 
   download_file "$ES_URL" "$ES_FILE_PATH"
 
@@ -172,6 +169,11 @@ for arch in amd64 arm64; do
       echo "WARNING: Custom config file not found at $CUSTOM_CONFIG_PATH. Using default."
   fi
 
+  if [ -n "${JAVA_HOME:-}" ]; then
+    ES_JAVA_HOME="$JAVA_HOME"
+    echo "Using JAVA_HOME from environment: $ES_JAVA_HOME"
+  fi
+  
   # --- D. Install Plugins ---
   echo "Installing plugin: analysis-ik"
   # Use --batch for non-interactive installation
