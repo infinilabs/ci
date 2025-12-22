@@ -117,6 +117,9 @@ for arch in amd64 arm64; do
   ES_URL="${ES_BASE_URL}/${ES_FILENAME}"
   ES_FILE_PATH="$DOWNLOAD_DIR/$ES_FILENAME"
   ES_EXTRACT_DIR="$WORK_DIR/${PNAME}-${arch}"
+  if [ -n "${JAVA_HOME:-}" ]; then
+    ES_JAVA_HOME="$JAVA_HOME"
+  fi
 
   download_file "$ES_URL" "$ES_FILE_PATH"
 
