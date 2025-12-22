@@ -37,7 +37,6 @@ jobs:
     name: Publish Elasticsearch Docker Image
     runs-on: ubuntu-latest
     env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
       PUBLISH_OSS: ${{ inputs.PUBLISH_OSS }}
       AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
     steps:
@@ -59,13 +58,16 @@ jobs:
           fi
           echo "AGENT_VERSION=$AGENT_VERSION" >> "$GITHUB_ENV"
 
-          # Ensure ES_VERSION_BASE is set
-          if [ -z "${ES_VERSION_BASE}" ]; then
-            echo "ERROR: ES_VERSION_BASE is not set!" >&2
+          # Ensure PUBLISH_VERSION is set
+          if [ -z "${{ inputs.PUBLISH_VERSION }}" ]; then
+            echo "ERROR: PUBLISH_VERSION is not set!" >&2
             exit 1
+          else
+            PUBLISH_VERSION="${{ inputs.PUBLISH_VERSION }}"
+            echo "PUBLISH_VERSION=$PUBLISH_VERSION" >> "$GITHUB_ENV"
           fi
 
-          MAJOR_VERSION=$(echo "$ES_VERSION_BASE" | cut -d'.' -f1)
+          MAJOR_VERSION=$(echo "$PUBLISH_VERSION" | cut -d'.' -f1)
 
           # Validate MAJOR_VERSION is a number
           if ! [[ "$MAJOR_VERSION" =~ ^[0-9]+$ ]]; then
