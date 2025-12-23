@@ -5,7 +5,7 @@ defaults:
 env:
   CI: false
   SEARCHCHAT-REPO-NAME: "coco-app"
-  NODEJS_VERSION: 20
+  NODEJS_VERSION: 24
 
 permissions:
   contents: read
@@ -49,7 +49,6 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: 'https://registry.npmjs.org'
           
