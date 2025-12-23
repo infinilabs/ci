@@ -50,9 +50,10 @@ jobs:
           path: ${{ env.SEARCHCHAT-REPO-NAME }}
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -121,9 +122,10 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
       
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
