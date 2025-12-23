@@ -53,7 +53,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -125,7 +124,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
       
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
