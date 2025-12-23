@@ -5,7 +5,7 @@ defaults:
 env:
   CI: false
   SEARCHCHAT-REPO-NAME: "coco-app"
-  NODEJS_VERSION: 24
+  NODEJS_VERSION: 20
 
 permissions:
   contents: read
@@ -22,8 +22,12 @@ on:
           - search-chat
         required: true
         default: search-chat
-      PUBLISH_VERSION:
-        description: 'Publish NPM Version (Format: x.y.z)'
+      PUBLISH_CHAT_VERSION:
+        description: 'Publish Search-Chat Version (Format: x.y.z)'
+        required: true
+        default: ""
+      PUBLISH_CLI_VERSION:
+        description: 'Publish Web-CLI Version (Format: x.y.z)'
         required: true
         default: ""
 
@@ -31,7 +35,7 @@ jobs:
   build-search-chat:
     if: ${{ inputs.PUBLISH_COMPONENT == 'search-chat' }}
     env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_CHAT_VERSION  }}
       PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
       VITE_LOG_LEVEL: 'warn'
     runs-on: ubuntu-latest
@@ -51,7 +55,6 @@ jobs:
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: 'https://registry.npmjs.org'
-          
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -89,11 +92,11 @@ jobs:
           version: latest
 
       - name: Sync node version and setup cache
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          #cache: 'pnpm'
-          #cache-dependency-path: "**/pnpm-lock.yaml"
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Install dependencies and build web
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -104,12 +107,14 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
+          unset NODE_AUTH_TOKEN
+          rm -f ~/.npmrc .npmrc
           pnpm run build:web && cd out/search-chat && npm publish --provenance --access public
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
     env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION  }}
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_CLI_VERSION  }}
       PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
       VITE_LOG_LEVEL: 'warn'
     runs-on: ubuntu-latest
@@ -175,6 +180,8 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
+          unset NODE_AUTH_TOKEN
+          rm -f ~/.npmrc .npmrc
           pnpm run build && npm publish --provenance --access public
 
   notify_on_failure:
