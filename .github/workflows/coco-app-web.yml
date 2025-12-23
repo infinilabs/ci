@@ -6,7 +6,10 @@ env:
   CI: false
   SEARCHCHAT-REPO-NAME: "coco-app"
   NODEJS_VERSION: 20
-  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+permissions:
+  contents: read
+  id-token: write 
 
 on:
   workflow_dispatch:
@@ -140,7 +143,7 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
-          pnpm run build:web && cd out/search-chat && npm publish --access public
+          pnpm run build:web && cd out/search-chat && npm publish --provenance --access public
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
@@ -234,7 +237,7 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
-          pnpm run build && npm publish --access public
+          pnpm run build && npm publish --provenance --access public
 
   notify_on_failure:
     runs-on: ubuntu-latest
