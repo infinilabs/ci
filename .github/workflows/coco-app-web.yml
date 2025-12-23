@@ -24,23 +24,8 @@ on:
         default: search-chat
       PUBLISH_VERSION:
         description: 'Publish NPM Version (Format: x.y.z)'
-        required: false
+        required: true
         default: ""
-      MAJOR_VERSION:
-        description: 'Update Major (Increment x)'
-        type: boolean
-        required: false
-        default: false
-      MINOR_VERSION:
-        description: 'Update Minor (Increment y)'
-        type: boolean
-        required: false
-        default: false
-      PATCH_VERSION:
-        description: 'Update Patch (Increment z)'
-        type: boolean
-        required: false
-        default: true
 
 jobs:
   build-search-chat:
@@ -67,52 +52,27 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
-        env: 
-          NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
-          source $GITHUB_WORKSPACE/scripts/version_greater.sh
-          latest=$(npm view @infinilabs/${{ env.PUBLISH_COMPONENT }} version)
-
-          # Extract x.y.z using a regular expression
-          if [[ -n "$PUBLISH_VERSION" ]]; then
-            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
-              current_version="${BASH_REMATCH[1]}"
-              # compare with latest version, must be greater than latest version
-              if ! version_greater "$current_version" "$latest"; then
-                echo "Error: Current version $current_version is not greater than latest version $latest" >&2
-                exit 1
-              fi
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z." >&2
-              exit 1
-            fi
-          else
-            if [[ -n "$latest" ]]; then
-              major=$(echo "$latest" | cut -d '.' -f 1)
-              minor=$(echo "$latest" | cut -d '.' -f 2)
-              patch=$(echo "$latest" | cut -d '.' -f 3)
-
-              # Increment the version based on the inputs
-              if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
-                major=$(echo "$latest" | awk -F. -v OFS=. '{$1++; print $1}')
-              fi
-              if [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
-                minor=$(echo "$latest" | awk -F. -v OFS=. '{$2++; print $2}')
-              fi
-              if [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
-                patch=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $3}')
-              fi
-              current_version="$major.$minor.$patch"
-            fi
+          version="${{ inputs.PUBLISH_VERSION }}"
+          if [[ -z "$version" ]]; then
+            echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
+            exit 1
           fi
-          version="$current_version"
-          sed -i -e "s/version: *\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
-          # Extract the build number from the version string
-          grep -oP "version: *\"[^\"]*\"" tsup.config.ts
-          echo "Current version to publish: $version"
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format. Expected x.y.z (e.g. 1.2.3)" >&2
+            exit 1
+          fi
+
+          # Update tsup.config.ts
+          sed -i "s/version:\s*\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
+          grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' tsup.config.ts || {
+            echo "Error: Failed to update version in tsup.config.ts" >&2
+            exit 1
+          }
+
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Enable web adapter
@@ -172,49 +132,26 @@ jobs:
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
-        env: 
-          NPM_CONFIG_UPDATE_NOTIFIER: false
         run: |
-          source $GITHUB_WORKSPACE/scripts/version_greater.sh
-          latest=$(npm view @infinilabs/${{ env.PUBLISH_COMPONENT }} version)
-
-          # Extract x.y.z using a regular expression
-          if [[ -n "$PUBLISH_VERSION" ]]; then
-            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+$) ]]; then
-              current_version="${BASH_REMATCH[1]}"
-              # compare with latest version, must be greater than latest version
-              if ! version_greater "$current_version" "$latest"; then
-                echo "Error: Current version $current_version is not greater than latest version $latest" >&2
-                exit 1
-              fi
-            else
-              echo "Error: Invalid version string format. Expected X.Y.Z." >&2
-              exit 1
-            fi
-          else
-            if [[ -n "$latest" ]]; then
-              major=$(echo "$latest" | cut -d '.' -f 1)
-              minor=$(echo "$latest" | cut -d '.' -f 2)
-              patch=$(echo "$latest" | cut -d '.' -f 3)
-
-              # Increment the version based on the inputs
-              if [[ "${{ inputs.MAJOR_VERSION }}" == "true" ]]; then
-                major=$(echo "$latest" | awk -F. -v OFS=. '{$1++; print $1}')
-              fi
-              if [[ "${{ inputs.MINOR_VERSION }}" == "true" ]]; then
-                minor=$(echo "$latest" | awk -F. -v OFS=. '{$2++; print $2}')
-              fi
-              if [[ "${{ inputs.PATCH_VERSION }}" == "true" ]]; then
-                patch=$(echo "$latest" | awk -F. -v OFS=. '{$3++; print $3}')
-              fi
-              current_version="$major.$minor.$patch"
-            fi
+          version="${{ inputs.PUBLISH_VERSION }}"
+          if [[ -z "$version" ]]; then
+            echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
+            exit 1
           fi
-          version="$current_version"
-          sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
-          # Extract the build number from the version string
-          grep -oP "\"version\": *\"[^\"]*\"" package.json
-          echo "Current version to publish: $version"
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format. Expected x.y.z (e.g. 1.2.3)" >&2
+            exit 1
+          fi
+
+          # Update package.json
+          tmp_file=$(mktemp)
+          jq --arg v "$version" '.version = $v' package.json > "$tmp_file" && mv "$tmp_file" package.json
+          if ! grep -q "\"version\": \"$version\"" package.json; then
+            echo "Error: Failed to update version in package.json" >&2
+            exit 1
+          fi
+
           echo "VERSION=$version" >> $GITHUB_ENV
 
       - uses: pnpm/action-setup@v4
