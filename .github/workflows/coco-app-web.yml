@@ -100,7 +100,7 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build:web && cd out/search-chat && npm publish --access public
+          pnpm run build:web && cd out/search-chat && npm publish
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
@@ -165,7 +165,7 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build && npm publish --access public
+          pnpm run build && npm publish
 
   notify_on_failure:
     runs-on: ubuntu-latest
