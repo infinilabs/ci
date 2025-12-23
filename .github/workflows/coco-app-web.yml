@@ -53,7 +53,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -106,8 +105,6 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
-          unset NODE_AUTH_TOKEN
-          rm -f ~/.npmrc .npmrc
           pnpm run build:web && cd out/search-chat && npm publish --provenance --access public
 
   build-web-cli:
@@ -133,7 +130,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
@@ -179,8 +175,6 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
-          unset NODE_AUTH_TOKEN
-          rm -f ~/.npmrc .npmrc
           pnpm run build && npm publish --provenance --access public
 
   notify_on_failure:
