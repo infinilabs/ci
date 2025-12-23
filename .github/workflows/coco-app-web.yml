@@ -25,12 +25,11 @@ on:
       PUBLISH_CHAT_VERSION:
         description: 'Publish Search-Chat Version (Format: x.y.z)'
         required: true
-        default: ""
+        default: "1.3.1"
       PUBLISH_CLI_VERSION:
         description: 'Publish Web-CLI Version (Format: x.y.z)'
         required: true
-        default: ""
-
+        default: "0.0.38"
 jobs:
   build-search-chat:
     if: ${{ inputs.PUBLISH_COMPONENT == 'search-chat' }}
@@ -59,7 +58,7 @@ jobs:
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
         run: |
-          version="${{ inputs.PUBLISH_VERSION }}"
+          version="$PUBLISH_VERSION"
           if [[ -z "$version" ]]; then
             echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
             exit 1
@@ -139,7 +138,7 @@ jobs:
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
         run: |
-          version="${{ inputs.PUBLISH_VERSION }}"
+          version="$PUBLISH_VERSION"
           if [[ -z "$version" ]]; then
             echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
             exit 1
