@@ -5,7 +5,7 @@ defaults:
 env:
   CI: false
   SEARCHCHAT-REPO-NAME: "coco-app"
-  NODEJS_VERSION: 22
+  NODEJS_VERSION: 24
 
 permissions:
   contents: read
