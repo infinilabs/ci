@@ -106,6 +106,41 @@ jobs:
             '.repository = { type: "git", url: $url }' \
             package.json > temp.json && mv temp.json package.json
           npm publish
+      
+      - name: Update version in coco-app-web.yml
+        run: |
+          FILE=".github/workflows/publish-components.yml"
+          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "${{ inputs.PUBLISH_CHAT_VERSION }}"' "$FILE"
+          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CLI_VERSION.default = "${{ inputs.PUBLISH_CLI_VERSION }}"' "$FILE"
+          if [ "${{ inputs.PUBLISH_COMPONENT }}" == "search-chat" ]; then
+            VERSION="${{ inputs.PUBLISH_CHAT_VERSION }}"
+          else
+            VERSION="${{ inputs.PUBLISH_CLI_VERSION }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update ${{ inputs.PUBLISH_COMPONENT }} default version to ${{ env.VERSION }}"
+          branch: "bump/${{ inputs.PUBLISH_COMPONENT }}-v${{ env.VERSION }}"
+          title: "Bump ${{ inputs.PUBLISH_COMPONENT }} default version"
+          body: |
+            Auto-updated default version after successful publish.
+          labels: "auto-merge"
+          delete-branch: true
+
+      - name: Auto-merge the PR
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -n "$PR_URL" ]]; then
+            echo "Auto-merging PR: $PR_URL"
+            gh pr merge "$PR_URL" --auto --merge
+          fi
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
@@ -174,15 +209,6 @@ jobs:
             '.repository = { type: "git", url: $url }' \
             package.json > temp.json && mv temp.json package.json
           npm publish
-
-  notify_on_success:
-    runs-on: ubuntu-latest
-    needs: [build-search-chat, build-web-cli]
-    if: success()
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
       - name: Update version in coco-app-web.yml
         run: |
           FILE=".github/workflows/publish-components.yml"
@@ -217,17 +243,6 @@ jobs:
             echo "Auto-merging PR: $PR_URL"
             gh pr merge "$PR_URL" --auto --merge
           fi
-          
-      
-      - name: Send Feishu Notification on Success
-        env:
-          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
-          REPO_NAME: ${{ github.repository }}
-          WORKFLOW_NAME: ${{ github.workflow }}
-          RUN_ID: ${{ github.run_id }}
-          ACTOR: ${{ github.triggering_actor }}
-          SERVER_URL: ${{ github.server_url }}
-        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
         
   notify_on_failure:
     runs-on: ubuntu-latest
