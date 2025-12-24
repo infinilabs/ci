@@ -103,12 +103,11 @@ jobs:
           echo "node version: $(node -v) and npm version: $(npm -v)"
           pnpm run build:web
           cd out/search-chat
-      
-          npm config delete //registry.npmjs.org/:_authToken || true
-          rm -f ~/.npmrc
-
-          npm whoami || true
-
+          jq '.repository = {
+            "type": "git",
+            "url": "https://github.com/infinilabs/ci"
+          }' package.json > tmp.json && mv tmp.json package.json
+          cat package.json
           npm publish --provenance --access public
 
   build-web-cli:
