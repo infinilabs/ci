@@ -101,10 +101,15 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          rm -f ~/.npmrc
-          npm whoami || true
+          pnpm run build:web
+          cd out/search-chat
+      
           npm config delete //registry.npmjs.org/:_authToken || true
-          pnpm run build:web && cd out/search-chat && npm publish --access public
+          rm -f ~/.npmrc
+
+          npm whoami || true
+
+          npm publish --provenance --access public
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
