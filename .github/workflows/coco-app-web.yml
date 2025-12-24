@@ -109,7 +109,7 @@ jobs:
       
       - name: Update version in coco-app-web.yml
         run: |
-          FILE=".github/workflows/publish-components.yml"
+          FILE="$GITHUB_WORKSPACE/.github/workflows/coco-app-web.yml"
           yq -i '.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "${{ inputs.PUBLISH_CHAT_VERSION }}"' "$FILE"
           yq -i '.on.workflow_dispatch.inputs.PUBLISH_CLI_VERSION.default = "${{ inputs.PUBLISH_CLI_VERSION }}"' "$FILE"
           if [ "${{ inputs.PUBLISH_COMPONENT }}" == "search-chat" ]; then
@@ -211,7 +211,7 @@ jobs:
           npm publish
       - name: Update version in coco-app-web.yml
         run: |
-          FILE=".github/workflows/publish-components.yml"
+          FILE="$GITHUB_WORKSPACE/.github/workflows/coco-app-web.yml"
           yq -i '.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "${{ inputs.PUBLISH_CHAT_VERSION }}"' "$FILE"
           yq -i '.on.workflow_dispatch.inputs.PUBLISH_CLI_VERSION.default = "${{ inputs.PUBLISH_CLI_VERSION }}"' "$FILE"
           if [ "${{ inputs.PUBLISH_COMPONENT }}" == "search-chat" ]; then
