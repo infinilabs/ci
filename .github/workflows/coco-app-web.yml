@@ -52,7 +52,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
@@ -91,7 +90,7 @@ jobs:
       
       - name: Upgrade npm
         run: npm install -g npm
-        
+
       - name: Install dependencies and build web
         working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
         run: pnpm install
@@ -102,7 +101,10 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build:web && cd out/search-chat && npm publish
+          rm -f ~/.npmrc
+          npm whoami || true
+          npm config delete //registry.npmjs.org/:_authToken || true
+          pnpm run build:web && cd out/search-chat && npm publish --access public
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
