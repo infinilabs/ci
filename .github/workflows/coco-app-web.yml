@@ -107,8 +107,7 @@ jobs:
             "type": "git",
             "url": "https://github.com/infinilabs/ci"
           }' package.json > tmp.json && mv tmp.json package.json
-          cat package.json
-          npm publish --provenance --access public
+          npm publish
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
@@ -133,7 +132,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
       
       - name: Set version for ${{ env.PUBLISH_COMPONENT }}
         working-directory: ${{ env.PUBLISH_COMPONENT }}
@@ -173,7 +171,12 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build && npm publish
+          pnpm run build
+          jq '.repository = {
+            "type": "git",
+            "url": "https://github.com/infinilabs/ci"
+          }' package.json > tmp.json && mv tmp.json package.json
+          npm publish
 
   notify_on_failure:
     runs-on: ubuntu-latest
