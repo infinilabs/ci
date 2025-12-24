@@ -5,7 +5,7 @@ defaults:
 env:
   CI: false
   SEARCHCHAT-REPO-NAME: "coco-app"
-  NODEJS_VERSION: 24
+  NODEJS_VERSION: 22
 
 permissions:
   contents: read
@@ -100,7 +100,16 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build:web && cd out/search-chat && npm publish
+
+          pnpm run build:web
+          cd out/search-chat
+      
+          npm config delete //registry.npmjs.org/:_authToken || true
+          rm -f ~/.npmrc
+      
+          npm whoami || true
+      
+          npm publish --provenance --access public
 
   build-web-cli:
     if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
@@ -165,7 +174,14 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=8192"
         run: |
           echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build && npm publish
+
+          pnpm run build
+
+          npm config delete //registry.npmjs.org/:_authToken || true
+          rm -f ~/.npmrc
+          npm whoami || true
+      
+          npm publish --provenance --access public
 
   notify_on_failure:
     runs-on: ubuntu-latest
