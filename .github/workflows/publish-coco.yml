@@ -24,7 +24,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "0.10.0"
+        default: "0.11.0"
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
