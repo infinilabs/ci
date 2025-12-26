@@ -90,6 +90,7 @@ jobs:
           ADAPTER=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].adapter_script")
 
           # 4. write to env
+          echo "PUBLISH_COMPONENT=$COMPONENT" >> $GITHUB_ENV
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
@@ -157,7 +158,7 @@ jobs:
           echo "Running build: $BUILD_CMD"
           eval "$BUILD_CMD"
 
-      - name: Inject Repository & Publish
+      - name: Inject Repository & Publish for ${{ env.COMPONENT}} - Version ${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
         run: |
           cd ${{ env.DIST_DIR }}
@@ -167,6 +168,12 @@ jobs:
           
           echo "Publishing to NPM..."
           #npm publish --provenance --access public
+
+      - name: Cleanup External Repos
+        run: |
+          echo "Cleaning up external repositories..."
+          rm -rf ${{ env.REPO_NAME }}
+          git status
           
       - name: Update Workflow Default Version
         run: |
@@ -174,7 +181,7 @@ jobs:
           # e.g: .on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "1.3.2"
           yq -i ".on.workflow_dispatch.inputs.${{ env.INPUT_KEY }}.default = \"${{ env.VERSION }}\"" "$FILE"
 
-      - name: Create Pull Request
+      - name: Create Pull Request for Version Bump of ${{ env.COMPONENT }}
         uses: peter-evans/create-pull-request@v7
         id: create-pr
         with:
