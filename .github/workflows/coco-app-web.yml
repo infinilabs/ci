@@ -4,8 +4,10 @@ defaults:
     shell: bash
 env:
   NODEJS_VERSION: 24
-  SEARCHCHAT-REPO-NAME: "coco-app"
   REPO_URL: "https://github.com/infinilabs/ci"
+  NPM_REGISTRY: "https://registry.npmjs.org"
+  WORKFLOW_FILE: ".github/workflows/publish.yml" # 确保这里文件名正确
+  NODE_OPTIONS: "--max_old_space_size=8192"
 
 permissions:
   contents: write
@@ -21,232 +23,182 @@ on:
         options:
           - ui-web-cli
           - search-chat
+          # new-component
         required: true
         default: search-chat
+      
       PUBLISH_CHAT_VERSION:
-        description: 'Publish Search-Chat Version (Format: x.y.z)'
+        description: 'Search-Chat Version'
         required: true
         default: "1.3.1"
       PUBLISH_CLI_VERSION:
-        description: 'Publish Web-CLI Version (Format: x.y.z)'
+        description: 'Web-CLI Version'
         required: true
         default: "0.0.39"
+      # new-component: PUBLISH_NEW_VERSION ...
+
 jobs:
-  build-search-chat:
-    if: ${{ inputs.PUBLISH_COMPONENT == 'search-chat' }}
-    env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_CHAT_VERSION  }}
-      PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
-      VITE_LOG_LEVEL: 'warn'
+  build-and-publish:
     runs-on: ubuntu-latest
+    env:
+      INPUTS_JSON: ${{ toJson(inputs) }}
+      COMPONENT: ${{ inputs.PUBLISH_COMPONENT }}
+
     steps:
-      - name: Checkout repository
+      - name: Generate Configuration
+        id: config
+        run: |
+          # config map for components
+          CONFIG_JSON='{
+            "search-chat": {
+              "repo_name": "coco-app",
+              "input_key": "PUBLISH_CHAT_VERSION",
+              "build_cmd": "pnpm run build:web",
+              "dist_dir": "out/search-chat",
+              "use_ssh": false,
+              "version_file": "tsup",
+              "adapter_script": true
+            },
+            "ui-web-cli": {
+              "repo_name": "ui-web-cli",
+              "input_key": "PUBLISH_CLI_VERSION",
+              "build_cmd": "pnpm run build",
+              "dist_dir": ".",
+              "use_ssh": true,
+              "version_file": "package.json",
+              "adapter_script": false
+            }
+          }'
+
+          # 1. get repo name and input key from config
+          REPO_NAME=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].repo_name")
+          INPUT_KEY=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].input_key")
+          
+          if [[ "$REPO_NAME" == "null" ]]; then
+            echo "Error: Configuration for component '$COMPONENT' not found."
+            exit 1
+          fi
+
+          # 2. get version from inputs
+          VERSION=$(echo "$INPUTS_JSON" | jq -r ".[\"$INPUT_KEY\"]")
+
+          # 3. get other config values
+          BUILD_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].build_cmd")
+          DIST_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].dist_dir")
+          USE_SSH=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].use_ssh")
+          VERSION_FILE=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].version_file")
+          ADAPTER=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].adapter_script")
+
+          # 4. write to env
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
+          echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
+          echo "DIST_DIR=$DIST_DIR" >> $GITHUB_ENV
+          echo "USE_SSH=$USE_SSH" >> $GITHUB_ENV
+          echo "VERSION_FILE=$VERSION_FILE" >> $GITHUB_ENV
+          echo "ADAPTER=$ADAPTER" >> $GITHUB_ENV
+
+          echo "::notice title=Config Loaded::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
+
+      - name: Checkout CI repository
         uses: actions/checkout@v4
 
-      - name: Checkout ${{ env.SEARCHCHAT-REPO-NAME }} repository
+      - name: Checkout ${{ env.REPO_NAME }} repository
         uses: actions/checkout@v4
         with: 
-          repository: ${{ vars.GIT_REPO }}/${{ env.SEARCHCHAT-REPO-NAME }}
+          repository: ${{ vars.GIT_REPO }}/${{ env.REPO_NAME }}
           ref: main
-          path: ${{ env.SEARCHCHAT-REPO-NAME }}
+          path: ${{ env.REPO_NAME }}
+          ssh-key: ${{ env.USE_SSH == 'true' && secrets.SSH_PRIVATE_KEY || '' }}
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          registry-url: ${{ env.NPM_REGISTRY }}
 
-      - name: Set version for ${{ env.PUBLISH_COMPONENT }}
-        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
+      - name: Validate and Set Version
+        working-directory: ${{ env.REPO_NAME }}
         run: |
-          version="$PUBLISH_VERSION"
-          if [[ -z "$version" ]]; then
-            echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
-            exit 1
+          if [[ -z "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format '$VERSION'." >&2; exit 1
+          fi
+          
+          echo "Setting version to $VERSION..."
+
+          if [[ "$VERSION_FILE" == "tsup" ]]; then
+            sed -i "s/version:\s*\"[^\"]*\"/version: \"$VERSION\"/" tsup.config.ts
+            grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' tsup.config.ts
+          else
+            tmp=$(mktemp)
+            jq --arg v "$VERSION" '.version = $v' package.json > "$tmp" && mv "$tmp" package.json
+            grep "\"version\": \"$VERSION\"" package.json
           fi
 
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid version format. Expected x.y.z (e.g. 1.2.3)" >&2
-            exit 1
-          fi
-
-          # Update tsup.config.ts
-          sed -i "s/version:\s*\"[^\"]*\"/version: \"$version\"/" tsup.config.ts
-          grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' tsup.config.ts || {
-            echo "Error: Failed to update version in tsup.config.ts" >&2
-            exit 1
-          }
-
-          echo "VERSION=$version" >> $GITHUB_ENV
-
-      - name: Enable web adapter
-        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
+      - name: Enable web adapter (Conditional)
+        if: ${{ env.ADAPTER == 'true' }}
+        working-directory: ${{ env.REPO_NAME }}
         run: |
-          TARGET_FILE="src/utils/platformAdapter.ts"
-          # Enable Web Adapter and disable Tauri Adapter
-          sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET_FILE"
-          cat "$TARGET_FILE"
+          TARGET="src/utils/platformAdapter.ts"
+          [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || echo "Skip adapter"
 
       - uses: pnpm/action-setup@v4
         with:
           version: latest
 
-      - name: Install dependencies and build web
-        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
+      - name: Install dependencies
+        working-directory: ${{ env.REPO_NAME }}
         run: pnpm install
+
+      - name: Build
+        working-directory: ${{ env.REPO_NAME }}
+        run: |
+          echo "Running build: $BUILD_CMD"
+          eval "$BUILD_CMD"
+
+      - name: Inject Repository & Publish
+        working-directory: ${{ env.REPO_NAME }}
+        run: |
+          cd ${{ env.DIST_DIR }}
           
-      - name: Build for publish with ${{ env.VERSION }}
-        working-directory: ${{ env.SEARCHCHAT-REPO-NAME }}
-        env:
-          NODE_OPTIONS: "--max_old_space_size=8192"
+          tmp=$(mktemp)
+          jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
+          
+          echo "Publishing to NPM..."
+          #npm publish --provenance --access public
+          
+      - name: Update Workflow Default Version
         run: |
-          echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build:web
-          cd out/search-chat
-          jq --arg url "$REPO_URL" \
-            '.repository = { type: "git", url: $url }' \
-            package.json > temp.json && mv temp.json package.json
-          npm publish
-      
-      - name: Update version in coco-app-web.yml
-        run: |
-          FILE="$GITHUB_WORKSPACE/.github/workflows/coco-app-web.yml"
-          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "${{ inputs.PUBLISH_CHAT_VERSION }}"' "$FILE"
-          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CLI_VERSION.default = "${{ inputs.PUBLISH_CLI_VERSION }}"' "$FILE"
-          if [ "${{ inputs.PUBLISH_COMPONENT }}" == "search-chat" ]; then
-            VERSION="${{ inputs.PUBLISH_CHAT_VERSION }}"
-          else
-            VERSION="${{ inputs.PUBLISH_CLI_VERSION }}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          FILE="$GITHUB_WORKSPACE/$WORKFLOW_FILE"
+          # 使用 yq 动态更新，key 由 JSON 配置决定
+          # 例如：.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "1.3.2"
+          yq -i ".on.workflow_dispatch.inputs.${{ env.INPUT_KEY }}.default = \"${{ env.VERSION }}\"" "$FILE"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         id: create-pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update ${{ inputs.PUBLISH_COMPONENT }} default version to ${{ env.VERSION }}"
-          branch: "bump/${{ inputs.PUBLISH_COMPONENT }}-v${{ env.VERSION }}"
-          title: "Bump ${{ inputs.PUBLISH_COMPONENT }} default version"
+          commit-message: "chore: release ${{ env.COMPONENT }} v${{ env.VERSION }}"
+          branch: "release/${{ env.COMPONENT }}-v${{ env.VERSION }}"
+          title: "Release: ${{ env.COMPONENT }} v${{ env.VERSION }}"
           body: |
-            Auto-updated default version after successful publish.
+            Automated release for ${{ env.COMPONENT }}.
+            Version bumped to ${{ env.VERSION }}.
           labels: "auto-merge"
           delete-branch: true
 
       - name: Auto-merge the PR
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
         env:
           PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ -n "$PR_URL" ]]; then
-            echo "Auto-merging PR: $PR_URL"
-            gh pr merge "$PR_URL" --auto --merge
-          fi
+        run: gh pr merge "$PR_URL" --auto --merge
 
-  build-web-cli:
-    if: ${{ inputs.PUBLISH_COMPONENT == 'ui-web-cli' }}
-    env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_CLI_VERSION  }}
-      PUBLISH_COMPONENT: ${{ inputs.PUBLISH_COMPONENT  }}
-      VITE_LOG_LEVEL: 'warn'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Checkout ${{ env.PUBLISH_COMPONENT }} repository
-        uses: actions/checkout@v4
-        with: 
-          repository: ${{ vars.GIT_REPO }}/${{ env.PUBLISH_COMPONENT }}
-          ref: main
-          path: ${{ env.PUBLISH_COMPONENT }}
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Setup node
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-      
-      - name: Set version for ${{ env.PUBLISH_COMPONENT }}
-        working-directory: ${{ env.PUBLISH_COMPONENT }}
-        run: |
-          version="$PUBLISH_VERSION"
-          if [[ -z "$version" ]]; then
-            echo "Error: PUBLISH_VERSION is required. Please specify a version in x.y.z format." >&2
-            exit 1
-          fi
-
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid version format. Expected x.y.z (e.g. 1.2.3)" >&2
-            exit 1
-          fi
-
-          # Update package.json
-          tmp_file=$(mktemp)
-          jq --arg v "$version" '.version = $v' package.json > "$tmp_file" && mv "$tmp_file" package.json
-          if ! grep -q "\"version\": \"$version\"" package.json; then
-            echo "Error: Failed to update version in package.json" >&2
-            exit 1
-          fi
-
-          echo "VERSION=$version" >> $GITHUB_ENV
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: Install dependencies and build web
-        working-directory: ${{ env.PUBLISH_COMPONENT }}
-        run: pnpm install
-          
-      - name: Build for publish with ${{ env.VERSION }}
-        working-directory: ${{ env.PUBLISH_COMPONENT }}
-        env:
-          NODE_OPTIONS: "--max_old_space_size=8192"
-        run: |
-          echo "node version: $(node -v) and npm version: $(npm -v)"
-          pnpm run build
-          jq --arg url "$REPO_URL" \
-            '.repository = { type: "git", url: $url }' \
-            package.json > temp.json && mv temp.json package.json
-          npm publish
-      - name: Update version in coco-app-web.yml
-        run: |
-          FILE="$GITHUB_WORKSPACE/.github/workflows/coco-app-web.yml"
-          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "${{ inputs.PUBLISH_CHAT_VERSION }}"' "$FILE"
-          yq -i '.on.workflow_dispatch.inputs.PUBLISH_CLI_VERSION.default = "${{ inputs.PUBLISH_CLI_VERSION }}"' "$FILE"
-          if [ "${{ inputs.PUBLISH_COMPONENT }}" == "search-chat" ]; then
-            VERSION="${{ inputs.PUBLISH_CHAT_VERSION }}"
-          else
-            VERSION="${{ inputs.PUBLISH_CLI_VERSION }}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        id: create-pr
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update ${{ inputs.PUBLISH_COMPONENT }} default version to ${{ env.VERSION }}"
-          branch: "bump/${{ inputs.PUBLISH_COMPONENT }}-v${{ env.VERSION }}"
-          title: "Bump ${{ inputs.PUBLISH_COMPONENT }} default version"
-          body: |
-            Auto-updated default version after successful publish.
-          labels: "auto-merge"
-          delete-branch: true
-
-      - name: Auto-merge the PR
-        env:
-          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ -n "$PR_URL" ]]; then
-            echo "Auto-merging PR: $PR_URL"
-            gh pr merge "$PR_URL" --auto --merge
-          fi
-        
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [build-search-chat, build-web-cli]
+    needs: [build-and-publish]
     if: failure()
     steps:
       - name: Checkout code
