@@ -26,12 +26,12 @@ if [[ "$STATUS" == "success" ]]; then
   COLOR="green"
   EMOJI="✅"
   TITLE="Workflow Succeeded: ${WORKFLOW_NAME}"
-  MESSAGE_MARKDOWN=$(printf "**Triggered by:** *%s* \n\n The workflow completed successfully." "${ACTOR}")
+  MESSAGE_MARKDOWN=$(printf "**Triggered by:** *%s* \\n\\n The workflow completed successfully." "${ACTOR}")
 else
   COLOR="red"
   EMOJI="🚨"
   TITLE="Workflow Failed: ${WORKFLOW_NAME}"
-  MESSAGE_MARKDOWN=$(printf "**Triggered by:** *%s* \n\n Please investigate the failed job(s)." "${ACTOR}")
+  MESSAGE_MARKDOWN=$(printf "**Triggered by:** *%s* \\n\\n Please investigate the failed job(s)." "${ACTOR}")
 fi
 
 # --- Create temp JSON file safely ---

@@ -169,7 +169,7 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
           commit-message: "chore: release ${{ env.COMPONENT }} v${{ env.VERSION }}"
           branch: "release/${{ env.COMPONENT }}-v${{ env.VERSION }}"
-          title: "Release: ${{ env.COMPONENT }} v${{ env.VERSION }}"
+          title: "bumpver: ${{ env.COMPONENT }} v${{ env.VERSION }}"
           body: |
             Automated release for ${{ env.COMPONENT }}.
             Version bumped to ${{ env.VERSION }}.
