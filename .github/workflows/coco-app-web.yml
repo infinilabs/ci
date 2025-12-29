@@ -136,7 +136,7 @@ jobs:
           if [[ -z "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: Invalid version format '$VERSION'." >&2; exit 1
           fi
-
+          cd ${{ env.WORK_DIR }}
           echo "Setting version to $VERSION..."
 
           if [[ "$VERSION_FILE" == "tsup" ]]; then
