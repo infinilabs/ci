@@ -32,7 +32,7 @@ on:
       PUBLISH_CLI_VERSION:
         description: 'Web-CLI Version'
         required: true
-        default: "0.0.40"
+        default: "0.0.41"
       PUBLISH_FILTER_VERSION:
         description: 'Filter Version'
         required: true
