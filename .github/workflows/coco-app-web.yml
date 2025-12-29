@@ -260,6 +260,17 @@ jobs:
               
               echo "Processing: $COMP -> $VER (Key: $KEY)"
               
+              # --- Build Title String ---
+              # Format: component@version
+              ITEM="${COMP}@${VER}"
+              
+              # Append comma if list is not empty
+              if [[ -z "$TITLE_LIST" ]]; then
+                TITLE_LIST="$ITEM"
+              else
+                TITLE_LIST="$TITLE_LIST, $ITEM"
+              fi
+
               # 1. Update YAML using sed to preserve formatting
               # Match the block starting with KEY, find the 'default' line, and replace the value
               if sed -i "/$KEY:/,/default:/s/default: \"[^\"]*\"/default: \"$VER\"/" "$WORKFLOW_PATH"; then
@@ -277,8 +288,10 @@ jobs:
             fi
           done
           
+          # Output variables for the next step
           if [[ $UPDATES_COUNT -gt 0 ]]; then
              echo "has_updates=true" >> $GITHUB_OUTPUT
+             echo "title_info=$TITLE_LIST" >> $GITHUB_OUTPUT
           else
              echo "has_updates=false" >> $GITHUB_OUTPUT
           fi
@@ -289,10 +302,11 @@ jobs:
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
-          commit-message: "chore: update versions after release"
-          branch: "release/batch-update-${{ github.run_id }}"
-          title: "chore: batch update component versions"
-          body: "Automated update for component versions in workflow and config."
+          commit-message: "bumpver: publish ${{ steps.update.outputs.title_info }} to npm"
+          branch: "release/publish-npm-${{ github.run_id }}"
+          title: "bumpver: publish ${{ steps.update.outputs.title_info }} to npm"
+          body: |
+            Automated publish to npm: ${{ steps.update.outputs.title_info }}
           labels: |
             auto-merge
             automated
