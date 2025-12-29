@@ -148,9 +148,11 @@ jobs:
             sed -i "s/version:\s*\"[^\"]*\"/version: \"$VERSION\"/" tsup.config.ts
             grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' tsup.config.ts
           else
-            tmp=$(mktemp)
-            jq --arg v "$VERSION" '.version = $v' package.json > "$tmp" && mv "$tmp" package.json
-            grep "\"version\": \"$VERSION\"" package.json
+            tmp=$(mktemp) && \
+            jq --arg v "$VERSION" --arg url "$REPO_URL" \
+              '.version = $v | .repository = { type: "git", url: $url }' \
+              package.json > "$tmp" && \
+            mv "$tmp" package.json
           fi
       - name: Enable web adapter (conditional)
         if: ${{ env.ADAPTER == 'true' }}
@@ -172,8 +174,12 @@ jobs:
         run: |
           cd ${{ env.DIST_DIR }}
 
-          tmp=$(mktemp)
-          jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
+          if grep -wq "$url" package.json; then
+            echo "Repository url already set in package.json"
+          else
+            tmp=$(mktemp)
+            jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
+          fi
 
           echo "Publishing to NPM..."
           eval "$PUBLISH_CMD"
