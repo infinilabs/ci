@@ -54,6 +54,7 @@ jobs:
               "repo_name": "coco-app",
               "input_key": "PUBLISH_CHAT_VERSION",
               "build_cmd": "pnpm run build:web",
+              "work_dir": ".",
               "dist_dir": "out/search-chat",
               "use_ssh": false,
               "version_file": "tsup",
@@ -63,6 +64,7 @@ jobs:
               "repo_name": "ui-web-cli",
               "input_key": "PUBLISH_CLI_VERSION",
               "build_cmd": "pnpm run build",
+              "work_dir": ".",
               "dist_dir": ".",
               "use_ssh": true,
               "version_file": "package.json",
@@ -71,8 +73,9 @@ jobs:
             "filter": {
               "repo_name": "ui-common",
               "input_key": "PUBLISH_FILTER_VERSION",
-              "build_cmd": "cd packages/Filter && pnpm run build",
-              "dist_dir": ".",
+              "build_cmd": "pnpm run build",
+              "work_dir": "packages/Filter",
+              "dist_dir": "packages/Filter/dist",
               "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
@@ -93,6 +96,7 @@ jobs:
 
           # 3. get other config values
           BUILD_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].build_cmd")
+          WORK_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].work_dir")
           DIST_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].dist_dir")
           USE_SSH=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].use_ssh")
           VERSION_FILE=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].version_file")
@@ -150,10 +154,13 @@ jobs:
           [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || echo "Skip adapter"
       - name: Install dependencies for ${{ env.COMPONENT }} - ${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
-        run: pnpm install
+        run:
+          cd ${{ env.WORK_DIR }} 
+          pnpm install
       - name: Build ${{ env.COMPONENT }} - ${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
         run: |
+          cd ${{ env.WORK_DIR }}
           echo "Running build: $BUILD_CMD"
           eval "$BUILD_CMD"
       - name: Inject Repository & Publish for ${{ env.COMPONENT}} - ${{ env.VERSION }}
