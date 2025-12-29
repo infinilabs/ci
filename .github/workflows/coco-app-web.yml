@@ -91,7 +91,7 @@ jobs:
             done
             MATRIX_JSON=$(printf '%s\n' "${MATRIX_ARRAY[@]}" | jq -s -c .)
             
-            echo -e "Final Matrix: \n" && echo "$MATRIX_JSON" | jq '.[]'
+            echo -e "\nFinal Matrix: " && echo "$MATRIX_JSON" | jq '.[]'
             echo "has_repos=true" >> $GITHUB_OUTPUT
             echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
           fi
