@@ -42,6 +42,7 @@ jobs:
       - name: Generate publish matrix
         id: set-matrix
         run: |
+          echo "Generating publish matrix..."
           if [[ ! -f "$CONFIG_FILE" ]]; then echo "Error: Config not found"; exit 1; fi
           CONFIG=$(cat "$CONFIG_FILE")
           REPOS=$(echo "$CONFIG" | jq -r 'keys[]')
