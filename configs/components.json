@@ -7,7 +7,7 @@
     "adapter_script": true,
     "components": {
       "search-chat": {
-        "current_version": "1.3.9",
+        "current_version": "1.3.10",
         "work_dir": ".",
         "dist_dir": "out/search-chat"
       }
@@ -21,7 +21,7 @@
     "adapter_script": false,
     "components": {
       "ui-web-cli": {
-        "current_version": "0.0.42",
+        "current_version": "0.0.43",
         "work_dir": ".",
         "dist_dir": "."
       }
@@ -35,32 +35,32 @@
     "adapter_script": false,
     "components": {
       "filter": {
-        "current_version": "0.0.8",
+        "current_version": "0.0.9",
         "work_dir": "packages/Filter",
         "dist_dir": "packages/Filter"
       },
       "search-results": {
-        "current_version": "0.0.3",
+        "current_version": "0.0.4",
         "work_dir": "packages/SearchResults",
         "dist_dir": "packages/SearchResults"
       },
       "entity-ui": {
-        "current_version": "0.0.9",
+        "current_version": "0.0.10",
         "work_dir": "packages/EntityUI",
         "dist_dir": "packages/EntityUI"
       },
       "custom-icons": {
-        "current_version": "0.0.9",
+        "current_version": "0.0.10",
         "work_dir": "packages/CustomIcons",
         "dist_dir": "packages/CustomIcons"
       },
       "dropdownlist": {
-        "current_version": "1.3.4",
+        "current_version": "1.3.5",
         "work_dir": "packages/DropdownList",
         "dist_dir": "packages/DropdownList"
       },
       "datepicker": {
-        "current_version": "0.0.6",
+        "current_version": "0.0.8",
         "work_dir": "packages/DatePicker",
         "dist_dir": "packages/DatePicker"
       }
