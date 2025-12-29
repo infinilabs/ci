@@ -252,10 +252,10 @@ jobs:
               ITEM="${COMP}@${VER}"
               if [[ -z "$TITLE_LIST" ]]; then TITLE_LIST="$ITEM"; else TITLE_LIST="$TITLE_LIST, $ITEM"; fi
 
-              # 1. Update YAML (UI Default) - Safer sed logic
+              # 1. Update YAML (Handle One-line Object Syntax)
+              # Matches:   SEARCH_CHAT_VERSION: { ... default: "1.3.8" }
               if grep -q "$KEY:" "$WORKFLOW_PATH"; then
-                 # Match KEY line, search until default, replace value
-                 sed -i "/$KEY:/,/default:/ s/default: \"[^\"]*\"/default: \"$VER\"/" "$WORKFLOW_PATH"
+                 sed -i "/^ *$KEY:/ s/default: \"[^\"]*\"/default: \"$VER\"/" "$WORKFLOW_PATH"
               fi
               
               # 2. Update JSON (Nested Structure)
