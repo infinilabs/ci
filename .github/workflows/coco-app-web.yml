@@ -36,7 +36,7 @@ on:
       PUBLISH_FILTER_VERSION:
         description: 'Filter Version'
         required: true
-        default: "0.0.1"
+        default: "0.0.6"
         # new-component: PUBLISH_NEW_VERSION ...
 jobs:
   build-and-publish:
