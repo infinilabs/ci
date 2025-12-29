@@ -75,7 +75,7 @@ jobs:
               "input_key": "PUBLISH_FILTER_VERSION",
               "build_cmd": "pnpm run build",
               "work_dir": "packages/Filter",
-              "dist_dir": "packages/Filter/dist",
+              "dist_dir": "packages/Filter",
               "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
