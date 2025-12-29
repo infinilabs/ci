@@ -21,6 +21,7 @@ on:
         options:
           - ui-web-cli
           - search-chat
+          - filter
           # new-component
         required: true
         default: search-chat
@@ -32,7 +33,11 @@ on:
         description: 'Web-CLI Version'
         required: true
         default: "0.0.40"
-        # new-component: PUBLISH_NEW_VERSION ...
+      PUBLISH_FILTER_VERSION:
+        description: 'Filter Version'
+        required: true
+        default: "0.0.1"
+      # new-component: PUBLISH_NEW_VERSION ...
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -60,6 +65,15 @@ jobs:
               "build_cmd": "pnpm run build",
               "dist_dir": ".",
               "use_ssh": true,
+              "version_file": "package.json",
+              "adapter_script": false
+            },
+            "filter": {
+              "repo_name": "ui-common",
+              "input_key": "PUBLISH_FILTER_VERSION",
+              "build_cmd": "cd packages/Filter && pnpm run build",
+              "dist_dir": ".",
+              "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
             }
