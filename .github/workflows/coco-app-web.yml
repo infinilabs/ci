@@ -7,135 +7,141 @@ env:
   REPO_URL: "https://github.com/infinilabs/ci"
   NPM_REGISTRY: "https://registry.npmjs.org"
   WORKFLOW_FILE: ".github/workflows/coco-app-web.yml"
+  CONFIG_FILE: "configs/components.json"
   NODE_OPTIONS: "--max_old_space_size=8192"
+
 permissions:
   contents: write
   pull-requests: write
   id-token: write
+
 on:
   workflow_dispatch:
     inputs:
-      PUBLISH_COMPONENT:
-        description: 'Component to publish'
-        type: choice
-        options:
-          - ui-web-cli
-          - search-chat
-          - filter
-          # new-component
-        required: true
-        default: search-chat
-      PUBLISH_CHAT_VERSION:
-        description: 'Search-Chat Version'
+      # --- Component 1: Search Chat ---
+      PUBLISH_SEARCH_CHAT:
+        description: 'Publish search-chat?'
+        type: boolean
+        default: false
+      PUBLISH_SEARCH_CHAT_VERSION:
+        description: 'Search Chat Version'
         required: true
         default: "1.3.6"
+
+      # --- Component 2: Web CLI ---
+      PUBLISH_UI_WEB_CLI:
+        description: 'Publish ui-web-cli?'
+        type: boolean
+        default: false
       PUBLISH_CLI_VERSION:
-        description: 'Web-CLI Version'
+        description: 'CLI Version'
         required: true
         default: "0.0.41"
+
+      # --- Component 3: Filter ---
+      PUBLISH_FILTER:
+        description: 'Publish filter?'
+        type: boolean
+        default: false
       PUBLISH_FILTER_VERSION:
         description: 'Filter Version'
         required: true
         default: "0.0.6"
-        # new-component: PUBLISH_NEW_VERSION ...
+
 jobs:
-  build-and-publish:
+  prepare-matrix:
     runs-on: ubuntu-latest
-    env:
-      INPUTS_JSON: ${{ toJson(inputs) }}
-      COMPONENT: ${{ inputs.PUBLISH_COMPONENT }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_components: ${{ steps.set-matrix.outputs.has_components }}
     steps:
-      - name: Generate configuration for ${{ env.COMPONENT }}
-        id: config
+      - id: set-matrix
         run: |
-          # config map for components
-          CONFIG_JSON='{
-            "search-chat": {
-              "repo_name": "coco-app",
-              "input_key": "PUBLISH_CHAT_VERSION",
-              "work_dir": ".",
-              "dist_dir": "out/search-chat",
-              "build_cmd": "pnpm build:web",
-              "publish_cmd": "npm publish",
-              "use_ssh": false,
-              "version_file": "tsup",
-              "adapter_script": true
-            },
-            "ui-web-cli": {
-              "repo_name": "ui-web-cli",
-              "input_key": "PUBLISH_CLI_VERSION",
-              "work_dir": ".",
-              "dist_dir": ".",
-              "build_cmd": "pnpm build",
-              "publish_cmd": "npm publish",
-              "use_ssh": true,
-              "version_file": "package.json",
-              "adapter_script": false
-            },
-            "filter": {
-              "repo_name": "ui-common",
-              "input_key": "PUBLISH_FILTER_VERSION",
-              "work_dir": "packages/Filter",
-              "dist_dir": "packages/Filter",
-              "build_cmd": "pnpm build",
-              "publish_cmd": "npm publish",
-              "use_ssh": false,
-              "version_file": "package.json",
-              "adapter_script": false
-            }
-          }'
-
-          # 1. get repo name and input key from config
-          REPO_NAME=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].repo_name")
-          INPUT_KEY=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].input_key")
-
-          if [[ "$REPO_NAME" == "null" ]]; then
-            echo "Error: Configuration for component '$COMPONENT' not found."
-            exit 1
+          COMPONENTS=()
+          
+          if [[ "${{ inputs.PUBLISH_SEARCH_CHAT }}" == "true" ]]; then COMPONENTS+=("search-chat"); fi
+          if [[ "${{ inputs.PUBLISH_UI_WEB_CLI }}" == "true" ]]; then COMPONENTS+=("ui-web-cli"); fi
+          if [[ "${{ inputs.PUBLISH_FILTER }}" == "true" ]]; then COMPONENTS+=("filter"); fi
+          
+          if [ ${#COMPONENTS[@]} -eq 0 ]; then
+            echo "has_components=false" >> $GITHUB_OUTPUT
+            echo "matrix=[]" >> $GITHUB_OUTPUT
+          else
+            MATRIX_JSON=$(printf '%s\n' "${COMPONENTS[@]}" | jq -R . | jq -s -c .)
+            echo "has_components=true" >> $GITHUB_OUTPUT
+            echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
           fi
 
-          # 2. get version from inputs
+  build-and-publish:
+    needs: prepare-matrix
+    if: ${{ needs.prepare-matrix.outputs.has_components == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+    env:
+      INPUTS_JSON: ${{ toJson(inputs) }}
+      COMPONENT: ${{ matrix.component }}
+    steps:
+      - name: Checkout ci repository
+        uses: actions/checkout@v4
+
+      - name: Load Config for ${{ env.COMPONENT }}
+        id: config
+        run: |
+          if [[ ! -f "$CONFIG_FILE" ]]; then echo "Error: Config file '$CONFIG_FILE' not found!"; exit 1; fi
+          
+          CONFIG_CONTENT=$(cat "$CONFIG_FILE")
+          
+          REPO_NAME=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].repo_name")
+          REPO_PRIVATE=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].repo_private")
+          INPUT_KEY=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].input_key")
+          
+          if [[ "$REPO_NAME" == "null" ]]; then echo "Error: Component '$COMPONENT' not found."; exit 1; fi
+
+          # Get version from input
           VERSION=$(echo "$INPUTS_JSON" | jq -r ".[\"$INPUT_KEY\"]")
 
-          # 3. get other config values
-          WORK_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].work_dir")
-          DIST_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].dist_dir")
-          BUILD_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].build_cmd")
-          PUBLISH_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].publish_cmd")
-          USE_SSH=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].use_ssh")
-          VERSION_FILE=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].version_file")
-          ADAPTER=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].adapter_script")
+          WORK_DIR=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].work_dir")
+          DIST_DIR=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].dist_dir")
+          BUILD_CMD=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].build_cmd")
+          PUBLISH_CMD=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].publish_cmd")
+          VERSION_FILE=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].version_file")
+          ADAPTER=$(echo "$CONFIG_CONTENT" | jq -r ".[\"$COMPONENT\"].adapter_script")
 
-          # 4. write to env
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "REPO_PRIVATE=$REPO_PRIVATE" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
           echo "WORK_DIR=$WORK_DIR" >> $GITHUB_ENV
           echo "DIST_DIR=$DIST_DIR" >> $GITHUB_ENV
           echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
           echo "PUBLISH_CMD=$PUBLISH_CMD" >> $GITHUB_ENV
-          echo "USE_SSH=$USE_SSH" >> $GITHUB_ENV
           echo "VERSION_FILE=$VERSION_FILE" >> $GITHUB_ENV
           echo "ADAPTER=$ADAPTER" >> $GITHUB_ENV
 
-          echo "::notice title=Config Loaded::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
-      - name: Checkout ci repository
-        uses: actions/checkout@v4
+          echo "::notice title=Config::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
+
       - name: Checkout ${{ env.REPO_NAME }} repository
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO_NAME }}
           ref: main
           path: ${{ env.REPO_NAME }}
-          ssh-key: ${{ env.USE_SSH == 'true' && secrets.SSH_PRIVATE_KEY || '' }}
+          ssh-key: ${{ env.REPO_PRIVATE == 'true' && secrets.SSH_PRIVATE_KEY || '' }}
+
       - name: Setup node-${{ env.NODEJS_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          registry-url: ${{ env.NPM_REGISTRY }}
+
       - uses: pnpm/action-setup@v4
         with:
           version: latest
-      - name: Validate and set version for ${{ env.COMPONENT }} - ${{ env.VERSION }}
+
+      - name: Validate and set version
         working-directory: ${{ env.REPO_NAME }}
         run: |
           if [[ -z "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -154,67 +160,112 @@ jobs:
               package.json > "$tmp" && \
             mv "$tmp" package.json
           fi
+
       - name: Enable web adapter (conditional)
         if: ${{ env.ADAPTER == 'true' }}
         working-directory: ${{ env.REPO_NAME }}
         run: |
           TARGET="src/utils/platformAdapter.ts"
           [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || echo "Skip adapter"
-      - name: Install dependencies for ${{ env.COMPONENT }} - ${{ env.VERSION }}
+
+      - name: Install dependencies
         working-directory: ${{ env.REPO_NAME }}
         run: cd ${{ env.WORK_DIR }} && pnpm install
-      - name: Build ${{ env.COMPONENT }} - ${{ env.VERSION }}
+
+      - name: Build
         working-directory: ${{ env.REPO_NAME }}
-        run: |
-          cd ${{ env.WORK_DIR }}
-          echo "Running build: $BUILD_CMD"
-          eval "$BUILD_CMD"
-      - name: Inject Repository & Publish for ${{ env.COMPONENT}} - ${{ env.VERSION }}
+        run: cd ${{ env.WORK_DIR }} && eval "$BUILD_CMD"
+
+      - name: Publish
         working-directory: ${{ env.REPO_NAME }}
         run: |
           cd ${{ env.DIST_DIR }}
-
-          if grep -wq "$url" package.json; then
-            echo "Repository url already set in package.json"
+          if grep -q "$url" package.json; then
+            echo "Repository URL already set."
           else
+            echo "Setting repository URL in package.json..."
             tmp=$(mktemp)
             jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
           fi
 
-          echo "Publishing to $COMPONENT-$VERSION NPM..."
+          echo "Publishing $COMPONENT@$VERSION to NPM..."
           eval "$PUBLISH_CMD"
-      - name: Cleanup external repos
+
+      - name: Save Release Info
         run: |
-          echo "Cleaning up external repositories..."
-          rm -rf ${{ env.REPO_NAME }}
-          git status
-      - name: Update workflow default version
+          mkdir -p release_info
+          # Format: INPUT_KEY=VERSION
+          echo "${{ env.INPUT_KEY }}=${{ env.VERSION }}" > release_info/${{ env.COMPONENT }}.txt
+          # Also save description key if you want to update description dynamically (harder)
+          
+      - name: Upload Release Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-info-${{ env.COMPONENT }}
+          path: release_info/*.txt
+          retention-days: 1
+
+  # Job 3: Update Workflow (Serial) - Single Commit
+  update-workflow:
+    needs: build-and-publish
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ci repository
+        uses: actions/checkout@v4
+
+      - name: Download all release infos
+        uses: actions/download-artifact@v4
+        with:
+          path: all_releases
+          pattern: release-info-*
+          merge-multiple: true
+
+      - name: Update Workflow File
         run: |
           FILE="$GITHUB_WORKSPACE/$WORKFLOW_FILE"
-          # e.g: .on.workflow_dispatch.inputs.PUBLISH_CHAT_VERSION.default = "1.3.2"
-          yq -i ".on.workflow_dispatch.inputs.${{ env.INPUT_KEY }}.default = \"${{ env.VERSION }}\"" "$FILE"
-      - name: Create pull request for version bump of ${{ env.COMPONENT }} - ${{ env.VERSION }}
+          
+          # Iterate all success components
+          for f in all_releases/*.txt; do
+            if [[ -f "$f" ]]; then
+              line=$(cat "$f")
+              key=$(echo "$line" | cut -d'=' -f1)
+              val=$(echo "$line" | cut -d'=' -f2)
+              
+              echo "Updating default value for input: $key -> $val"
+              
+              # Update default value
+              yq -i ".on.workflow_dispatch.inputs.$key.default = \"$val\"" "$FILE"
+            fi
+          done
+
+      - name: Create Combined Pull Request
         uses: peter-evans/create-pull-request@v7
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
-          commit-message: "chore: release ${{ env.COMPONENT }} v${{ env.VERSION }}"
-          branch: "release/${{ env.COMPONENT }}-v${{ env.VERSION }}"
-          title: "bumpver: ${{ env.COMPONENT }} v${{ env.VERSION }}"
-          body: |
-            Automated release for ${{ env.COMPONENT }}.
-            Version bumped to ${{ env.VERSION }}.
-          labels: "auto-merge, automated"
+          commit-message: "chore: update component versions after release"
+          branch: "release/batch-update-${{ github.run_id }}"
+          title: "chore: batch update component versions"
+          body: "Automated update for component versions in workflow file."
+          labels: |
+            auto-merge
+            automated
           delete-branch: true
+          add-paths: |
+            .github/workflows/*.yml
+
       - name: Auto-merge the pr
         if: ${{ steps.create-pr.outputs.pull-request-url }}
         env:
           PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: gh pr merge "$PR_URL" --auto --merge
+
   notify_after_publish:
     runs-on: ubuntu-latest
-    needs: [build-and-publish]
+    if: always()
+    needs: [build-and-publish, update-workflow]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -226,5 +277,5 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           ACTOR: ${{ github.triggering_actor }}
           SERVER_URL: ${{ github.server_url }}
-          STATUS: ${{ needs.build-and-publish.result }}
+          STATUS: ${{ needs.update-workflow.result }}
         run: $GITHUB_WORKSPACE/scripts/feishu_message.sh

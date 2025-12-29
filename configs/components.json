@@ -1,0 +1,32 @@
+{
+  "search-chat": {
+    "repo_name": "coco-app",
+    "repo_private": false,
+    "version_file": "tsup",
+    "work_dir": ".",
+    "dist_dir": "out/search-chat",
+    "build_cmd": "pnpm build:web",
+    "publish_cmd": "npm publish",
+    "adapter_script": true
+  },
+  "ui-web-cli": {
+    "repo_name": "ui-web-cli",
+    "repo_private": true,
+    "version_file": "package.json",
+    "work_dir": ".",
+    "dist_dir": ".",
+    "build_cmd": "pnpm build",
+    "publish_cmd": "npm publish",
+    "adapter_script": false
+  },
+  "filter": {
+    "repo_name": "ui-common",
+    "repo_private": false,
+    "version_file": "package.json",
+    "work_dir": "packages/Filter",
+    "dist_dir": "packages/Filter",
+    "build_cmd": "pnpm build",
+    "publish_cmd": "npm publish",
+    "adapter_script": false
+  }
+}
