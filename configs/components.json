@@ -1,36 +1,69 @@
 {
-  "search-chat": {
-    "repo_name": "coco-app",
+  "coco-app": {
     "repo_private": false,
-    "current_version": "1.3.8",
-    "version_file": "tsup.config.ts",
-    "work_dir": ".",
-    "dist_dir": "out/search-chat",
     "build_cmd": "pnpm build:web",
     "publish_cmd": "npm publish",
+    "version_file": "tsup.config.ts",
     "adapter_script": true,
-    "input_key": "CHAT_VERSION"
+    "components": {
+      "search-chat": {
+        "current_version": "1.3.8",
+        "work_dir": ".",
+        "dist_dir": "out/search-chat"
+      }
+    }
   },
   "ui-web-cli": {
-    "repo_name": "ui-web-cli",
     "repo_private": true,
-    "current_version": "0.0.41",
-    "version_file": "package.json",
-    "work_dir": ".",
-    "dist_dir": ".",
     "build_cmd": "pnpm build",
     "publish_cmd": "npm publish",
-    "adapter_script": false
+    "version_file": "package.json",
+    "adapter_script": false,
+    "components": {
+      "ui-web-cli": {
+        "current_version": "0.0.41",
+        "work_dir": ".",
+        "dist_dir": "."
+      }
+    }
   },
-  "filter": {
-    "repo_name": "ui-common",
+  "ui-common": {
     "repo_private": false,
-    "current_version": "0.0.8",
-    "version_file": "package.json",
-    "work_dir": "packages/Filter",
-    "dist_dir": "packages/Filter",
     "build_cmd": "pnpm build",
     "publish_cmd": "npm publish",
-    "adapter_script": false
+    "version_file": "package.json",
+    "adapter_script": false,
+    "components": {
+      "filter": {
+        "current_version": "0.0.8",
+        "work_dir": "packages/Filter",
+        "dist_dir": "packages/Filter"
+      },
+      "search-results": {
+        "current_version": "0.0.2",
+        "work_dir": "packages/SearchResults",
+        "dist_dir": "packages/SearchResults"
+      },
+      "entity-ui": {
+        "current_version": "0.0.6",
+        "work_dir": "packages/EntityUI",
+        "dist_dir": "packages/EntityUI"
+      },
+      "custom-icons": {
+        "current_version": "0.0.5",
+        "work_dir": "packages/CustomIcons",
+        "dist_dir": "packages/CustomIcons"
+      },
+      "dropdownlist": {
+        "current_version": "1.3.4",
+        "work_dir": "packages/DropdownList",
+        "dist_dir": "packages/DropdownList"
+      },
+      "datepicker": {
+        "current_version": "0.0.6",
+        "work_dir": "packages/DatePicker",
+        "dist_dir": "packages/DatePicker"
+      }
+    }
   }
 }

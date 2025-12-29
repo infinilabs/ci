@@ -6,7 +6,7 @@ env:
   NODEJS_VERSION: 24
   REPO_URL: "https://github.com/infinilabs/ci"
   NPM_REGISTRY: "https://registry.npmjs.org"
-  WORKFLOW_FILE: ".github/workflows/coco-app-web.yml"
+  WORKFLOW_FILE: ".github/workflows/publish.yml"
   CONFIG_FILE: "configs/components.json"
   NODE_OPTIONS: "--max_old_space_size=8192"
 
@@ -18,131 +18,103 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
-       # --- Naming Convention: {COMPONENT_UPPER}_VERSION ---
-      SEARCH_CHAT_VERSION:
-        description: 'Search-Chat Version'
-        required: true
-        default: "1.3.8"
-      UI_WEB_CLI_VERSION:
-        description: 'Web-CLI Version'
-        required: true
-        default: "0.0.41"
-      FILTER_VERSION:
-        description: 'Filter Version'
-        required: true
-        default: "0.0.8"
+      # --- Component Versions (Change value to trigger publish) ---
+      SEARCH_CHAT_VERSION: { description: 'search-chat Version', required: true, default: "1.3.8" }
+      UI_WEB_CLI_VERSION: { description: 'ui-web-cli Version', required: true, default: "0.0.41" }
+      FILTER_VERSION: { description: 'filter Version', required: true, default: "0.0.8" }
+      SEARCH_RESULTS_VERSION: { description: 'search-results Version', required: true, default: "0.0.2" }
+      ENTITY_UI_VERSION: { description: 'entity-ui Version', required: true, default: "0.0.6" }
+      CUSTOM_ICONS_VERSION: { description: 'custom-icons Version', required: true, default: "0.0.5" }
+      DROPDOWNLIST_VERSION: { description: 'dropdownlist Version', required: true, default: "1.3.4" }
+      DATEPICKER_VERSION: { description: 'datepicker Version', required: true, default: "0.0.6" }
 
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_components: ${{ steps.set-matrix.outputs.has_components }}
+      has_repos: ${{ steps.set-matrix.outputs.has_repos }}
     env:
       INPUTS_JSON: ${{ toJson(inputs) }}
     steps:
-      - name: Checkout ci repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Build Matrix
-        id: set-matrix
+      - uses: actions/checkout@v4
+      - id: set-matrix
         run: |
-          if [[ ! -f "$CONFIG_FILE" ]]; then echo "Error: $CONFIG_FILE not found"; exit 1; fi
-
-          CONFIG_CONTENT=$(cat "$CONFIG_FILE")
-          ALL_COMPONENTS=$(echo "$CONFIG_CONTENT" | jq -r 'keys[]')
+          if [[ ! -f "$CONFIG_FILE" ]]; then echo "Error: Config not found"; exit 1; fi
+          CONFIG=$(cat "$CONFIG_FILE")
+          REPOS=$(echo "$CONFIG" | jq -r 'keys[]')
           
-          SELECTED_COMPONENTS=()
+          declare -A REPO_GROUPS
+          HAS_CHANGES=false
 
           echo "Checking version changes..."
 
-          for comp in $ALL_COMPONENTS; do
-            # 1. Derive Input Key via Naming Convention
-            # search-chat -> SEARCH_CHAT_VERSION
-            SAFE_NAME=$(echo "$comp" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-            INPUT_KEY="${SAFE_NAME}_VERSION"
+          for repo in $REPOS; do
+            COMPS=$(echo "$CONFIG" | jq -r --arg r "$repo" '.[$r].components | keys[]')
             
-            # 2. Get current version from Config JSON
-            CURRENT_VER=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$comp" '.[$c].current_version')
-            
-            # 3. Get input version from Workflow Inputs
-            INPUT_VER=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
-            
-            echo "  Component: $comp"
-            echo "    - Key: $INPUT_KEY"
-            echo "    - Config: $CURRENT_VER | Input: $INPUT_VER"
+            for comp in $COMPS; do
+              # Naming Convention: search-chat -> SEARCH_CHAT_VERSION
+              SAFE_NAME=$(echo "$comp" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+              INPUT_KEY="${SAFE_NAME}_VERSION"
+              
+              # Get Versions (Current from JSON, Input from Dispatch)
+              CURRENT_VER=$(echo "$CONFIG" | jq -r --arg r "$repo" --arg c "$comp" '.[$r].components[$c].current_version')
+              INPUT_VER=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
 
-            # 4. Compare
-            if [[ "$INPUT_VER" != "$CURRENT_VER" && "$INPUT_VER" != "null" ]]; then
-              echo "    -> CHANGED. Adding to build queue."
-              SELECTED_COMPONENTS+=("$comp")
-            else
-              echo "    -> UNCHANGED or Not Found. Skipping."
-            fi
+              # Compare
+              if [[ "$INPUT_VER" != "$CURRENT_VER" && "$INPUT_VER" != "null" ]]; then
+                echo "  [+] $comp ($repo): $CURRENT_VER -> $INPUT_VER"
+                HAS_CHANGES=true
+                if [[ -z "${REPO_GROUPS[$repo]}" ]]; then
+                  REPO_GROUPS[$repo]="$comp"
+                else
+                  REPO_GROUPS[$repo]="${REPO_GROUPS[$repo]} $comp"
+                fi
+              else
+                echo "  [.] $comp: Unchanged"
+              fi
+            done
           done
 
-          if [ ${#SELECTED_COMPONENTS[@]} -eq 0 ]; then
-            echo "::warning::No version changes detected."
-            echo "has_components=false" >> $GITHUB_OUTPUT
+          if [[ "$HAS_CHANGES" == "false" ]]; then
+            echo "has_repos=false" >> $GITHUB_OUTPUT
             echo "matrix=[]" >> $GITHUB_OUTPUT
           else
-            # Generate JSON array
-            MATRIX_JSON=$(printf '%s\n' "${SELECTED_COMPONENTS[@]}" | jq -R . | jq -s -c .)
-            echo "has_components=true" >> $GITHUB_OUTPUT
+            # Build Matrix: [{ "repo": "ui-common", "components": "filter search-results" }, ...]
+            MATRIX_ARRAY=()
+            for repo in "${!REPO_GROUPS[@]}"; do
+              comps="${REPO_GROUPS[$repo]}"
+              ITEM=$(jq -n --arg r "$repo" --arg c "$comps" '{repo: $r, components: $c}')
+              MATRIX_ARRAY+=("$ITEM")
+            done
+            MATRIX_JSON=$(printf '%s\n' "${MATRIX_ARRAY[@]}" | jq -s -c .)
+            
+            echo "Final Matrix: $MATRIX_JSON"
+            echo "has_repos=true" >> $GITHUB_OUTPUT
             echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
           fi
 
   publish:
     needs: prepare-matrix
-    if: ${{ needs.prepare-matrix.outputs.has_components == 'true' }}
+    if: ${{ needs.prepare-matrix.outputs.has_repos == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        component: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
-    
+        include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
     env:
       INPUTS_JSON: ${{ toJson(inputs) }}
-      COMPONENT: ${{ matrix.component }}
-
+      REPO_NAME: ${{ matrix.repo }}
+      COMPONENTS: ${{ matrix.components }}
     steps:
       - name: Checkout ci repository
         uses: actions/checkout@v4
 
-      - name: Load configuration for ${{ env.COMPONENT }}
-        id: config
+      - name: Load repo config
         run: |
-          CONFIG_CONTENT=$(cat "$CONFIG_FILE")
-          
-          # 1. Derive Input Key (Same logic as Job 1)
-          SAFE_NAME=$(echo "$COMPONENT" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-          INPUT_KEY="${SAFE_NAME}_VERSION"
-          
-          # 2. Get Version
-          VERSION=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
-
-          # 3. Get Static Configs
-          REPO_NAME=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].repo_name')
-          WORK_DIR=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].work_dir')
-          DIST_DIR=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].dist_dir')
-          BUILD_CMD=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].build_cmd')
-          PUBLISH_CMD=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].publish_cmd')
-          REPO_PRIVATE=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].repo_private')
-          VERSION_FILE=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].version_file')
-          ADAPTER=$(echo "$CONFIG_CONTENT" | jq -r --arg c "$COMPONENT" '.[$c].adapter_script')
-
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
-          echo "WORK_DIR=$WORK_DIR" >> $GITHUB_ENV
-          echo "DIST_DIR=$DIST_DIR" >> $GITHUB_ENV
-          echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
-          echo "PUBLISH_CMD=$PUBLISH_CMD" >> $GITHUB_ENV
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          CONFIG=$(cat "$CONFIG_FILE")
+          REPO_PRIVATE=$(echo "$CONFIG" | jq -r --arg r "$REPO_NAME" '.[$r].repo_private')
           echo "REPO_PRIVATE=$REPO_PRIVATE" >> $GITHUB_ENV
-          echo "VERSION_FILE=$VERSION_FILE" >> $GITHUB_ENV
-          echo "ADAPTER=$ADAPTER" >> $GITHUB_ENV
-
-          echo "::notice title=Config::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
 
       - name: Checkout ${{ env.REPO_NAME }} repository
         uses: actions/checkout@v4
@@ -163,68 +135,84 @@ jobs:
         with:
           version: latest
 
-      - name: Validate and set version
+      - name: Process components with ${{ env.COMPONENTS}}@${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
         run: |
-          if [[ -z "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid version format '$VERSION'." >&2; exit 1
-          fi
-          cd ${{ env.WORK_DIR }}
-          echo "Setting version to $COMPONENT@$VERSION in $VERSION_FILE"
-
-          if [[ "$VERSION_FILE" == "tsup.config.ts" ]]; then
-            sed -i "s/version:\s*\"[^\"]*\"/version: \"$VERSION\"/" $VERSION_FILE
-            grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' $VERSION_FILE
-          else
-            tmp=$(mktemp) && \
-            jq --arg v "$VERSION" --arg url "$REPO_URL" \
-              '.version = $v | .repository = { type: "git", url: $url }' \
-              package.json > "$tmp" && \
-            mv "$tmp" package.json
-            grep -oP '"version":\s*"\K[0-9]+\.[0-9]+\.[0-9]+' $VERSION_FILE
-          fi
-
-      - name: Enable web adapter (conditional)
-        if: ${{ env.ADAPTER == 'true' }}
-        working-directory: ${{ env.REPO_NAME }}
-        run: |
-          TARGET="src/utils/platformAdapter.ts"
-          [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || echo "Skip adapter"
-          echo "Adapter script applied to $TARGET"
-
-      - name: Install dependencies
-        working-directory: ${{ env.REPO_NAME }}
-        run: cd ${{ env.WORK_DIR }} && pnpm install
-
-      - name: Build ${{ env.COMPONENT }}@${{ env.VERSION }}
-        working-directory: ${{ env.REPO_NAME }}
-        run: |
-          cd ${{ env.WORK_DIR }}
-          echo "Running build $COMPONENT@$VERSION by $BUILD_CMD"
-          eval "$BUILD_CMD"
-
-      - name: Publish ${{ env.COMPONENT }}@${{ env.VERSION }}
-        working-directory: ${{ env.REPO_NAME }}
-        run: |
-          cd ${{ env.DIST_DIR }}
+          CONFIG=$(cat "$GITHUB_WORKSPACE/$CONFIG_FILE")
           
-          # Re-inject repo URL (overwrite safe)
-          tmp=$(mktemp)
-          jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
+          for CPT in $COMPONENTS; do
+            echo "--------------------------------------------------"
+            echo "Processing: $CPT ($REPO_NAME)"
+            echo "--------------------------------------------------"
+            
+            # --- 1. Config Inheritance ---
+            # Priority: Component Config > Repo Config
+            REPO_ROOT=".[ \"$REPO_NAME\" ]"
+            COMP_ROOT="$REPO_ROOT.components[ \"$CPT\" ]"
+            
+            get_config() {
+                echo "$CONFIG" | jq -r "$COMP_ROOT.$1 // $REPO_ROOT.$1 // empty"
+            }
+            
+            WORK_DIR=$(get_config "work_dir")
+            DIST_DIR=$(get_config "dist_dir")
+            BUILD_CMD=$(get_config "build_cmd")
+            PUBLISH_CMD=$(get_config "publish_cmd")
+            VERSION_FILE=$(get_config "version_file")
+            ADAPTER=$(get_config "adapter_script")
+            
+            # --- 2. Get Version ---
+            SAFE_NAME=$(echo "$CPT" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            INPUT_KEY="${SAFE_NAME}_VERSION"
+            VERSION=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
+            
+            echo "  Target: $VERSION | Dir: $WORK_DIR"
 
-          echo "Publishing $COMPONENT@$VERSION by $PUBLISH_CMD"
-          eval "$PUBLISH_CMD"
+            # --- 3. Set Version ---
+            pushd "$WORK_DIR" > /dev/null
+            if [[ "$VERSION_FILE" == "tsup.config.ts" ]]; then
+               sed -i "s/version:\s*\"[^\"]*\"/version: \"$VERSION\"/" "$VERSION_FILE"
+            else
+               tmp=$(mktemp)
+               jq --arg v "$VERSION" '.version = $v' package.json > "$tmp" && mv "$tmp" package.json
+            fi
+            popd > /dev/null
 
-      - name: Save release info for ${{ env.COMPONENT }}@${{ env.VERSION }}
-        run: |
-          mkdir -p release_info
-          # Content: search-chat|CHAT_VERSION|1.3.7
-          echo "${{ env.COMPONENT }}|${{ env.INPUT_KEY }}|${{ env.VERSION }}" > release_info/${{ env.COMPONENT }}.txt
+            # --- 4. Adapter ---
+            if [[ "$ADAPTER" == "true" ]]; then
+               TARGET="src/utils/platformAdapter.ts"
+               [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || true
+            fi
 
-      - name: Upload release info for ${{ env.COMPONENT }}@${{ env.VERSION }}
+            # --- 5. Install Dependencies ---
+            pushd "$WORK_DIR" > /dev/null
+            echo "  Installing dependencies..."
+            pnpm install
+            popd > /dev/null
+
+            # --- 6. Build ---
+            pushd "$WORK_DIR" > /dev/null
+            echo "  Building..."
+            eval "$BUILD_CMD"
+            popd > /dev/null
+
+            # --- 7. Publish ---
+            pushd "$DIST_DIR" > /dev/null
+            echo "  Publishing..."
+            tmp=$(mktemp)
+            jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
+            eval "$PUBLISH_CMD"
+            popd > /dev/null
+            
+            # --- 8. Save Metadata ---
+            mkdir -p "$GITHUB_WORKSPACE/release_info"
+            echo "${REPO_NAME}|${CPT}|${INPUT_KEY}|${VERSION}" > "$GITHUB_WORKSPACE/release_info/${CPT}.txt"
+          done
+
+      - name: Upload release info for ${{ env.COMPONENTS }}@${{ env.VERSION }}
         uses: actions/upload-artifact@v4
         with:
-          name: release-info-${{ env.COMPONENT }}
+          name: release-info-${{ env.COMPONENTS }}
           path: release_info/*.txt
           retention-days: 1
 
@@ -248,47 +236,37 @@ jobs:
         run: |
           WORKFLOW_PATH="$GITHUB_WORKSPACE/$WORKFLOW_FILE"
           CONFIG_PATH="$GITHUB_WORKSPACE/$CONFIG_FILE"
-          
           UPDATES_COUNT=0
+          TITLE_LIST=""
 
           for f in all_releases/*.txt; do
             if [[ -f "$f" ]]; then
               line=$(cat "$f")
-              COMP=$(echo "$line" | cut -d'|' -f1)
-              KEY=$(echo "$line" | cut -d'|' -f2)
-              VER=$(echo "$line" | cut -d'|' -f3)
+              # Format: REPO|COMP|KEY|VER
+              REPO=$(echo "$line" | cut -d'|' -f1)
+              COMP=$(echo "$line" | cut -d'|' -f2)
+              KEY=$(echo "$line" | cut -d'|' -f3)
+              VER=$(echo "$line" | cut -d'|' -f4)
               
-              echo "Processing: $COMP -> $VER (Key: $KEY)"
-              
-              # --- Build Title String ---
-              # Format: component@version
+              echo "Updating: $COMP -> $VER"
               ITEM="${COMP}@${VER}"
-              
-              # Append comma if list is not empty
-              if [[ -z "$TITLE_LIST" ]]; then
-                TITLE_LIST="$ITEM"
-              else
-                TITLE_LIST="$TITLE_LIST, $ITEM"
-              fi
+              if [[ -z "$TITLE_LIST" ]]; then TITLE_LIST="$ITEM"; else TITLE_LIST="$TITLE_LIST, $ITEM"; fi
 
-              # 1. Update YAML using sed to preserve formatting
-              # Match the block starting with KEY, find the 'default' line, and replace the value
-              if sed -i "/$KEY:/,/default:/s/default: \"[^\"]*\"/default: \"$VER\"/" "$WORKFLOW_PATH"; then
-                 echo "YAML updated successfully."
-              else
-                 echo "Error updating YAML."
-                 exit 1
+              # 1. Update YAML (UI Default) - Safer sed logic
+              if grep -q "$KEY:" "$WORKFLOW_PATH"; then
+                 # Match KEY line, search until default, replace value
+                 sed -i "/$KEY:/,/default:/ s/default: \"[^\"]*\"/default: \"$VER\"/" "$WORKFLOW_PATH"
               fi
               
-              # 2. Update JSON using jq
+              # 2. Update JSON (Nested Structure)
               tmp=$(mktemp)
-              jq --arg c "$COMP" --arg v "$VER" '.[$c].current_version = $v' "$CONFIG_PATH" > "$tmp" && mv "$tmp" "$CONFIG_PATH"
+              jq --arg r "$REPO" --arg c "$COMP" --arg v "$VER" \
+                 '.[$r].components[$c].current_version = $v' "$CONFIG_PATH" > "$tmp" && mv "$tmp" "$CONFIG_PATH"
               
               UPDATES_COUNT=$((UPDATES_COUNT+1))
             fi
           done
           
-          # Output variables for the next step
           if [[ $UPDATES_COUNT -gt 0 ]]; then
              echo "has_updates=true" >> $GITHUB_OUTPUT
              echo "title_info=$TITLE_LIST" >> $GITHUB_OUTPUT
@@ -296,7 +274,7 @@ jobs:
              echo "has_updates=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create combined pull request
+      - name: Create bumpver pull request
         if: ${{ steps.update.outputs.has_updates == 'true' }}
         uses: peter-evans/create-pull-request@v7
         id: create-pr
@@ -305,11 +283,8 @@ jobs:
           commit-message: "bumpver: publish ${{ steps.update.outputs.title_info }} to npm"
           branch: "release/publish-npm-${{ github.run_id }}"
           title: "bumpver: publish ${{ steps.update.outputs.title_info }} to npm"
-          body: |
-            Automated publish to npm: ${{ steps.update.outputs.title_info }}
-          labels: |
-            auto-merge
-            automated
+          body: "Automated publish to npm: ${{ steps.update.outputs.title_info }}"
+          labels: "auto-merge, automated"
           delete-branch: true
           add-paths: |
             ${{ env.WORKFLOW_FILE }}
@@ -325,17 +300,15 @@ jobs:
   notify_final:
     runs-on: ubuntu-latest
     if: always()
-    needs: [update-workflow, publish]
+    needs: [publish,update-workflow]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Send Feishu Notification
+      - uses: actions/checkout@v4
+      - name: Notify message via feishu
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
           REPO_NAME: ${{ github.repository }}
           WORKFLOW_NAME: ${{ github.workflow }}
           RUN_ID: ${{ github.run_id }}
           ACTOR: ${{ github.triggering_actor }}
-          SERVER_URL: ${{ github.server_url }}
           STATUS: ${{ needs.update-workflow.result == 'skipped' && needs.publish.result || needs.update-workflow.result }}
         run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
