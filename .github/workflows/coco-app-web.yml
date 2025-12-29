@@ -37,8 +37,10 @@ jobs:
     env:
       INPUTS_JSON: ${{ toJson(inputs) }}
     steps:
-      - uses: actions/checkout@v4
-      - id: set-matrix
+      - name: Checkout ci repository
+        uses: actions/checkout@v4
+      - name: Generate publish matrix
+        id: set-matrix
         run: |
           if [[ ! -f "$CONFIG_FILE" ]]; then echo "Error: Config not found"; exit 1; fi
           CONFIG=$(cat "$CONFIG_FILE")
@@ -89,7 +91,7 @@ jobs:
             done
             MATRIX_JSON=$(printf '%s\n' "${MATRIX_ARRAY[@]}" | jq -s -c .)
             
-            echo "Final Matrix: $MATRIX_JSON"
+            echo -e "Final Matrix: \n" && echo "$MATRIX_JSON" | jq '.[]'
             echo "has_repos=true" >> $GITHUB_OUTPUT
             echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
           fi
