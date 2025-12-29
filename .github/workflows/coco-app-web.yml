@@ -78,7 +78,7 @@ jobs:
               "work_dir": "packages/Filter",
               "dist_dir": "packages/Filter",
               "build_cmd": "pnpm run build",
-              "publish_cmd": "npm publish",
+              "publish_cmd": "pnpm publish",
               "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
@@ -181,7 +181,7 @@ jobs:
             jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
           fi
 
-          echo "Publishing to NPM..."
+          echo "Publishing to $COMPONENT-$VERSION NPM..."
           eval "$PUBLISH_CMD"
       - name: Cleanup external repos
         run: |
