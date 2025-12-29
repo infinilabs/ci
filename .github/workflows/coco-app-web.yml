@@ -53,9 +53,10 @@ jobs:
             "search-chat": {
               "repo_name": "coco-app",
               "input_key": "PUBLISH_CHAT_VERSION",
-              "build_cmd": "pnpm run build:web",
               "work_dir": ".",
               "dist_dir": "out/search-chat",
+              "build_cmd": "pnpm run build:web",
+              "publish_cmd": "npm publish",
               "use_ssh": false,
               "version_file": "tsup",
               "adapter_script": true
@@ -63,9 +64,10 @@ jobs:
             "ui-web-cli": {
               "repo_name": "ui-web-cli",
               "input_key": "PUBLISH_CLI_VERSION",
-              "build_cmd": "pnpm run build",
               "work_dir": ".",
               "dist_dir": ".",
+              "build_cmd": "pnpm run build",
+              "publish_cmd": "npm publish",
               "use_ssh": true,
               "version_file": "package.json",
               "adapter_script": false
@@ -73,9 +75,10 @@ jobs:
             "filter": {
               "repo_name": "ui-common",
               "input_key": "PUBLISH_FILTER_VERSION",
-              "build_cmd": "pnpm run build",
               "work_dir": "packages/Filter",
               "dist_dir": "packages/Filter",
+              "build_cmd": "pnpm run build",
+              "publish_cmd": "npm publish",
               "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
@@ -95,9 +98,10 @@ jobs:
           VERSION=$(echo "$INPUTS_JSON" | jq -r ".[\"$INPUT_KEY\"]")
 
           # 3. get other config values
-          BUILD_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].build_cmd")
           WORK_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].work_dir")
           DIST_DIR=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].dist_dir")
+          BUILD_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].build_cmd")
+          PUBLISH_CMD=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].publish_cmd")
           USE_SSH=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].use_ssh")
           VERSION_FILE=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].version_file")
           ADAPTER=$(echo "$CONFIG_JSON" | jq -r ".[\"$COMPONENT\"].adapter_script")
@@ -106,9 +110,10 @@ jobs:
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
-          echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
           echo "WORK_DIR=$WORK_DIR" >> $GITHUB_ENV
           echo "DIST_DIR=$DIST_DIR" >> $GITHUB_ENV
+          echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
+          echo "PUBLISH_CMD=$PUBLISH_CMD" >> $GITHUB_ENV
           echo "USE_SSH=$USE_SSH" >> $GITHUB_ENV
           echo "VERSION_FILE=$VERSION_FILE" >> $GITHUB_ENV
           echo "ADAPTER=$ADAPTER" >> $GITHUB_ENV
@@ -171,7 +176,7 @@ jobs:
           jq --arg url "$REPO_URL" '.repository = { type: "git", url: $url }' package.json > "$tmp" && mv "$tmp" package.json
 
           echo "Publishing to NPM..."
-          npm publish --provenance --access public
+          eval "$PUBLISH_CMD"
       - name: Cleanup external repos
         run: |
           echo "Cleaning up external repositories..."
