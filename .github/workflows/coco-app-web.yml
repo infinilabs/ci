@@ -155,9 +155,7 @@ jobs:
           [ -f "$TARGET" ] && sed -i 's|^\s*//\(\s*.*Web.*\)| \1|g; s|^\s*\([^/].*Tauri.*\)|//\1|g' "$TARGET" || echo "Skip adapter"
       - name: Install dependencies for ${{ env.COMPONENT }} - ${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
-        run:
-          cd ${{ env.WORK_DIR }} 
-          pnpm install
+        run: cd ${{ env.WORK_DIR }} &&pnpm install
       - name: Build ${{ env.COMPONENT }} - ${{ env.VERSION }}
         working-directory: ${{ env.REPO_NAME }}
         run: |
