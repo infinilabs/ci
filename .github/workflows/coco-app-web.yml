@@ -78,7 +78,7 @@ jobs:
               "work_dir": "packages/Filter",
               "dist_dir": "packages/Filter",
               "build_cmd": "pnpm run build",
-              "publish_cmd": "pnpm publish",
+              "publish_cmd": "pnpm publish --no-git-checks",
               "use_ssh": false,
               "version_file": "package.json",
               "adapter_script": false
