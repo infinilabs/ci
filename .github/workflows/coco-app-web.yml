@@ -167,7 +167,7 @@ jobs:
             VERSION=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
             
             echo "  Target: $VERSION | Dir: $WORK_DIR"
-            echo "::notice title=Config::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
+            echo "::notice title=Config::Component: $CPT | Version: $VERSION | Repo: $REPO_NAME"
             
             # --- 3. Set Version ---
             pushd "$WORK_DIR" > /dev/null
