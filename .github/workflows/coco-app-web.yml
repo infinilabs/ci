@@ -135,7 +135,7 @@ jobs:
         with:
           version: latest
 
-      - name: Process components with ${{ env.COMPONENTS}}@${{ env.VERSION }}
+      - name: Process components with ${{ env.REPO_NAME }} - ${{ env.COMPONENTS}}
         working-directory: ${{ env.REPO_NAME }}
         run: |
           CONFIG=$(cat "$GITHUB_WORKSPACE/$CONFIG_FILE")
@@ -167,7 +167,8 @@ jobs:
             VERSION=$(echo "$INPUTS_JSON" | jq -r --arg k "$INPUT_KEY" '.[$k]')
             
             echo "  Target: $VERSION | Dir: $WORK_DIR"
-
+            echo "::notice title=Config::Component: $COMPONENT | Version: $VERSION | Repo: $REPO_NAME"
+            
             # --- 3. Set Version ---
             pushd "$WORK_DIR" > /dev/null
             if [[ "$VERSION_FILE" == "tsup.config.ts" ]]; then
@@ -209,10 +210,10 @@ jobs:
             echo "${REPO_NAME}|${CPT}|${INPUT_KEY}|${VERSION}" > "$GITHUB_WORKSPACE/release_info/${CPT}.txt"
           done
 
-      - name: Upload release info for ${{ env.COMPONENTS }}@${{ env.VERSION }}
+      - name: Upload release info for ${{ env.REPO_NAME }} - ${{ env.COMPONENTS}}
         uses: actions/upload-artifact@v4
         with:
-          name: release-info-${{ env.COMPONENTS }}
+          name: release-info-${{ env.REPO_NAME }}-${{ github.run_id }}
           path: release_info/*.txt
           retention-days: 1
 
