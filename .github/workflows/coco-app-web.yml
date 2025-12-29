@@ -6,7 +6,7 @@ env:
   NODEJS_VERSION: 24
   REPO_URL: "https://github.com/infinilabs/ci"
   NPM_REGISTRY: "https://registry.npmjs.org"
-  WORKFLOW_FILE: ".github/workflows/publish.yml"
+  WORKFLOW_FILE: ".github/workflows/coco-app-web.yml"
   CONFIG_FILE: "configs/components.json"
   NODE_OPTIONS: "--max_old_space_size=8192"
 
@@ -20,10 +20,10 @@ on:
     inputs:
       # --- Component Versions (Change value to trigger publish) ---
       SEARCH_CHAT_VERSION: { description: 'search-chat Version', required: true, default: "1.3.8" }
-      UI_WEB_CLI_VERSION: { description: 'ui-web-cli Version', required: true, default: "0.0.41" }
+      UI_WEB_CLI_VERSION: { description: 'ui-web-cli Version', required: true, default: "0.0.42" }
       FILTER_VERSION: { description: 'filter Version', required: true, default: "0.0.8" }
-      SEARCH_RESULTS_VERSION: { description: 'search-results Version', required: true, default: "0.0.2" }
-      ENTITY_UI_VERSION: { description: 'entity-ui Version', required: true, default: "0.0.6" }
+      SEARCH_RESULTS_VERSION: { description: 'search-results Version', required: true, default: "0.0.3" }
+      ENTITY_UI_VERSION: { description: 'entity-ui Version', required: true, default: "0.0.9" }
       CUSTOM_ICONS_VERSION: { description: 'custom-icons Version', required: true, default: "0.0.5" }
       DROPDOWNLIST_VERSION: { description: 'dropdownlist Version', required: true, default: "1.3.4" }
       DATEPICKER_VERSION: { description: 'datepicker Version', required: true, default: "0.0.6" }
