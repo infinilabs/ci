@@ -107,6 +107,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "INPUT_KEY=$INPUT_KEY" >> $GITHUB_ENV
           echo "BUILD_CMD=$BUILD_CMD" >> $GITHUB_ENV
+          echo "WORK_DIR=$WORK_DIR" >> $GITHUB_ENV
           echo "DIST_DIR=$DIST_DIR" >> $GITHUB_ENV
           echo "USE_SSH=$USE_SSH" >> $GITHUB_ENV
           echo "VERSION_FILE=$VERSION_FILE" >> $GITHUB_ENV
