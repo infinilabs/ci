@@ -9,7 +9,7 @@
     "publish_cmd": "npm publish",
     "adapter_script": true,
     "input_key": "CHAT_VERSION",
-    "current_version": "1.3.6"
+    "current_version": "1.3.7"
   },
   "ui-web-cli": {
     "repo_name": "ui-web-cli",
@@ -33,6 +33,6 @@
     "publish_cmd": "npm publish",
     "adapter_script": false,
     "input_key": "FILTER_VERSION",
-    "current_version": "0.0.6"
+    "current_version": "0.0.7"
   }
 }
