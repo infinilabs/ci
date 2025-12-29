@@ -313,7 +313,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Send Feishu Notification on Failure
+      - name: Notify message via feishu
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
           REPO_NAME: ${{ github.repository }}

@@ -298,12 +298,13 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: gh pr merge "$PR_URL" --auto --merge
 
-  notify_final:
+  notify_on_failure:
     runs-on: ubuntu-latest
-    if: always()
+    if: failure()
     needs: [publish,update-workflow]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Notify message via feishu
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
