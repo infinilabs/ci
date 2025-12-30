@@ -22,24 +22,41 @@ get_signature() {
 
 # Get the signature for each platform
 signature_darwin_aarch64=$(get_signature "Coco-AI_${VERSION}_arm64.app.tar.gz.sig")
-echo "signature_darwin_aarch64: $signature_darwin_aarch64"
-signature_darwin_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
-echo "signature_darwin_x86_64: $signature_darwin_x86_64"
-signature_linux_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
-echo "signature_linux_x86_64: $signature_linux_x86_64"
-signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_aarch64.AppImage.sig")
-echo "signature_linux_aarch64: $signature_linux_aarch64"
-signature_windows_x86_64=$(get_signature "Coco-AI_${VERSION}_x64-setup.exe.sig")
-echo "signature_windows_x86_64: $signature_windows_x86_64"
-signature_windows_arm64=$(get_signature "Coco-AI_${VERSION}_arm64-setup.exe.sig")
-echo "signature_windows_arm64: $signature_windows_arm64"
-signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
-echo "signature_windows_i686: $signature_windows_i686"
-
-if [[ -z "$signature_darwin_aarch64" || -z "$signature_darwin_x86_64" || -z "$signature_linux_x86_64" || -z "$signature_linux_aarch64" || -z "$signature_windows_x86_64" || -z "$signature_windows_arm64" || -z "$signature_windows_i686" ]]; then
-  echo "Error: One or more signatures are empty. Exiting."
+if [[ -z "$signature_darwin_aarch64" ]]; then
+  echo "Warning: signature_darwin_aarch64 is empty. The file may not exist."
   exit 1
 fi
+signature_darwin_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.app.tar.gz.sig")
+if [[ -z "$signature_darwin_x86_64" ]]; then
+  echo "Warning: signature_darwin_x86_64 is empty. The file may not exist."
+  exit 1
+fi
+signature_linux_x86_64=$(get_signature "Coco-AI_${VERSION}_amd64.AppImage.sig")
+if [[ -z "$signature_linux_x86_64" ]]; then
+  echo "Warning: signature_linux_x86_64 is empty. The file may not exist."
+  exit 1
+fi
+signature_linux_aarch64=$(get_signature "Coco-AI_${VERSION}_aarch64.AppImage.sig")
+if [[ -z "$signature_linux_aarch64" ]]; then
+  echo "Warning: signature_linux_aarch64 is empty. The file may not exist."
+  exit 1
+fi
+signature_windows_x86_64=$(get_signature "Coco-AI_${VERSION}_x64-setup.exe.sig")
+if [[ -z "$signature_windows_x86_64" ]]; then
+  echo "Warning: signature_windows_x86_64 is empty. The file may not exist."
+  exit 1
+fi
+signature_windows_arm64=$(get_signature "Coco-AI_${VERSION}_arm64-setup.exe.sig")
+if [[ -z "$signature_windows_arm64" ]]; then
+  echo "Warning: signature_windows_arm64 is empty. The file may not exist."
+  exit 1
+fi
+signature_windows_i686=$(get_signature "Coco-AI_${VERSION}_x86-setup.exe.sig")
+if [[ -z "$signature_windows_i686" ]]; then
+  echo "Warning: signature_windows_i686 is empty. The file may not exist."
+  exit 1
+fi
+
 
 # Create the base JSON structure
 cat > .latest.json <<EOF
