@@ -10,7 +10,7 @@ set -euo pipefail
 OSS="${EZS_OSS:-true}"
 NEED_S3_PLUGIN=false
 ES_VERSION_FULL="${EZS_VER:-7.10.2-1}"
-AGENT_VERSION_FULL="${AGENT_VERSION:-1.30.0-2197}"
+AGENT_VERSION_FULL="${AGENT_VERSION:-1.30.1-2197}"
 PNAME="${PNAME:-elasticsearch}" # Product name from environment
 JAVA_HOME="${JAVA_HOME:-}"
 

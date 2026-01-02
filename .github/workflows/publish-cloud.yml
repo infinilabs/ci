@@ -173,11 +173,11 @@ jobs:
             if [ -z "$latest_json" ] || ! echo "$latest_json" | jq . > /dev/null 2>&1; then
               echo "Warning: Failed to fetch or parse .latest from $RELEASE_URL. Using fallback versions."
               easysearch_ver="2.0.0"
-              gateway_ver="1.30.0"
+              gateway_ver="1.30.1"
               cocoserver_ver="0.9.0"
             else
               jq_easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"2.0.0\"")
-              jq_gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.30.0\"")
+              jq_gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.30.1\"")
               jq_cocoserver_ver=$(echo "$latest_json" | jq -r '."coco-server" // "0.9.0"')
 
               easysearch_ver="${jq_easysearch_ver%%-*}"
