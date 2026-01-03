@@ -168,7 +168,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Release latest version
+      - name: Update ci variables for release
         if: ${{ inputs.OPERATION == 'RELEASE' }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
@@ -222,6 +222,49 @@ jobs:
           # set actions variables
           echo && echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER, Coco app version: $COCO_APP_VER, Coco server version: $COCO_VER"
         
+      - name: Update latest version file and upload
+        if: ${{ inputs.OPERATION == 'RELEASE'}}
+        run: |
+          VER=${{ inputs.PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          
+          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
+            echo "Please input the publish version, easysearch version, coco app version and coco version"
+            exit 1
+          fi
+          SUFFIX=${VER#*-}
+          if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            EZS_VER="${EZS_VER}-$SUFFIX"
+          fi
+          #check if the version is correct
+          if [[ "$VER" == *"-"* ]] && [[ "$COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
+          fi
+          if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+            COCO_VER="${COCO_VER}-$SUFFIX"
+          fi
+          fname=".latest"
+          echo "Products publish version: $VER, Easysearch version: $EZS_VER"
+          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+          jq --arg publish_version "$VER" \
+            --arg easysearch_version "$EZS_VER" \
+            --arg coco_app_version "$COCO_APP_VER" \
+            --arg coco_version "$COCO_VER" \
+            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+            "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+
+          # check if the file is the same
+          if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
+            echo "Files are the same, no need to upload."
+          else
+            echo "Files are different, uploading..."
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
+            # Reset cache
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+          fi
+
       - name: Publish coco website
         if: ${{ inputs.OPERATION == 'RELEASE' && matrix.product == 'coco-server'}}
         run: |
