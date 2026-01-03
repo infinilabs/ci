@@ -147,7 +147,7 @@ jobs:
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Setup coco server go toolchain
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: false
@@ -155,14 +155,14 @@ jobs:
           cache-dependency-path: "**/*.sum"
 
       - name: Check coco server go toolchain
-        run: go version
+        run: go version && go env
 
       - name: Set up with coco server pnpm toolchain
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set up with coco server nodejs toolchain
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'

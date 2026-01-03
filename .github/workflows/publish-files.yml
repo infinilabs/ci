@@ -162,7 +162,7 @@ jobs:
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV  
 
       - name: Setup ${{ matrix.product }} go toolchain
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: false
@@ -170,11 +170,11 @@ jobs:
           cache-dependency-path: "**/*.sum"
 
       - name: Check ${{ matrix.product }} go toolchain
-        run: go version
+        run: go version && go env
 
       - name: Set up nodejs toolchain
         if: matrix.product == 'console'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'npm'

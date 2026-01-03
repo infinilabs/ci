@@ -102,13 +102,13 @@ jobs:
         path: testing
 
     - name: Set up go toolchain
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GO_VERSION }}
         check-latest: false
         cache: true
     - name: Check go toolchain
-      run: go version
+      run: go version && go env
 
     - name: Set up java toolchain
       uses: actions/setup-java@v4
