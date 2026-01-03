@@ -100,20 +100,20 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout coco app repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
           ref: "v${{ inputs.PUBLISH_VERSION }}"
           path: ${{ env.REPO-NAME }}
 
       - name: Checkout dependency repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: 'infinilabs/pizza'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}

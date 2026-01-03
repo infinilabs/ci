@@ -75,48 +75,48 @@ jobs:
                 cat $GITHUB_ENV
             
             - name: Checkout current repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Setup bootstrap
               uses: ./containers/bootstrap
 
             - name: Checkout console
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/console
                 path: console
                 
             - name: Checkout gateway
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/gateway
                 path: gateway
             
             - name: Checkout agent
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/agent
                 path: agent
               
             - name: Checkout loadgen
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/loadgen
                 path: loadgen
                   
             - name: Checkout framework
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/framework
                 path: framework
 
             - name: Checkout framework-vendor
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
                 repository: infinilabs/framework-vendor
@@ -148,7 +148,7 @@ jobs:
               run: go version && go env
 
             - name: Set up java toolchain
-              uses: actions/setup-java@v4
+              uses: actions/setup-java@v5
               with:
                 distribution: ${{ env.JAVA_DISTRIBUTION }}
                 java-version: ${{ env.JAVA_VERSION }}
@@ -531,12 +531,12 @@ jobs:
                 done
 
             - name: Checkout current repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                 ref: main
 
             - name: Set up java toolchain
-              uses: actions/setup-java@v4
+              uses: actions/setup-java@v5
               with:
                 distribution: ${{ env.JAVA_DISTRIBUTION }}
                 java-version: ${{ env.JAVA_VERSION }}
@@ -815,7 +815,7 @@ jobs:
       if: failure()
       steps:
         - name: Checkout code
-          uses: actions/checkout@v4
+          uses: actions/checkout@v6
           
         - name: Notify message via feishu
           env:

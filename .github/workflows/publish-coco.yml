@@ -70,7 +70,7 @@ jobs:
         TARGETS: win-amd64 linux-amd64 linux-amd64-dev linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -87,21 +87,21 @@ jobs:
           swap-storage: true
 
       - name: Checkout framework code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
           path: framework
 
       - name: Checkout framework vendor code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/framework-vendor
           ref: main
           path: vendor
 
       - name: Checkout coco server code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
@@ -407,7 +407,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -141,17 +141,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout private pizza repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: 'infinilabs/pizza'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           path: pizza
 
       - name: Checkout coco repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: 'infinilabs/coco-app'
           path: coco-app

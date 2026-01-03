@@ -1,4 +1,4 @@
-name: Publish Products Files (Only)
+name: Publish Products (Only Files)
 defaults:
   run:
     shell: bash
@@ -124,27 +124,27 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout framework code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
           path: framework
 
       - name: Checkout framework vendor code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/framework-vendor
           ref: main
           path: vendor
 
       - name: Checkout ${{ matrix.product }} code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
           ref: main
@@ -311,7 +311,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

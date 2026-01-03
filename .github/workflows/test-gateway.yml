@@ -61,41 +61,41 @@ jobs:
         cat $GITHUB_ENV
     
     - name: Checkout current repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup bootstrap
       uses: ./containers/bootstrap
         
     - name: Checkout gateway
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: main
         repository: infinilabs/gateway
         path: gateway
         
     - name: Checkout loadgen
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: main
         repository: infinilabs/loadgen
         path: loadgen
             
     - name: Checkout framework
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: main
         repository: infinilabs/framework
         path: framework
 
     - name: Checkout framework-vendor
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: main
         repository: infinilabs/framework-vendor
         path: vendor
 
     - name: Checkout testing
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: main
         repository: infinilabs/testing
@@ -111,7 +111,7 @@ jobs:
       run: go version && go env
 
     - name: Set up java toolchain
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: ${{ env.JAVA_DISTRIBUTION }}
         java-version: ${{ env.JAVA_VERSION }}

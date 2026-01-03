@@ -92,7 +92,7 @@ jobs:
       CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -253,7 +253,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Notify message via feishu
         env:

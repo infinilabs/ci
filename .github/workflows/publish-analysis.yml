@@ -61,20 +61,20 @@ jobs:
           - ${{ inputs.REPUBLISH_TNAME }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -263,20 +263,20 @@ jobs:
           - opensearch
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -416,20 +416,20 @@ jobs:
           - opensearch
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -560,7 +560,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

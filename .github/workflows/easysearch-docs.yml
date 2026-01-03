@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Product Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -108,7 +108,7 @@ jobs:
           sudo mv hugo /usr/local/bin/
 
       - name: Checkout Docs Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: infinilabs/docs
           path: docs-output
@@ -173,7 +173,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

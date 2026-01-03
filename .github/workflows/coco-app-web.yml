@@ -38,7 +38,7 @@ jobs:
       INPUTS_JSON: ${{ toJson(inputs) }}
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Generate publish matrix
         id: set-matrix
         run: |
@@ -111,7 +111,7 @@ jobs:
       COMPONENTS: ${{ matrix.components }}
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Load repo config
         run: |
@@ -120,7 +120,7 @@ jobs:
           echo "REPO_PRIVATE=$REPO_PRIVATE" >> $GITHUB_ENV
 
       - name: Checkout ${{ env.REPO_NAME }} repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO_NAME }}
           ref: main
@@ -214,7 +214,7 @@ jobs:
           done
 
       - name: Upload release info for ${{ env.REPO_NAME }} - ${{ env.COMPONENTS}}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-info-${{ env.REPO_NAME }}-${{ github.run_id }}
           path: release_info/*.txt
@@ -226,10 +226,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download all release infos
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: all_releases
           pattern: release-info-*
@@ -299,7 +299,7 @@ jobs:
         env:
           PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: gh pr merge "$PR_URL" --auto --merge
+        run: gh pr merge "$PR_URL" --auto --squash
 
   notify_on_failure:
     runs-on: ubuntu-latest
@@ -307,7 +307,7 @@ jobs:
     needs: [publish,update-workflow]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Notify message via feishu
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}

@@ -74,7 +74,7 @@ jobs:
       matrix: ${{ steps.gen-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Generate matrix
         id: gen-matrix
@@ -105,7 +105,7 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -405,7 +405,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

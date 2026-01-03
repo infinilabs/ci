@@ -31,7 +31,7 @@ jobs:
       matrix_json: ${{ steps.generate_matrix.outputs.matrix_json_string }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -163,7 +163,7 @@ jobs:
         include: ${{ fromJSON(needs.build-test-matrix.outputs.matrix_json) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -359,7 +359,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:

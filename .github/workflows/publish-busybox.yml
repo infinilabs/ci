@@ -26,7 +26,7 @@ jobs:
       INPUT_VERSION: ${{ inputs.BUSYBOX_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up qemu with ${{ env.PNAME }}
         uses: docker/setup-qemu-action@v3
@@ -73,7 +73,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: Notify message via feishu
         env:
