@@ -244,7 +244,7 @@ jobs:
           echo "Config $PNAME with update-vfs update-plugins finished at $PWD"
           cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy
           echo "Go mod edit and tidy $PNAME with license finished at $PWD"
-          cd $WORK/$PNAME && OFFLINE_BUILD=true make config
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make config && go mod tidy
           echo "Config $PNAME with license finished at $PWD"
 
       - name: Build coco server go mod
