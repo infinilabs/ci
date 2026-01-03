@@ -2,6 +2,7 @@
 
 export WORKBASE=$HOME/go/src
 export WORK=$WORKBASE/infini.sh
+export GOEXPERIMENT=greenteagc
 
 echo "Home path is $HOME"
 mkdir -p $WORKBASE
