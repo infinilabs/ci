@@ -271,7 +271,7 @@ jobs:
       - name: Run connect in background
         if: ${{ github.event_name == 'schedule' || inputs.ONLY_DEPLOY_STAGING == true || inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 

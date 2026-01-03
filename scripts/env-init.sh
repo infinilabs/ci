@@ -4,7 +4,7 @@
 #  CI Environment Initialization Script
 #
 #  This script is designed to be SOURCED in a CI/CD environment.
-#  It sets up tools, SSH keys, proxy configs, and robust HTTP clients.
+#  It sets up tools, SSH keys, network configs, and robust HTTP clients.
 # ==============================================================================
 
 # --- Helper Functions for Logging ---
@@ -113,12 +113,12 @@ env_init() {
         log_success "SSH configuration is complete."
     fi
 
-    # --- Configure Proxy (Connect Config) ---
+    # --- Configure Network (Connect Config) ---
     if [[ -n "$LOCAL_PORT" ]]; then
-        log_info "🌐  Generating proxy configuration file..."
+        log_info "🌐  Generating network configuration file..."
         # Using a temporary variable for clarity
-        local proxy_config
-        proxy_config=$(cat <<-EOF
+        local net_config
+        net_config=$(cat <<-EOF
 			{
 			  "local_port": $LOCAL_PORT,
 			  "local_address": "${LOCAL_HOST:-127.0.0.1}",
@@ -135,8 +135,8 @@ env_init() {
 			}
 		EOF
         )
-        echo "$proxy_config" > "$GITHUB_WORKSPACE/.oss.json"
-        log_success "Proxy config (.oss.json) created."
+        echo "$net_config" > "$GITHUB_WORKSPACE/.net.json"
+        log_success "Network config (.net.json) created."
     fi
 
     # --- Configure OSS ---

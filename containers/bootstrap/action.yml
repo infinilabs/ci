@@ -29,6 +29,10 @@ inputs:
     default: '3.3.8'
     description: 'Version of Maven to install'
     required: false
+  npm:
+    default: '10.7.0'
+    description: 'Version of npm to install'
+    required: false
   pnpm:
     default: '10.27.0'
     description: 'Version of pnpm to install'

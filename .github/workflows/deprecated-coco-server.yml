@@ -258,7 +258,7 @@ jobs:
 
       - name: Run connect in background
         run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 
@@ -483,7 +483,7 @@ jobs:
 
       - name: Run connect in background
         run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 
@@ -795,7 +795,7 @@ jobs:
 
       - name: Run connect in background
         run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 

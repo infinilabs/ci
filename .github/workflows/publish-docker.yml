@@ -326,7 +326,7 @@ jobs:
       - name: Run connect in background for ${{ matrix.product }}
         if: ${{ matrix.product == 'console' }}
         run: |
-          connect -c "$GITHUB_WORKSPACE/.oss.json" >/dev/null 2>&1 &
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 
