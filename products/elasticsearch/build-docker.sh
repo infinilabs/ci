@@ -25,6 +25,7 @@ ES_PLUGIN_BASE_URL="${ES_URL}/elasticsearch-plugins"
 # Use RELEASE_URL from GitHub Actions environment, with a fallback.
 RELEASE_URL_BASE="${RELEASE_URL:-https://release.infinilabs.com}"
 AGENT_BASE_URL="${RELEASE_URL_BASE}/agent"
+CCR_PLUGIN_URL="${ES_PLUGIN_BASE_URL}/.ccr/ccr-${ES_VERSION_BASE}.zip"
 IK_PLUGIN_URL="${RELEASE_URL_BASE}/analysis-ik/stable/elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
 S3_PLUGIN_URL="${ES_PLUGIN_BASE_URL}/repository-s3/repository-s3-${ES_VERSION_BASE}.zip"
 
@@ -82,13 +83,14 @@ download_file() {
 
 # --- Main Logic ---
 
-# 1. Download the IK plugin (shared by all architectures)
+# 1. Download plugin
+# 1.1 IK plugin (shared by all architectures)
 echo "--- Preparing shared plugins ---"
 IK_PLUGIN_FILENAME="elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
 IK_PLUGIN_PATH="$DOWNLOAD_DIR/$IK_PLUGIN_FILENAME"
 download_file "$IK_PLUGIN_URL" "$IK_PLUGIN_PATH"
 
-# 2. Download the S3 repository plugin (shared by all architectures) if needed
+# 1.2 S3 repository plugin (shared by all architectures) if needed
 if [ "$NEED_S3_PLUGIN" = true ]; then
   echo "Elasticsearch version $ES_VERSION_BASE requires the S3 repository plugin."
   S3_PLUGIN_FILENAME="repository-s3-${ES_VERSION_BASE}.zip"
@@ -98,7 +100,14 @@ else
   echo "Elasticsearch version $ES_VERSION_BASE includes built-in S3 support; skipping download of S3 plugin."
 fi
 
-# 3. Process each architecture
+# 1.3 CCR plugin (only for version 7.10.0/7.10.2)
+if [[ "$ES_VERSION_BASE" == "7.10.0" || "$ES_VERSION_BASE" == "7.10.2" ]]; then
+  CCR_PLUGIN_FILENAME="ccr-${ES_VERSION_BASE}.zip"
+  CCR_PLUGIN_PATH="$DOWNLOAD_DIR/$CCR_PLUGIN_FILENAME"
+  download_file "$CCR_PLUGIN_URL" "$CCR_PLUGIN_PATH"
+fi
+
+# 2. Process each architecture
 for arch in amd64 arm64; do
   echo -e "\n--- Processing architecture: $arch ---"
 
@@ -177,16 +186,12 @@ for arch in amd64 arm64; do
   fi
 
   # --- D. Install Plugins ---
-  echo "Installing plugin: analysis-ik"
-  # Use --batch for non-interactive installation
-  "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$IK_PLUGIN_PATH" 
-
-  if [ "$NEED_S3_PLUGIN" = true ]; then
-    echo "Installing plugin: repository-s3"
-    "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$S3_PLUGIN_PATH"
-  else
-    echo "Skipping S3 plugin installation for Elasticsearch version $ES_VERSION_BASE."
-  fi
+  plugins=$(find "$DOWNLOAD_DIR" -name "*.zip")
+  for plugin_path in $plugins; do
+    plugin_filename=$(basename "$plugin_path")
+    echo "Starting to install plugin: $plugin_filename"
+    "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" install --batch "file:///$plugin_path"
+  done
 
   echo "Installed plugins for $arch:"
   "$ES_EXTRACT_DIR/bin/${PNAME}-plugin" list
