@@ -63,6 +63,11 @@
         "current_version": "0.0.10",
         "work_dir": "packages/DatePicker",
         "dist_dir": "packages/DatePicker"
+      },
+      "ai-answer": {
+        "current_version": "0.0.1",
+        "work_dir": "packages/AIAnswer",
+        "dist_dir": "packages/AIAnswer"
       }
     }
   }
