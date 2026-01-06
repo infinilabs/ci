@@ -117,6 +117,8 @@ jobs:
       - name: Build Documentation
         working-directory: ${{ env.PNAME }}
         run: |
+          # use product's docs Makefile to build docs with the theme
+          echo "Building documentation for version $VERSION on branch $BRANCH"
           (cd docs && OUTPUT=$(pwd)/../../docs-output make docs-build docs-place-redirect)
           echo "Documentation built successfully with $BRANCH"
 

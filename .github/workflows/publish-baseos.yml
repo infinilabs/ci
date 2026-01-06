@@ -27,6 +27,7 @@ on:
         options:
           - 'almalinux'
           - 'anolisos'
+          - 'alpine'
         default: 'almalinux'
 
 
