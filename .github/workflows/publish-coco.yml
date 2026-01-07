@@ -438,10 +438,10 @@ jobs:
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
-          commit-message: "bumpver: publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
-          branch: "release/publish-coco-app-${{ github.run_id }}"
-          title: "bumpver: publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
-          body: "Automated publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          commit-message: "bumpver: publish coco-server ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          branch: "release/publish-coco-server-${{ github.run_id }}"
+          title: "bumpver: publish coco-server ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          body: "Automated publish coco-server ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           labels: "auto-merge, automated"
           delete-branch: true
           add-paths: |
