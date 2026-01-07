@@ -29,12 +29,6 @@ on:
           - 'almalinux'
           - 'anolisos'
         default: 'alpine'
-      
-      CUSTOMER_TAG:
-        description: 'Customer Tag'
-        required: false
-        type: boolean
-        default: false
 
 
 jobs:
@@ -87,8 +81,8 @@ jobs:
             JDK_TAG=${{ env.JDK_TAG }}
           platforms: ${{ env.PLATFORMS }}
           tags: |
-            ${{ env.REPO_NAME }}:24
-            ${{ env.REPO_NAME }}:25
+            ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
           push: true
           provenance: false
           #no-cache: true
