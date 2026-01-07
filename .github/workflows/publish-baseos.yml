@@ -47,9 +47,13 @@ jobs:
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
           if [ "${{ env.IMAGE_BASE }}" == "alpine" ]; then
+            PLATFORMS="linux/386,linux/arm/v6,linux/arm/v7,linux/amd64,linux/arm64,linux/riscv64,linux/s390x"
             echo "IMAGE_TAG=${{env.IMAGE_BASE}}" >> $GITHUB_ENV
             echo "JDK_TAG=${{env.IMAGE_BASE}}-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
           else
+            PLATFORMS="linux/amd64,linux/arm64"
+            echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
             echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
           fi
 
@@ -75,9 +79,7 @@ jobs:
           target: prod
           build-args: |
             JDK_TAG=${{ env.JDK_TAG }}
-          platforms: |
-            linux/amd64
-            linux/arm64
+          platforms: ${{ env.PLATFORMS }}
           tags: |
             ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
