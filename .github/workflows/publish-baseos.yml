@@ -25,10 +25,10 @@ on:
         required: true
         type: choice
         options:
+          - 'alpine'
           - 'almalinux'
           - 'anolisos'
-          - 'alpine'
-        default: 'almalinux'
+        default: 'alpine'
 
 
 jobs:
@@ -46,7 +46,12 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
+          if [ "${{ env.IMAGE_BASE }}" == "alpine" ]; then
+            echo "IMAGE_TAG=${{env.IMAGE_BASE}}" >> $GITHUB_ENV
+            echo "JDK_TAG=${{env.IMAGE_BASE}}-${{ github.run_number }}" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
+          fi
 
       - name: Set up qemu
         uses: docker/setup-qemu-action@v3

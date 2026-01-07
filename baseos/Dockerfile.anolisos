@@ -157,6 +157,12 @@ FROM scratch AS prod
 # Add metadata labels to the image.
 LABEL description="A custom linux OS from anolisos with a custom jdk."
 LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
+
+# Copy the entire root filesystem from the 'builder' stage.
 COPY --from=builder / /
+
+# Set the default working directory.
 WORKDIR /
+
+# Set the default command to run when a container is started.
 CMD ["/bin/bash"]
