@@ -1,4 +1,4 @@
-FROM alpine AS builder
+FROM infinilabs/baseos:alpine AS builder
 
 ARG TARGETARCH
 
