@@ -10,11 +10,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      CUSTOMER_TAG:
-        description: 'Customer Tag'
-        required: false
-        type: boolean
-        default: false
       JDK_TAG:
         description: 'Image Tag'
         required: true
@@ -34,6 +29,12 @@ on:
           - 'almalinux'
           - 'anolisos'
         default: 'alpine'
+      
+      CUSTOMER_TAG:
+        description: 'Customer Tag'
+        required: false
+        type: boolean
+        default: false
 
 
 jobs:
@@ -59,12 +60,7 @@ jobs:
           else
             PLATFORMS="linux/amd64,linux/arm64"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
-            if [ "${{ inputs.CUSTOMER_TAG }}" == "true" ]; then
-              echo "IMAGE_TAG=24" >> $GITHUB_ENV
-              echo "JDK_TAG=25" >> $GITHUB_ENV
-            else
-              echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
-            fi
+            echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
           fi
 
       - name: Set up qemu
@@ -91,8 +87,8 @@ jobs:
             JDK_TAG=${{ env.JDK_TAG }}
           platforms: ${{ env.PLATFORMS }}
           tags: |
-            ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }}
-            ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
+            ${{ env.REPO_NAME }}:24
+            ${{ env.REPO_NAME }}:25
           push: true
           provenance: false
           #no-cache: true
