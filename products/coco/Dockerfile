@@ -1,4 +1,4 @@
-FROM infinilabs/baseos:24 AS builder
+FROM infinilabs/baseos:almalinux-jdk-21 AS builder
 
 ARG TARGETARCH
 
