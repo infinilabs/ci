@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: true
+        default: "1.30.2"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -41,7 +41,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.30.1"
+        default: "1.30.2"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -382,13 +382,13 @@ jobs:
           # publish-cloud.yml update agent version
           sed -i "/GATEWAY_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" publish-cloud.yml
           # publish-docker.yml update all products version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" publish-docker.yml
+          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
           # publish-elasticsearch.yml update agent version
-          sed -i "/PUBLISH_AGENT_VERSION:/,/default:/ s/default: .*/default: \"$FULL_VERSION\"/" publish-elasticsearch.yml
+          sed -i "/PUBLISH_AGENT_VERSION:/,/default:/ s/default: "1.30.2"
           # publish-files.yml update all products version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" publish-files.yml
+          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
           # release.yml update version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: .*/default: \"$FULL_VERSION\"/" release.yml
+          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
           # test-gateway.yml update gateway version
           sed -i "/PRODUCT_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" test-gateway.yml
           # test-inergration-products.yml update all products version
