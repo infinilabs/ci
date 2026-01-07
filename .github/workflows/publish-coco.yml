@@ -401,6 +401,59 @@ jobs:
             fi
           done
 
+  update_repo:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Prepare update version env
+        run: |
+          if [[ "$PUBLISH_VERSION" == *-* ]]; then
+            IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+          else
+            RUN_NUMBER=${{ github.run_number }}
+            OFFSET=${{ vars.OFFSET }}
+            DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+            DYNAMIC_VERSION="$PUBLISH_VERSION"
+          fi
+          echo "Update repo with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+
+      - name: Update release version in workflow files
+        id: update
+        run: |
+          cd $GITHUB_WORKSPACE/.github/workflows
+          FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+
+          update_yaml_version "publish-coco.yml" "PUBLISH_VERSION" "$VERSION"
+          update_yaml_version "release.yml" "PUBLISH_COCO_VERSION" "$FULL_VERSION"
+          
+      - name: Create bumpver pull request
+        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          branch: "release/publish-coco-app-${{ github.run_id }}"
+          title: "bumpver: publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          body: "Automated publish coco-app ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            .github/workflows/*.yml
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --auto --squash
+
   notify_on_failure:
     runs-on: ubuntu-latest
     needs: [publish]

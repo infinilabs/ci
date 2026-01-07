@@ -471,8 +471,8 @@ jobs:
             DYNAMIC_VERSION="$PUBLISH_VERSION"
           fi
           echo "Update repo with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
-
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
 
       - name: Update release version in workflow files
         id: update
@@ -497,6 +497,7 @@ jobs:
             .github/workflows/*.yml
 
       - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
         env:
           PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.REPO_PAT }}
