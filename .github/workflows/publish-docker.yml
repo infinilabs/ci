@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: "1.30.2"
+        default: true
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -377,22 +377,16 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/.github/workflows
           FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
-          # easysearch-publish.yml update agent version
-          sed -i "/PUBLISH_AGENT_VERSION:/,/default:/ s/default: .*/default: \"$FULL_VERSION\"/" easysearch-publish.yml
-          # publish-cloud.yml update agent version
-          sed -i "/GATEWAY_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" publish-cloud.yml
-          # publish-docker.yml update all products version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
-          # publish-elasticsearch.yml update agent version
-          sed -i "/PUBLISH_AGENT_VERSION:/,/default:/ s/default: "1.30.2"
-          # publish-files.yml update all products version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
-          # release.yml update version
-          sed -i "/PUBLISH_VERSION:/,/default:/ s/default: "1.30.2"
-          # test-gateway.yml update gateway version
-          sed -i "/PRODUCT_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" test-gateway.yml
-          # test-inergration-products.yml update all products version
-          sed -i "/PRODUCT_VERSION:/,/default:/ s/default: .*/default: \"$VERSION\"/" test-integration-products.yml
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+
+          update_yaml_version "easysearch-publish.yml"        "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
+          update_yaml_version "publish-cloud.yml"             "GATEWAY_VERSION"       "$VERSION"
+          update_yaml_version "publish-docker.yml"            "PUBLISH_VERSION"       "$VERSION"
+          update_yaml_version "publish-elasticsearch.yml"     "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
+          update_yaml_version "publish-files.yml"             "PUBLISH_VERSION"       "$VERSION"
+          update_yaml_version "release.yml"                   "PUBLISH_VERSION"       "$FULL_VERSION"
+          update_yaml_version "test-gateway.yml"              "PRODUCT_VERSION"       "$VERSION"
+          update_yaml_version "test-integration-products.yml" "PRODUCT_VERSION"       "$VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v7

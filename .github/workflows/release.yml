@@ -30,7 +30,7 @@ on:
         required: true
         type: choice
         options: ['PR', 'TAG', 'RELEASE']
-        default: "1.30.2-2333"
+        default: "PR"
       PUBLISH_FRAMEWORK_VERSION:
           description: 'Publish Framework Version'
           required: false

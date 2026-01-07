@@ -220,6 +220,12 @@ EOF
 node:
   major_ip_pattern: ".*"
 EOF
+    if [ -n "$CLUSTER_ID" ]; then
+      cat <<-EOF >> agent.yml
+  labels:
+    cluster_id: "$CLUSTER_ID"
+EOF
+    fi
       if [ $? -ne 0 ]; then log "ERROR: Failed to add node config to agent.yml."; return 1; fi
     fi
   fi

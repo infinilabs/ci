@@ -21,7 +21,7 @@ on:
         description: 'Easysearch Version'
         required: false
         type: string
-        default: "1.30.2"
+        default: "2.0.2"
       PRODUCT_VERSION:
         description: 'Products Version'
         required: false
