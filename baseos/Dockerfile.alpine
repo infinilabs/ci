@@ -1,0 +1,19 @@
+FROM alpine:latest
+
+# Install bash and common system utilities
+RUN apk add --no-cache \
+    bash \
+    coreutils \
+    findutils \
+    grep \
+    sed \
+    procps \
+    util-linux \
+    && rm -rf /var/cache/apk/*
+
+# Set bash as default shell
+RUN sed -i 's|/bin/sh|/bin/bash|g' /etc/passwd
+
+WORKDIR /app
+
+CMD ["/bin/bash"]
