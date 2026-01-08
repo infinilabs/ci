@@ -89,7 +89,7 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Set up JDK ${{ env.JDK_VERSION }}
+      - name: Set up jdk ${{ env.JDK_VERSION }}
         uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JDK_VERSION }}
@@ -100,7 +100,7 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Setup Gradle
+      - name: Setup gradle
         if: ${{ env.BUILD_TOOL == 'gradle' }}
         uses: gradle/actions/setup-gradle@v5
           
@@ -124,7 +124,7 @@ jobs:
           echo "Cloning component repository: $REPO_NAME"
           git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
       
-      - name: Prepare Publish Version ${{env.PUBLISH_VERSION }}
+      - name: Prepare publish version ${{ env.PNAME}}@${{env.PUBLISH_VERSION }}
         working-directory: ${{ env.PNAME}}
         run: |
           if [ "$PNAME" == 'easysearch-client' ]; then
@@ -135,7 +135,7 @@ jobs:
             mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
           fi
       
-      - name: Publish License
+      - name: Publish with maven
         if: ${{ env.BUILD_TOOL == 'maven' && env.PNAME == 'license' }}
         working-directory: ${{ env.PNAME}}
         run: mvn -DskipTests clean deploy
@@ -145,20 +145,16 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           MAVEN_ARGS: "-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 
-      - name: Build and Bundle
+      - name: Build with gradle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
         run: |
           ./gradlew bundleZip
-          # Debug: check the pom file
-          cat build/repos/staging/com/infinilabs/easysearch-client/$PUBLISH_VERSION/easysearch-client-$PUBLISH_VERSION.pom
-          # Debug: Verify the zip content is flat and correct
-          unzip -l build/distributions/*-bundle.zip
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Upload to Central Portal
+      - name: Upload to central portal
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         run: |
           ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME/build/distributions -name "*-bundle.zip" | head -n 1)
