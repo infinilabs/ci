@@ -18,11 +18,14 @@ allprojects {
 
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:none"
+        options.deprecation = false
+        options.warnings = false
     }
     
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.quiet()
+        options.encoding = 'UTF-8'
         failOnError = false
     }
 }
@@ -171,17 +174,15 @@ signing {
 task bundleZip(type: Zip) {
     dependsOn 'publishMavenJavaPublicationToStagingRepository'
     
-    archiveFileName = "${archivesBaseName}-${version}-bundle.zip"
-    destinationDirectory = layout.buildDirectory.dir("distributions")
+    archiveFileName.set("${archivesBaseName}-${version}-bundle.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     
     def groupPath = project.group.replace('.', '/')
     def artifactPath = "${groupPath}/${archivesBaseName}/${version}"
-    def stagingDir = layout.buildDirectory.dir("repos/staging/${artifactPath}")
+    def stagingDir = layout.buildDirectory.dir("repos/staging/${artifactPath}").get().asFile
     
     from(fileTree(stagingDir)) {
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = fileCopyDetails.name
-        }
+        eachFile { it.path = it.name }
         includeEmptyDirs = false
     }
 
