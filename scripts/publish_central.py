@@ -92,7 +92,7 @@ def main():
     time.sleep(15)
 
     # ================= 2. Check Status =================
-    status_url = f"{BASE_URL}/status"
+    status_url = f"{BASE_URL}/status?id={deployment_id}"
     print(f"⏳ [POST] {status_url} (ID: {deployment_id})")
     
     start_time = time.time()
