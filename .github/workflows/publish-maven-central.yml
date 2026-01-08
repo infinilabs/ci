@@ -104,10 +104,12 @@ jobs:
         if: ${{ env.BUILD_TOOL == 'gradle' }}
         uses: gradle/actions/setup-gradle@v5
           
-      - name: Check Env version
+      - name: Check env version
         run: |
           java -version || true
+          echo 
           mvn -version || true
+          echo
           gradle -version || true
 
       - name: Checkout ${{ env.PNAME }} code
