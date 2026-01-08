@@ -126,7 +126,6 @@ jobs:
           if [ "$PNAME" == 'easysearch-client' ]; then
             cp -rf $GITHUB_WORKSPACE/products/easysearch/client/build.gradle .
             sed -i "s/^version[[:space:]]*=[[:space:]]*['\"].*['\"]/version = '$PUBLISH_VERSION'/" build.gradle
-            gradle wrapper --gradle-version 7.6.4
           elif [ "$PNAME" == 'license' ]; then
             cp -rf $GITHUB_WORKSPACE/products/license/pom.xml .
             mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
