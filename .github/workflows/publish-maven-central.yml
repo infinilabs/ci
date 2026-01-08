@@ -121,7 +121,7 @@ jobs:
             cp $GITHUB_WORKSPACE/products/easysearch/client/build.gradle .
             sed -i "s/^version[[:space:]]*=[[:space:]]*['\"].*['\"]/version = '$PUBLISH_VERSION'/" build.gradle
           elif [ "$PNAME" == 'license' ]; then
-            cp $GITHUB_WORKSPACE/license/pom.xml .
+            cp $GITHUB_WORKSPACE/products/license/pom.xml .
             mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
           fi
       
