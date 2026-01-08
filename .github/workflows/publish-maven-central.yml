@@ -157,7 +157,7 @@ jobs:
       - name: Upload to central portal
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         run: |
-          ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME/build/distributions -name "*-bundle.zip" | head -n 1)
+          ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME -name "*-bundle.zip" | head -n 1)
           echo "Found bundle: `basename $ZIP_FILE`"
           
           export ZIP_FILE_PATH="$ZIP_FILE"
