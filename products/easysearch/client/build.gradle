@@ -16,7 +16,7 @@ allprojects {
         mavenCentral()
     }
 
-    ttasks.withType(JavaCompile).configureEach {
+    tasks.withType(JavaCompile).configureEach {
         options.compilerArgs << "-Xlint:none"
         options.deprecation = false
         options.warnings = false
