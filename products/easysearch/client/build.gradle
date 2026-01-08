@@ -24,6 +24,11 @@ java {
     withJavadocJar()
 }
 
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.quiet()
+}
+
 def loadVersionProperties() {
     def props = new Properties()
     def propFile = file('version.properties')
@@ -166,8 +171,12 @@ task bundleZip(type: Zip) {
     
     def groupPath = project.group.replace('.', '/')
     def artifactPath = "${groupPath}/${archivesBaseName}/${version}"
+    def stagingDir = layout.buildDirectory.dir("repos/staging/${artifactPath}")
     
-    from(layout.buildDirectory.dir("repos/staging/${artifactPath}"))
+    from(stagingDir) {
+        into '' 
+    }
+
     exclude "maven-metadata*"
     exclude "**/*.sha256"
     exclude "**/*.sha512"

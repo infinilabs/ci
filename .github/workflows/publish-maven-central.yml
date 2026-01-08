@@ -151,17 +151,9 @@ jobs:
 
       - name: Upload to Central Portal
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
-        working-directory: ${{ env.PNAME}}
         run: |
-          ZIP_FILE=$(find build/distributions -name "*-bundle.zip" | head -n 1)
+          ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME/build/distributions -name "*-bundle.zip" | head -n 1)
           echo "Found bundle: $ZIP_FILE"
           
-          AUTH_HEADER=$(echo -n "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_PASSWORD }}" | base64 -w 0)
-          
-          curl --request POST \
-            --verbose \
-            --fail \
-            --header "Authorization: UserToken ${AUTH_HEADER}" \
-            --form "bundle=@${ZIP_FILE}" \
-            --form "publishingType=AUTOMATIC" \
-            https://central.sonatype.com/api/v1/publisher/upload
+          export ZIP_FILE_PATH="$ZIP_FILE"
+          python3 $GITHUB_WORKSPACE/scripts/publish_central.py
