@@ -24,8 +24,9 @@ allprojects {
     
     tasks.withType(Javadoc).configureEach {
         options.addStringOption('Xdoclint:none', '-quiet')
-        failOnError = false
         options.quiet()
+        options.encoding = 'UTF-8'
+        failOnError = false
     }
 }
 
@@ -82,6 +83,7 @@ dependencies {
 Set<String> excludedDependencies = new HashSet<>()
 shadowJar {
     archiveBaseName.set('easysearch-client')
+    archiveClassifier.set('')
     dependencies {
         exclude {
             boolean isExcluded = it.moduleGroup != 'org.easysearch.client' && it.moduleGroup != 'com.infinilabs'
@@ -185,10 +187,9 @@ task bundleZip(type: Zip) {
         includeEmptyDirs = false
     }
 
-    exclude("**/maven-metadata*.*")
-    doLast {
-        println "Finish Generating distribution zip file $archiveFileName"
-    }
+    exclude "maven-metadata*"
+    exclude "**/*.sha256"
+    exclude "**/*.sha512"
 }
 
 test {

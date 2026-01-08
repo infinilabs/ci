@@ -106,11 +106,13 @@ jobs:
           
       - name: Check env version
         run: |
-          java -version || true
-          echo "-------------------------------------------------"
-          mvn -version || true
-          echo "-------------------------------------------------"
-          gradle -version || true
+          java_ver=$(java -version 2>&1 | head -n1 | cut -d'"' -f2) || java_ver="not found"
+          maven_ver=$(mvn -version 2>/dev/null | head -n1 | cut -d' ' -f3) || maven_ver="not found"
+          gradle_ver=$(gradle -version 2>/dev/null | head -n1 | cut -d' ' -f2) || gradle_ver="not found"
+          
+          echo "Java:    ${java_ver}"
+          echo "Maven:   ${maven_ver}"
+          echo "Gradle:  ${gradle_ver}"
 
       - name: Checkout ${{ env.PNAME }} code
         run: |
@@ -146,7 +148,10 @@ jobs:
       - name: Build and Bundle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
-        run: ./gradlew bundleZip --warning-mode all
+        run: |
+          ./gradlew bundleZip
+          # Debug: Verify the zip content is flat and correct
+          unzip -l build/distributions/*-bundle.zip
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
@@ -156,8 +161,7 @@ jobs:
         run: |
           ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME/build/distributions -name "*-bundle.zip" | head -n 1)
           echo "Found bundle: `basename $ZIP_FILE`"
-          echo "Inspecting $ZIP_FILE"
-          unzip -v $ZIP_FILE
+          
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:
