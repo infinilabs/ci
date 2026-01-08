@@ -143,6 +143,7 @@ jobs:
 
       - name: Build and Bundle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
+        working-directory: ${{ env.PNAME}}
         run: ./gradlew bundleZip
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -150,6 +151,7 @@ jobs:
 
       - name: Upload to Central Portal
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
+        working-directory: ${{ env.PNAME}}
         run: |
           ZIP_FILE=$(find build/distributions -name "*-bundle.zip" | head -n 1)
           echo "Found bundle: $ZIP_FILE"
