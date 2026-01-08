@@ -106,17 +106,15 @@ jobs:
           
       - name: Checkout ${{ inputs.PUBLISH_COMPONENT }} code
         run: |
-          REPO_NAME=$PUBLISH_COMPONENT
+          REPO_NAME=$PNAME
           if [ "$PUBLISH_COMPONENT" == 'license' ]; then
-            REPO_NAME="$PUBLISH_COMPONENT-java"
+            REPO_NAME="$PNAME-java"
           else
             echo "Unknown component: $PUBLISH_COMPONENT"
             exit 1
           fi
 
-          echo "PNAME=$PUBLISH_COMPONENT" >> $GITHUB_ENV
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-          echo "Cloning component repository: $REPO_NAME to $PNAME"
+          echo "Cloning component repository: $REPO_NAME"
           git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
       
       - name: Prepare Publish Version
