@@ -104,13 +104,19 @@ jobs:
         if: ${{ env.BUILD_TOOL == 'gradle' }}
         uses: gradle/actions/setup-gradle@v5
           
+      - name: Check Env version
+        run: |
+          java -version || true
+          mvn -version || true
+          gradle -version || true
+
       - name: Checkout ${{ env.PNAME }} code
         run: |
           REPO_NAME=$PNAME
           if [ "$PNAME" == 'license' ]; then
             REPO_NAME="$PNAME-java"
           fi
-
+  
           echo "Cloning component repository: $REPO_NAME"
           git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
       
@@ -120,7 +126,7 @@ jobs:
           if [ "$PNAME" == 'easysearch-client' ]; then
             cp -rf $GITHUB_WORKSPACE/products/easysearch/client/build.gradle .
             sed -i "s/^version[[:space:]]*=[[:space:]]*['\"].*['\"]/version = '$PUBLISH_VERSION'/" build.gradle
-            ./gradlew wrapper --gradle-version 7.6.4
+            gradle wrapper --gradle-version 7.6.4
           elif [ "$PNAME" == 'license' ]; then
             cp -rf $GITHUB_WORKSPACE/products/license/pom.xml .
             mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
