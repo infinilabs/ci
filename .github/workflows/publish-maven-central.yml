@@ -107,11 +107,8 @@ jobs:
       - name: Checkout ${{ inputs.PUBLISH_COMPONENT }} code
         run: |
           REPO_NAME=$PNAME
-          if [ "$PUBLISH_COMPONENT" == 'license' ]; then
+          if [ "$PNAME" == 'license' ]; then
             REPO_NAME="$PNAME-java"
-          else
-            echo "Unknown component: $PUBLISH_COMPONENT"
-            exit 1
           fi
 
           echo "Cloning component repository: $REPO_NAME"
