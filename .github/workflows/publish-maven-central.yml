@@ -142,12 +142,25 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           MAVEN_ARGS: "-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 
-      - name: Publish Easysearch Client
+      - name: Build and Bundle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
-        working-directory: ${{ env.PNAME}}
-        run: ./gradlew publishMavenJavaPublicationToCentralPortal
+        run: ./gradlew bundleZip
         env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Upload to Central Portal
+        if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
+        run: |
+          ZIP_FILE=$(find build/distributions -name "*-bundle.zip" | head -n 1)
+          echo "Found bundle: $ZIP_FILE"
+          
+          AUTH_HEADER=$(echo -n "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_PASSWORD }}" | base64 -w 0)
+          
+          curl --request POST \
+            --verbose \
+            --fail \
+            --header "Authorization: UserToken ${AUTH_HEADER}" \
+            --form "bundle=@${ZIP_FILE}" \
+            --form "publishingType=AUTOMATIC" \
+            https://central.sonatype.com/api/v1/publisher/upload
