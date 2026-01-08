@@ -3,46 +3,69 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    
+    <!-- Project Coordinates -->
     <groupId>com.infinilabs</groupId>
     <artifactId>license</artifactId>
     <version>0.0.1</version>
     
+    <!-- Project Metadata for Maven Central -->
     <name>INFINI Labs License</name>
     <description>INFINI Labs License</description>
     <url>https://github.com/infinilabs/license</url>
 
     <licenses>
         <license>
-        <name>The Apache License, Version 2.0</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
+    
     <developers>
         <developer>
-        <name>INFINI Labs</name>
-        <url>https://www.infinilabs.com/</url>
+            <name>INFINI Labs</name>
+            <url>https://www.infinilabs.com/</url>
+            <organization>INFINI Labs</organization>
+            <organizationUrl>https://www.infinilabs.com/</organizationUrl>
         </developer>
     </developers>
+    
     <scm>
-        <url>git@github.com:infinilabs/license.git</url>
+        <connection>scm:git:git://github.com/infinilabs/license.git</connection>
+        <developerConnection>scm:git:ssh://github.com:infinilabs/license.git</developerConnection>
+        <url>https://github.com/infinilabs/license</url>
     </scm>
 
     <properties>
+        <!-- File encoding  -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        
+        <!-- Java Version -->
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        
         <skipTest>true</skipTest>
+        
+        <!-- Dependency Versions Management -->
+        <slf4j.version>1.7.36</slf4j.version>
+        <logback.version>1.2.13</logback.version>
+        <jackson.version>2.15.3</jackson.version>
+        <junit.version>4.13.2</junit.version>
     </properties>
+
     <dependencies>
-        <!--公共依赖,统一管理版本号-->
+        <!-- Testing Dependencies -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <!-- use 3.0.0 for Java 8 projects -->
-            <version>2.0.0</version>
+            <version>3.24.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -51,54 +74,47 @@
             <version>1.8</version>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Logging Dependencies -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.2</version>
-            <!--<scope>test</scope>-->
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.1.2</version>
-            <!--<scope>test</scope>-->
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.1.2</version>
-            <!--<scope>test</scope>-->
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.7</version>
-            <!--<scope>test</scope>-->
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>compile</scope>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- JSON Processing Dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.11.2</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.2</version>
+            <version>${jackson.version}</version>
         </dependency>
-        <!--公共依赖-->
-
     </dependencies>
 
     <build>
         <finalName>${project.groupId}-${project.artifactId}-${project.version}</finalName>
 
         <pluginManagement>
+            <!-- Define plugin versions and default configurations here -->
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -127,6 +143,7 @@
                             <configuration>
                                 <failOnError>false</failOnError>
                                 <doclint>none</doclint>
+                                <quiet>true</quiet>
                             </configuration>
                         </execution>
                     </executions>
@@ -166,15 +183,20 @@
         </pluginManagement>
 
         <plugins>
+            <!-- Compiler Configuration -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <!-- Explicitly set encoding to match project settings -->
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
+            <!-- Jar Packaging Configuration -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -190,6 +212,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Copy Dependencies to Lib Directory -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -208,22 +231,25 @@
                 </executions>
             </plugin>
 
+            <!-- Attach Source Code -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
             </plugin>
 
+            <!-- Attach Javadocs -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
             </plugin>
 
+            <!-- GPG Signing (Required for Maven Central) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
             </plugin>
 
-            <!-- Central Portal Publish -->
+            <!-- Central Portal Publishing Plugin -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
