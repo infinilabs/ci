@@ -69,7 +69,7 @@ on:
 
 jobs:
   publish:
-    name: Publish easysearch files and docker
+    name: Publish ${{ inputs.PUBLISH_COMPONENT }} to Maven Central
     runs-on: ubuntu-latest
     env:
       JDK_VERSION: ${{ inputs.JDK_VERSION }}
