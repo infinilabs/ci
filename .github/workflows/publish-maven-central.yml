@@ -150,6 +150,8 @@ jobs:
         working-directory: ${{ env.PNAME}}
         run: |
           ./gradlew bundleZip
+          # Debug: check the pom file
+          cat build/repos/staging/com/infinilabs/easysearch-client/$PUBLISH_VERSION/easysearch-client-$PUBLISH_VERSION.pom
           # Debug: Verify the zip content is flat and correct
           unzip -l build/distributions/*-bundle.zip
         env:
@@ -165,5 +167,6 @@ jobs:
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:
+          DEBUG: "true"
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}

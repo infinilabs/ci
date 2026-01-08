@@ -17,13 +17,15 @@ allprojects {
     }
 
     tasks.withType(JavaCompile).configureEach {
-        options.compilerArgs << "-Xlint:none"
+        options.compilerArgs << "-Xlint:none" << "-nowarn" 
         options.deprecation = false
         options.warnings = false
     }
     
     tasks.withType(Javadoc).configureEach {
-        options.addStringOption('Xdoclint:none', '-quiet')
+        if (JavaVersion.current().isJava8Compatible()) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
         options.quiet()
         options.encoding = 'UTF-8'
         failOnError = false
