@@ -59,7 +59,7 @@ def main():
     # 2. Check Status Loop
     print("⏳ Waiting for validation...")
     start_time = time.time()
-    timeout_seconds = 600 # 10 mins
+    timeout_seconds = 300 # 5 mins
     
     last_response = None
 
