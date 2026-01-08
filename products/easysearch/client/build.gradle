@@ -3,7 +3,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id "com.gradleup.nmcp" version "0.0.9"
 }
 
@@ -19,8 +19,9 @@ allprojects {
 }
 
 java {
-    targetCompatibility = JavaVersion.VERSION_1_8
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
     withSourcesJar()
     withJavadocJar()
 }
@@ -43,7 +44,6 @@ versionProps.each { key, value ->
 
 dependencies {
     def jacksonVersion = "2.15.3"
-    def jacksonDatabindVersion = "2.15.3"
     def hamcrestVersion = "2.1"
     def randomizedrunnerVersion = "2.7.1"
     
@@ -61,7 +61,7 @@ dependencies {
     implementation 'jakarta.json.bind:jakarta.json.bind-api:2.0.0'
 
     implementation "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
-    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
     
     testImplementation "junit:junit:${project.hasProperty('junit') ? junit : '4.13.2'}"
@@ -145,11 +145,9 @@ publishing {
 
 signing {
     required { gradle.taskGraph.hasTask("publishMavenJavaPublicationToCentralPortal") }
-    
     def signingKey = System.getenv("SIGNING_KEY")
     def signingPassword = System.getenv("SIGNING_PASSWORD")
     useInMemoryPgpKeys(signingKey, signingPassword)
-    
     sign publishing.publications.mavenJava
 }
 
