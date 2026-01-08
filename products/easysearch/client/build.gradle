@@ -24,7 +24,7 @@ allprojects {
     
     tasks.withType(Javadoc).configureEach {
         if (JavaVersion.current().isJava8Compatible()) {
-            options.addStringOption('Xdoclint', 'none')
+            options.addStringOption('Xdoclint:none', '-quiet')
         }
         options.quiet()
         options.encoding = 'UTF-8'
@@ -41,11 +41,8 @@ java {
 
 def loadVersionProperties() {
     def props = new Properties()
-    def propFile = file('version.properties')
-    if (propFile.exists()) {
-        propFile.withInputStream { stream ->
-            props.load(stream)
-        }
+    file('version.properties').withInputStream { stream ->
+        props.load(stream)
     }
     return props
 }
@@ -55,13 +52,17 @@ versionProps.each { key, value ->
     project.ext.set(key, value)
 }
 
+versionProps.each { key, value ->
+    project.ext.set(key, value)
+}
+
 dependencies {
     def jacksonVersion = "2.15.3"
+    def jacksonDatabindVersion = "2.15.3"
     def hamcrestVersion = "2.1"
     def randomizedrunnerVersion = "2.7.1"
-    
+    def slf4jVersion = "1.7.36"
     implementation project(':rest')
-    
     testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
     testImplementation("com.carrotsearch.randomizedtesting:randomizedtesting-runner:$randomizedrunnerVersion") {
         exclude group: "junit"
@@ -74,18 +75,41 @@ dependencies {
     implementation 'jakarta.json.bind:jakarta.json.bind-api:2.0.0'
 
     implementation "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
-    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
     
-    testImplementation "junit:junit:${project.hasProperty('junit') ? junit : '4.13.2'}"
-    testImplementation "org.apache.logging.log4j:log4j-api:${project.hasProperty('log4j') ? log4j : '2.17.1'}"
-    testImplementation "org.apache.logging.log4j:log4j-core:${project.hasProperty('log4j') ? log4j : '2.17.1'}"
+    testImplementation "junit:junit:${junit}"
+    testImplementation "org.apache.logging.log4j:log4j-api:${log4j}"
+    testImplementation "org.apache.logging.log4j:log4j-core:${log4j}"
+
 }
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task bundleZip(type: Zip) {
+    dependsOn publish
+
+    def archiveFileName = "${archivesBaseName}-${version}.zip"
+    destinationDirectory = file("$buildDir/release")
+    from "$buildDir/repo"
+    exclude("**/maven-metadata*.*")
+    doLast {
+        println "Finish Generating distribution zip file $archiveFileName"
+    }
+}
+
 
 Set<String> excludedDependencies = new HashSet<>()
 shadowJar {
     archiveBaseName.set('easysearch-client')
-    archiveClassifier.set('')
     dependencies {
         exclude {
             boolean isExcluded = it.moduleGroup != 'org.easysearch.client' && it.moduleGroup != 'com.infinilabs'
@@ -101,9 +125,33 @@ shadowJar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact shadowJar
-            artifact sourcesJar
             artifact javadocJar
+            artifact sourcesJar
+            artifact shadowJar.archiveFile
+            pom.withXml { xml ->
+                def dependenciesNode = xml.asNode().appendNode('dependencies')
+                excludedDependencies.each { depStr ->
+                    def (group, name, version) = depStr.split(':')
+                    if (name.contains('bom')) {
+                        dependenciesNode.appendNode('dependency').with {
+                            appendNode('groupId', group)
+                            appendNode('artifactId', name)
+                            appendNode('version', version)
+                            appendNode('type', 'pom')
+                            appendNode('scope', 'import')
+                        }
+                        println "dependencies with bom $group:$name:$version"
+                    } else {
+                        dependenciesNode.appendNode('dependency').with {
+                            appendNode('groupId', group)
+                            appendNode('artifactId', name)
+                            appendNode('version', version)
+                            appendNode('scope', 'compile')
+                        }
+                        println "dependencies with jar $group:$name:$version"
+                    }
+                }
+            }
 
             pom {
                 name = "Easysearch java client"
@@ -115,51 +163,25 @@ publishing {
                         url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
                     }
                 }
+
                 developers {
                     developer {
-                        name = "Infinilabs"
+                        name = "INFINI Labs"
                         url = "https://www.infinilabs.com/"
-                        organization = "Infinilabs"
-                        organizationUrl = "https://www.infinilabs.com/"
+                        inceptionYear = "2024"
                     }
                 }
                 scm {
-                    connection = "scm:git:git://github.com/infinilabs/easysearch-client.git"
-                    developerConnection = "scm:git:ssh://github.com:infinilabs/easysearch-client.git"
-                    url = "https://github.com/infinilabs/easysearch-client"
-                }
-                
-                withXml { xml ->
-                    def dependenciesNode = xml.asNode().appendNode('dependencies')
-                    excludedDependencies.each { depStr ->
-                        def parts = depStr.split(':')
-                        if (parts.length >= 3) {
-                            def group = parts[0]
-                            def name = parts[1]
-                            def ver = parts[2]
-                            
-                            def depNode = dependenciesNode.appendNode('dependency')
-                            depNode.appendNode('groupId', group)
-                            depNode.appendNode('artifactId', name)
-                            depNode.appendNode('version', ver)
-                            
-                            if (name.contains('bom')) {
-                                depNode.appendNode('type', 'pom')
-                                depNode.appendNode('scope', 'import')
-                            } else {
-                                depNode.appendNode('scope', 'compile')
-                            }
-                        }
-                    }
+                    url = "git@github.com:infinilabs/easysearch-client.git"
                 }
             }
         }
     }
-    
     repositories {
+        mavenLocal()
         maven {
-            name = 'staging'
-            url = layout.buildDirectory.dir("repos/staging")
+            name = 'localRepo'
+            url = "file://${buildDir}/repo"
         }
     }
 }
@@ -172,26 +194,6 @@ signing {
     useInMemoryPgpKeys(signingKey, signingPassword)
     
     sign publishing.publications.mavenJava
-}
-
-task bundleZip(type: Zip) {
-    dependsOn 'publishMavenJavaPublicationToStagingRepository'
-    
-    archiveFileName.set("${archivesBaseName}-${version}-bundle.zip")
-    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
-    
-    def groupPath = project.group.replace('.', '/')
-    def artifactPath = "${groupPath}/${archivesBaseName}/${version}"
-    def stagingDir = layout.buildDirectory.dir("repos/staging/${artifactPath}").get().asFile
-    
-    from(fileTree(stagingDir)) {
-        eachFile { it.path = it.name }
-        includeEmptyDirs = false
-    }
-
-    exclude "maven-metadata*"
-    exclude "**/*.sha256"
-    exclude "**/*.sha512"
 }
 
 test {
