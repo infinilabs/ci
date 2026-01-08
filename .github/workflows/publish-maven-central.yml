@@ -106,13 +106,13 @@ jobs:
           
       - name: Check env version
         run: |
-          java_ver=$(java -version 2>&1 | head -n1 | cut -d'"' -f2) || java_ver="not found"
-          maven_ver=$(mvn -version 2>/dev/null | head -n1 | cut -d' ' -f3) || maven_ver="not found"
-          gradle_ver=$(gradle -version 2>/dev/null | head -n1 | cut -d' ' -f2) || gradle_ver="not found"
-          
-          echo "Java:    ${java_ver}"
-          echo "Maven:   ${maven_ver}"
-          echo "Gradle:  ${gradle_ver}"
+          java_ver=$(java -version 2>&1 | head -n1 | cut -d'"' -f2)
+          maven_ver=$(mvn -version 2>/dev/null | head -n1 | cut -d' ' -f3)
+          gradle_ver=$(gradle -version 2>/dev/null | grep '^Gradle ' | cut -d' ' -f2)
+
+          echo "Java:    ${java_ver:-not found}"
+          echo "Maven:   ${maven_ver:-not found}"
+          echo "Gradle:  ${gradle_ver:-not found}"
 
       - name: Checkout ${{ env.PNAME }} code
         run: |
@@ -149,7 +149,7 @@ jobs:
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
         run: |
-          ./gradlew generateDistributionZip
+          ./gradlew distribution
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
@@ -163,6 +163,6 @@ jobs:
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:
-          DEBUG: "true"
+          DEBUG: false
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}

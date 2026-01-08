@@ -99,7 +99,7 @@ def main():
     consecutive_errors = 0
     
     while True:
-        if time.time() - start_time > 600: # 10 mins
+        if time.time() - start_time > 1200:  # 20 minutes timeout
             print("\n❌ Timeout.")
             drop_deployment(deployment_id, headers)
             sys.exit(1)
