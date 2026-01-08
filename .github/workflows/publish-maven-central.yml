@@ -107,9 +107,9 @@ jobs:
       - name: Check env version
         run: |
           java -version || true
-          echo 
+          echo "-------------------------------------------------"
           mvn -version || true
-          echo
+          echo "-------------------------------------------------"
           gradle -version || true
 
       - name: Checkout ${{ env.PNAME }} code
