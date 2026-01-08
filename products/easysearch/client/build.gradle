@@ -1,0 +1,171 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id "com.gradleup.nmcp" version "0.0.9"
+}
+
+group = 'com.infinilabs'
+archivesBaseName = 'easysearch-client'
+version = '2.0.2'
+
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+def loadVersionProperties() {
+    def props = new Properties()
+    def propFile = file('version.properties')
+    if (propFile.exists()) {
+        propFile.withInputStream { stream ->
+            props.load(stream)
+        }
+    }
+    return props
+}
+
+def versionProps = loadVersionProperties()
+versionProps.each { key, value ->
+    project.ext.set(key, value)
+}
+
+dependencies {
+    def jacksonVersion = "2.15.3"
+    def jacksonDatabindVersion = "2.15.3"
+    def hamcrestVersion = "2.1"
+    def randomizedrunnerVersion = "2.7.1"
+    
+    implementation project(':rest')
+    
+    testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
+    testImplementation("com.carrotsearch.randomizedtesting:randomizedtesting-runner:$randomizedrunnerVersion") {
+        exclude group: "junit"
+    }
+
+    api("org.eclipse.parsson:parsson:1.1.7")
+    api("com.google.code.findbugs:jsr305:3.0.2")
+    api("jakarta.json:jakarta.json-api:2.0.1")
+
+    implementation 'jakarta.json.bind:jakarta.json.bind-api:2.0.0'
+
+    implementation "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
+    
+    testImplementation "junit:junit:${project.hasProperty('junit') ? junit : '4.13.2'}"
+    testImplementation "org.apache.logging.log4j:log4j-api:${project.hasProperty('log4j') ? log4j : '2.17.1'}"
+    testImplementation "org.apache.logging.log4j:log4j-core:${project.hasProperty('log4j') ? log4j : '2.17.1'}"
+}
+
+Set<String> excludedDependencies = new HashSet<>()
+shadowJar {
+    archiveBaseName.set('easysearch-client')
+    dependencies {
+        exclude {
+            boolean isExcluded = it.moduleGroup != 'org.easysearch.client' && it.moduleGroup != 'com.infinilabs'
+            if (isExcluded) {
+                String depStr = "${it.moduleGroup}:${it.moduleName}:${it.moduleVersion}"
+                excludedDependencies.add(depStr)
+            }
+            return isExcluded
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact shadowJar
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = "Easysearch java client"
+                description = "Easysearch java client"
+                url = "https://github.com/infinilabs/easysearch-client"
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "INFINI Labs"
+                        url = "https://www.infinilabs.com/"
+                        organization = "INFINI Labs"
+                        organizationUrl = "https://www.infinilabs.com/"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/infinilabs/easysearch-client.git"
+                    developerConnection = "scm:git:ssh://github.com:infinilabs/easysearch-client.git"
+                    url = "https://github.com/infinilabs/easysearch-client"
+                }
+                
+                withXml { xml ->
+                    def dependenciesNode = xml.asNode().appendNode('dependencies')
+                    excludedDependencies.each { depStr ->
+                        def parts = depStr.split(':')
+                        if (parts.length >= 3) {
+                            def group = parts[0]
+                            def name = parts[1]
+                            def ver = parts[2]
+                            
+                            def depNode = dependenciesNode.appendNode('dependency')
+                            depNode.appendNode('groupId', group)
+                            depNode.appendNode('artifactId', name)
+                            depNode.appendNode('version', ver)
+                            
+                            if (name.contains('bom')) {
+                                depNode.appendNode('type', 'pom')
+                                depNode.appendNode('scope', 'import')
+                            } else {
+                                depNode.appendNode('scope', 'compile')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    required { gradle.taskGraph.hasTask("publishMavenJavaPublicationToCentralPortal") }
+    
+    def signingKey = System.getenv("SIGNING_KEY")
+    def signingPassword = System.getenv("SIGNING_PASSWORD")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    
+    sign publishing.publications.mavenJava
+}
+
+nmcp {
+    publish("mavenJava") {
+        username = System.getenv("OSSRH_USERNAME")
+        password = System.getenv("OSSRH_PASSWORD")
+        publicationType = "AUTOMATIC"
+    }
+}
+
+test {
+    include '**/*Test.class'
+    include '**/*Tests.class'
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+    }
+}
