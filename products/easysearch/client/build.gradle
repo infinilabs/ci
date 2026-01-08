@@ -84,7 +84,14 @@ dependencies {
 
 }
 
-task bundleZip(type: Zip) {
+task generateBundleZip(type: Zip) {
+    from shadowJar.archiveFile
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+task generateDistributionZip(type: Zip) {
     dependsOn publish
 
     def archiveFileName = "${archivesBaseName}-${version}.zip"

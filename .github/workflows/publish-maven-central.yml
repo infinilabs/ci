@@ -149,7 +149,12 @@ jobs:
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
         run: |
-          ./gradlew bundleZip
+          ./gradlew generateDistributionZip
+          find $GITHUB_WORKSPACE/$PNAME -name "*.zip"
+          if [ ! -f "$(find $GITHUB_WORKSPACE/$PNAME -name "*-bundle.zip" | head -n 1)" ]; then
+            echo "❌ Bundle zip file not found!"
+            exit 1
+          fi
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
