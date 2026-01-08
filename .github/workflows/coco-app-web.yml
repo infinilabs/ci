@@ -22,7 +22,7 @@ on:
       SEARCH_CHAT_VERSION: { description: 'search-chat Version', required: true, default: "1.3.10" }
       UI_WEB_CLI_VERSION: { description: 'ui-web-cli Version', required: true, default: "0.0.43" }
       FILTER_VERSION: { description: 'filter Version', required: true, default: "0.0.11" }
-      SEARCH_RESULTS_VERSION: { description: 'search-results Version', required: true, default: "0.0.11" }
+      SEARCH_RESULTS_VERSION: { description: 'search-results Version', required: true, default: "0.0.12" }
       ENTITY_UI_VERSION: { description: 'entity-ui Version', required: true, default: "0.0.10" }
       CUSTOM_ICONS_VERSION: { description: 'custom-icons Version', required: true, default: "0.0.10" }
       DROPDOWNLIST_VERSION: { description: 'dropdownlist Version', required: true, default: "1.3.5" }
