@@ -27,7 +27,7 @@ on:
       CUSTOM_ICONS_VERSION: { description: 'custom-icons Version', required: true, default: "0.0.10" }
       DROPDOWNLIST_VERSION: { description: 'dropdownlist Version', required: true, default: "1.3.5" }
       DATEPICKER_VERSION: { description: 'datepicker Version', required: true, default: "0.0.10" }
-      AI_ANSWER_VERSION: { description: 'ai-answer Version', required: true, default: "0.0.3" }
+      AI_ANSWER_VERSION: { description: 'ai-answer Version', required: true, default: "0.0.4" }
 
 jobs:
   prepare-matrix:
