@@ -156,7 +156,8 @@ jobs:
         run: |
           ZIP_FILE=$(find $GITHUB_WORKSPACE/$PNAME/build/distributions -name "*-bundle.zip" | head -n 1)
           echo "Found bundle: `basename $ZIP_FILE`"
-          
+          echo "Inspecting $ZIP_FILE"
+          unzip -v $ZIP_FILE
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:

@@ -16,17 +16,16 @@ allprojects {
         mavenCentral()
     }
 
-    tasks.withType(JavaCompile) {
+    ttasks.withType(JavaCompile).configureEach {
         options.compilerArgs << "-Xlint:none"
         options.deprecation = false
         options.warnings = false
     }
     
-    tasks.withType(Javadoc) {
+    tasks.withType(Javadoc).configureEach {
         options.addStringOption('Xdoclint:none', '-quiet')
-        options.quiet()
-        options.encoding = 'UTF-8'
         failOnError = false
+        options.quiet()
     }
 }
 

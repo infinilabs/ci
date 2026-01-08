@@ -5,6 +5,8 @@ import base64
 import requests
 import json
 
+sys.stdout.reconfigure(line_buffering=True)
+
 BASE_URL = "https://central.sonatype.com/api/v1/publisher"
 
 def drop_deployment(deployment_id, headers):
