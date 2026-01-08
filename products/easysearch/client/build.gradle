@@ -178,8 +178,11 @@ task bundleZip(type: Zip) {
     def artifactPath = "${groupPath}/${archivesBaseName}/${version}"
     def stagingDir = layout.buildDirectory.dir("repos/staging/${artifactPath}")
     
-    from(stagingDir) {
-        into '' 
+    from(fileTree(stagingDir)) {
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.name
+        }
+        includeEmptyDirs = false
     }
 
     exclude "maven-metadata*"
