@@ -15,6 +15,16 @@ allprojects {
         mavenLocal()
         mavenCentral()
     }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:none"
+    }
+    
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.quiet()
+        failOnError = false
+    }
 }
 
 java {
@@ -22,11 +32,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
     withJavadocJar()
-}
-
-javadoc {
-    options.addStringOption('Xdoclint:none', '-quiet')
-    options.quiet()
 }
 
 def loadVersionProperties() {

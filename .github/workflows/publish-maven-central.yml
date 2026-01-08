@@ -144,7 +144,7 @@ jobs:
       - name: Build and Bundle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
-        run: ./gradlew bundleZip
+        run: ./gradlew bundleZip --warning-mode all
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
