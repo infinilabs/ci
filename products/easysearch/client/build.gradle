@@ -24,7 +24,7 @@ allprojects {
     
     tasks.withType(Javadoc).configureEach {
         if (JavaVersion.current().isJava8Compatible()) {
-            options.addStringOption('Xdoclint:none', '-quiet')
+            options.addStringOption('Xdoclint', 'none')
         }
         options.quiet()
         options.encoding = 'UTF-8'
@@ -117,9 +117,9 @@ publishing {
                 }
                 developers {
                     developer {
-                        name = "INFINI Labs"
+                        name = "Infinilabs"
                         url = "https://www.infinilabs.com/"
-                        organization = "INFINI Labs"
+                        organization = "Infinilabs"
                         organizationUrl = "https://www.infinilabs.com/"
                     }
                 }
