@@ -75,7 +75,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui analysis-morphology)
+    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
       $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip >/dev/null 2>&1
