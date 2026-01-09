@@ -73,6 +73,11 @@
         "current_version": "0.0.1",
         "work_dir": "packages/DocDetail",
         "dist_dir": "packages/DocDetail"
+      },
+      "attachments": {
+        "current_version": "0.0.0",
+        "work_dir": "packages/Attachments",
+        "dist_dir": "packages/Attachments"
       }
     }
   }
