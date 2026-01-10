@@ -446,7 +446,7 @@ jobs:
         run: |
           # reset the cache
           echo "Flushed cache for version $PUBLISH_VERSION"
-          curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$PUBLISH_VERSION" > /dev/null
+          curl -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$PUBLISH_VERSION" > /dev/null
 
       - name: Generate .latest.json with ${{ env.VERSION }}
         shell: bash
