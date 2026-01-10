@@ -145,9 +145,9 @@ env_init() {
         cat > "$GITHUB_WORKSPACE/.oss.yml" <<-EOF
 		oss:
 		  endpoint: $OSS_EP
-		  accesskeyid: $OSS_AK
-		  accesskeysecret: $OSS_SK
-		  bucket: $OSS_BK
+		  access_key_id: $OSS_AK
+		  access_key_secret: $OSS_SK
+		  bucket_name: $OSS_BK
 		  upload_mode: $OSS_MODE
 		loglevel: "error"
 		EOF
