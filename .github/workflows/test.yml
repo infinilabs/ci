@@ -50,7 +50,8 @@ jobs:
         if: ${{ inputs.TEST_UPLOAD == true }}
         run: |
           echo "This is a test artifact" > test-artifact.txt
-          oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME
+          oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
+          oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
 
       - name: Get github release versions
         env:
