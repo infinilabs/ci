@@ -148,7 +148,7 @@ env_init() {
 		  accesskeyid: $OSS_AK
 		  accesskeysecret: $OSS_SK
 		  bucket: $OSS_BK
-          upload_mode: $OSS_MODE
+		  upload_mode: $OSS_MODE
 		loglevel: "error"
 		EOF
         log_success "OSS config (.oss.yml) created."
