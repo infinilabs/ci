@@ -78,6 +78,11 @@
         "current_version": "0.0.0",
         "work_dir": "packages/Attachments",
         "dist_dir": "packages/Attachments"
+      },
+      "chat-message": {
+        "current_version": "0.0.4",
+        "work_dir": "packages/ChatMessage",
+        "dist_dir": "packages/ChatMessage"
       }
     }
   }
