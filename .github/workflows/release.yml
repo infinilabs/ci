@@ -21,7 +21,7 @@ env:
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
-  
+
 on:
   workflow_dispatch:
     inputs:
@@ -36,7 +36,7 @@ on:
           required: false
           default: "1.4.0" 
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Products Release Version'
         required: false
         default: "1.30.2-2333"
       PUBLISH_EZS_VERSION:
@@ -92,9 +92,10 @@ jobs:
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           cat "$GITHUB_OUTPUT"
 
-  publish:
+  create-pr:
     needs: generate-matrix
-    name: Create ${{ inputs.OPERATION }} for ${{ matrix.product }}
+    if: ${{ inputs.OPERATION == 'PR' }}
+    name: Create PR for ${{ matrix.product }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -110,25 +111,13 @@ jobs:
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
-      - name: Set up and check env for ${{ matrix.product }}
+      - name: Set up env for PR
         run: |
           if [[ "${{ matrix.product }}" == "framework" ]]; then
             VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
-            if [[ -z "$VERSION" ]]; then
-              echo "Please input the framework version"
-              exit 1
-            fi
           elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
             EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-            if [[ -z "$EZS_VER" ]]; then
-              echo "Please input the easysearch version"
-              exit 1
-            fi
             VER=${{ env.PUBLISH_VERSION }}
-            if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]]; then
-              echo "Please input the publish version and easysearch version"
-              exit 1
-            fi
             SUFFIX=${VER#*-}
             if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
               VERSION="${EZS_VER}-$SUFFIX"
@@ -137,161 +126,33 @@ jobs:
             fi
           elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
             VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-            if [[ -z "$VERSION" ]]; then
-              echo "Please input the Coco app version"
-              exit 1
-            fi
           elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
             VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
-            if [[ -z "$VERSION" ]]; then
-              echo "Please input the Coco server version"
-              exit 1
-            fi
           else
             VERSION=${{ env.PUBLISH_VERSION }}
           fi
           
-          if [[ "${{ inputs.OPERATION }}" == "PR" ]]; then
-            PR_BRANCH="ci_release_$VERSION"
-            PR_MESSAGE="chore: update release notes for publish $VERSION"
-            echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
-            echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
+          if [[ -z "$VERSION" ]]; then
+            echo "Error: Version is empty for ${{ matrix.product }}"
+            exit 1
           fi
+
+          PR_BRANCH="ci_release_$VERSION"
+          PR_MESSAGE="chore: update release notes for publish $VERSION"
+          
           echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          cat $GITHUB_ENV
+          echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
+          echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
-      - name: Run connect in background
-        if: ${{ matrix.product == 'easysearch' && inputs.OPERATION != 'RELEASE' }}
+      - name: Run connect in background (Easysearch only)
+        if: ${{ matrix.product == 'easysearch' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Update ci variables for release
-        if: ${{ inputs.OPERATION == 'RELEASE' }}
-        env:
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: |
-          VER=${{ inputs.PUBLISH_VERSION }}
-          FRAMEWORK_VER=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
-          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          
-          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-            if [[ "${{matrix.product}}" == "console" ]]; then
-              VER="${VER%%-*}"
-              echo "Updating GitHub release version to $VER"
-              gh variable set PUBLISH_VERSION --body "$VER"
-            fi
-          else
-            echo "Publish version is not a valid semantic version: $VER"
-          fi
-
-          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-            if [[ "${{matrix.product}}" == "easysearch" ]]; then
-              EZS_VER="${EZS_VER%%-*}"
-              echo "Updating GitHub release Easysearch version to $EZS_VER"
-              gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER"
-            fi
-          else
-            echo "Easysearch version is not a valid semantic version: $EZS_VER"
-          fi
-
-          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-            if [[ "${{matrix.product}}" == "coco-app" ]]; then
-              COCO_APP_VER="${COCO_APP_VER%%-*}"
-              echo "Updating GitHub release Coco app version to $COCO_APP_VER"
-              gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER"
-            fi
-          else
-            echo "Coco app version is not a valid semantic version: $COCO_APP_VER"
-          fi
-
-          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-            if [[ "${{matrix.product}}" == "coco-server" ]]; then
-              COCO_VER="${COCO_VER%%-*}"
-              echo "Updating GitHub release Coco server version to $COCO_VER"
-              gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER"
-            fi
-          else
-            echo "Coco server version is not a valid semantic version: $COCO_VER"
-          fi
-          
-          # set actions variables
-          echo && echo "Set actions variables with publish version: $VER, Easysearch version: $EZS_VER, Coco app version: $COCO_APP_VER, Coco server version: $COCO_VER"
-        
-      - name: Update latest version file and upload
-        if: ${{ inputs.OPERATION == 'RELEASE'}}
-        run: |
-          VER=${{ inputs.PUBLISH_VERSION }}
-          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          
-          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
-            echo "Please input the publish version, easysearch version, coco app version and coco version"
-            exit 1
-          fi
-          SUFFIX=${VER#*-}
-          if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            EZS_VER="${EZS_VER}-$SUFFIX"
-          fi
-          #check if the version is correct
-          if [[ "$VER" == *"-"* ]] && [[ "$COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
-          fi
-          if [[ "$VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-            COCO_VER="${COCO_VER}-$SUFFIX"
-          fi
-          fname=".latest"
-          echo "Products publish version: $VER, Easysearch version: $EZS_VER"
-          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
-          jq --arg publish_version "$VER" \
-            --arg easysearch_version "$EZS_VER" \
-            --arg coco_app_version "$COCO_APP_VER" \
-            --arg coco_version "$COCO_VER" \
-            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
-            "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
-
-          # check if the file is the same
-          if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
-            echo "Files are the same, no need to upload."
-          else
-            echo "Files are different, uploading..."
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
-            # Reset cache
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
-          fi
-
-      - name: Publish coco website
-        if: ${{ inputs.OPERATION == 'RELEASE' && matrix.product == 'coco-server'}}
-        run: |
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-
-          # Publish coco website
-          echo "Publish coco website"
-          
-          # coco website publish
-          git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
-          cd $GITHUB_WORKSPACE/coco-website
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          echo "Check tag and create tag for coco-website"
-          PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
-          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
-          if [[ "$tag_exists" == "false" ]]; then
-            git tag -a $PVER -m "Release $PVER"
-            git push origin $PVER
-            echo "Tag $PVER created for coco-website"
-            sleep 10 #wait for 10 secs to make sure the tag is created
-          else
-            echo "Tag $PVER already exists for coco-website"
-          fi
-
       - name: Checkout code for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR'}}
         timeout-minutes: 30
         run: |
           if [[ "${{ matrix.product }}" == "easysearch" ]]; then
@@ -299,64 +160,32 @@ jobs:
           else
             git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
           fi
-          # Set up git
           cd $GITHUB_WORKSPACE/${{ matrix.product }} && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
           git config user.name github-actions
           git config user.email github-actions@github.com
 
-      - name: Checkout and create tag for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'TAG'}}
-        run: |
-          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
-          else
-            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
-          fi
-          cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          echo "Check tag and create tag for ${{ matrix.product }}"
-          PVER=$(echo "v$VERSION" | sed 's/-.*//')
-          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
-          if [[ "$tag_exists" == "false" ]]; then
-            git tag -a $PVER -m "Release $PVER"
-            git push origin $PVER
-            echo "Tag $PVER created for ${{ matrix.product }}"
-            sleep 10 #wait for 10 secs to make sure the tag is created
-          else
-            echo "Tag $PVER already exists for ${{ matrix.product }}"
-            exit 0
-          fi
-
-      - name: Create Branch and update release notes & data for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' }}
+      - name: Create Branch and update release notes & data
         continue-on-error: true
         run: |
           VER=${{ inputs.PUBLISH_VERSION }}
           FRAMEWORK_VER=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
           EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-
+          
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           # Check if the branch already exists
           if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
             echo "Branch $PR_BRANCH found. Deleting remote branch..."
             git push origin --delete "$PR_BRANCH"
-            echo "Branch $BRANCH_NAME deleted."
           fi
-          # Create a new branch
+          
           echo "Create Branch $PR_BRANCH for ${{ matrix.product }}"
           git checkout -b "$PR_BRANCH"
-          #update release notes
+          
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
-          # first uppercase for product name
           PRODUCT_NAME=$(echo "${{ matrix.product }}" | sed 's/./\u&/')
-          #PRODUCT_NAME=$(echo "${{ matrix.product }}" | tr '[:lower:]' '[:upper:]' | sed 's/^./\U&/')
+          
           for f in en zh; do
-            if [[ ! -d docs/content.$f ]]; then
-              continue
-            fi
+            if [[ ! -d docs/content.$f ]]; then continue; fi
 
             FRAMEWORK_UPDATE_NOTES="- This release includes updates from the underlying [Framework v${FRAMEWORK_VER}](https://docs.infinilabs.com/framework/v${FRAMEWORK_VER}), which resolves several common issues and enhances overall stability and performance. While there are no direct changes to ${PRODUCT_NAME} itself, the improvements inherited from Framework benefit ${PRODUCT_NAME} indirectly."
             if [[ "$f" == "zh" ]]; then
@@ -365,18 +194,14 @@ jobs:
 
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
               if [[ "${{ matrix.product }}" == "console" || "${{ matrix.product }}" == "agent" || "${{ matrix.product }}" == "gateway" || "${{ matrix.product }}" == "loadgen" ]]; then
-                # insert the FRAMEWORK_UPDATE_NOTES to the first Improvements section
                 sed -i "0,/^[[:space:]]*###\{1,2\}[[:space:]]*✈️[[:space:]]*Improvements[[:space:]]*$/s||&\n$FRAMEWORK_UPDATE_NOTES|" docs/content.$f/docs/release-notes/_index.md
               fi
-              # insert the PUBLISH to the latest section
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
               sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### ❌ Breaking changes  \\n### 🚀 Features  \\n### 🐛 Bug fix  \\n### ✈️ Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
               git add docs/content.$f/docs/release-notes/_index.md
-            else
-              echo "Release notes for $VERSION already exists in docs/content.$f/docs/release-notes/_index.md"
             fi
           done
-          # udpate version
+          
           if [[ -d docs/data ]]; then
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             if [[ "${{ matrix.product }}" == "easysearch" ]]; then
@@ -388,8 +213,7 @@ jobs:
             git add docs/data/quick_start.yaml
           fi
 
-      - name: Create Commit Message for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' }}
+      - name: Create Commit Message
         id: commit_and_push
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
@@ -406,18 +230,16 @@ jobs:
             git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
           fi
 
-      - name: Create Github Pull Request for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product != 'easysearch' }}
+      - name: Create Github Pull Request
+        if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product != 'easysearch' }}
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }} 
         run: |
           cd $GITHUB_WORKSPACE/${{ matrix.product }}
           if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "auto-merge"; then
-            echo "Label auto-merge does not exist. Creating it..."
             gh label create "auto-merge" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automatically merge this PR" --color 34d058 --force
           fi
           if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "automated"; then
-            echo "Label automated does not exist. Creating it..."
             gh label create "automated" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automated create this PR" --color 34d058 --force
           fi
           gh pr create --title "$PR_MESSAGE" \
@@ -427,8 +249,8 @@ jobs:
                   --label "auto-merge" \
                   --label "automated"
 
-      - name: Create Pull Request for ${{ matrix.product }}
-        if: ${{ inputs.OPERATION == 'PR' && steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
+      - name: Create Pull Request (Gitea)
+        if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
         uses: infinilabs/gitea-pr@v0
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
@@ -442,9 +264,205 @@ jobs:
           tea-version: 0.9.2
           pr-label: "auto-merge, automated"
 
+  create-tag:
+    needs: generate-matrix
+    if: ${{ inputs.OPERATION == 'TAG' }}
+    name: Create TAG for ${{ matrix.product }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Set up env for TAG
+        run: |
+          if [[ "${{ matrix.product }}" == "framework" ]]; then
+            VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
+          elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+            VER=${{ env.PUBLISH_VERSION }}
+            SUFFIX=${VER#*-}
+            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              VERSION="${EZS_VER}-$SUFFIX"
+            else
+              VERSION=$EZS_VER
+            fi
+          elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
+            VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
+            VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
+          else
+            VERSION=${{ env.PUBLISH_VERSION }}
+          fi
+          
+          if [[ -z "$VERSION" ]]; then
+            echo "Error: Version is empty for ${{ matrix.product }}"
+            exit 1
+          fi
+          echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Run connect in background (Easysearch only)
+        if: ${{ matrix.product == 'easysearch' }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
+
+      - name: Checkout and create tag
+        run: |
+          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
+            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          else
+            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          fi
+          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          echo "Check tag and create tag for ${{ matrix.product }}"
+          PVER=$(echo "v$VERSION" | sed 's/-.*//')
+          tag_exists=$(git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo true || echo false)
+          if [[ "$tag_exists" == "false" ]]; then
+            git tag -a $PVER -m "Release $PVER"
+            git push origin $PVER
+            sleep 10
+          else
+            echo "Tag $PVER already exists for ${{ matrix.product }}"
+            exit 0
+          fi
+
+  release-metadata:
+    if: ${{ inputs.OPERATION == 'RELEASE' }}
+    name: Update Release Metadata & .latest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Update GitHub Variables
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          VER=${{ inputs.PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          
+          # 1. Update Global Product Version (Console, Agent, Gateway...)
+          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+             VER_CLEAN="${VER%%-*}"
+             echo "Updating GitHub release version to $VER_CLEAN"
+             gh variable set PUBLISH_VERSION --body "$VER_CLEAN"
+          fi
+
+          # 2. Update Easysearch Version
+          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+             EZS_VER_CLEAN="${EZS_VER%%-*}"
+             echo "Updating GitHub release Easysearch version to $EZS_VER_CLEAN"
+             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
+          fi
+
+          # 3. Update Coco Versions
+          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+             COCO_APP_VER_CLEAN="${COCO_APP_VER%%-*}"
+             echo "Updating GitHub release Coco app version to $COCO_APP_VER_CLEAN"
+             gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER_CLEAN"
+          fi
+
+          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+             COCO_VER_CLEAN="${COCO_VER%%-*}"
+             echo "Updating GitHub release Coco server version to $COCO_VER_CLEAN"
+             gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER_CLEAN"
+          fi
+
+      - name: Update .latest file and upload to OSS
+        run: |
+          VER=${{ inputs.PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          
+          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
+            echo "::error::Missing version inputs. All versions must be supplied for release metadata update."
+            exit 1
+          fi
+
+          # Handle Suffix logic for Easysearch/Coco matching Product Version
+          SUFFIX=${VER#*-}
+          if [[ "$VER" == *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+             [[ "$EZS_VER" != *"-"* ]] && EZS_VER="${EZS_VER}-$SUFFIX"
+             [[ "$COCO_APP_VER" != *"-"* ]] && COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
+             [[ "$COCO_VER" != *"-"* ]] && COCO_VER="${COCO_VER}-$SUFFIX"
+          fi
+          
+          fname=".latest"
+          echo "Downloading current .latest from $RELEASE_URL/$fname..."
+          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+
+          # Update ALL fields at once. This solves the "cannot be released separately" issue 
+          # by ensuring consistent versions across the suite.
+          echo "Updating local .latest file..."
+          jq --arg publish_version "$VER" \
+            --arg easysearch_version "$EZS_VER" \
+            --arg coco_app_version "$COCO_APP_VER" \
+            --arg coco_version "$COCO_VER" \
+            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+            "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
+
+          if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
+            echo "Files are the same, no need to upload."
+          else
+            echo "Files are different, uploading to OSS..."
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
+            
+            echo "Triggering republish hook..."
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+            echo "Republish trigger sent."
+          fi
+
+  publish-coco-website:
+    needs: release-metadata
+    if: ${{ inputs.OPERATION == 'RELEASE' && inputs.COCO_PUBLISH == true }}
+    name: Publish Coco Website
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        
+      - name: Publish Website Tag
+        run: |
+          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
+          cd $GITHUB_WORKSPACE/coco-website
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          
+          PVER=$(echo "v$COCO_VER" | sed 's/-.*//')
+          if git rev-parse --verify "refs/tags/$PVER" >/dev/null 2>&1; then
+            echo "Tag $PVER already exists for coco-website"
+          else
+            git tag -a $PVER -m "Release $PVER"
+            git push origin $PVER
+            echo "Tag $PVER created."
+          fi
+
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish]
+    needs: [create-pr, create-tag, release-metadata, publish-coco-website]
     if: failure()
     steps:
       - name: Checkout code
