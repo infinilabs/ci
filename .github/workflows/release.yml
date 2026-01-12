@@ -356,6 +356,9 @@ jobs:
       - name: Update GitHub Variables
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
+          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO: ${{ inputs.COCO_PUBLISH }}
         run: |
           VER=${{ inputs.PUBLISH_VERSION }}
           EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
@@ -363,63 +366,105 @@ jobs:
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
           # 1. Update Global Product Version (Console, Agent, Gateway...)
-          if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-             VER_CLEAN="${VER%%-*}"
-             echo "Updating GitHub release version to $VER_CLEAN"
-             gh variable set PUBLISH_VERSION --body "$VER_CLEAN"
+          if [[ "$DO_PROD" == "true" ]]; then
+            if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               VER_CLEAN="${VER%%-*}"
+               echo "Updating GitHub release version to $VER_CLEAN"
+               gh variable set PUBLISH_VERSION --body "$VER_CLEAN"
+            else
+               echo "::warning:: Products publish selected but version invalid: $VER"
+            fi
+          else
+            echo "Skipping Products (Agent/Console) variable update."
           fi
 
           # 2. Update Easysearch Version
-          if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-             EZS_VER_CLEAN="${EZS_VER%%-*}"
-             echo "Updating GitHub release Easysearch version to $EZS_VER_CLEAN"
-             gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
+          if [[ "$DO_EZS" == "true" ]]; then
+            if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               EZS_VER_CLEAN="${EZS_VER%%-*}"
+               echo "Updating GitHub release Easysearch version to $EZS_VER_CLEAN"
+               gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
+            fi
+          else
+            echo "Skipping Easysearch variable update."
           fi
 
           # 3. Update Coco Versions
-          if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-             COCO_APP_VER_CLEAN="${COCO_APP_VER%%-*}"
-             echo "Updating GitHub release Coco app version to $COCO_APP_VER_CLEAN"
-             gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER_CLEAN"
-          fi
+          if [[ "$DO_COCO" == "true" ]]; then
+            if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               COCO_APP_VER_CLEAN="${COCO_APP_VER%%-*}"
+               echo "Updating GitHub release Coco app version to $COCO_APP_VER_CLEAN"
+               gh variable set COCO_APP_PUBLISH_VERSION --body "$COCO_APP_VER_CLEAN"
+            fi
 
-          if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-             COCO_VER_CLEAN="${COCO_VER%%-*}"
-             echo "Updating GitHub release Coco server version to $COCO_VER_CLEAN"
-             gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER_CLEAN"
+            if [[ ! -z "$COCO_VER" && "$COCO_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               COCO_VER_CLEAN="${COCO_VER%%-*}"
+               echo "Updating GitHub release Coco server version to $COCO_VER_CLEAN"
+               gh variable set COCO_PUBLISH_VERSION --body "$COCO_VER_CLEAN"
+            fi
+          else
+            echo "Skipping Coco variable update."
           fi
 
       - name: Update .latest file and upload to OSS
+        env:
+          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO: ${{ inputs.COCO_PUBLISH }}
         run: |
-          VER=${{ inputs.PUBLISH_VERSION }}
-          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
-          
-          if [[ -z "$VER" ]] || [[ -z "$EZS_VER" ]] || [[ -z "$COCO_APP_VER" ]] || [[ -z "$COCO_VER" ]]; then
-            echo "::error::Missing version inputs. All versions must be supplied for release metadata update."
-            exit 1
-          fi
-
-          # Handle Suffix logic for Easysearch/Coco matching Product Version
-          SUFFIX=${VER#*-}
-          if [[ "$VER" == *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-             [[ "$EZS_VER" != *"-"* ]] && EZS_VER="${EZS_VER}-$SUFFIX"
-             [[ "$COCO_APP_VER" != *"-"* ]] && COCO_APP_VER="${COCO_APP_VER}-$SUFFIX"
-             [[ "$COCO_VER" != *"-"* ]] && COCO_VER="${COCO_VER}-$SUFFIX"
-          fi
+          IN_VER=${{ inputs.PUBLISH_VERSION }}
+          IN_EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          IN_COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          IN_COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
           fname=".latest"
           echo "Downloading current .latest from $RELEASE_URL/$fname..."
           wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
 
-          # Update ALL fields at once. This solves the "cannot be released separately" issue 
-          # by ensuring consistent versions across the suite.
+          if [[ "$DO_PROD" == "true" ]]; then
+            FINAL_PROD_VER="$IN_VER"
+          else
+            FINAL_PROD_VER=$(jq -r .console "/tmp/$fname")
+            echo "Products publish skipped, keeping existing version: $FINAL_PROD_VER"
+          fi
+
+          if [[ "$DO_EZS" == "true" ]]; then
+            SUFFIX=${IN_VER#*-}
+            if [[ "$IN_VER" == *"-"* ]] && [[ "$IN_EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              FINAL_EZS_VER="${IN_EZS_VER}-$SUFFIX"
+            else
+              FINAL_EZS_VER="$IN_EZS_VER"
+            fi
+          else
+            FINAL_EZS_VER=$(jq -r .easysearch "/tmp/$fname")
+            echo "Easysearch publish skipped, keeping existing version: $FINAL_EZS_VER"
+          fi
+
+          if [[ "$DO_COCO" == "true" ]]; then
+            SUFFIX=${IN_VER#*-}
+            
+            if [[ "$IN_VER" == *"-"* ]] && [[ "$IN_COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              FINAL_COCO_APP_VER="${IN_COCO_APP_VER}-$SUFFIX"
+            else
+              FINAL_COCO_APP_VER="$IN_COCO_APP_VER"
+            fi
+            
+            if [[ "$IN_VER" == *"-"* ]] && [[ "$IN_COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              FINAL_COCO_VER="${IN_COCO_VER}-$SUFFIX"
+            else
+              FINAL_COCO_VER="$IN_COCO_VER"
+            fi
+          else
+            FINAL_COCO_APP_VER=$(jq -r '."coco-app"' "/tmp/$fname")
+            FINAL_COCO_VER=$(jq -r '."coco-server"' "/tmp/$fname")
+            echo "Coco publish skipped, keeping existing versions."
+          fi
+
           echo "Updating local .latest file..."
-          jq --arg publish_version "$VER" \
-            --arg easysearch_version "$EZS_VER" \
-            --arg coco_app_version "$COCO_APP_VER" \
-            --arg coco_version "$COCO_VER" \
+          jq --arg publish_version "$FINAL_PROD_VER" \
+            --arg easysearch_version "$FINAL_EZS_VER" \
+            --arg coco_app_version "$FINAL_COCO_APP_VER" \
+            --arg coco_version "$FINAL_COCO_VER" \
             '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
             "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
 
@@ -430,7 +475,7 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
             
             echo "Triggering republish hook..."
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$COCO_APP_VER,$COCO_VER,$EZS_VER,$VER" > /dev/null
+            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$FINAL_COCO_APP_VER,$FINAL_COCO_VER,$FINAL_EZS_VER,$FINAL_PROD_VER" > /dev/null
             echo "Republish trigger sent."
           fi
 
