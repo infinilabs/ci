@@ -21,6 +21,15 @@ on:
         description: 'Publish Version'
         required: true
         default: "7.10.2"
+      PUBLISH_JDK_VERSION:
+        description: 'Publish With JDK Version'
+        required: true
+        type: choice
+        options:
+          - "11"
+          - "17"
+          - "21"
+        default: "11"
       
       PUBLISH_AGENT_VERSION:
         description: 'Publish With Agent Version'
@@ -84,9 +93,8 @@ jobs:
           else
             JAVA_VERSION=8
           fi
-          if [ "$JAVA_VERSION" -ge 21 ]; then
-            echo "JDK_EXT=.jdk21" >> "$GITHUB_ENV"
-          fi
+          
+          echo "JDK_EXT=.jdk$JAVA_VERSION" >> "$GITHUB_ENV"
           echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
 
       - name: Set up java toolchain
