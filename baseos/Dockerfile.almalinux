@@ -36,6 +36,12 @@ RUN set -eux; \
     # Select the JDK distribution based on the JDK_TAG build argument.
     echo "Preparing to build jdk for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
+        "jdk-25") \
+            # Using the official Oracle GraalVM download link for JDK 25.
+            echo "Selecting Oracle GraalVM for JDK 25..."; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-${JDK_ARCH}_bin.tar.gz"; \
+            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector"; \
+            ;; \
         "jdk-21") \
             # Using the official Oracle GraalVM download link for JDK 21.
             echo "Selecting Oracle GraalVM for JDK 21..."; \
