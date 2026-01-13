@@ -25,7 +25,7 @@ ES_PLUGIN_BASE_URL="${ES_URL}/elasticsearch-plugins"
 # Use RELEASE_URL from GitHub Actions environment, with a fallback.
 RELEASE_URL_BASE="${RELEASE_URL:-https://release.infinilabs.com}"
 AGENT_BASE_URL="${RELEASE_URL_BASE}/agent"
-CCR_PLUGIN_URL="${RELEASE_URL_BASE}/.ccr/ccr-${ES_VERSION_BASE}.zip"
+CCR_PLUGIN_URL="${RELEASE_URL_BASE}/.ccr/plugins/ccr-${ES_VERSION_BASE}.zip"
 IK_PLUGIN_URL="${RELEASE_URL_BASE}/analysis-ik/stable/elasticsearch-analysis-ik-${ES_VERSION_BASE}.zip"
 S3_PLUGIN_URL="${ES_PLUGIN_BASE_URL}/repository-s3/repository-s3-${ES_VERSION_BASE}.zip"
 
