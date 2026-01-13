@@ -67,10 +67,10 @@ RUN set -eux; \
     # --- Common Steps: Download, Extract, jlink, Package ---
     echo "Downloading JDK from ${DOWNLOAD_URL}"; \
     curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}"; \
-    tar -xzf jdk.tar.gz; \
+    tar -mxzf jdk.tar.gz; \
     rm jdk.tar.gz; \
     # Find the extracted directory name, which can vary between providers.
-    JDK_DIR=$(ls -d ./*jdk* ./*graalvm* | head -n 1); \
+    JDK_DIR=$(ls -d ./*jdk* ./*graalvm* 2>/dev/null | head -n 1); \
     \
     echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
