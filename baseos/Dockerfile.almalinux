@@ -4,7 +4,7 @@
 # This stage uses a build argument (JDK_TAG) to conditionally download the
 # correct JDK: GraalVM for jdk-21, and Zulu OpenJDK for others.
 # =========================================================================
-FROM almalinux:9 AS jdk-builder
+FROM almalinux:8 AS jdk-builder
 
 # ARG TARGETARCH is automatically provided by Docker Buildx (e.g., "amd64", "arm64").
 ARG TARGETARCH
