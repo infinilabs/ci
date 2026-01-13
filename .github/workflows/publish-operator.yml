@@ -251,6 +251,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: publish
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
