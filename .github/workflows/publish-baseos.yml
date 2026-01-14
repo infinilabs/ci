@@ -28,7 +28,7 @@ on:
           - 'alpine'
           - 'almalinux'
           - 'anolisos'
-        default: 'alpine'
+        default: 'almalinux'
 
 
 jobs:
