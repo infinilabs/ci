@@ -85,7 +85,7 @@ RUN set -eux; \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
-        --compress=2; \
+        --compress=1; \
     \
     tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
