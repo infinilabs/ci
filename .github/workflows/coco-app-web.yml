@@ -30,7 +30,7 @@ on:
       AI_ANSWER_VERSION: { description: 'ai-answer Version', required: true, default: "0.0.4" }
       DOC_DETAIL_VERSION: { description: 'doc-detail Version', required: true, default: "0.0.8" }
       ATTACHMENTS_VERSION: { description: 'attachments Version', required: true, default: "0.0.1" }
-      CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.5" }
+      CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.6" }
 
 jobs:
   prepare-matrix:
