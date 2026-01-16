@@ -83,6 +83,11 @@
         "current_version": "0.0.6",
         "work_dir": "packages/ChatMessage",
         "dist_dir": "packages/ChatMessage"
+      },
+      "ai-chat": {
+        "current_version": "0.0.0",
+        "work_dir": "packages/AIChat",
+        "dist_dir": "packages/AIChat"
       }
     }
   }
