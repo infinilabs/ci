@@ -40,7 +40,7 @@
         "dist_dir": "packages/Filter"
       },
       "search-results": {
-        "current_version": "0.0.13",
+        "current_version": "0.0.14",
         "work_dir": "packages/SearchResults",
         "dist_dir": "packages/SearchResults"
       },
