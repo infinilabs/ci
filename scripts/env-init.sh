@@ -143,11 +143,13 @@ env_init() {
     if [[ -n "$OSS_EP" ]]; then
         log_info "📦  Generating OSS configuration file..."
         cat > "$GITHUB_WORKSPACE/.oss.yml" <<-EOF
-			endpoint: $OSS_EP
-			accesskeyid: $OSS_AK
-			accesskeysecret: $OSS_SK
-			bucket: $OSS_BK
-			mode: $OSS_MODE
+		oss:
+		  endpoint: $OSS_EP
+		  access_key_id: $OSS_AK
+		  access_key_secret: $OSS_SK
+		  bucket_name: $OSS_BK
+		  upload_mode: $OSS_MODE
+		log_level: "error"
 		EOF
         log_success "OSS config (.oss.yml) created."
     fi

@@ -118,7 +118,7 @@ jobs:
             fi
           fi
           if [[ "${{ inputs.PUBLISH_RELEASE}}" == "true" ]]; then
-            curl -H "X-Token: $TOKEN" "$RELEASE_URL/_flush?versions=$EZS_VER,$version" > /dev/null
+            curl -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$EZS_VER,$version" > /dev/null
             echo "Flushed cache for version $EZS_VER and $version"
           fi
 

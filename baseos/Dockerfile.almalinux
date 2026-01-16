@@ -4,7 +4,7 @@
 # This stage uses a build argument (JDK_TAG) to conditionally download the
 # correct JDK: GraalVM for jdk-21, and Zulu OpenJDK for others.
 # =========================================================================
-FROM almalinux:9 AS jdk-builder
+FROM almalinux:8 AS jdk-builder
 
 # ARG TARGETARCH is automatically provided by Docker Buildx (e.g., "amd64", "arm64").
 ARG TARGETARCH
@@ -23,7 +23,7 @@ WORKDIR /tmp
 RUN set -eux; \
     DOWNLOAD_URL=""; \
     # Define base modules required for all JDK versions
-    BASE_MODULES="java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.internal.vm.compiler.management,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.internal.vm.compiler,jdk.jlink,jdk.zipfs"; \
+    BASE_MODULES="java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.jlink,jdk.zipfs"; \
     \
     # Determine the correct architecture string for download URLs.
     # Note: GraalVM and Zulu use slightly different architecture names.
@@ -36,11 +36,17 @@ RUN set -eux; \
     # Select the JDK distribution based on the JDK_TAG build argument.
     echo "Preparing to build jdk for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
+        "jdk-25") \
+            # Using the official Oracle GraalVM download link for JDK 25.
+            echo "Selecting Oracle GraalVM for JDK 25..."; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-${JDK_ARCH}_bin.tar.gz"; \
+            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector"; \
+            ;; \
         "jdk-21") \
             # Using the official Oracle GraalVM download link for JDK 21.
             echo "Selecting Oracle GraalVM for JDK 21..."; \
             DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector"; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector"; \
             ;; \
         "jdk-17") \
             # Using updated, verified Zulu JDK 17 link.
@@ -48,7 +54,7 @@ RUN set -eux; \
             ZULU_VERSION_NUM="17.0.17"; \
             ZULU_VERSION="17.62.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector"; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector"; \
             ;; \
         "jdk-11") \
             # Using updated, verified Zulu JDK 11 link.
@@ -56,7 +62,7 @@ RUN set -eux; \
             ZULU_VERSION_NUM="11.0.29"; \
             ZULU_VERSION="11.84.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES}"; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management"; \
             ;; \
         *) \
             echo "Unsupported JDK_TAG: ${JDK_TAG}"; \
@@ -67,10 +73,10 @@ RUN set -eux; \
     # --- Common Steps: Download, Extract, jlink, Package ---
     echo "Downloading JDK from ${DOWNLOAD_URL}"; \
     curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}"; \
-    tar -xzf jdk.tar.gz; \
+    tar -mxzf jdk.tar.gz; \
     rm jdk.tar.gz; \
     # Find the extracted directory name, which can vary between providers.
-    JDK_DIR=$(ls -d ./*jdk* ./*graalvm* | head -n 1); \
+    JDK_DIR=$(ls -d ./*jdk* ./*graalvm* 2>/dev/null | head -n 1); \
     \
     echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
@@ -79,7 +85,7 @@ RUN set -eux; \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
-        --compress=2; \
+        --compress=1; \
     \
     tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
@@ -90,7 +96,7 @@ RUN set -eux; \
 # Purpose: Prepare the main filesystem layer. The ADD/COPY paths in this stage
 # are relative to the build context, which is the 'deps' directory.
 # =========================================================================
-FROM almalinux:9 AS builder
+FROM almalinux:10 AS builder
 
 ARG TARGETARCH
 WORKDIR /

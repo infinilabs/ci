@@ -30,6 +30,12 @@ env:
 
 on:
   workflow_dispatch:
+    inputs:
+      TEST_UPLOAD:
+        description: 'Test upload file'
+        required: false
+        type: boolean
+        default: false
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -39,6 +45,13 @@ jobs:
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
+
+      - name: Upload Test Artifact
+        if: ${{ inputs.TEST_UPLOAD == true }}
+        run: |
+          echo "This is a test artifact" > test-artifact.txt
+          oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
+          oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
 
       - name: Get github release versions
         env:
@@ -87,33 +100,6 @@ jobs:
           fi
           cat /tmp/versions
 
-      - name: Run connect in background
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
-
-      - name: Download agent files with proxy
-        env:
-          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
-          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
-        run: |
-          AGENT_VERSION=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
-          for t in amd64 arm64; do
-            mkdir -p /tmp/agent-$t
-            AGENT_FILENAME=agent-$AGENT_VERSION-linux-$t.tar.gz
-            for f in stable snapshot; do
-              DOWNLOAD_URL=$RELEASE_URL/agent/$f/$AGENT_FILENAME
-              HTTP_STATUS=$(curl -s -I -o /dev/null -w "%{http_code}" "$DOWNLOAD_URL" || true)
-              if [[ "$HTTP_STATUS" =~ ^2[0-9]{2}$ ]]; then
-                if [ ! -e /tmp/agent-$t/$AGENT_FILENAME ]; then
-                  echo "Downloading $AGENT_FILENAME from $DOWNLOAD_URL"
-                  wget $RELEASE_URL/agent/$f/$AGENT_FILENAME -P /tmp/agent-$t
-                fi
-              fi
-            done
-            ls /tmp/agent*/agent* || echo "No agent files found"
-          done
       - name: Setup ${{ env.PNAME }} env
         run: |
           source $GITHUB_WORKSPACE/scripts/go-init.sh
@@ -124,51 +110,3 @@ jobs:
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
-
-      - name: Clone Repository
-        run: |
-          echo "License repo cloning to $GITHUB_WORKSPACE/license"
-          git clone git@github.com:infinilabs/license $GITHUB_WORKSPACE/license
-          cd $GITHUB_WORKSPACE/license && echo Checkout license repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-
-          echo "$PNAME repo cloning to $GITHUB_WORKSPACE/$PNAME"
-          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          echo ".............................."
-
-  test-on-windows-with-checkout:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Checkout private pizza repository
-        uses: actions/checkout@v6
-        with:
-          repository: 'infinilabs/pizza'
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          path: pizza
-
-      - name: Checkout coco repository
-        uses: actions/checkout@v6
-        with:
-          repository: 'infinilabs/coco-app'
-          path: coco-app
-      
-      - name: Check the path files
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -la
-
-      - name: Set up and check env
-        working-directory: coco-app
-        run: |
-          PACKAGE_VERSION=$(jq -r '.version' package.json)
-          CARGO_VERSION=$(grep -m 1 '^version =' src-tauri/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "$PACKAGE_VERSION" != "$CARGO_VERSION" ]; then
-            echo "::error::Version mismatch!"
-          else
-            echo "Version match: $PACKAGE_VERSION"
-          fi

@@ -60,7 +60,7 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
-plugins=(sql jieba analysis-hanlp analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
+plugins=(sql jieba analysis-hanlp analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui rules)
 for p in ${plugins[@]}; do
   f=$DEST/plugins/$p/$p-$VERSION.zip
   if [ ! -d $DEST/plugins/$p ]; then
@@ -102,7 +102,7 @@ echo
 if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
   echo "Publish Docker <Only> image no need to flush cache"
 else
-  ssh staging "curl -s -H 'X-Token: $TOKEN' '$RELEASE_URL/_flush?versions=$VERSION' > /dev/null"
+  ssh staging "curl -s -H 'X-Token: $TOKEN' '$RELEASE_URL/_republish?versions=$VERSION' > /dev/null"
   echo "Flushed plugin cache and page cache ..."
 fi
 echo
