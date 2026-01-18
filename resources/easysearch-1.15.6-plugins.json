@@ -18,7 +18,7 @@
       "description_zh": "基于 HanLP 的中文自然语言处理分词与分析",
       "description_en": "Chinese NLP tokenization and analysis based on HanLP",
       "id": "analysis-hanlp",
-      "enabled": true,
+      "enabled": false,
       "builtin": false
     },
     {
@@ -27,7 +27,7 @@
       "description_zh": "基于 ICU 的 Unicode 文本分析插件，支持多语言分词与规范化",
       "description_en": "Unicode text analysis plugin based on ICU, supporting multi-language tokenization and normalization",
       "id": "analysis-icu",
-      "enabled": true,
+      "enabled": false,
       "builtin": true
     },
     {
@@ -108,7 +108,7 @@
       "description_zh": "结巴中文分词插件",
       "description_en": "Jieba Chinese word segmentation plugin",
       "id": "jieba",
-      "enabled": true,
+      "enabled": false,
       "builtin": false
     },
     {
