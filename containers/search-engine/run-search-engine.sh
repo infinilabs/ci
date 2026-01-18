@@ -36,9 +36,9 @@ docker network inspect "$NETWORK_NAME" >/dev/null 2>&1 || docker network create 
 
 # Prepare config/plugin directory on host
 mkdir -p "$CONFIG_DIR_HOST"
-chown -R 1000:1000 "$CONFIG_DIR_HOST"
+chown -RLf 1000:1000 "$CONFIG_DIR_HOST"
 mkdir -p "$PLUGIN_DIR_HOST"
-chown -R 1000:1000 "$PLUGIN_DIR_HOST"
+chown -RLf 1000:1000 "$PLUGIN_DIR_HOST"
 
 if [[ "$ENGINE_TYPE" == "elasticsearch" ]]; then
   IMAGE_NAME="docker.elastic.co/elasticsearch/elasticsearch:${ENGINE_VERSION}"

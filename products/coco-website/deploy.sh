@@ -18,7 +18,7 @@ unzip -qo "$WORK.$EXT" -d "$WORK" || {
   exit 1
 }
 
-chown -R www-data:www-data "$WORK" || {
+chown -RLf www-data:www-data "$WORK" || {
   echo "Failed to change ownership of $WORK"
   exit 1
 }

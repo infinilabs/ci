@@ -155,7 +155,7 @@ jobs:
           fi
         fi
         echo "Using easysearch docker image with $VER ..."
-        sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -R 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
+        sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -RLf 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
         docker pull infinilabs/easysearch:$VER
         docker run -d --name easysearch \
           --network host \

@@ -80,7 +80,7 @@ fi
 KS="$(find "$NODES_DIR" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)"
 if [ "$(stat -c %U $WORKING_DIR)" != "easysearch" ] || [ -n "$KS" ]; then
   log "Fixing permissions for ks file(s) and working directory..."
-  chown -R 602:602 "$WORKING_DIR" || die "Failed to change ownership for working directory."
+  chown -RLf 602:602 "$WORKING_DIR" || die "Failed to change ownership for working directory."
 fi
 
 # 5. Change to the working directory.

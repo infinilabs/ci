@@ -37,7 +37,7 @@ change_ownership() {
       [ -d "$opt_dir" ] || mkdir -p "$opt_dir"
       if [ "$(stat -c %U "$opt_dir")" != "easysearch" ] || [ "$(stat -c %G "$opt_dir")" != "easysearch" ]; then
         log "Changing ownership of $opt_dir to 602:602."
-        chown -R 602:602 "$opt_dir" 2>/dev/null || true
+        chown -RLf 602:602 "$opt_dir" 2>/dev/null || true
         if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
       fi
     done
@@ -110,7 +110,7 @@ setup_agent() {
     cp -rf /app/agent "$DATA_DIR"
     if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent files."; return 1; fi
     log "Setting ownership of agent directory $AGENT_DIR to 602:602."
-    chown -R 602:602 "$AGENT_DIR"
+    chown -RLf 602:602 "$AGENT_DIR"
      if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent directory."; return 1; fi
   fi
 
@@ -238,7 +238,7 @@ EOF
   # Ensure agent directory is owned by easysearch after all root operations
   log "Ensuring final agent directory ownership is 602:602."
   # Use absolute path for robustness.
-  chown -R 602:602 "$AGENT_DIR"
+  chown -RLf 602:602 "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to set final ownership for agent directory."; return 1; fi
 
   # --- Supervisor configuration for the agent ---

@@ -123,7 +123,7 @@ COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
 # Extract the jdk and set appropriate ownership.
 RUN mkdir -p /usr/local/jdk \
     && tar -xzf /tmp/jdk-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
-    && chown -R 602:602 /usr/local/jdk \
+    && chown -RLf 602:602 /usr/local/jdk \
     && rm /tmp/jdk-minimal.tar.gz
 
 # Add executables from the build context (the 'deps' dir).

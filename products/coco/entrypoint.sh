@@ -30,7 +30,7 @@ setup_coco() {
     if [ ! -d "$COCO_DIR/$dir" ]; then
       mkdir -p "$COCO_DIR/$dir"
       if [ "$(stat -c %U $COCO_DIR/$dir)" != "easysearch" ] ; then
-        chown -R 602:602 "$COCO_DIR/$dir"
+        chown -RLf 602:602 "$COCO_DIR/$dir"
       fi
       log "Created $COCO_DIR/$dir"
     fi
@@ -43,14 +43,14 @@ setup_coco() {
   
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD >/dev/null
-    chown -R 602:602 $WORK_DIR
+    chown -RLf 602:602 $WORK_DIR
     log "Added ES_PASSWORD to keystore and changed ownership."
   else
     log "Keystore is already for coco."
   fi
   
   if [ "$(stat -c %U $COCO_DIR)" != "easysearch" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)" ]; then
-    chown -R 602:602 $COCO_DIR
+    chown -RLf 602:602 $COCO_DIR
   else
     log "$COCO_DIR is already owned by easysearch."
   fi

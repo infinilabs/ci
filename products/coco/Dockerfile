@@ -34,7 +34,7 @@ ENV PATH=/sbin:/app/easysearch/jdk/bin:/app/easysearch/bin:$PATH
 WORKDIR /app/easysearch
 
 # 权限处理
-RUN chown -R 602:602 /app/easysearch && chown -R 602:602 /app/coco
+RUN chown -RLf 602:602 /app/easysearch && chown -RLf 602:602 /app/coco
 
 EXPOSE 9000 2900
 
