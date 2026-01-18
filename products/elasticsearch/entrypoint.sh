@@ -37,7 +37,7 @@ change_ownership() {
       [ -d "$opt_dir" ] || mkdir -p "$opt_dir"
       if [ "$(stat -c %U "$opt_dir")" != "ezs" ] || [ "$(stat -c %G "$opt_dir")" != "ezs" ]; then
         log "Changing ownership of $opt_dir to ezs:ezs."
-        chown -R ezs:ezs "$opt_dir"
+        chown -R ezs:ezs "$opt_dir" 2>/dev/null || true
         if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
       fi
     done
