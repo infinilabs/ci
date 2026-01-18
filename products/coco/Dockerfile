@@ -11,11 +11,11 @@ ADD config/supervisor /app/tpl
 ADD config/scripts /app/tpl
 
 # 安装 Coco
-ADD --chown=ezs:ezs coco-$TARGETARCH /app/coco
+ADD --chown=602:602 coco-$TARGETARCH /app/coco
 RUN cd /app/coco && ln -s coco-* coco
 
 # 安装 Easysearch
-ADD --chown=ezs:ezs easysearch-$TARGETARCH /app/easysearch
+ADD --chown=602:602 easysearch-$TARGETARCH /app/easysearch
 RUN cd /app/easysearch && ln -s /usr/local/jdk .
 
 # 最终阶段
@@ -34,7 +34,7 @@ ENV PATH=/sbin:/app/easysearch/jdk/bin:/app/easysearch/bin:$PATH
 WORKDIR /app/easysearch
 
 # 权限处理
-RUN chown -R ezs:ezs /app/easysearch && chown -R ezs:ezs /app/coco
+RUN chown -R 602:602 /app/easysearch && chown -R 602:602 /app/coco
 
 EXPOSE 9000 2900
 

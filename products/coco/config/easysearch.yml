@@ -1,4 +1,4 @@
-cluster.name: ezs-coco-server
+cluster.name: easysearch-coco-server
 node.name: node-1
 network.host: 127.0.0.1
 http.port: 9200

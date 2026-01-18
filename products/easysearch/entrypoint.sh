@@ -34,9 +34,9 @@ change_ownership() {
   if is_root; then
     for opt_dir in "$DATA_DIR" "$LOGS_DIR" "$CFG_DIR"; do
       [ -d "$opt_dir" ] || mkdir -p "$opt_dir"
-      if [ "$(stat -c %U "$opt_dir")" != "ezs" ] || [ "$(stat -c %G "$opt_dir")" != "ezs" ]; then
-        log "Changing ownership of $opt_dir to ezs:ezs."
-        chown -R ezs:ezs "$opt_dir" 2>/dev/null || true
+      if [ "$(stat -c %U "$opt_dir")" != "easysearch" ] || [ "$(stat -c %G "$opt_dir")" != "easysearch" ]; then
+        log "Changing ownership of $opt_dir to 602:602."
+        chown -R 602:602 "$opt_dir" 2>/dev/null || true
         if [ $? -ne 0 ]; then log "ERROR: Failed to change ownership of $opt_dir."; exit 1; fi
       fi
     done
@@ -51,7 +51,7 @@ execute_core_initial_script() {
   else
     log "Executing core initialization script: bin/initialize.sh -s"
     # Note: bin/initialize.sh must be designed to be idempotent or run only once for actual initialization logic
-    gosu ezs bash bin/initialize.sh -s
+    gosu easysearch bash bin/initialize.sh -s
     return $? # Return the exit status of the gosu command
   fi
 }
@@ -108,8 +108,8 @@ setup_agent() {
     log "Agent directory not found. Copying agent files from /app/agent to $DATA_DIR."
     cp -rf /app/agent "$DATA_DIR"
     if [ $? -ne 0 ]; then log "ERROR: Failed to copy agent files."; return 1; fi
-    log "Setting ownership of agent directory $AGENT_DIR to ezs:ezs."
-    chown -R ezs:ezs "$AGENT_DIR"
+    log "Setting ownership of agent directory $AGENT_DIR to 602:602."
+    chown -R 602:602 "$AGENT_DIR"
      if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent directory."; return 1; fi
   fi
 
@@ -121,8 +121,8 @@ setup_agent() {
       log "Creating agent subdirectory: $AGENT_SUBDIR"
       mkdir -p "$AGENT_SUBDIR"
       if [ $? -ne 0 ]; then log "ERROR: Failed to create agent subdirectory '$AGENT_SUBDIR'."; return 1; fi
-      log "Setting ownership of agent subdirectory $AGENT_SUBDIR to ezs:ezs."
-      chown ezs:ezs "$AGENT_SUBDIR"
+      log "Setting ownership of agent subdirectory $AGENT_SUBDIR to 602:602."
+      chown 602:602 "$AGENT_SUBDIR"
        if [ $? -ne 0 ]; then log "ERROR: Failed to set ownership for agent subdirectory '$AGENT_SUBDIR'."; return 1; fi
     fi
   done
@@ -260,10 +260,10 @@ EOF
     cp -rf /app/tpl/*.sh "$AGENT_DIR"
   fi
 
-  # Ensure agent directory is owned by ezs after all root operations
-  log "Ensuring final agent directory ownership is ezs:ezs."
+  # Ensure agent directory is owned by easysearch after all root operations
+  log "Ensuring final agent directory ownership is 602:602."
   # Use absolute path for robustness.
-  chown -R ezs:ezs "$AGENT_DIR"
+  chown -R 602:602 "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to set final ownership for agent directory."; return 1; fi
 
   # --- Supervisor configuration for the agent ---
@@ -313,15 +313,15 @@ EOF
 
 
 # --- Function to conditionally start Supervisor ---
-# This function is called in the ezs user block if Agent was configured.
-# It starts supervisord as the current user (ezs).
+# This function is called in the easysearch user block if Agent was configured.
+# It starts supervisord as the current user (easysearch).
 start_supervisor_if_agent_enabled() {
   log "Checking if Supervisor should be started based on Agent configuration."
 
   # Supervisor should be started if the agent supervisor config file exists (meaning agent setup ran successfully)
   if [ -f "$AGENT_SUPERVISOR_CONFIG" ]; then
       log "Supervisor is enabled to manage the agent."
-      # Check if supervisord is already running as the current user (ezs)
+      # Check if supervisord is already running as the current user (easysearch)
       if ! supervisorctl status > /dev/null 2>&1; then
         if [ -f $AGENT_DIR/supervisor/supervisord.conf ]; then
           if [ ! -f /etc/supervisord.conf ]; then
@@ -330,9 +330,9 @@ start_supervisor_if_agent_enabled() {
           fi
         fi
         log "Supervisord process not running. Starting supervisord..."
-        # Need to start supervisord as ezs user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by ezs.
-        # The agent.conf should be readable by ezs.
-        # The logs dir for supervisord should be writable by ezs.
+        # Need to start supervisord as easysearch user. Its config $AGENT_DIR/supervisor/supervisord.conf must be readable by easysearch.
+        # The agent.conf should be readable by easysearch.
+        # The logs dir for supervisord should be writable by easysearch.
         # Assuming necessary permissions are set by the Dockerfile or the root setup_agent phase.
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
         # Wait a moment for supervisord to start and read configs
@@ -398,7 +398,7 @@ fi
 
 
 # --- Switch to non-root user if running as root ---
-# This block remains as is, it ensures the rest of the script runs as 'ezs' user
+# This block remains as is, it ensures the rest of the script runs as 'easysearch' user
 if is_root; then
   # Change ownership of directories before switching user
   change_ownership
@@ -419,18 +419,18 @@ if is_root; then
   # After initial setup and agent setup, we can start the supervisor if needed
   # This is done after the agent setup to ensure the config files are in place
   # and the agent process can be managed by supervisord.
-  # This should be called after the agent setup and before switching to the 'ezs' user.
+  # This should be called after the agent setup and before switching to the 'easysearch' user.
   # Supervisor startup requires root permissions.
   start_supervisor_if_agent_enabled
 
-  log "Switching user to 'ezs' and executing the rest of the entrypoint..."
-  # Re-execute the entrypoint script as the 'ezs' user
-  exec gosu ezs "$0" "$@"
+  log "Switching user to 'easysearch' and executing the rest of the entrypoint..."
+  # Re-execute the entrypoint script as the 'easysearch' user
+  exec gosu easysearch "$0" "$@"
 fi
 
-# --- Code below this line runs as the 'ezs' user ---
+# --- Code below this line runs as the 'easysearch' user ---
 
-# This is the main process flow for the 'ezs' user.
+# This is the main process flow for the 'easysearch' user.
 
 # --- Execute the main command passed to the process ---
 # This is typically the command to start the main Easysearch process.

@@ -12,11 +12,11 @@ ADD config/supervisor/ /app/tpl/
 ADD config/scripts/ /app/tpl/
 
 # 安装 Agent
-ADD --chown=ezs:ezs agent-$TARGETARCH /app/agent
+ADD --chown=602:602 agent-$TARGETARCH /app/agent
 RUN cd /app/agent && ln -s agent-* agent
 
 # 安装 Easysearch
-ADD --chown=ezs:ezs easysearch-$TARGETARCH /app/easysearch
+ADD --chown=602:602 easysearch-$TARGETARCH /app/easysearch
 RUN cd /app/easysearch && ln -s /usr/local/jdk .
 
 # 最终阶段
@@ -35,7 +35,7 @@ ENV PATH=/sbin:/app/easysearch/jdk/bin:/app/easysearch/bin:$PATH
 WORKDIR /app/easysearch
 
 # 权限处理
-RUN chown -R ezs:ezs /app/easysearch
+RUN chown -R 602:602 /app/easysearch
 
 EXPOSE 9200 9300
 

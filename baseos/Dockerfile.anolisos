@@ -108,22 +108,22 @@ RUN yum clean all && \
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
-    && groupadd -r -g 602 ezs \
-    && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app ezs \
-    && usermod -c "INFINI Easysearch Operator" ezs
+    && groupadd -r -g 602 easysearch \
+    && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app easysearch \
+    && usermod -c "INFINI Easysearch Operator" easysearch
 
 COPY --from=jdk-builder /jdk-minimal.tar.gz /tmp/jdk-minimal.tar.gz
 
 RUN mkdir -p /usr/local/jdk \
     && tar -xzf /tmp/jdk-minimal.tar.gz -C /usr/local/jdk --strip-components=1 \
-    && chown -R ezs:ezs /usr/local/jdk \
+    && chown -R 602:602 /usr/local/jdk \
     && rm /tmp/jdk-minimal.tar.gz
 
 ADD $TARGETARCH/bin/* /sbin
 RUN echo "alias ll='ls -l'" >> /root/.bashrc \
     && cp -rf /root/.bash* /app \
-    && chown ezs:ezs /app/.bash*
-ADD etc/ezs.sh /etc/profile.d
+    && chown 602:602 /app/.bash*
+ADD etc/easysearch.sh /etc/profile.d
 ADD etc/limits.conf /etc/security
 ADD etc/70-infini.conf /etc/sysctl.d
 COPY initOS.sh /tmp

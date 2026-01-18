@@ -29,8 +29,8 @@ setup_coco() {
   for dir in data config; do
     if [ ! -d "$COCO_DIR/$dir" ]; then
       mkdir -p "$COCO_DIR/$dir"
-      if [ "$(stat -c %U $COCO_DIR/$dir)" != "ezs" ] ; then
-        chown -R ezs:ezs "$COCO_DIR/$dir"
+      if [ "$(stat -c %U $COCO_DIR/$dir)" != "easysearch" ] ; then
+        chown -R 602:602 "$COCO_DIR/$dir"
       fi
       log "Created $COCO_DIR/$dir"
     fi
@@ -43,16 +43,16 @@ setup_coco() {
   
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
     echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD >/dev/null
-    chown -R ezs:ezs $WORK_DIR
+    chown -R 602:602 $WORK_DIR
     log "Added ES_PASSWORD to keystore and changed ownership."
   else
     log "Keystore is already for coco."
   fi
   
-  if [ "$(stat -c %U $COCO_DIR)" != "ezs" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)" ]; then
-    chown -R ezs:ezs $COCO_DIR
+  if [ "$(stat -c %U $COCO_DIR)" != "easysearch" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)" ]; then
+    chown -R 602:602 $COCO_DIR
   else
-    log "$COCO_DIR is already owned by ezs."
+    log "$COCO_DIR is already owned by easysearch."
   fi
 
   [ ! -d /opt/coco ] && mkdir -p /opt/coco
@@ -113,11 +113,11 @@ if [ "$(id -u)" = '0' ]; then
       fi
     fi
   fi
-  # for ezs init
+  # for easysearch init
   if [[ $(compgen -G "config/*.{crt,key}" 2>/dev/null) ]]; then
     log "Certificates already exist. Skipping initialization."
   else
-    gosu ezs bash bin/initialize.sh -s
+    gosu easysearch bash bin/initialize.sh -s
   fi
   # for coco
   export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
@@ -129,7 +129,7 @@ if [ "$(id -u)" = '0' ]; then
   
   # start easysearch
   log "Starting Easysearch Process..."
-  exec gosu ezs "$0" "$@"
+  exec gosu easysearch "$0" "$@"
 fi
 
 exec "$@"

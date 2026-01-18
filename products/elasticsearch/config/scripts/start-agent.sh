@@ -77,10 +77,10 @@ fi
 
 
 # 4. Check permissions and ownership
-KS="$(find "$NODES_DIR" -type f -name ks -not -user "ezs" -print -quit 2>/dev/null)"
-if [ "$(stat -c %U $WORKING_DIR)" != "ezs" ] || [ -n "$KS" ]; then
+KS="$(find "$NODES_DIR" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)"
+if [ "$(stat -c %U $WORKING_DIR)" != "easysearch" ] || [ -n "$KS" ]; then
   log "Fixing permissions for ks file(s) and working directory..."
-  chown -R ezs:ezs "$WORKING_DIR" || die "Failed to change ownership for working directory."
+  chown -R 602:602 "$WORKING_DIR" || die "Failed to change ownership for working directory."
 fi
 
 # 5. Change to the working directory.
@@ -93,4 +93,4 @@ log "Starting ${TARGET_NAME} process..."
 # We don't create a lock file here because the process itself is expected
 # to create its own .lock file inside the nodes/*/ directory upon startup.
 # The 'exec' command replaces the current shell, which is crucial for supervisord.
-exec gosu ezs "./${TARGET_NAME}"
+exec gosu easysearch "./${TARGET_NAME}"
