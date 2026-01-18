@@ -1,2 +1,2 @@
 # zip -r resources.zip resources/ -x "*/.DS_Store"
-resource.zip
+resources.zip
