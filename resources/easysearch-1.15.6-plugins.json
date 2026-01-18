@@ -1,0 +1,178 @@
+{
+  "name": "1.15.6",
+  "version": "1.15.6",
+  "enabled": true,
+  "plugins": [
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ai/ai-1.15.6.zip",
+      "name": "ai",
+      "description_zh": "AI 增强功能插件（如向量嵌入、语义搜索）",
+      "description_en": "AI-enhanced features (e.g., vector embeddings, semantic search)",
+      "id": "ai",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/community/plugins/analysis-hanlp/analysis-hanlp-1.15.6.zip",
+      "name": "analysis-hanlp",
+      "description_zh": "基于 HanLP 的中文自然语言处理分词与分析",
+      "description_en": "Chinese NLP tokenization and analysis based on HanLP",
+      "id": "analysis-hanlp",
+      "enabled": true,
+      "builtin": false
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-icu/analysis-icu-1.15.6.zip",
+      "name": "analysis-icu",
+      "description_zh": "基于 ICU 的 Unicode 文本分析插件，支持多语言分词与规范化",
+      "description_en": "Unicode text analysis plugin based on ICU, supporting multi-language tokenization and normalization",
+      "id": "analysis-icu",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-ik/analysis-ik-1.15.6.zip",
+      "name": "analysis-ik",
+      "description_zh": "IK 中文分词器，支持细粒度和智能分词",
+      "description_en": "IK Chinese tokenizer supporting fine-grained and smart segmentation",
+      "id": "analysis-ik",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-pinyin/analysis-pinyin-1.15.6.zip",
+      "name": "analysis-pinyin",
+      "description_zh": "拼音分词与搜索支持插件",
+      "description_en": "Pinyin-based tokenization and search support",
+      "id": "analysis-pinyin",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-stconvert/analysis-stconvert-1.15.6.zip",
+      "name": "analysis-stconvert",
+      "description_zh": "简繁体中文转换插件",
+      "description_en": "Simplified-Traditional Chinese conversion plugin",
+      "id": "analysis-stconvert",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/async_search/async_search-1.15.6.zip",
+      "name": "async_search",
+      "description_zh": "异步搜索支持，适用于长时间运行的查询",
+      "description_en": "Asynchronous search support for long-running queries",
+      "id": "async_search",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/cross-cluster-replication/cross-cluster-replication-1.15.6.zip",
+      "name": "cross-cluster-replication",
+      "description_zh": "跨集群复制（CCR）功能，支持索引级数据同步",
+      "description_en": "Cross-Cluster Replication (CCR) for index-level data synchronization",
+      "id": "cross-cluster-replication",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ingest-common/ingest-common-1.15.6.zip",
+      "name": "ingest-common",
+      "description_zh": "通用 Ingest 处理器（如 set、remove、rename 等）",
+      "description_en": "Common Ingest processors (e.g., set, remove, rename)",
+      "id": "ingest-common",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ingest-geoip/ingest-geoip-1.15.6.zip",
+      "name": "ingest-geoip",
+      "description_zh": "基于 MaxMind GeoIP 数据库的地理位置解析处理器",
+      "description_en": "Geolocation resolution processor using MaxMind GeoIP database",
+      "id": "ingest-geoip",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ingest-user-agent/ingest-user-agent-1.15.6.zip",
+      "name": "ingest-user-agent",
+      "description_zh": "解析 User-Agent 字符串的 Ingest 处理器",
+      "description_en": "User-Agent string parsing processor",
+      "id": "ingest-user-agent",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/community/plugins/jieba/jieba-1.15.6.zip",
+      "name": "jieba",
+      "description_zh": "结巴中文分词插件",
+      "description_en": "Jieba Chinese word segmentation plugin",
+      "id": "jieba",
+      "enabled": true,
+      "builtin": false
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/knn/knn-1.15.6.zip",
+      "name": "knn",
+      "description_zh": "向量近似最近邻（KNN）搜索支持",
+      "description_en": "Approximate k-Nearest Neighbor (KNN) vector search support",
+      "id": "knn",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/mapper-annotated-text/mapper-annotated-text-1.15.6.zip",
+      "name": "mapper-annotated-text",
+      "description_zh": "支持带注解文本的字段映射",
+      "description_en": "Field mapper for annotated text",
+      "id": "mapper-annotated-text",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/mapper-murmur3/mapper-murmur3-1.15.6.zip",
+      "name": "mapper-murmur3",
+      "description_zh": "为字段添加 MurmurHash3 哈希值",
+      "description_en": "Adds MurmurHash3 hash values to fields",
+      "id": "mapper-murmur3",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/mapper-size/mapper-size-1.15.6.zip",
+      "name": "mapper-size",
+      "description_zh": "记录字段原始字节大小",
+      "description_en": "Records the original byte size of fields",
+      "id": "mapper-size",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/sql/sql-1.15.6.zip",
+      "name": "sql",
+      "description_zh": "SQL 查询支持，允许使用 SQL 语法查询 Easysearch",
+      "description_en": "SQL query support, enabling SQL syntax to query Easysearch",
+      "id": "sql",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/transport-nio/transport-nio-1.15.6.zip",
+      "name": "transport-nio",
+      "description_zh": "基于 NIO 的高性能传输模块",
+      "description_en": "High-performance NIO-based transport module",
+      "id": "transport-nio",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ui/ui-1.15.6.zip",
+      "name": "ui",
+      "description_zh": "Web 管理界面插件",
+      "description_en": "Web-based management UI plugin",
+      "id": "ui",
+      "enabled": true,
+      "builtin": true
+    }
+  ]
+}

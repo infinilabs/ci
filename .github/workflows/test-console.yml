@@ -1,0 +1,36 @@
+name: Test Console Docker Image
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
+  EZS_VERSION: ${{ inputs.EZS_VERSION }}
+  PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
+
+on:
+  schedule:
+    - cron: '30 16 * * *'
+  workflow_dispatch:
+    inputs:
+        EZS_VERSION:
+            description: 'EZS Version'
+            required: true
+            default: 'latest'
+        PRODUCT_VERSION:
+            description: 'Product Version'
+            required: true
+            default: 'latest'
+
+jobs:
+  test-console:
+    name: Build and Test Console Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6            
