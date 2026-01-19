@@ -88,6 +88,11 @@
         "current_version": "0.0.0",
         "work_dir": "packages/AIChat",
         "dist_dir": "packages/AIChat"
+      },
+      "markdown": {
+        "current_version": "0.0.1",
+        "work_dir": "packages/Markdown",
+        "dist_dir": "packages/Markdown"
       }
     }
   }
