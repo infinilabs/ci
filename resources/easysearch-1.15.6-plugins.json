@@ -58,15 +58,6 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/async_search/async_search-1.15.6.zip",
-      "name": "async_search",
-      "description_zh": "异步搜索支持，适用于长时间运行的查询",
-      "description_en": "Asynchronous search support for long-running queries",
-      "id": "async_search",
-      "enabled": true,
-      "builtin": true
-    },
-    {
       "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/cross-cluster-replication/cross-cluster-replication-1.15.6.zip",
       "name": "cross-cluster-replication",
       "description_zh": "跨集群复制（CCR）功能，支持索引级数据同步",
