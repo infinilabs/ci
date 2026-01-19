@@ -58,15 +58,6 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/cross-cluster-replication/cross-cluster-replication-1.15.6.zip",
-      "name": "cross-cluster-replication",
-      "description_zh": "跨集群复制（CCR）功能，支持索引级数据同步",
-      "description_en": "Cross-Cluster Replication (CCR) for index-level data synchronization",
-      "id": "cross-cluster-replication",
-      "enabled": true,
-      "builtin": true
-    },
-    {
       "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ingest-common/ingest-common-1.15.6.zip",
       "name": "ingest-common",
       "description_zh": "通用 Ingest 处理器（如 set、remove、rename 等）",

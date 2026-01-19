@@ -104,7 +104,7 @@ WORKDIR /
 # Install base OS tools and dependencies.
 RUN dnf clean all && \
     dnf install -y --allowerasing --setopt install_weak_deps=False \
-    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip make gcc glibc-devel
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \

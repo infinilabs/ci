@@ -1,6 +1,6 @@
 {
   "name": "2.0.3",
-  "version": "2.0.3",
+  "version": "2.0.3-2539",
   "enabled": true,
   "plugins": [
     {
@@ -63,15 +63,6 @@
       "description_zh": "简繁体中文转换插件",
       "description_en": "Simplified-Traditional Chinese conversion plugin",
       "id": "analysis-stconvert",
-      "enabled": true,
-      "builtin": true
-    },
-    {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/cross-cluster-replication/cross-cluster-replication-2.0.3.zip",
-      "name": "cross-cluster-replication",
-      "description_zh": "跨集群复制（CCR）功能，支持索引级数据同步",
-      "description_en": "Cross-Cluster Replication (CCR) for index-level data synchronization",
-      "id": "cross-cluster-replication",
       "enabled": true,
       "builtin": true
     },
