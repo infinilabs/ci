@@ -28,7 +28,7 @@ on:
       DROPDOWNLIST_VERSION: { description: 'dropdownlist Version', required: true, default: "1.3.5" }
       DATEPICKER_VERSION: { description: 'datepicker Version', required: true, default: "0.0.10" }
       AI_ANSWER_VERSION: { description: 'ai-answer Version', required: true, default: "0.0.4" }
-      DOC_DETAIL_VERSION: { description: 'doc-detail Version', required: true, default: "0.0.9" }
+      DOC_DETAIL_VERSION: { description: 'doc-detail Version', required: true, default: "0.0.10" }
       ATTACHMENTS_VERSION: { description: 'attachments Version', required: true, default: "0.0.1" }
       CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.6" }
       AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.0" }
