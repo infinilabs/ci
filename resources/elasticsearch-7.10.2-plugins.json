@@ -32,7 +32,7 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/.plugins/repository-s3/repository-s3-7.10.0.zip",
+      "download_url": "https://release.infinilabs.com/.plugins/repository-s3/repository-s3-7.10.2.zip",
       "name": "repository-s3",
       "description_zh": "S3 存储库插件",
       "description_en": "S3 repository plugin",
