@@ -19,8 +19,17 @@
       "description_zh": "拼音分词与搜索支持插件",
       "description_en": "Pinyin-based tokenization and search support",
       "id": "analysis-pinyin",
-      "enabled": true,
-      "builtin": true
+      "enabled": false,
+      "builtin": false
+    },
+    {
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-stconvert/analysis-stconvert-7.10.2.zip",
+      "name": "analysis-stconvert",
+      "description_zh": "简繁体中文转换插件",
+      "description_en": "Simplified and Traditional Chinese conversion plugin",
+      "id": "analysis-stconvert",
+      "enabled": false,
+      "builtin": false
     },
     {
       "download_url": "https://release.infinilabs.com/.plugins/ccr/ccr-7.10.2.zip",
