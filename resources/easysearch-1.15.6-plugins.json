@@ -2,6 +2,7 @@
   "name": "1.15.6",
   "version": "1.15.6",
   "enabled": true,
+  "type": "easysearch",
   "plugins": [
     {
       "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ai/ai-1.15.6.zip",

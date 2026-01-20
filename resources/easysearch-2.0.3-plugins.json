@@ -1,7 +1,8 @@
 {
   "name": "2.0.3",
-  "version": "2.0.3-2539",
+  "version": "2.0.3-2541",
   "enabled": true,
+  "type": "easysearch",
   "plugins": [
     {
       "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/ai/ai-2.0.3.zip",
