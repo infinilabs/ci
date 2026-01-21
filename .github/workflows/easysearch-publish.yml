@@ -307,6 +307,28 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.anolisos
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}-anolisos
+          push: true
+          provenance: false
+
+      - name: Docker build meta with ${{ env.PNAME }}
+        id: tags
+        run: |
+          echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
+          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
           target: prod
           platforms: |
