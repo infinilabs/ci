@@ -31,7 +31,7 @@ on:
       DOC_DETAIL_VERSION: { description: 'doc-detail Version', required: true, default: "0.0.12" }
       ATTACHMENTS_VERSION: { description: 'attachments Version', required: true, default: "0.0.1" }
       CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.10" }
-      AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.4" }
+      AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.5" }
       MARKDOWN_VERSION: { description: 'markdown Version', required: true, default: "0.0.2" }
 
 jobs:
