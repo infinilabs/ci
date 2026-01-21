@@ -14,7 +14,7 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/community/plugins/analysis-hanlp/analysis-hanlp-1.15.6.zip",
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-hanlp/analysis-hanlp-1.15.6.zip",
       "name": "analysis-hanlp",
       "description_zh": "基于 HanLP 的中文自然语言处理分词与分析",
       "description_en": "Chinese NLP tokenization and analysis based on HanLP",
@@ -86,7 +86,7 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/community/plugins/jieba/jieba-1.15.6.zip",
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/jieba/jieba-1.15.6.zip",
       "name": "jieba",
       "description_zh": "结巴中文分词插件",
       "description_en": "Jieba Chinese word segmentation plugin",
