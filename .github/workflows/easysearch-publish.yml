@@ -119,39 +119,9 @@ jobs:
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
           echo Gradle path is $HOME/gradle-$GRADLE_VERSION
 
-      - name: Checkout ${{ env.PNAME }} repo and set build version
+      - name: Checkout ${{ env.PNAME }} repo
         run: |
           git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-          # for build init
-          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
-            fi
-            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-              PUBLISH_VERSION="${BASH_REMATCH[1]}"
-            fi
-            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
-          fi
-
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
-            $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-            echo "Publish release version with ${{ github.event_name }}"
-          else
-            export BUILD_TYPE="${{ github.event_name }}"
-            export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
-            echo "Build type is $BUILD_TYPE and PUBLISH_VERSION is $PUBLISH_VERSION and PUBLISHED_VERSION is $PUBLISHED_VERSION"
-            $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
-          fi
-
-          if [[ "$BUILD_TYPE" == "schedule" ]]; then
-            STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')
-          else
-            STEP_VERSION="$PUBLISH_VERSION"
-          fi
-          echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
-          echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
       
       - name: Set up with pnpm toolchain
         uses: pnpm/action-setup@v4
@@ -182,7 +152,36 @@ jobs:
 
       - name: Prepare for build dependency with ${{ env.STEP_VERSION}}
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && echo #gradle installMavenDep
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          # for build init
+          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+            fi
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              PUBLISH_VERSION="${BASH_REMATCH[1]}"
+            fi
+            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+          fi
+
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
+            $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
+            echo "Publish release version with ${{ github.event_name }}"
+          else
+            export BUILD_TYPE="${{ github.event_name }}"
+            export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
+            echo "Build type is $BUILD_TYPE and PUBLISH_VERSION is $PUBLISH_VERSION and PUBLISHED_VERSION is $PUBLISHED_VERSION"
+            $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
+          fi
+
+          if [[ "$BUILD_TYPE" == "schedule" ]]; then
+            STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')
+          else
+            STEP_VERSION="$PUBLISH_VERSION"
+          fi
+          echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
+          echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
 
       - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
         run: |
