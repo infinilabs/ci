@@ -305,7 +305,7 @@ jobs:
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}-anolisos
+      - name: Docker Build and push with anolisos ${{ env.VERSION }}-${{ github.run_number }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
