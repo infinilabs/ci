@@ -382,6 +382,7 @@ jobs:
           update_yaml_version "test-gateway.yml" "EZS_VERSION" "$VERSION"
           update_yaml_version "test-integration-products.yml" "EZS_VERSION" "$VERSION"
           update_yaml_version "test-integration-cocoserver.yml" "EZS_VERSION" "$VERSION"
+          update_json_version "$GITHUB_WORKSPACE/ci/resources/easysearch-$VERSION-plugins.json" "version" "$FULL_VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v7
@@ -396,6 +397,7 @@ jobs:
           delete-branch: true
           add-paths: |
             .github/workflows/*.yml
+            resources/easysearch-*.json
 
       - name: Auto-merge the pr
         if: ${{ steps.create-pr.outputs.pull-request-url }}
