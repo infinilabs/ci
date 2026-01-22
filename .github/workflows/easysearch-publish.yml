@@ -306,6 +306,7 @@ jobs:
 
       - name: Docker Build and push with anolisos ${{ env.VERSION }}-${{ github.run_number }}
         uses: docker/build-push-action@v6
+        if: ${{ github.event_name == 'workflow_dispatch' || inputs.PUBLISH_RELEASE == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.anolisos
