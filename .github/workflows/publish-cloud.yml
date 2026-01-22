@@ -39,7 +39,7 @@ on:
       EZS_VERSION:
         description: 'Easysearch version'
         required: false
-        default: "1.15.6"
+        default: "2.0.3"
       GATEWAY_VERSION:
         description: 'Gateway version'
         required: false
