@@ -335,7 +335,8 @@ jobs:
           provenance: false
           #no-cache: true
 
-      - name: Deploy easysearch to staging k8s
+      - name: Deploy easysearch to staging k8s(disabled for now)
+        if: false
         timeout-minutes: 30
         continue-on-error: true
         run: |
