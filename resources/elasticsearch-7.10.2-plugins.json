@@ -14,7 +14,7 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-pinyin/analysis-pinyin-7.10.2.zip",
+      "download_url": "https://release.infinilabs.com/analysis-pinyin/analysis-pinyin-7.10.2.zip",
       "name": "analysis-pinyin",
       "description_zh": "拼音分词与搜索支持插件",
       "description_en": "Pinyin-based tokenization and search support",
@@ -23,7 +23,7 @@
       "builtin": false
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/analysis-stconvert/analysis-stconvert-7.10.2.zip",
+      "download_url": "https://release.infinilabs.com/analysis-stconvert/analysis-stconvert-7.10.2.zip",
       "name": "analysis-stconvert",
       "description_zh": "简繁体中文转换插件",
       "description_en": "Simplified and Traditional Chinese conversion plugin",
