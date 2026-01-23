@@ -190,23 +190,19 @@ jobs:
             
             - name: Prepare coco server tests
               run: |
-                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/coco/tests
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
 
             - name: Restore prepared snapshot data to easysearch
               timeout-minutes: 10
-              working-directory: ${{env.WORK}}/coco
+              working-directory: ${{env.WORK}}/coco/snapshot
               run: |
-                python3 tests/snapshot/es_import_raw.py
+                python3 es_import_raw.py
                 echo "Checking easysearch indices after restore ..."
                 curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT/_cat/indices?v"
 
-            - name: Replace Coco configuration file
-              working-directory: ${{env.WORK}}/coco
-              run: rm coco.yml && ln -s tests/coco.yml coco.yml
-
             - name: Run Coco integration tests
               working-directory: ${{env.WORK}}/coco
-              run: python3 tests/run_integration_tests.py
+              run: python3 run_integration_tests.py
               
     notify_on_failure:
       runs-on: ubuntu-latest
