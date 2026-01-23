@@ -7,6 +7,7 @@ env:
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
 
 on:
   schedule:
@@ -124,10 +125,25 @@ jobs:
                 cd $WORK/loadgen && echo Compiling loadgen at $PWD ...
                 OFFLINE_BUILD=true GOMODULE=false make build
 
+                # move loadgen binary to PATH
+                if [ ! -f $WORK/loadgen/bin/loadgen ]; then
+                  echo "Error: loadgen binary not found at $WORK/loadgen/bin/loadgen"
+                  exit 1
+                fi
+                mkdir -p $HOME/bin
+                cp -f $WORK/loadgen/bin/loadgen $HOME/bin/
+                chmod +x $HOME/bin/loadgen
+                echo "$HOME/bin" >> $GITHUB_PATH
+                echo Loadgen version: $(loadgen -v)
+
                 # for coco server
                 cd $WORK/coco && echo Compiling coco server at $PWD ...
                 make build-all
-
+                if [ ! -f $WORK/coco/bin/coco ]; then
+                  echo "Error: coco binary not found at $WORK/coco/bin/coco"
+                  exit 1
+                fi
+                echo Coco server version: $($WORK/coco/bin/coco -v)
 
             - name: Run easysearch docker
               run: |
@@ -177,18 +193,26 @@ jobs:
                 echo "Checking easysearch status at $ES_ENDPOINT ..."
                 curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
             
-            - name: Prepare tests
+            - name: Prepare coco server tests
               run: |
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/coco/tests
 
             - name: Restore prepared snapshot data to easysearch
               timeout-minutes: 10
-              working-directory: ${{env.WORK}}/coco/tests/snapshot
+              working-directory: ${{env.WORK}}/coco
               run: |
-                python3 es_import_raw.py
+                python3 tests/snapshot/es_import_raw.py
                 echo "Checking easysearch indices after restore ..."
                 curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT/_cat/indices?v"
 
+            - name: Replace Coco configuration file
+              working-directory: ${{env.WORK}}/coco
+              run: rm coco.yml && ln -s tests/coco.yml coco.yml
+
+            - name: Run Coco integration tests
+              working-directory: ${{env.WORK}}/coco
+              run: python3 tests/run_integration_tests.py
+              
     notify_on_failure:
       runs-on: ubuntu-latest
       needs: [compile-test]
