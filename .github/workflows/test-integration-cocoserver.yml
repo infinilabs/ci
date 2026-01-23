@@ -123,27 +123,23 @@ jobs:
 
                 # for loadgen
                 cd $WORK/loadgen && echo Compiling loadgen at $PWD ...
-                OFFLINE_BUILD=true GOMODULE=false make build
+                OFFLINE_BUILD=true GOMODULE=false make build  > /dev/null 2>&1
+                
+                # for coco server
+                cd $WORK/coco && echo Compiling coco server at $PWD ...
+                make build-all > /dev/null 2>&1
 
-                # move loadgen binary to PATH
-                if [ ! -f $WORK/loadgen/bin/loadgen ]; then
-                  echo "Error: loadgen binary not found at $WORK/loadgen/bin/loadgen"
+                # verify binaries exist
+                if [ ! -f $WORK/coco/bin/coco ] || [ ! -f $WORK/loadgen/bin/loadgen ]; then
+                  echo "Error: coco or agent binary not found at $WORK/coco/bin/coco"
                   exit 1
                 fi
+
+                # export loadgen to PATH
                 mkdir -p $HOME/bin
                 cp -f $WORK/loadgen/bin/loadgen $HOME/bin/
                 chmod +x $HOME/bin/loadgen
                 echo "$HOME/bin" >> $GITHUB_PATH
-                echo Loadgen version: $(loadgen -v)
-
-                # for coco server
-                cd $WORK/coco && echo Compiling coco server at $PWD ...
-                make build-all
-                if [ ! -f $WORK/coco/bin/coco ]; then
-                  echo "Error: coco binary not found at $WORK/coco/bin/coco"
-                  exit 1
-                fi
-                echo Coco server version: $($WORK/coco/bin/coco -v)
 
             - name: Run easysearch docker
               run: |
