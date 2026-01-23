@@ -1,0 +1,92 @@
+{
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "20000"
+        }
+      },
+      "number_of_shards": "1",
+      "max_result_window": "10000000",
+      "analysis": {
+        "analyzer": {
+          "suggest_text_search": {
+            "filter": [
+              "word_delimiter"
+            ],
+            "tokenizer": "classic"
+          },
+          "combined_text_analyzer": {
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "word_delimiter",
+              "unique"
+            ],
+            "char_filter": [
+              "tsconvert"
+            ],
+            "tokenizer": "classic"
+          },
+          "pinyin_analyzer": {
+            "tokenizer": "my_pinyin"
+          }
+        },
+        "char_filter": {
+          "tsconvert": {
+            "convert_type": "t2s",
+            "type": "stconvert",
+            "keep_both": "false",
+            "delimiter": ","
+          }
+        },
+        "tokenizer": {
+          "my_pinyin": {
+            "lowercase": "true",
+            "keep_original": "false",
+            "keep_first_letter": "true",
+            "keep_separate_first_letter": "true",
+            "type": "pinyin",
+            "limit_first_letter_length": "16",
+            "keep_full_pinyin": "true"
+          }
+        }
+      },
+      "number_of_replicas": "1"
+    }
+  },
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "strings": {
+          "match_mapping_type": "string",
+          "mapping": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "payload": {
+        "type": "object",
+        "enabled": false
+      },
+      "search_text": {
+        "type": "text",
+        "analyzer": "suggest_text_search",
+        "index_prefixes": {
+          "min_chars": 2,
+          "max_chars": 5
+        },
+        "index_phrases": true
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "20000"
+        }
+      },
+      "number_of_shards": "1",
+      "max_result_window": "10000000",
+      "analysis": {
+        "analyzer": {
+          "suggest_text_search": {
+            "filter": [
+              "lowercase",
+              "word_delimiter"
+            ],
+            "tokenizer": "classic"
+          },
+          "combined_text_analyzer": {
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "word_delimiter",
+              "unique"
+            ],
+            "char_filter": [
+              "tsconvert"
+            ],
+            "tokenizer": "classic"
+          },
+          "pinyin_analyzer": {
+            "tokenizer": "my_pinyin"
+          }
+        },
+        "char_filter": {
+          "tsconvert": {
+            "convert_type": "t2s",
+            "type": "stconvert",
+            "keep_both": "false",
+            "delimiter": ","
+          }
+        },
+        "tokenizer": {
+          "my_pinyin": {
+            "lowercase": "true",
+            "keep_original": "false",
+            "keep_first_letter": "true",
+            "keep_separate_first_letter": "true",
+            "type": "pinyin",
+            "limit_first_letter_length": "16",
+            "keep_full_pinyin": "true"
+          }
+        }
+      },
+      "number_of_replicas": "1"
+    }
+  },
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "strings": {
+          "match_mapping_type": "string",
+          "mapping": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "_system": {
+        "type": "object"
+      },
+      "agent_basic_auth": {
+        "properties": {
+          "password": {
+            "type": "keyword"
+          },
+          "username": {
+            "type": "keyword"
+          }
+        }
+      },
+      "agent_credential_id": {
+        "type": "keyword"
+      },
+      "basic_auth": {
+        "properties": {
+          "password": {
+            "type": "keyword"
+          },
+          "username": {
+            "type": "keyword"
+          }
+        }
+      },
+      "cluster_uuid": {
+        "type": "keyword"
+      },
+      "created": {
+        "type": "date"
+      },
+      "credential_id": {
+        "type": "keyword"
+      },
+      "description": {
+        "type": "text"
+      },
+      "distribution": {
+        "type": "keyword"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "endpoint": {
+        "type": "keyword"
+      },
+      "endpoints": {
+        "type": "keyword"
+      },
+      "host": {
+        "type": "keyword",
+        "copy_to": [
+          "search_text"
+        ]
+      },
+      "hosts": {
+        "type": "keyword"
+      },
+      "id": {
+        "type": "keyword"
+      },
+      "location": {
+        "properties": {
+          "dc": {
+            "type": "keyword"
+          },
+          "provider": {
+            "type": "keyword"
+          },
+          "rack": {
+            "type": "keyword"
+          },
+          "region": {
+            "type": "keyword"
+          }
+        }
+      },
+      "max_cached_size": {
+        "type": "integer"
+      },
+      "metadata_configs": {
+        "type": "object"
+      },
+      "metric_collection_mode": {
+        "type": "keyword"
+      },
+      "monitor_configs": {
+        "type": "object"
+      },
+      "monitored": {
+        "type": "boolean"
+      },
+      "name": {
+        "type": "keyword",
+        "fields": {
+          "text": {
+            "type": "text"
+          }
+        }
+      },
+      "order": {
+        "type": "integer"
+      },
+      "owner": {
+        "properties": {
+          "department": {
+            "type": "keyword",
+            "copy_to": [
+              "search_text"
+            ]
+          },
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "keyword",
+            "copy_to": [
+              "search_text"
+            ]
+          }
+        }
+      },
+      "project": {
+        "type": "keyword",
+        "copy_to": [
+          "search_text"
+        ]
+      },
+      "raw_name": {
+        "type": "keyword"
+      },
+      "reserved": {
+        "type": "boolean"
+      },
+      "schema": {
+        "type": "keyword"
+      },
+      "search_text": {
+        "type": "text",
+        "analyzer": "suggest_text_search",
+        "index_prefixes": {
+          "min_chars": 2,
+          "max_chars": 5
+        },
+        "index_phrases": true
+      },
+      "tags": {
+        "type": "keyword",
+        "copy_to": [
+          "search_text"
+        ]
+      },
+      "traffic_control": {
+        "properties": {
+          "max_bytes_per_node": {
+            "type": "keyword"
+          },
+          "max_connection_per_node": {
+            "type": "keyword"
+          },
+          "max_qps_per_node": {
+            "type": "keyword"
+          },
+          "max_wait_time_in_ms": {
+            "type": "keyword"
+          }
+        }
+      },
+      "updated": {
+        "type": "date"
+      },
+      "version": {
+        "type": "keyword",
+        "copy_to": [
+          "search_text"
+        ]
+      }
+    }
+  }
+}

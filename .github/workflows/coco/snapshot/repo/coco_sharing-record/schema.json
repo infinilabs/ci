@@ -1,0 +1,143 @@
+{
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "20000"
+        }
+      },
+      "number_of_shards": "1",
+      "max_result_window": "10000000",
+      "analysis": {
+        "analyzer": {
+          "suggest_text_search": {
+            "filter": [
+              "lowercase",
+              "word_delimiter"
+            ],
+            "tokenizer": "classic"
+          },
+          "combined_text_analyzer": {
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "word_delimiter",
+              "unique"
+            ],
+            "char_filter": [
+              "tsconvert"
+            ],
+            "tokenizer": "classic"
+          },
+          "pinyin_analyzer": {
+            "tokenizer": "my_pinyin"
+          }
+        },
+        "char_filter": {
+          "tsconvert": {
+            "convert_type": "t2s",
+            "type": "stconvert",
+            "keep_both": "false",
+            "delimiter": ","
+          }
+        },
+        "tokenizer": {
+          "my_pinyin": {
+            "lowercase": "true",
+            "keep_original": "false",
+            "keep_first_letter": "true",
+            "keep_separate_first_letter": "true",
+            "type": "pinyin",
+            "limit_first_letter_length": "16",
+            "keep_full_pinyin": "true"
+          }
+        }
+      },
+      "number_of_replicas": "1"
+    }
+  },
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "strings": {
+          "match_mapping_type": "string",
+          "mapping": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "_system": {
+        "type": "object"
+      },
+      "created": {
+        "type": "date"
+      },
+      "display_name": {
+        "type": "keyword",
+        "copy_to": [
+          "combined_fulltext"
+        ]
+      },
+      "granted_by": {
+        "type": "keyword"
+      },
+      "id": {
+        "type": "keyword"
+      },
+      "inherited_from": {
+        "type": "keyword"
+      },
+      "inherited_from_folder": {
+        "type": "keyword"
+      },
+      "path_pattern": {
+        "type": "keyword"
+      },
+      "permission": {
+        "type": "byte"
+      },
+      "principal_id": {
+        "type": "keyword"
+      },
+      "principal_type": {
+        "type": "keyword"
+      },
+      "recursive": {
+        "type": "boolean"
+      },
+      "resource_category_id": {
+        "type": "keyword"
+      },
+      "resource_category_type": {
+        "type": "keyword"
+      },
+      "resource_full_path": {
+        "type": "keyword"
+      },
+      "resource_id": {
+        "type": "keyword"
+      },
+      "resource_is_folder": {
+        "type": "boolean"
+      },
+      "resource_parent_path": {
+        "type": "keyword"
+      },
+      "resource_parent_path_reversed": {
+        "type": "keyword"
+      },
+      "resource_type": {
+        "type": "keyword"
+      },
+      "updated": {
+        "type": "date"
+      },
+      "via": {
+        "type": "keyword"
+      }
+    }
+  }
+}

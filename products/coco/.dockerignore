@@ -2,3 +2,5 @@ Dockerfile
 build-*.sh
 deploy.sh
 config/*.yml
+snapshot
+tests

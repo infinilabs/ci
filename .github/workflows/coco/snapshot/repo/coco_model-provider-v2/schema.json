@@ -1,0 +1,154 @@
+{
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "20000"
+        }
+      },
+      "number_of_shards": "1",
+      "max_result_window": "10000000",
+      "analysis": {
+        "analyzer": {
+          "suggest_text_search": {
+            "filter": [
+              "word_delimiter"
+            ],
+            "tokenizer": "classic"
+          },
+          "combined_text_analyzer": {
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "word_delimiter",
+              "unique"
+            ],
+            "char_filter": [
+              "tsconvert"
+            ],
+            "tokenizer": "classic"
+          },
+          "pinyin_analyzer": {
+            "tokenizer": "my_pinyin"
+          }
+        },
+        "char_filter": {
+          "tsconvert": {
+            "convert_type": "t2s",
+            "type": "stconvert",
+            "keep_both": "false",
+            "delimiter": ","
+          }
+        },
+        "tokenizer": {
+          "my_pinyin": {
+            "lowercase": "true",
+            "keep_original": "false",
+            "keep_first_letter": "true",
+            "keep_separate_first_letter": "true",
+            "type": "pinyin",
+            "limit_first_letter_length": "16",
+            "keep_full_pinyin": "true"
+          }
+        }
+      },
+      "number_of_replicas": "1"
+    }
+  },
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "strings": {
+          "match_mapping_type": "string",
+          "mapping": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "_system": {
+        "properties": {
+          "owner_id": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "api_key": {
+        "type": "keyword"
+      },
+      "api_type": {
+        "type": "keyword"
+      },
+      "base_url": {
+        "type": "object",
+        "enabled": false
+      },
+      "builtin": {
+        "type": "keyword"
+      },
+      "combined_fulltext": {
+        "type": "text",
+        "analyzer": "combined_text_analyzer",
+        "index_prefixes": {
+          "min_chars": 2,
+          "max_chars": 5
+        },
+        "index_phrases": true
+      },
+      "created": {
+        "type": "date"
+      },
+      "description": {
+        "type": "text",
+        "copy_to": [
+          "combined_fulltext"
+        ]
+      },
+      "enabled": {
+        "type": "keyword"
+      },
+      "icon": {
+        "type": "object",
+        "enabled": false
+      },
+      "id": {
+        "type": "keyword"
+      },
+      "metadata": {
+        "type": "object"
+      },
+      "models": {
+        "type": "object",
+        "enabled": false
+      },
+      "name": {
+        "type": "keyword",
+        "fields": {
+          "pinyin": {
+            "type": "text",
+            "analyzer": "pinyin_analyzer"
+          },
+          "text": {
+            "type": "text"
+          }
+        },
+        "copy_to": [
+          "combined_fulltext"
+        ]
+      },
+      "payload": {
+        "type": "object",
+        "enabled": false
+      },
+      "updated": {
+        "type": "date"
+      },
+      "website": {
+        "type": "keyword"
+      }
+    }
+  }
+}

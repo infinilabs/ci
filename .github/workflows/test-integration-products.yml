@@ -58,8 +58,8 @@ jobs:
               run: |
                 export WORKBASE=$HOME/go/src
                 export WORK=$WORKBASE/infini.sh
-                export ES_PASSWORD=INFINILabs_Test_CI_2025
-                export EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2025
+                export ES_PASSWORD=INFINILabs_Test_CI_2026
+                export EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2026
 
                 echo WORKBASE=$WORKBASE >> $GITHUB_ENV
                 echo WORK=$WORK >> $GITHUB_ENV
@@ -499,8 +499,8 @@ jobs:
                 echo WORKBASE=$WORKBASE >> $GITHUB_ENV
                 echo WORK=$WORK >> $GITHUB_ENV
                 echo ES_USERNAME=admin >> $GITHUB_ENV
-                echo ES_PASSWORD=INFINILabs_Test_CI_2025 >> $GITHUB_ENV
-                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2025 >> $GITHUB_ENV
+                echo ES_PASSWORD=INFINILabs_Test_CI_2026 >> $GITHUB_ENV
+                echo EASYSEARCH_INITIAL_ADMIN_PASSWORD=INFINILabs_Test_CI_2026 >> $GITHUB_ENV
                 echo ES_ENDPOINT=https://127.0.0.1:9200 >> $GITHUB_ENV
                 echo GW_ENDPOINT=https://127.0.0.1:8000 >> $GITHUB_ENV
                 echo VERSION=1.0.0 >> $GITHUB_ENV
