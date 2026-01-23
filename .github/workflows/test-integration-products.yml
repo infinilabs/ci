@@ -270,8 +270,8 @@ jobs:
               continue-on-error: true
               run: |
                 echo "Running integration test at $PWD ..."
-                ls -al "$HOME/easysearch/logs"
-                tail -n 100 "$HOME/easysearch/logs/easysearch.log"
+                #ls -al "$HOME/easysearch/logs"
+                #tail -n 100 "$HOME/easysearch/logs/easysearch.log"
 
                 HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
                 PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
@@ -283,7 +283,7 @@ jobs:
                 done
                 echo "Port $PORT is open on $HOST. Proceeding with tests..."
                 echo
-                echo "Checking easysearch status at $ES_ENDPOINT with $ES_USERNAME:$ES_PASSWORD..."
+                echo "Checking easysearch status at $ES_ENDPOINT ..."
                 curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
                 
             - name: Run loadgen api test for console initialize

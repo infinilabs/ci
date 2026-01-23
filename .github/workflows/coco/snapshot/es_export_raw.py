@@ -7,7 +7,7 @@ import urllib.error
 
 # ================= CONFIGURATION =================
 # Easysearch Host (HTTPS)
-ES_HOST = "https://127.0.0.1:9200"
+ES_ENDPOINT = "https://127.0.0.1:9200"
 # Credentials
 ES_USERNAME = os.getenv("ES_USERNAME", "elastic")
 ES_PASSWORD = os.getenv("ES_PASSWORD", "changeme")
@@ -35,7 +35,7 @@ def es_request(method, endpoint, body=None):
     """
     Helper function to make HTTP requests to Easysearch using standard library.
     """
-    url = f"{ES_HOST}/{endpoint.lstrip('/')}"
+    url = f"{ES_ENDPOINT}/{endpoint.lstrip('/')}"
     data = json.dumps(body).encode("utf-8") if body else None
     
     req = urllib.request.Request(url, data=data, headers=HEADERS, method=method)

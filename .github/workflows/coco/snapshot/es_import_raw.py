@@ -8,7 +8,7 @@ import urllib.error
 
 # ================= CONFIGURATION =================
 # Easysearch URL
-ES_HOST = os.getenv("ES_HOST", "https://localhost:9200") 
+ES_ENDPOINT = os.getenv("ES_ENDPOINT", "https://localhost:9200") 
 # Credentials
 ES_USERNAME = os.getenv("ES_USERNAME", "elastic")
 ES_PASSWORD = os.getenv("ES_PASSWORD", "changeme")
@@ -40,7 +40,7 @@ def es_request(method, endpoint, body=None):
     """
     Standard HTTP request wrapper with Auth and SSL support.
     """
-    url = f"{ES_HOST}/{endpoint.lstrip('/')}"
+    url = f"{ES_ENDPOINT}/{endpoint.lstrip('/')}"
     data = json.dumps(body).encode("utf-8") if body else None
     
     req = urllib.request.Request(url, data=data, headers=COMMON_HEADERS, method=method)
@@ -59,8 +59,8 @@ def wait_for_es():
     """
     Wait for Easysearch to be healthy.
     """
-    print(f"Waiting for Easysearch at {ES_HOST}...")
-    url = f"{ES_HOST}/_cluster/health"
+    print(f"Waiting for Easysearch at {ES_ENDPOINT}...")
+    url = f"{ES_ENDPOINT}/_cluster/health"
     req = urllib.request.Request(url, headers=COMMON_HEADERS, method="GET")
     
     for i in range(30):
@@ -143,7 +143,7 @@ def main():
                         bulk_headers["Content-Type"] = "application/x-ndjson"
 
                         req = urllib.request.Request(
-                            f"{ES_HOST}/_bulk", 
+                            f"{ES_ENDPOINT}/_bulk", 
                             data=body_str.encode('utf-8'), 
                             headers=bulk_headers, 
                             method="POST"
@@ -158,7 +158,7 @@ def main():
                     bulk_headers = COMMON_HEADERS.copy()
                     bulk_headers["Content-Type"] = "application/x-ndjson"
                     req = urllib.request.Request(
-                        f"{ES_HOST}/_bulk", 
+                        f"{ES_ENDPOINT}/_bulk", 
                         data=body_str.encode('utf-8'), 
                         headers=bulk_headers, 
                         method="POST"
