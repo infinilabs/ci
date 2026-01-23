@@ -5,13 +5,8 @@ defaults:
 env:
   TZ: Asia/Shanghai
   GO_VERSION: ${{ vars.GO_VERSION }}
-  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
-  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
-  JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
-  PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
-  RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
 
 on:
   schedule:
