@@ -162,16 +162,16 @@ jobs:
 
             - name: Prepare coco server tests
               run: |
-                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
-
-            - name: Compile products code
-              run: |
                 mkdir -p $WORKBASE
                 echo Home path is $HOME
                 
                 echo Check work folder $GITHUB_WORKSPACE
                 ln -s $GITHUB_WORKSPACE $WORK
+                
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
 
+            - name: Compile products code
+              run: |
                 # for loadgen
                 cd $WORK/loadgen && echo Compiling loadgen at $PWD ...
                 OFFLINE_BUILD=true GOMODULE=false make build  > /dev/null 2>&1

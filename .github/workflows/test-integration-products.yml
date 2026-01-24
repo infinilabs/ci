@@ -329,6 +329,7 @@ jobs:
                   LOG_LEVEL=info
                 fi
                 exec $WORK/$PRODUCT/bin/$PRODUCT -log $LOG_LEVEL &
+
             - name: Run loadgen api test for runtime registry
               run: |
                 export PRODUCT=loadgen
