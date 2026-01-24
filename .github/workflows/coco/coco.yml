@@ -1,5 +1,7 @@
 env:
-  ES_ENDPOINT: http://localhost:9200
+  ES_ENDPOINT: https://localhost:9200
+  ES_USERNAME: admin
+  ES_PASSWORD: INFINILabs_Test_CI_2026
   WEB_BINDING: 0.0.0.0:9000
   API_BINDING: 0.0.0.0:2900
 
@@ -31,11 +33,6 @@ coco:
       #[END] for managed mode only
 
 ## Cleanup exists data:
-# curl -u admin:45ff432a5428ade77c7b -k -XDELETE   https://localhost:9200/_template/coco-search
-# curl -u admin:45ff432a5428ade77c7b -k -XDELETE   https://localhost:9200/_template/coco
-# curl -u admin:45ff432a5428ade77c7b -k -XDELETE  https://localhost:9200/_scripts/coco-query-string
-# curl -u admin:45ff432a5428ade77c7b -k -XDELETE  https://localhost:9200/_scripts/coco-query-string-extra-should
-# curl -u admin:45ff432a5428ade77c7b -k -XDELETE   https://localhost:9200/coco_*
 elastic:
   elasticsearch: prod
   enabled: true
