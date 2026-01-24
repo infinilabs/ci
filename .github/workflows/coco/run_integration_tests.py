@@ -275,4 +275,10 @@ def main():
     print("="*60 + "\n")
 
 if __name__ == "__main__":
-    main()
+    #main()
+    dsl_files = sorted(list(TESTS_DIR.glob("**/*.dsl")))
+    print(f"Found {len(dsl_files)} DSL at {TESTS_DIR} scenarios to run.")
+    for i, dsl_file in enumerate(dsl_files, start=1):
+        print("\n" + "="*60)
+        log(f"Running scenario [{i}/{len(dsl_files)}]: {dsl_file.name}")
+        print("="*60 + "\n")
