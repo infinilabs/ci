@@ -249,6 +249,10 @@ elasticsearch:
       - $[[env.ES_ENDPOINT]]
     discovery:
       enabled: false
+    basic_auth:
+      username: $[[env.ES_USERNAME]]
+      password: $[[env.ES_PASSWORD]]
+
 
 api:
   enabled: true
