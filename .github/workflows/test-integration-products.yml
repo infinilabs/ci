@@ -252,7 +252,6 @@ jobs:
                 sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -RLf 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
                 docker pull infinilabs/easysearch:$VER
                 docker run -d --name easysearch \
-                  --network host \
                   -p 9200:9200 -p 9300:9300 \
                   -e cluster.name=easysearch \
                   -e "JAVA_OPTS=-Xms2g -Xmx2g" \
