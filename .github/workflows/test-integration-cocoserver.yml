@@ -186,7 +186,7 @@ jobs:
                   echo "Error: coco.yml file not found at $WORK/coco/coco.yml"
                   exit 1
                 fi
-                
+
                 make build-all > /dev/null 2>&1
 
                 # verify binaries exist
@@ -205,10 +205,14 @@ jobs:
               working-directory: ${{env.WORK}}/coco
               timeout-minutes: 20
               run: |
+                echo "Check coco.yml file setting ..."
+                if [ -f $WORK/coco/bin/coco.yml ]; then
+                  head -n 5 $WORK/coco/bin/coco.yml
+                fi
                 echo "Running Coco integration tests at $PWD ..."
                 python3 run_integration_tests.py
-              env:
-                GITHUB_ACTIONS: true
+                env:
+                  GITHUB_ACTIONS: true
 
     notify_on_failure:
       runs-on: ubuntu-latest
