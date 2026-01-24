@@ -203,6 +203,8 @@ jobs:
             - name: Run Coco integration tests
               working-directory: ${{env.WORK}}/coco
               run: python3 run_integration_tests.py
+              env:
+                GITHUB_ACTIONS: true
 
     notify_on_failure:
       runs-on: ubuntu-latest
