@@ -178,15 +178,6 @@ jobs:
                 
                 # for coco server
                 cd $WORK/coco && echo Compiling coco server at $PWD ...
-
-                # check coco yml file
-                if [ -f $WORK/coco/coco.yml ]; then
-                  head -n 5 $WORK/coco/coco.yml
-                else
-                  echo "Error: coco.yml file not found at $WORK/coco/coco.yml"
-                  exit 1
-                fi
-
                 make build-all > /dev/null 2>&1
 
                 # verify binaries exist
@@ -205,9 +196,10 @@ jobs:
               working-directory: ${{env.WORK}}/coco
               timeout-minutes: 20
               run: |
-                echo "Check coco.yml file setting ..."
-                if [ -f $WORK/coco/bin/coco.yml ]; then
-                  head -n 5 $WORK/coco/bin/coco.yml
+                echo "Update coco.yml file setting ..."
+                if [ -f $WORK/coco/coco.yml ]; then
+                  echo "Copy coco.yml to bin folder ..."
+                  cp -f $WORK/coco/coco.yml $WORK/coco/bin/coco.yml
                 fi
                 echo "Running Coco integration tests at $PWD ..."
                 python3 run_integration_tests.py
