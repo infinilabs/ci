@@ -139,7 +139,7 @@ jobs:
                   -v $HOME/easysearch/data:/app/easysearch/data \
                   infinilabs/easysearch:$VER
                 # Wait for easysearch to start
-                sleep 30
+                sleep 60
 
             - name: Run easysearch test
               timeout-minutes: 5

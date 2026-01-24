@@ -7,6 +7,7 @@ import subprocess
 import time
 import socket
 import signal
+import base64
 from pathlib import Path
 
 # ================= CONFIGURATION =================
@@ -16,11 +17,18 @@ LOG_IDENTIFIER = 'COCO_TEST_INFO'
 PROJECT_ROOT = Path(os.getcwd()).resolve()
 
 # Critical Paths
+# Note: Ensure this filename matches your actual file (import_data_raw.py vs import_es_raw.py)
 SNAPSHOT_SCRIPT = PROJECT_ROOT / "snapshot" / "import_data_raw.py"
 TESTS_DIR = PROJECT_ROOT / "tests"
 COCO_BIN = PROJECT_ROOT / "bin" / "coco"
 PID_FILE = PROJECT_ROOT / "integration_test_coco.pid"
 SERVER_LOG_FILE = PROJECT_ROOT / "coco_server.log"
+
+# Easysearch Server
+# Easysearch URL (Defaults to https://localhost:9200)
+ES_ENDPOINT = os.getenv("ES_ENDPOINT", "https://localhost:9200") 
+ES_USERNAME = os.getenv("ES_USERNAME", "elastic")
+ES_PASSWORD = os.getenv("ES_PASSWORD", "changeme")
 
 # Ports to check
 PORT_HTTP = 9000
@@ -51,6 +59,7 @@ def run_cmd(command, check=True):
         
         # Dump Easysearch logs if in CI
         if os.getenv("GITHUB_ACTIONS") == "true":
+            # Adjusted path based on typical CI setups
             es_log = Path.home() / "easysearch" / "logs" / "easysearch.log"
             if es_log.exists():
                 log("--- Dumping Easysearch logs ---")
@@ -202,10 +211,33 @@ def run_single_dsl_test(dsl_file, loadgen_bin):
         # 2. Restore Data
         run_cmd(f"python3 {SNAPSHOT_SCRIPT}", check=True)
 
-        # 3. Start Service
+        # 3. Check if restore was successful
+        log("Verifying data restore...")
+        
+        # --- FIX START: Calculate Basic Auth in Python ---
+        user_pass = f"{ES_USERNAME}:{ES_PASSWORD}"
+        # Encode to base64 bytes, then decode to ascii string
+        b64_auth = base64.b64encode(user_pass.encode('utf-8')).decode('utf-8')
+
+        # Wait a few seconds for ES to be ready
+        time.sleep(5)
+
+        # Construct curl command with:
+        # -k: Insecure (ignore self-signed certs)
+        # -s: Silent
+        # -H: Authorization header
+        # ES_ENDPOINT: Already includes 'https://', so we use it directly
+        verify_cmd = f"curl -k -s -X GET -H 'Authorization: Basic {b64_auth}' {ES_ENDPOINT}/_cat/indices?v"
+        
+        run_cmd(verify_cmd, check=True)
+
+        # Wait a few seconds for ES to be ready
+        time.sleep(5)
+
+        # 4. Start Service
         start_coco_server()
 
-        # 4. Run Test (Loadgen)
+        # 5. Run Test (Loadgen)
         config_path = TESTS_DIR / "loadgen.yml"
         cmd = f"{loadgen_bin} -config {config_path} -run {dsl_path} -debug"
         run_cmd(cmd, check=True)
@@ -216,7 +248,7 @@ def run_single_dsl_test(dsl_file, loadgen_bin):
         log(f"Test FAILED: {dsl_file}")
         sys.exit(1)
     finally:
-        # 5. Final Cleanup
+        # 6. Final Cleanup
         stop_coco_server()
 
 def main():
