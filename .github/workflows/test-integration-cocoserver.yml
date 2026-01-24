@@ -112,6 +112,58 @@ jobs:
             - name: Check go toolchain
               run: go version && go env
 
+            - name: Run easysearch docker
+              run: |
+                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
+                echo "The latest easysearch version is $VER and input version is $EZS_VERSION"
+                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                  # x.y.z or x.y.z-build_number pattern
+                  if [[ "$EZS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
+                    VER=$EZS_VERSION
+                  else
+                    echo "EZS_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
+                  fi
+                fi
+                echo "Using easysearch docker image with $VER ..."
+                sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -RLf 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
+                docker pull infinilabs/easysearch:$VER
+                docker run -d --name easysearch \
+                  --network host \
+                  -p 9200:9200 -p 9300:9300 \
+                  -e cluster.name=easysearch \
+                  -e "JAVA_OPTS=-Xms2g -Xmx2g" \
+                  -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
+                  -e METRICS_WITH_AGENT=true \
+                  -e METRICS_CONFIG_SERVER=http://127.0.0.1:9000 \
+                  -v $HOME/easysearch/logs:/app/easysearch/logs \
+                  -v $HOME/easysearch/data:/app/easysearch/data \
+                  infinilabs/easysearch:$VER
+                # Wait for easysearch to start
+                sleep 30
+
+            - name: Run easysearch test
+              timeout-minutes: 5
+              continue-on-error: true
+              run: |
+                echo "Running integration test at $PWD ..."
+
+                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
+                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
+                PORT=${PORT:-443}
+
+                while ! nc -z "$HOST" "$PORT"; do
+                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
+                  sleep 5
+                done
+                echo "Port $PORT is open on $HOST. Proceeding with tests..."
+                echo
+                echo "Checking easysearch status at $ES_ENDPOINT ..."
+                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT/_cluster/health?pretty&local=true"
+
+            - name: Prepare coco server tests
+              run: |
+                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
+
             - name: Compile products code
               run: |
                 mkdir -p $WORKBASE
@@ -140,60 +192,9 @@ jobs:
                 chmod +x $HOME/bin/loadgen
                 echo "$HOME/bin" >> $GITHUB_PATH
 
-            - name: Run easysearch docker
-              run: |
-                VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
-                echo "The latest easysearch version is $VER"
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  # x.y.z or x.y.z-build_number pattern
-                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$' ]]; then
-                    VER=$EZS_VERSION
-                  else
-                    echo "EZS_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
-                  fi
-                fi
-                echo "Using easysearch docker image with $VER ..."
-                sudo mkdir -p $HOME/easysearch/{data,logs} && sudo chown -RLf 602:602 $HOME/easysearch && sudo chmod -R 777 "$HOME/easysearch"
-                docker pull infinilabs/easysearch:$VER
-                docker run -d --name easysearch \
-                  --network host \
-                  -p 9200:9200 -p 9300:9300 \
-                  -e cluster.name=easysearch \
-                  -e "JAVA_OPTS=-Xms2g -Xmx2g" \
-                  -e EASYSEARCH_INITIAL_ADMIN_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD \
-                  -e METRICS_WITH_AGENT=true \
-                  -e METRICS_CONFIG_SERVER=http://127.0.0.1:9000 \
-                  -v $HOME/easysearch/logs:/app/easysearch/logs \
-                  -v $HOME/easysearch/data:/app/easysearch/data \
-                  infinilabs/easysearch:$VER
-                # Wait for easysearch to start
-                sleep 60
-
-            - name: Run easysearch test
-              timeout-minutes: 5
-              continue-on-error: true
-              run: |
-                echo "Running integration test at $PWD ..."
-
-                HOST=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $4}')
-                PORT=$(echo "$ES_ENDPOINT" | awk -F[/:] '{print $5}')
-                PORT=${PORT:-443}
-
-                while ! nc -z "$HOST" "$PORT"; do
-                  echo "Port $PORT not open on $HOST. Retrying in 5 seconds..."
-                  sleep 5
-                done
-                echo "Port $PORT is open on $HOST. Proceeding with tests..."
-                echo
-                echo "Checking easysearch status at $ES_ENDPOINT ..."
-                curl -u "$ES_USERNAME:$ES_PASSWORD" "$ES_ENDPOINT"
-
-            - name: Prepare coco server tests
-              run: |
-                cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
-
             - name: Run Coco integration tests
               working-directory: ${{env.WORK}}/coco
+              timeout-minutes: 20
               run: python3 run_integration_tests.py
               env:
                 GITHUB_ACTIONS: true
