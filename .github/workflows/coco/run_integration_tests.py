@@ -118,7 +118,9 @@ def wait_for_ports(ports, target_state='open', timeout=30):
 
 def start_coco_server():
     """Start the coco binary in the background."""
-    if not COCO_BIN.exists():
+    if COCO_BIN.exists():
+        log(f"Coco binary found at {COCO_BIN}")
+    else:
         log(f"Error: Coco binary not found at {COCO_BIN}")
         sys.exit(1)
 

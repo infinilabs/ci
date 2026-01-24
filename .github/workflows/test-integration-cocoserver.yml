@@ -167,7 +167,7 @@ jobs:
                 
                 echo Check work folder $GITHUB_WORKSPACE
                 ln -s $GITHUB_WORKSPACE $WORK
-                
+
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
 
             - name: Compile products code
@@ -178,6 +178,15 @@ jobs:
                 
                 # for coco server
                 cd $WORK/coco && echo Compiling coco server at $PWD ...
+
+                # check coco yml file
+                if [ -f $WORK/coco/coco.yml ]; then
+                  head -n 5 $WORK/coco/coco.yml
+                else
+                  echo "Error: coco.yml file not found at $WORK/coco/coco.yml"
+                  exit 1
+                fi
+                
                 make build-all > /dev/null 2>&1
 
                 # verify binaries exist
@@ -195,7 +204,9 @@ jobs:
             - name: Run Coco integration tests
               working-directory: ${{env.WORK}}/coco
               timeout-minutes: 20
-              run: python3 run_integration_tests.py
+              run: |
+                echo "Running Coco integration tests at $PWD ..."
+                python3 run_integration_tests.py
               env:
                 GITHUB_ACTIONS: true
 
