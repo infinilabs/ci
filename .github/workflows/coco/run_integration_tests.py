@@ -16,7 +16,7 @@ LOG_IDENTIFIER = 'COCO_TEST_INFO'
 PROJECT_ROOT = Path(os.getcwd()).resolve()
 
 # Critical Paths
-SNAPSHOT_SCRIPT = PROJECT_ROOT / "snapshot" / "import_es_raw.py"
+SNAPSHOT_SCRIPT = PROJECT_ROOT / "snapshot" / "import_data_raw.py"
 TESTS_DIR = PROJECT_ROOT / "tests"
 COCO_BIN = PROJECT_ROOT / "bin" / "coco"
 PID_FILE = PROJECT_ROOT / "integration_test_coco.pid"
