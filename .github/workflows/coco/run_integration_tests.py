@@ -51,7 +51,7 @@ def run_cmd(command, check=True):
         
         # Dump Easysearch logs if in CI
         if os.getenv("GITHUB_ACTIONS") == "true":
-            es_log = Path.home() / "es_install_dir" / "easysearch.log"
+            es_log = Path.home() / "easysearch" / "logs" / "easysearch.log"
             if es_log.exists():
                 log("--- Dumping Easysearch logs ---")
                 print(es_log.read_text(errors='replace'))
