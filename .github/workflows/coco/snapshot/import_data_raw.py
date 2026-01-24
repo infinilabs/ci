@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import base64
@@ -12,9 +13,8 @@ ES_ENDPOINT = os.getenv("ES_ENDPOINT", "https://localhost:9200")
 # Credentials
 ES_USERNAME = os.getenv("ES_USERNAME", "elastic")
 ES_PASSWORD = os.getenv("ES_PASSWORD", "changeme")
-
-# Directory containing the backup
-INPUT_DIR = "./repo"
+# Data input directory
+INPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repo")
 
 # Pattern to clean before restoring (Ensures a completely clean slate)
 # This matches your requirement to delete "coco_*" before starting
@@ -49,7 +49,7 @@ def es_request(method, endpoint, body=None):
         with urllib.request.urlopen(req, context=ctx) as response:
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        # Return error details (allow caller to handle 404s etc.)
+        # Return error details for handling (e.g., 404 is fine during delete)
         return {"error": e.code, "msg": e.read().decode('utf-8')}
     except Exception as e:
         print(f"Error: {e}")
@@ -90,8 +90,8 @@ def main():
 
     # --- STEP 1: Restore from Files ---
     if not os.path.exists(INPUT_DIR):
-        print(f"Data directory not found: {INPUT_DIR}")
-        return
+        print(f"❌ Data directory not found: {INPUT_DIR}")
+        sys.exit(1)
 
     # Iterate over exported index directories
     for idx_name in os.listdir(INPUT_DIR):

@@ -14,7 +14,7 @@ ES_PASSWORD = os.getenv("ES_PASSWORD", "changeme")
 # Index Pattern to export
 INDEX_PATTERN = "coco*"
 # Output Directory
-OUTPUT_DIR = "./repo"
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repo")
 # =============================================
 
 # 1. Setup SSL Context (Ignore self-signed certificate errors)
