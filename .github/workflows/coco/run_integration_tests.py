@@ -228,7 +228,7 @@ def run_single_dsl_test(dsl_file, loadgen_bin):
         # -k: Insecure (ignore self-signed certs)
         # -s: Silent
         # ES_ENDPOINT usually contains https://, so don't double append
-        verify_cmd = f"curl -k -s -X GET -H 'Authorization: Basic {b64_auth}' {ES_ENDPOINT}/_cat/indices?v"
+        verify_cmd = f"curl -k -s -X GET -H 'Authorization: Basic {b64_auth}' {ES_ENDPOINT}/_cat/indices?v&h=i,h,s,dc"
         
         run_cmd(verify_cmd, check=True)
 

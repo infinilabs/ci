@@ -20,4 +20,4 @@ POST /setup/_initialize
     "password":"PASSword_123",
     "language":"zh-CN"
 }
-# assert: (200, {acknowledged: true}),
+# assert: (200, {acknowledged: true})
