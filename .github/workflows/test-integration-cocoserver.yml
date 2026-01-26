@@ -195,6 +195,8 @@ jobs:
             - name: Run Coco integration tests
               working-directory: ${{env.WORK}}/coco
               timeout-minutes: 20
+              env:
+                GITHUB_ACTIONS: true
               run: |
                 echo "Update coco.yml file setting ..."
                 if [ -f $WORK/coco/coco.yml ]; then
@@ -203,8 +205,6 @@ jobs:
                 fi
                 echo "Running Coco integration tests at $PWD ..."
                 python3 run_integration_tests.py
-                env:
-                  GITHUB_ACTIONS: true
 
     notify_on_failure:
       runs-on: ubuntu-latest
