@@ -18,11 +18,11 @@ PROJECT_ROOT = Path(os.getcwd()).resolve()
 
 # Critical Paths
 # Note: Ensure this filename matches your actual file (import_data_raw.py vs import_es_raw.py)
-SNAPSHOT_SCRIPT = PROJECT_ROOT / "snapshot" / "import_data_raw.py"
 TESTS_DIR = PROJECT_ROOT / "tests"
 COCO_BIN = PROJECT_ROOT / "bin" / "coco"
-PID_FILE = PROJECT_ROOT / "integration_test_coco.pid"
 SERVER_LOG_FILE = PROJECT_ROOT / "coco_server.log"
+PID_FILE = PROJECT_ROOT / "integration_test_coco.pid"
+SNAPSHOT_SCRIPT = TESTS_DIR / "snapshot" / "import_data_raw.py"
 
 # Easysearch Server
 # Defaults to https://localhost:9200 if not set in ENV
