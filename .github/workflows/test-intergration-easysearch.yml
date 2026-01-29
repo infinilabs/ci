@@ -172,12 +172,12 @@ jobs:
       - name: Run IndexingPressureIT tests
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :modules:indexing-pressure:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.indexingpressure.IndexingPressureIT --tests org.easysearch.index.IndexingPressureIT -Dtests.heap.size=2g -Dtests.cluster.reroute.timeout=300s -Dtests.cluster.recovery.timeout=300s -Dtests.cluster.stabilization.timeout=300s --rerun-tasks --info
+          gradle :server:clean :server:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.indexingpressure.IndexingPressureIT --tests org.easysearch.index.IndexingPressureIT -Dtests.heap.size=2g -Dtests.cluster.reroute.timeout=300s -Dtests.cluster.recovery.timeout=300s -Dtests.cluster.stabilization.timeout=300s --rerun-tasks --info
       
       - name: Run Read old lucene index tests
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :modules:indices:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.index.engine.InternalEngineTests --tests org.easysearch.index.store.StoreTests --rerun-tasks --info
+          gradle :server:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.index.engine.InternalEngineTests --tests org.easysearch.index.store.StoreTests --rerun-tasks --info
 
       - name: Run Rules Plugin Compiler tests
         run: |
