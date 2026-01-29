@@ -129,7 +129,9 @@ jobs:
       - name: Prepare for build dependency
         run: |
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
-
+          $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
+          echo "Testing with easysearch version: $PUBLISH_VERSION"
+          echo "STEP_VERSION=$PUBLISH_VERSION" >> $GITHUB_ENV
           PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins
           echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
 
