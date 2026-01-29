@@ -158,7 +158,8 @@ jobs:
       - name: Run Rules Plugin Compiler tests
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
-          LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}} 
+          LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
+          PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.compiler.RuleCompilerTests --rerun-tasks --info
@@ -167,6 +168,7 @@ jobs:
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
           LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
+          PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.sync.RulesMultiNodeIT --rerun-tasks --info
