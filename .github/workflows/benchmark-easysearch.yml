@@ -1,0 +1,68 @@
+name: Benchmark easysearch with previous versions
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DNAME: agent
+  PNAME: easysearch
+  TZ: Asia/Shanghai
+  TOKEN: ${{ secrets.X_TOKEN }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
+  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
+  AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
+  ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
+  JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  PNPM_VERSION: "latest"
+
+on:
+  push:
+    tags:
+      - "release*"
+  schedule:
+    - cron: "30 16 * * *"
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: "Publish Version"
+        required: false
+        default: "2.0.3"
+      PUBLISH_AGENT_VERSION:
+        description: "Publish With Agent Version"
+        required: false
+        default: "1.30.2-2333"
+
+jobs:
+  publish:
+    name: Benchmark easysearch with previous versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap

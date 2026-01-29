@@ -1,0 +1,197 @@
+name: Test Easysearch Integration
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DNAME: agent
+  PNAME: easysearch
+  TZ: Asia/Shanghai
+  TOKEN: ${{ secrets.X_TOKEN }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
+  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
+  ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
+  JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  PNPM_VERSION: "latest"
+
+on:
+  schedule:
+    - cron: "30 16 * * *"
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: "Publish Version"
+        required: false
+        default: "2.0.3"
+
+jobs:
+  publish:
+    name: Publish easysearch files and docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Set up and check env
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
+          # Set GRADLE version and BRANCH based on PUBLISH_VERSION
+          BRANCH="1.x"
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            BRANCH="main"
+            GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
+            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+          fi
+          echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up gradle
+        run: |
+          if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
+            wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
+          fi
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
+          echo Gradle path is $HOME/gradle-$GRADLE_VERSION
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+
+      - name: Set up with pnpm toolchain
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up nodejs toolchain
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: "pnpm"
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Check nodejs toolchain
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+          node -v && npm -v && pnpm -v
+      - name: Cache Gradle packages and jdks
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            /root/.gradle/caches
+            ${{ github.workspace }}/jdks
+          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
+
+      - name: Prepare for build dependency with ${{ env.STEP_VERSION}}
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          # for build init
+          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
+            fi
+            if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              PUBLISH_VERSION="${BASH_REMATCH[1]}"
+            fi
+            echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+          fi
+
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
+            $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
+            echo "Publish release version with ${{ github.event_name }}"
+          else
+            export BUILD_TYPE="${{ github.event_name }}"
+            export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
+            echo "Build type is $BUILD_TYPE and PUBLISH_VERSION is $PUBLISH_VERSION and PUBLISHED_VERSION is $PUBLISHED_VERSION"
+            $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
+          fi
+
+          if [[ "$BUILD_TYPE" == "schedule" ]]; then
+            STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')
+          else
+            STEP_VERSION="$PUBLISH_VERSION"
+          fi
+          echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
+          echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
+
+      - name: Run rest tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          gradle clean :rest-api-spec:yamlRestTest --tests org.easysearch.test.rest.ClientYamlTestSuiteIT -Dtest.jvmArgs=-Xmx4g -Drest.suite=rest-api-spec/src/yaml/rest-api/ -Drest.blacklist=rest-api-spec/src/yaml/rest-api/blacklist.txt -Deasysearch.version=$STEP_VERSION --info --stacktrace
+
+      
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Notify message via feishu
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
+
+  refresh_on_success:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: success()
+    steps:
+      - name: Refresh download page on success
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Refresh download page on ci success"
+            sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/snapshot/"
+            sleep 5 && curl -o /dev/null -w "%{http_code}\n" -H 'x-reset-cache: true' "$RELEASE_URL/$PNAME/snapshot/bundle/"
+          fi
