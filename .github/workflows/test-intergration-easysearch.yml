@@ -130,16 +130,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
-          $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-          echo "Publish release version with ${{ github.event_name }}"
-
-          if [[ "$BUILD_TYPE" == "schedule" ]]; then
-            STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')
-          else
-            STEP_VERSION="$PUBLISH_VERSION"
-          fi
-          echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
-          echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
+          PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins
+          echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
 
       - name: Run Rest tests
         run: |
@@ -162,11 +154,17 @@ jobs:
           gradle :server:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.index.engine.InternalEngineTests --tests org.easysearch.index.store.StoreTests --rerun-tasks --info
 
       - name: Run Rules Plugin Compiler tests
+        env:
+          RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
+          LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.compiler.RuleCompilerTests --rerun-tasks --info
 
       - name: Run Rules Plugin Multi-Node IT tests
+        env:
+          RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
+          LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.sync.RulesMultiNodeIT --rerun-tasks --info
