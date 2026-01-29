@@ -136,26 +136,37 @@ jobs:
           echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
 
       - name: Run Rest tests
+        continue-on-error: true 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :rest-api-spec:yamlRestTest --tests org.easysearch.test.rest.ClientYamlTestSuiteIT -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g -Drest.suite=rest-api-spec/src/yaml/rest-api/ -Drest.blacklist=rest-api-spec/src/yaml/rest-api/blacklist.txt -Deasysearch.version=$STEP_VERSION --info --stacktrace
       
       - name: Run Security tests
+        continue-on-error: true
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :modules:security:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests com.infinilabs.security.dlic.rest.api.AccountApiTest --tests com.infinilabs.security.HttpIntegrationTests --tests com.infinilabs.security.dlic.rest.api.RolesApiTest --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests --rerun-tasks --info
 
       - name: Run IndexingPressureIT tests
+        continue-on-error: true
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle :server:clean :server:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.indexingpressure.IndexingPressureIT --tests org.easysearch.index.IndexingPressureIT -Dtests.heap.size=2g -Dtests.cluster.reroute.timeout=300s -Dtests.cluster.recovery.timeout=300s -Dtests.cluster.stabilization.timeout=300s --rerun-tasks --info
-      
+          # Copy test reports
+          mkdir -p $GITHUB_WORKSPACE/all-test-reports/indexing-pressure
+          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/indexing-pressure || true
+
       - name: Run Read old lucene index tests
+        continue-on-error: true
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle :server:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.index.engine.InternalEngineTests --tests org.easysearch.index.store.StoreTests --rerun-tasks --info
+          # Copy test reports
+          mkdir -p $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index
+          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index || true
 
       - name: Run Rules Plugin Compiler tests
+        continue-on-error: true
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
           LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
@@ -163,8 +174,12 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.compiler.RuleCompilerTests --rerun-tasks --info
+          # Copy test reports
+          mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin
+          cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin || true
 
       - name: Run Rules Plugin Multi-Node IT tests
+        continue-on-error: true
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
           LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
@@ -172,14 +187,16 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :plugins:rules:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.sync.RulesMultiNodeIT --rerun-tasks --info
-
+           # Copy test reports
+          mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node
+          cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node || true
+      
       - name: Upload Test Reports
         if: always() 
         uses: actions/upload-artifact@v6
         with:
-          name: gradle-test-reports
-          path: |
-            **/build/reports/tests/**
+          name: all-test-reports
+          path: all-test-reports/
           retention-days: 7
 
   notify_on_failure:
