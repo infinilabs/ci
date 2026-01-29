@@ -136,21 +136,18 @@ jobs:
           echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
 
       - name: Run Rest tests
-        continue-on-error: true
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :rest-api-spec:yamlRestTest --tests org.easysearch.test.rest.ClientYamlTestSuiteIT -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g -Drest.suite=rest-api-spec/src/yaml/rest-api/ -Drest.blacklist=rest-api-spec/src/yaml/rest-api/blacklist.txt -Deasysearch.version=$STEP_VERSION --info --stacktrace
       
       - name: Run Security tests
-        continue-on-error: true
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :modules:security:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests com.infinilabs.security.dlic.rest.api.AccountApiTest --tests com.infinilabs.security.HttpIntegrationTests --tests com.infinilabs.security.dlic.rest.api.RolesApiTest --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests --rerun-tasks --info
 
       - name: Run IndexingPressureIT tests
-        continue-on-error: true
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
@@ -160,7 +157,6 @@ jobs:
           cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/indexing-pressure || true
 
       - name: Run Read old lucene index tests
-        continue-on-error: true
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
@@ -170,7 +166,6 @@ jobs:
           cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index || true
 
       - name: Run Rules Plugin Compiler tests
-        continue-on-error: true
         timeout-minutes: 10
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
@@ -184,7 +179,6 @@ jobs:
           cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin || true
 
       - name: Run Rules Plugin Multi-Node IT tests
-        continue-on-error: true
         timeout-minutes: 10
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
@@ -198,7 +192,7 @@ jobs:
           cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node || true
       
       - name: Upload Test Reports
-        if: always() 
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: all-test-reports
@@ -208,7 +202,7 @@ jobs:
   notify_on_failure:
     runs-on: ubuntu-latest
     needs: [publish]
-    if: false
+    if: failure()
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
