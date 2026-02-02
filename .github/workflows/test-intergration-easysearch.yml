@@ -50,7 +50,7 @@ on:
 
 jobs:
   publish:
-    name: Publish easysearch files and docker
+    name: Test Easysearch Integration
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -139,7 +139,11 @@ jobs:
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :rest-api-spec:yamlRestTest --tests org.easysearch.test.rest.ClientYamlTestSuiteIT -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g -Drest.suite=rest-api-spec/src/yaml/rest-api/ -Drest.blacklist=rest-api-spec/src/yaml/rest-api/blacklist.txt -Deasysearch.version=$STEP_VERSION --info --stacktrace
+          gradle clean :rest-api-spec:yamlRestTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
+                  --info --stacktrace
           # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/rest-tests
           cp -r $GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest/* $GITHUB_WORKSPACE/all-test-reports/rest-tests || true
@@ -148,16 +152,49 @@ jobs:
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :modules:security:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests com.infinilabs.security.dlic.rest.api.AccountApiTest --tests com.infinilabs.security.HttpIntegrationTests --tests com.infinilabs.security.dlic.rest.api.RolesApiTest --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests --rerun-tasks --info
+          gradle clean :modules:security:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests com.infinilabs.security.dlic.rest.api.AccountApiTest \
+                  --tests com.infinilabs.security.HttpIntegrationTests \
+                  --tests com.infinilabs.security.dlic.rest.api.RolesApiTest \
+                  --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
+                  --rerun-tasks --info
           # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/security-tests
           cp -r $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/security-tests || true
-
+      
+      - name: Run DataStream tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          gradle clean :server:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.cluster.metadata.DataStreamTests \
+                  --tests org.easysearch.cluster.metadata.DataStreamMetadataTests \
+                  --tests org.easysearch.cluster.metadata.DataStreamTemplateTests \
+                  --tests org.easysearch.action.admin.indices.datastream.CreateDataStreamRequestTests \
+                  --tests org.easysearch.action.admin.indices.datastream.DeleteDataStreamRequestTests \
+                  --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsRequestTests \
+                  --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsResponseTests \
+                  --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
+                  --rerun-tasks --info
+          # Copy test reports
+          mkdir -p $GITHUB_WORKSPACE/all-test-reports/datastream-tests
+          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/*  $GITHUB_WORKSPACE/all-test-reports/datastream-tests || true
       - name: Run IndexingPressureIT tests
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :server:clean :server:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.indexingpressure.IndexingPressureIT --tests org.easysearch.index.IndexingPressureIT -Dtests.heap.size=2g -Dtests.cluster.reroute.timeout=300s -Dtests.cluster.recovery.timeout=300s -Dtests.cluster.stabilization.timeout=300s --rerun-tasks --info
+          gradle clean :server:clean :server:internalClusterTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  -Dtests.cluster.reroute.timeout=300s \
+                  -Dtests.cluster.recovery.timeout=300s \
+                  -Dtests.cluster.stabilization.timeout=300s \
+                  --tests org.easysearch.indexingpressure.IndexingPressureIT \
+                  --tests org.easysearch.index.IndexingPressureIT \
+                  --rerun-tasks --info
           # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/indexing-pressure
           cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/indexing-pressure || true
@@ -166,7 +203,12 @@ jobs:
         timeout-minutes: 10
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :server:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.index.engine.InternalEngineTests --tests org.easysearch.index.store.StoreTests --rerun-tasks --info
+          gradle clean :server:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.index.engine.InternalEngineTests \
+                  --tests org.easysearch.index.store.StoreTests \
+                  --rerun-tasks --info
           # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index
           cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index || true
@@ -179,7 +221,11 @@ jobs:
           PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :plugins:rules:test -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.compiler.RuleCompilerTests --rerun-tasks --info
+          gradle clean :plugins:rules:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.rules.compiler.RuleCompilerTests \
+                  --rerun-tasks --info
           # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin
           cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin || true
@@ -192,7 +238,11 @@ jobs:
           PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          gradle clean :plugins:rules:internalClusterTest -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g --tests org.easysearch.rules.sync.RulesMultiNodeIT --rerun-tasks --info
+          gradle clean :plugins:rules:internalClusterTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.rules.sync.RulesMultiNodeIT \
+                  --rerun-tasks --info
            # Copy test reports
           mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node
           cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node || true
