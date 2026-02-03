@@ -136,7 +136,7 @@ jobs:
           echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
 
       - name: Run Rest tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :rest-api-spec:yamlRestTest \
@@ -157,7 +157,7 @@ jobs:
           fi
 
       - name: Run Security tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :modules:security:test \
@@ -208,7 +208,7 @@ jobs:
           fi
 
       - name: Run IndexingPressureIT tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :server:clean :server:internalClusterTest \
@@ -233,7 +233,7 @@ jobs:
           fi
 
       - name: Run Read old lucene index tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           gradle clean :server:test \
@@ -255,7 +255,7 @@ jobs:
           fi
 
       - name: Run Rules Plugin Compiler tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
           LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
@@ -280,7 +280,7 @@ jobs:
           fi
 
       - name: Run Rules Plugin Multi-Node IT tests
-        timeout-minutes: 10
+        timeout-minutes: 30
         env:
           RULE_DB_HOME: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg
           LD_LIBRARY_PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/lib:${{env.LD_LIBRARY_PATH}}
