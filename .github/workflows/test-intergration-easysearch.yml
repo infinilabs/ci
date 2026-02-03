@@ -145,8 +145,16 @@ jobs:
                   --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
                   --info --stacktrace
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/rest-tests
-          cp -r $GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest/* $GITHUB_WORKSPACE/all-test-reports/rest-tests || true
+          test_name="rest"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
 
       - name: Run Security tests
         timeout-minutes: 10
@@ -161,8 +169,16 @@ jobs:
                   --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
                   --rerun-tasks --info
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/security-tests
-          cp -r $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/security-tests || true
+          test_name="security"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
       
       - name: Run DataStream tests
         run: |
@@ -180,8 +196,17 @@ jobs:
                   --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
                   --rerun-tasks --info
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/datastream-tests
-          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/*  $GITHUB_WORKSPACE/all-test-reports/datastream-tests || true
+          test_name="datastream"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+
       - name: Run IndexingPressureIT tests
         timeout-minutes: 10
         run: |
@@ -196,8 +221,16 @@ jobs:
                   --tests org.easysearch.index.IndexingPressureIT \
                   --rerun-tasks --info
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/indexing-pressure
-          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/indexing-pressure || true
+          test_name="indexing-pressure"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
 
       - name: Run Read old lucene index tests
         timeout-minutes: 10
@@ -210,8 +243,16 @@ jobs:
                   --tests org.easysearch.index.store.StoreTests \
                   --rerun-tasks --info
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index
-          cp -r $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/read-old-lucene-index || true
+          test_name="read-old-lucene-index"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
 
       - name: Run Rules Plugin Compiler tests
         timeout-minutes: 10
@@ -227,8 +268,16 @@ jobs:
                   --tests org.easysearch.rules.compiler.RuleCompilerTests \
                   --rerun-tasks --info
           # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin
-          cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin || true
+          test_name="rules-plugin"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
 
       - name: Run Rules Plugin Multi-Node IT tests
         timeout-minutes: 10
@@ -244,8 +293,16 @@ jobs:
                   --tests org.easysearch.rules.sync.RulesMultiNodeIT \
                   --rerun-tasks --info
            # Copy test reports
-          mkdir -p $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node
-          cp -r $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest/* $GITHUB_WORKSPACE/all-test-reports/rules-plugin-multi-node || true
+          test_name="rules-plugin-multi-node"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
       
       - name: Upload Test Reports
         if: always()
