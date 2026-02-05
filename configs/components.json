@@ -93,6 +93,11 @@
         "current_version": "0.0.2",
         "work_dir": "packages/Markdown",
         "dist_dir": "packages/Markdown"
+      },
+      "discover": {
+        "current_version": "0.0.0",
+        "work_dir": "packages/Discover",
+        "dist_dir": "packages/Discover"
       }
     }
   }
