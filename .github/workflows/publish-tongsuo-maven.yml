@@ -45,16 +45,18 @@ jobs:
             cc_prefix: "aarch64-linux-gnu-"
             
           - platform_name: osx-x86_64
-            os: macos-13
+            os: macos-14
             arch: darwin64-x86_64
             tongsuo_config: "--prefix=$HOME/tongsuo darwin64-x86_64 enable-ntls"
             cc_prefix: ""
+            cross_compile: true
             
           - platform_name: osx-aarch_64
             os: macos-14
             arch: darwin64-arm64
             tongsuo_config: "--prefix=$HOME/tongsuo darwin64-arm64 enable-ntls"
             cc_prefix: ""
+            cross_compile: false
             
           - platform_name: windows-x86_64
             os: windows-2022
