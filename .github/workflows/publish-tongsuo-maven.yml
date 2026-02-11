@@ -151,8 +151,12 @@ jobs:
           choco install nasm -y
 
       - name: Checkout tongsuo-java-sdk
-        run: |
-          git clone --depth 1 --branch ${{ inputs.BRANCH }} ${{ vars.GIT_REPO }}/tongsuo-java-sdk $GITHUB_WORKSPACE/tongsuo-java-sdk
+        uses: actions/checkout@v6
+        with:
+          repository: 'infinilabs/tongsuo-java-sdk'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ref: ${{ inputs.BRANCH }}
+          path: tongsuo-java-sdk
 
       - name: Build Tongsuo
         shell: bash

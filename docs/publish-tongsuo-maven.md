@@ -49,6 +49,23 @@
 └─────────────────────────────────────────┘
 ```
 
+## 前置要求
+
+### 必需的 GitHub Secrets
+
+在使用此 workflow 之前，需要在 infinilabs/ci 仓库配置以下 secrets：
+
+#### 1. 仓库访问
+- `SSH_PRIVATE_KEY` - 用于 checkout infinilabs/tongsuo-java-sdk 的 SSH 私钥
+
+#### 2. GPG 签名
+- `GPG_PRIVATE_KEY` - GPG 私钥（ASCII armored 格式）
+- `GPG_PASSPHRASE` - GPG 私钥密码
+
+#### 3. Maven Central 凭证
+- `OSSRH_USERNAME` - Maven Central (Sonatype) 用户名
+- `OSSRH_PASSWORD` - Maven Central (Sonatype) 密码
+
 ## 使用方法
 
 ### 步骤 1: 触发发布
@@ -215,11 +232,11 @@ dependencies {
 
 ## 技术细节
 
-### SSH Clone
+### Repository Checkout
 
-Workflow 使用 SSH 方式 clone tongsuo-java-sdk 仓库：
-- 使用 `SSH_GIT_REPO` secret
-- 使用 `SSH_PRIVATE_KEY` 和 `SSH_CONFIG` secrets
+Workflow 使用标准的 `actions/checkout@v6` 方式 checkout tongsuo-java-sdk 仓库：
+- 使用 `SSH_PRIVATE_KEY` secret 进行 SSH 认证
+- 支持指定分支通过 workflow 输入参数
 
 ### GPG 签名
 
