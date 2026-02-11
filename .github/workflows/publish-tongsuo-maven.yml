@@ -149,6 +149,12 @@ jobs:
         run: |
           choco install strawberryperl -y
           choco install nasm -y
+          
+          # Refresh environment to get perl in PATH
+          refreshenv
+          
+          # Install required Perl modules
+          cpan -T Locale::Maketext::Simple
 
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
