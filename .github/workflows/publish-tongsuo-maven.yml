@@ -24,7 +24,7 @@ on:
         type: string
         default: 'master'
       TONGSUO_VERSION:
-        description: 'Tongsuo branch/tag to build (e.g., master, 8.4-stable, 8.3.3)'
+        description: 'Tongsuo version (branch/tag)'
         required: true
         type: string
         default: 'master'
@@ -35,10 +35,11 @@ on:
         required: true
         type: choice
         options:
-          - '3.0'
+          - 'default'
           - '1.1.1'
           - '1.0.2'
-        default: '3.0'
+          - '3.0'
+        default: 'default'
       
       # Feature Flags
       ENABLE_NTLS:
@@ -184,8 +185,8 @@ jobs:
           # Build configuration from inputs
           CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
           
-          # API Version
-          if [[ "${{ inputs.API_VERSION }}" != "3.0" ]]; then
+          # API Version (skip if 'default')
+          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
             CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
           fi
           

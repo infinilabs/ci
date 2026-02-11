@@ -69,9 +69,10 @@
 #### API 版本选择（下拉选择）
 
 - **API_VERSION**: 
-  - `3.0` - OpenSSL 3.0 API（默认）
+  - `default` - Tongsuo 默认 API（推荐，不添加 --api 参数）
   - `1.1.1` - OpenSSL 1.1.1 兼容 ⭐
   - `1.0.2` - OpenSSL 1.0.2 兼容
+  - `3.0` - OpenSSL 3.0 API
 
 #### 功能开关（Checkbox 复选框）
 
@@ -89,9 +90,9 @@
 
 #### 场景 1: 标准国密构建（默认）✓
 ```
-API_VERSION: 3.0
+API_VERSION: default
 ☑ ENABLE_NTLS
-适用于: 标准国密应用
+适用于: 标准国密应用（使用 Tongsuo 默认 API）
 ```
 
 #### 场景 2: OpenSSL 1.1.1 兼容 + 国密 ⭐
@@ -103,7 +104,7 @@ API_VERSION: 1.1.1
 
 #### 场景 3: 完整国密算法支持
 ```
-API_VERSION: 3.0
+API_VERSION: default
 ☑ ENABLE_NTLS
 ☑ ENABLE_SM2
 ☑ ENABLE_SM3
@@ -113,14 +114,14 @@ API_VERSION: 3.0
 
 #### 场景 4: 纯 OpenSSL 兼容（无国密）
 ```
-API_VERSION: 3.0
+API_VERSION: default
 ☐ ENABLE_NTLS (取消勾选)
 适用于: 不需要国密功能
 ```
 
 #### 场景 5: 调试构建
 ```
-API_VERSION: 3.0
+API_VERSION: default
 ☑ ENABLE_NTLS
 ☑ ENABLE_DEBUG
 适用于: Native 代码调试
