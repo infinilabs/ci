@@ -31,61 +31,61 @@ configure(project(':tongsuo-openjdk')) {
     println "  Classifier: ${platformClassifier}"
     println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    publishing {
-        publications {
-            maven(MavenPublication) {
-                groupId = 'com.infinilabs'
-                artifactId = 'tongsuo-openjdk'
-                
-                // Don't use components.java - configure artifacts manually
-                // to ensure proper classifiers
-                
-                // Add main JAR with platform classifier
-                artifact(tasks.jar) {
-                    classifier = platformClassifier
-                }
-                
-                // Add sources JAR
-                artifact(tasks.sourcesJar) {
-                    classifier = platformClassifier + '-sources'
-                }
-                
-                // Add javadoc JAR
-                artifact(tasks.javadocJar) {
-                    classifier = platformClassifier + '-javadoc'
-                }
-                
-                pom {
-                    name = 'Tongsuo Java SDK'
-                    description = 'Tongsuo Provider - Java Security Provider using Tongsuo'
-                    url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+    // Configure publishing after project evaluation when all tasks are available
+    afterEvaluate {
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    groupId = 'com.infinilabs'
+                    artifactId = 'tongsuo-openjdk'
                     
-                    licenses {
-                        license {
-                            name = 'The Apache License, Version 2.0'
-                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        }
+                    // Add main JAR with platform classifier
+                    artifact(tasks.jar) {
+                        classifier = platformClassifier
                     }
                     
-                    developers {
-                        developer {
-                            name = 'INFINI Labs'
-                            url = 'https://www.infinilabs.com/'
-                        }
+                    // Add sources JAR
+                    artifact(tasks.sourcesJar) {
+                        classifier = platformClassifier + '-sources'
                     }
                     
-                    scm {
+                    // Add javadoc JAR
+                    artifact(tasks.javadocJar) {
+                        classifier = platformClassifier + '-javadoc'
+                    }
+                    
+                    pom {
+                        name = 'Tongsuo Java SDK'
+                        description = 'Tongsuo Provider - Java Security Provider using Tongsuo'
                         url = 'https://github.com/infinilabs/tongsuo-java-sdk'
-                        connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                        
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+                        
+                        developers {
+                            developer {
+                                name = 'INFINI Labs'
+                                url = 'https://www.infinilabs.com/'
+                            }
+                        }
+                        
+                        scm {
+                            url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                            connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                        }
                     }
                 }
             }
-        }
-        
-        repositories {
-            maven {
-                name = 'mavenLocal'
-                url = "${System.getProperty('user.home')}/.m2/repository"
+            
+            repositories {
+                maven {
+                    name = 'mavenLocal'
+                    url = "${System.getProperty('user.home')}/.m2/repository"
+                }
             }
         }
     }
