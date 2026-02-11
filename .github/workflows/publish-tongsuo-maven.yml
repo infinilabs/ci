@@ -283,7 +283,18 @@ jobs:
           
           echo ""
           echo "✅ Tongsuo built successfully"
-          ls -lh /root/tongsuo/lib/
+          echo "Installation directory contents:"
+          ls -lh /root/tongsuo/
+          if [ -d /root/tongsuo/lib ]; then
+            echo "Libraries:"
+            ls -lh /root/tongsuo/lib/
+          elif [ -d /root/tongsuo/lib64 ]; then
+            echo "Libraries (lib64):"
+            ls -lh /root/tongsuo/lib64/
+          else
+            echo "⚠️  Warning: lib directory not found, checking installation:"
+            find /root/tongsuo -name "*.a" -o -name "*.so*"
+          fi
           
           # Build Java SDK
           cd /build/tongsuo-java-sdk
