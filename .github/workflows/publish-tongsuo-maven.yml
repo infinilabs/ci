@@ -28,6 +28,11 @@ on:
         required: true
         type: string
         default: 'master'
+      TONGSUO_CONFIG_OPTS:
+        description: 'Tongsuo compile options (e.g., "enable-ntls enable-sm2 --api=1.1.1")'
+        required: false
+        type: string
+        default: 'enable-ntls'
 
 jobs:
   build-all-platforms:
@@ -40,33 +45,33 @@ jobs:
           - platform_name: linux-x86_64
             os: ubuntu-22.04
             arch: linux-x86_64
-            tongsuo_config: "--prefix=$HOME/tongsuo enable-ntls -static -Wl,--no-as-needed -ldl"
+            tongsuo_base_config: "--prefix=$HOME/tongsuo -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             
           - platform_name: linux-aarch_64
             os: ubuntu-22.04
             arch: linux-aarch_64
-            tongsuo_config: "--prefix=$HOME/tongsuo --cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 enable-ntls -static -Wl,--no-as-needed -ldl"
+            tongsuo_base_config: "--prefix=$HOME/tongsuo --cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -static -Wl,--no-as-needed -ldl"
             cc_prefix: "aarch64-linux-gnu-"
             
           - platform_name: osx-x86_64
             os: macos-14
             arch: darwin64-x86_64
-            tongsuo_config: "--prefix=$HOME/tongsuo darwin64-x86_64 enable-ntls"
+            tongsuo_base_config: "--prefix=$HOME/tongsuo darwin64-x86_64"
             cc_prefix: ""
             cross_compile: true
             
           - platform_name: osx-aarch_64
             os: macos-14
             arch: darwin64-arm64
-            tongsuo_config: "--prefix=$HOME/tongsuo darwin64-arm64 enable-ntls"
+            tongsuo_base_config: "--prefix=$HOME/tongsuo darwin64-arm64"
             cc_prefix: ""
             cross_compile: false
             
           - platform_name: windows-x86_64
             os: windows-2022
             arch: VC-WIN64A
-            tongsuo_config: "--prefix=$HOME/tongsuo VC-WIN64A enable-ntls"
+            tongsuo_base_config: "--prefix=$HOME/tongsuo VC-WIN64A"
             cc_prefix: ""
 
     steps:
@@ -110,7 +115,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Building Tongsuo version: ${{ inputs.TONGSUO_VERSION }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Building Tongsuo"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  Version: ${{ inputs.TONGSUO_VERSION }}"
+          echo "  Platform: ${{ matrix.platform_name }}"
+          echo "  Custom options: ${{ inputs.TONGSUO_CONFIG_OPTS }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
@@ -119,15 +131,25 @@ jobs:
             export CXX=${{ matrix.cc_prefix }}g++
           fi
           
-          ./config ${{ matrix.tongsuo_config }}
+          # Merge base config with user options
+          CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
+          if [[ -n "${{ inputs.TONGSUO_CONFIG_OPTS }}" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.TONGSUO_CONFIG_OPTS }}"
+          fi
+          
+          echo "Full config command: ./config $CONFIG_OPTS"
+          ./config $CONFIG_OPTS
           
           make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
           make install_sw
           
           echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
           
-          # Show Tongsuo version
+          # Show Tongsuo version and features
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Tongsuo build completed:"
           $HOME/tongsuo/bin/openssl version
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build JAR with custom groupId
         shell: bash
