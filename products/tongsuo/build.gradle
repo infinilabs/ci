@@ -1,23 +1,115 @@
 // This build configuration overrides tongsuo-java-sdk settings
-// to publish with com.infinilabs groupId
+// to publish with com.infinilabs groupId for Maven Central
 
 allprojects {
-    // Override group ID for com.infinilabs publishing
     group = 'com.infinilabs'
-    
-    // Version will be set via command line: -Pversion=x.x.x
 }
 
-// Add distribution task to create Maven Central bundle
-task distribution(type: Zip) {
-    dependsOn ':tongsuo-openjdk:publish'
+// Configure publishing for tongsuo-openjdk module
+configure(project(':tongsuo-openjdk')) {
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
     
-    def archiveFileName = "tongsuo-openjdk-${version}.zip"
-    destinationDirectory = file("$buildDir/release")
-    from "$buildDir/repo"
-    exclude("**/maven-metadata*.*")
+    // Detect current platform for classifier
+    def osName = System.getProperty('os.name').toLowerCase()
+    def osArch = System.getProperty('os.arch').toLowerCase()
     
-    doLast {
-        println "Finish Generating distribution zip file $archiveFileName"
+    def platformClassifier = ''
+    if (osName.contains('linux')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'linux-aarch_64' : 'linux-x86_64'
+    } else if (osName.contains('mac') || osName.contains('darwin')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'osx-aarch_64' : 'osx-x86_64'
+    } else if (osName.contains('win')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'windows-aarch_64' : 'windows-x86_64'
+    }
+    
+    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    println "Publishing configuration:"
+    println "  Group:      ${project.group}"
+    println "  Artifact:   ${project.name}"
+    println "  Version:    ${project.version}"
+    println "  Classifier: ${platformClassifier}"
+    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = 'com.infinilabs'
+                artifactId = 'tongsuo-openjdk'
+                
+                // Add main JAR with platform classifier
+                artifact(jar) {
+                    classifier = platformClassifier
+                }
+                
+                // Add sources JAR
+                artifact(tasks.named('sourcesJar').get()) {
+                    classifier = platformClassifier + '-sources'
+                }
+                
+                // Add javadoc JAR
+                artifact(tasks.named('javadocJar').get()) {
+                    classifier = platformClassifier + '-javadoc'
+                }
+                
+                pom {
+                    name = 'Tongsuo Java SDK'
+                    description = 'Tongsuo Provider - Java Security Provider using Tongsuo'
+                    url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                    
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            name = 'INFINI Labs'
+                            url = 'https://www.infinilabs.com/'
+                        }
+                    }
+                    
+                    scm {
+                        url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                    }
+                }
+                
+                // Generate POM with platform classifier in artifact coordinates
+                pom.withXml {
+                    def root = asNode()
+                    // Update artifact section in dependencies if needed
+                    root.dependencies.'*'.findAll {
+                        // Keep dependencies clean
+                    }
+                }
+            }
+        }
+        
+        repositories {
+            maven {
+                name = 'mavenLocal'
+                url = "${System.getProperty('user.home')}/.m2/repository"
+            }
+        }
+    }
+    
+    signing {
+        required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
+        
+        def signingKey = System.getenv("SIGNING_KEY")
+        def signingPassword = System.getenv("SIGNING_PASSWORD")
+        
+        if (signingKey && signingPassword) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign publishing.publications.maven
+        }
+    }
+    
+    // Ensure sources and javadoc tasks exist
+    tasks.named('publishToMavenLocal') {
+        dependsOn 'sourcesJar', 'javadocJar'
     }
 }

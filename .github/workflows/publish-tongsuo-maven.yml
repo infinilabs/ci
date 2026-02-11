@@ -235,132 +235,34 @@ jobs:
           $HOME/tongsuo/bin/openssl version
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Build JAR with custom groupId
+      - name: Build and publish JAR with custom groupId
         shell: bash
         working-directory: tongsuo-java-sdk
         run: |
           set -e
           
-          # Use custom groupId and version
-          ./gradlew -PmavenGroupId=com.infinilabs \
-                    -Pversion=${{ inputs.PUBLISH_VERSION }} \
+          # Copy build.gradle override
+          cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle ./
+          
+          # Build and publish to Maven local repository
+          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PcheckErrorQueue \
-                    :tongsuo-openjdk:build
+                    :tongsuo-openjdk:publishToMavenLocal
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Published to Maven local repository"
+          find ~/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
 
-      - name: Prepare artifacts
-        shell: bash
-        run: |
-          set -e
-          mkdir -p artifacts/${{ matrix.platform_name }}
-          
-          # Find built JARs
-          MAIN_JAR=$(find tongsuo-java-sdk/openjdk/build/libs -name "tongsuo-openjdk-*.jar" ! -name "*-javadoc.jar" ! -name "*-sources.jar" | head -1)
-          SOURCES_JAR=$(find tongsuo-java-sdk/openjdk/build/libs -name "tongsuo-openjdk-*-sources.jar" | head -1)
-          JAVADOC_JAR=$(find tongsuo-java-sdk/openjdk/build/libs -name "tongsuo-openjdk-*-javadoc.jar" | head -1)
-          
-          # Copy with platform classifier
-          if [ -n "$MAIN_JAR" ]; then
-            cp "$MAIN_JAR" "artifacts/${{ matrix.platform_name }}/tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}-${{ matrix.platform_name }}.jar"
-          fi
-          
-          if [ -n "$SOURCES_JAR" ]; then
-            cp "$SOURCES_JAR" "artifacts/${{ matrix.platform_name }}/tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}-${{ matrix.platform_name }}-sources.jar"
-          fi
-          
-          if [ -n "$JAVADOC_JAR" ]; then
-            cp "$JAVADOC_JAR" "artifacts/${{ matrix.platform_name }}/tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}-${{ matrix.platform_name }}-javadoc.jar"
-          fi
-          
-          ls -lh artifacts/${{ matrix.platform_name }}/
-
-      - name: Upload platform artifacts
+      - name: Upload Maven repository
         uses: actions/upload-artifact@v4
         with:
-          name: tongsuo-artifacts-${{ matrix.platform_name }}
-          path: artifacts/${{ matrix.platform_name }}/*
-          retention-days: 7
-
-  build-uber-jars:
-    name: Build Uber JARs
-    needs: build-all-platforms
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 11
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Download all platform artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: platform-jars
-          pattern: tongsuo-artifacts-*
-
-      - name: Build static uber JAR
-        run: |
-          set -e
-          
-          mkdir -p uber-static/extract
-          cd uber-static/extract
-          
-          # Extract all platform main JARs (not sources/javadoc)
-          for platform_dir in ../../platform-jars/tongsuo-artifacts-*; do
-            for jar in "$platform_dir"/*.jar; do
-              if [[ ! "$jar" =~ (sources|javadoc) ]]; then
-                echo "Extracting $jar"
-                jar xf "$jar"
-              fi
-            done
-          done
-          
-          # Create static uber JAR
-          cd ..
-          jar cf "tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}-static-uber.jar" -C extract .
-          
-          echo "Static uber JAR created:"
-          ls -lh *.jar
-
-      - name: Build dynamic uber JAR  
-        run: |
-          set -e
-          
-          mkdir -p uber-dynamic/extract
-          cd uber-dynamic/extract
-          
-          # Extract only Java classes (no native libs)
-          for platform_dir in ../../platform-jars/tongsuo-artifacts-*; do
-            for jar in "$platform_dir"/*.jar; do
-              if [[ ! "$jar" =~ (sources|javadoc) ]]; then
-                echo "Extracting classes from $jar"
-                jar xf "$jar"
-                # Remove native libraries
-                rm -rf META-INF/native || true
-              fi
-            done
-          done
-          
-          # Create dynamic uber JAR
-          cd ..
-          jar cf "tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}-dynamic-uber.jar" -C extract .
-          
-          echo "Dynamic uber JAR created:"
-          ls -lh *.jar
-
-      - name: Upload uber JARs
-        uses: actions/upload-artifact@v4
-        with:
-          name: tongsuo-artifacts-uber
-          path: |
-            uber-static/*.jar
-            uber-dynamic/*.jar
+          name: maven-repo-${{ matrix.platform_name }}
+          path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
           retention-days: 7
 
   publish:
-    name: Publish to Maven Central
-    needs: [build-all-platforms, build-uber-jars]
+    name: Create Maven Central Bundle
+    needs: build-all-platforms
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI repo
@@ -380,27 +282,15 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-          server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: Checkout tongsuo-java-sdk
-        run: |
-          echo "Cloning tongsuo-java-sdk repository"
-          git clone --depth 1 --branch ${{ inputs.BRANCH }} $SSH_GIT_REPO/tongsuo-java-sdk $GITHUB_WORKSPACE/tongsuo-java-sdk
-
-      - name: Download all artifacts
+      - name: Download all Maven repositories
         uses: actions/download-artifact@v4
         with:
-          path: all-artifacts
-          pattern: tongsuo-artifacts-*
+          path: maven-repos
+          pattern: maven-repo-*
+          merge-multiple: false
 
-      - name: Prepare artifact repository structure
+      - name: Merge Maven repositories
         run: |
           set -e
           
@@ -409,71 +299,107 @@ jobs:
           ARTIFACT_ID="tongsuo-openjdk"
           GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
           
-          REPO_DIR="$GITHUB_WORKSPACE/local-repo/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
-          mkdir -p "$REPO_DIR"
+          MERGED_REPO="$GITHUB_WORKSPACE/merged-repo"
+          mkdir -p "$MERGED_REPO/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
           
-          echo "Creating repository in: $REPO_DIR"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Merging Maven repositories from all platforms"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Copy build.gradle override
-          cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle $GITHUB_WORKSPACE/tongsuo-java-sdk/
-          
-          # Copy all platform artifacts
-          for artifact_dir in all-artifacts/tongsuo-artifacts-*; do
-            if [ -d "$artifact_dir" ]; then
-              platform=$(basename "$artifact_dir" | sed 's/tongsuo-artifacts-//')
-              echo "Processing platform: $platform"
+          # Copy all platform Maven repositories
+          for repo_dir in maven-repos/maven-repo-*; do
+            if [ -d "$repo_dir" ]; then
+              platform=$(basename "$repo_dir" | sed 's/maven-repo-//')
+              echo "📦 Merging platform: $platform"
               
-              cp -v "$artifact_dir"/*.jar "$REPO_DIR/" || true
+              # Copy all files from this platform's repo
+              if [ -d "$repo_dir" ]; then
+                cp -rv "$repo_dir"/* "$MERGED_REPO/$GROUP_PATH/$ARTIFACT_ID/$VERSION/" || true
+              fi
             fi
           done
           
-          ls -lh "$REPO_DIR"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Merged repository contents:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          find "$MERGED_REPO" -type f | head -50
 
-      - name: Build and publish bundle
-        working-directory: tongsuo-java-sdk
+      - name: Verify Maven Central requirements
         run: |
           set -e
           
-          # Set version and use existing JARs
-          echo "version=${{ inputs.PUBLISH_VERSION }}" > gradle.properties
-          echo "mavenGroupId=com.infinilabs" >> gradle.properties
+          VERSION="${{ inputs.PUBLISH_VERSION }}"
+          GROUP_ID="com.infinilabs"
+          ARTIFACT_ID="tongsuo-openjdk"
+          GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
           
-          # Configure publishing to use pre-built artifacts
-          cat >> gradle.properties << 'EOF'
+          REPO_PATH="$GITHUB_WORKSPACE/merged-repo/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
           
-          # Publishing configuration
-          signing.keyId=
-          signing.password=
-          signing.secretKeyRingFile=
-          EOF
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Verifying Maven Central bundle requirements"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Use the override build.gradle from products/tongsuo
-          cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle ./build.gradle
+          # Count required files
+          JAR_COUNT=$(find "$REPO_PATH" -name "*.jar" ! -name "*javadoc*" ! -name "*sources*" | wc -l)
+          POM_COUNT=$(find "$REPO_PATH" -name "*.pom" | wc -l)
+          SOURCES_COUNT=$(find "$REPO_PATH" -name "*-sources.jar" | wc -l)
+          JAVADOC_COUNT=$(find "$REPO_PATH" -name "*-javadoc.jar" | wc -l)
+          ASC_COUNT=$(find "$REPO_PATH" -name "*.asc" | wc -l)
           
-          # Publish to local repo
-          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                    -PmavenGroupId=com.infinilabs \
-                    :tongsuo-openjdk:publishToMavenLocal
+          echo "Main JARs:    $JAR_COUNT"
+          echo "POM files:    $POM_COUNT"
+          echo "Sources JARs: $SOURCES_COUNT"
+          echo "Javadoc JARs: $JAVADOC_COUNT"
+          echo "Signatures:   $ASC_COUNT"
           
-          # Create distribution ZIP
-          mkdir -p build/repo
-          cp -r ~/.m2/repository/com/infinilabs/tongsuo-openjdk build/repo/
+          if [ "$POM_COUNT" -eq 0 ]; then
+            echo "❌ ERROR: No POM files found!"
+            exit 1
+          fi
           
-          cd build/repo
-          zip -r "../tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}.zip" .
-          cd ../..
+          if [ "$JAR_COUNT" -eq 0 ]; then
+            echo "❌ ERROR: No JAR files found!"
+            exit 1
+          fi
           
-          echo "Distribution ZIP created:"
-          ls -lh build/*.zip
-        env:
-          SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Bundle validation passed"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Create Maven Central bundle ZIP
+        run: |
+          set -e
+          
+          VERSION="${{ inputs.PUBLISH_VERSION }}"
+          GROUP_ID="com.infinilabs"
+          ARTIFACT_ID="tongsuo-openjdk"
+          GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
+          
+          cd "$GITHUB_WORKSPACE/merged-repo"
+          
+          # Create the ZIP bundle (Maven Central expects a specific structure)
+          ZIP_NAME="tongsuo-openjdk-${VERSION}.zip"
+          zip -r "$GITHUB_WORKSPACE/$ZIP_NAME" "$GROUP_PATH"
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Maven Central bundle created:"
+          echo "   File: $ZIP_NAME"
+          echo "   Size: $(du -h "$GITHUB_WORKSPACE/$ZIP_NAME" | cut -f1)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Upload to Maven Central Portal
         run: |
-          ZIP_FILE=$(find $GITHUB_WORKSPACE/tongsuo-java-sdk/build -name "*.zip" | head -n 1)
-          echo "Found bundle: $(basename $ZIP_FILE)"
+          ZIP_FILE="$GITHUB_WORKSPACE/tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}.zip"
           
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "❌ ERROR: ZIP file not found: $ZIP_FILE"
+            exit 1
+          fi
+          
+          echo "📤 Uploading bundle to Maven Central Portal"
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:
@@ -484,6 +410,6 @@ jobs:
       - name: Upload bundle as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: maven-bundle
-          path: tongsuo-java-sdk/build/*.zip
+          name: maven-central-bundle
+          path: tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}.zip
           retention-days: 30
