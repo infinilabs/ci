@@ -100,11 +100,27 @@
 
 - **EXTRA_CONFIG_OPTS**: 其他编译选项（如 `--symbol-prefix=tongsuo_`）
 
+#### 构建环境选择
+
+- **LINUX_UBUNTU_VERSION**: Ubuntu 版本（影响 GLIBC 兼容性）
+  - `ubuntu-20.04` - GLIBC 2.31（推荐，兼容性好）⭐
+  - `ubuntu-22.04` - GLIBC 2.35（较新）
+  - `ubuntu-24.04` - GLIBC 2.39（最新）
+
+**重要**: Ubuntu 版本决定了编译出的二进制文件的 GLIBC 依赖版本。选择较老的 Ubuntu 版本可以获得更好的兼容性。
+
+| Ubuntu 版本 | GLIBC 版本 | 兼容的 Linux 发行版 |
+|------------|-----------|-------------------|
+| ubuntu-20.04 | 2.31 | CentOS 8+, RHEL 8+, Debian 11+, Ubuntu 20.04+ |
+| ubuntu-22.04 | 2.35 | Ubuntu 22.04+, Debian 12+ |
+| ubuntu-24.04 | 2.39 | Ubuntu 24.04+（最新） |
+
 ### 常见配置场景
 
 #### 场景 1: 标准国密构建（默认）✓
 ```
 API_VERSION: default
+LINUX_UBUNTU_VERSION: ubuntu-20.04
 ☑ ENABLE_NTLS
 适用于: 标准国密应用（使用 Tongsuo 默认 API）
 ```
@@ -112,6 +128,7 @@ API_VERSION: default
 #### 场景 2: OpenSSL 1.1.1 兼容 + 国密 ⭐
 ```
 API_VERSION: 1.1.1
+LINUX_UBUNTU_VERSION: ubuntu-20.04
 ☑ ENABLE_NTLS
 适用于: 需要兼容 OpenSSL 1.1.1 API 的应用
 ```
@@ -119,11 +136,21 @@ API_VERSION: 1.1.1
 #### 场景 3: 完整国密算法支持
 ```
 API_VERSION: default
+LINUX_UBUNTU_VERSION: ubuntu-20.04
 ☑ ENABLE_NTLS
 ☑ ENABLE_SM2
 ☑ ENABLE_SM3
 ☑ ENABLE_SM4
 适用于: 需要完整国密算法栈
+```
+
+#### 场景 4: 最大兼容性（老系统）
+```
+API_VERSION: 1.1.1
+LINUX_UBUNTU_VERSION: ubuntu-20.04
+☑ ENABLE_NTLS
+适用于: 需要在 CentOS 8 / RHEL 8 等老系统运行
+说明: ubuntu-20.04 编译的二进制文件可以在更多老系统上运行
 ```
 
 #### 场景 4: 纯 OpenSSL 兼容（无国密）
@@ -253,6 +280,50 @@ Workflow 使用标准的 `actions/checkout@v6` 方式 checkout tongsuo-java-sdk 
 ### Bootstrap 和 Connect
 
 Workflow 使用 infinilabs/ci 的 bootstrap 容器和 connect 工具来处理网络连接。
+
+### GLIBC 兼容性
+
+**重要**: Linux 平台的二进制文件依赖编译环境的 GLIBC 版本。
+
+#### GLIBC 版本对应关系
+
+| Ubuntu 版本 | GLIBC 版本 | 发布日期 | 推荐使用场景 |
+|------------|-----------|---------|------------|
+| ubuntu-20.04 | 2.31 | 2020-04 | **推荐** - 兼容大多数生产环境 |
+| ubuntu-22.04 | 2.35 | 2022-04 | 较新环境 |
+| ubuntu-24.04 | 2.39 | 2024-04 | 最新环境 |
+
+#### 兼容性规则
+
+- ✅ 在**较老** GLIBC 上编译的程序可以在**较新** GLIBC 上运行
+- ❌ 在**较新** GLIBC 上编译的程序**不能**在**较老** GLIBC 上运行
+
+#### 常见 Linux 发行版的 GLIBC 版本
+
+| 发行版 | GLIBC 版本 | 需要的最低编译环境 |
+|--------|-----------|------------------|
+| CentOS 7 / RHEL 7 | 2.17 | 不支持（太老）|
+| CentOS 8 / RHEL 8 | 2.28 | ubuntu-20.04 |
+| Rocky Linux 9 | 2.34 | ubuntu-20.04 或 ubuntu-22.04 |
+| Debian 11 (Bullseye) | 2.31 | ubuntu-20.04 |
+| Debian 12 (Bookworm) | 2.36 | ubuntu-22.04 |
+| Ubuntu 20.04 | 2.31 | ubuntu-20.04 |
+| Ubuntu 22.04 | 2.35 | ubuntu-22.04 |
+| Ubuntu 24.04 | 2.39 | ubuntu-24.04 |
+
+#### 如何检查系统的 GLIBC 版本
+
+```bash
+ldd --version
+# 或
+/lib/x86_64-linux-gnu/libc.so.6
+```
+
+#### 建议
+
+- 🎯 **生产环境发布**: 使用 `ubuntu-20.04`（GLIBC 2.31）获得最大兼容性
+- 🔬 **测试环境**: 可以使用 `ubuntu-22.04` 或 `ubuntu-24.04`
+- ⚠️ **注意**: 如果目标用户包含 CentOS 8 / RHEL 8，必须使用 `ubuntu-20.04`
 
 ### 平台构建特点
 

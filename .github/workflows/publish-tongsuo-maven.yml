@@ -76,6 +76,17 @@ on:
         required: false
         type: string
         default: ''
+      
+      # Build Environment
+      LINUX_UBUNTU_VERSION:
+        description: 'Ubuntu version for Linux builds (GLIBC compatibility)'
+        required: true
+        type: choice
+        options:
+          - 'ubuntu-20.04'
+          - 'ubuntu-22.04'
+          - 'ubuntu-24.04'
+        default: 'ubuntu-20.04'
 
 jobs:
   build-all-platforms:
@@ -86,13 +97,13 @@ jobs:
       matrix:
         include:
           - platform_name: linux-x86_64
-            os: ubuntu-22.04
+            os: ${{ inputs.LINUX_UBUNTU_VERSION }}
             arch: linux-x86_64
             tongsuo_base_config: "--prefix=$HOME/tongsuo -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             
           - platform_name: linux-aarch_64
-            os: ubuntu-22.04
+            os: ${{ inputs.LINUX_UBUNTU_VERSION }}
             arch: linux-aarch_64
             tongsuo_base_config: "--prefix=$HOME/tongsuo --cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
@@ -163,6 +174,24 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ref: ${{ inputs.BRANCH }}
           path: tongsuo-java-sdk
+
+      - name: Show build environment info
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Build Environment Information"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "OS: $(uname -s)"
+          echo "Architecture: $(uname -m)"
+          
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "Distribution: $(lsb_release -d | cut -f2-)"
+            echo "GLIBC Version: $(ldd --version | head -n1)"
+            echo ""
+            echo "⚠️  Binaries built on this system require GLIBC $(ldd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+$') or higher"
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build Tongsuo
         shell: bash
