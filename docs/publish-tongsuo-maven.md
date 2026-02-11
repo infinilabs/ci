@@ -100,57 +100,86 @@
 
 - **EXTRA_CONFIG_OPTS**: 其他编译选项（如 `--symbol-prefix=tongsuo_`）
 
-#### 构建环境选择
+#### 构建环境选择 ⭐ 新功能
 
-- **LINUX_UBUNTU_VERSION**: Ubuntu 版本（影响 GLIBC 兼容性）
-  - `ubuntu-20.04` - GLIBC 2.31（推荐，兼容性好）⭐
-  - `ubuntu-22.04` - GLIBC 2.35（较新）
-  - `ubuntu-24.04` - GLIBC 2.39（最新）
+- **USE_DOCKER_BUILD**: 使用 Docker 构建 Linux 平台（推荐）
+  - ✅ `true` - Docker 构建（推荐，精确控制 GLIBC）⭐
+  - ❌ `false` - 原生构建（使用 GitHub Actions runner）
 
-**重要**: Ubuntu 版本决定了编译出的二进制文件的 GLIBC 依赖版本。选择较老的 Ubuntu 版本可以获得更好的兼容性。
+- **LINUX_DOCKER_IMAGE**: Docker 镜像（当 USE_DOCKER_BUILD=true 时）
+  - `ubuntu:18.04` - **GLIBC 2.27** （推荐，最大兼容性）⭐⭐⭐
+  - `ubuntu:20.04` - GLIBC 2.31
+  - `ubuntu:22.04` - GLIBC 2.35
+  - `ubuntu:24.04` - GLIBC 2.39
 
-| Ubuntu 版本 | GLIBC 版本 | 兼容的 Linux 发行版 |
-|------------|-----------|-------------------|
-| ubuntu-20.04 | 2.31 | CentOS 8+, RHEL 8+, Debian 11+, Ubuntu 20.04+ |
-| ubuntu-22.04 | 2.35 | Ubuntu 22.04+, Debian 12+ |
-| ubuntu-24.04 | 2.39 | Ubuntu 24.04+（最新） |
+**为什么使用 Docker 构建？**
+
+| 构建方式 | 优势 | 劣势 | 推荐 |
+|---------|------|------|------|
+| Docker 构建 | ✅ 可使用 Ubuntu 18.04（GLIBC 2.27）<br>✅ 精确控制构建环境<br>✅ 支持老系统（CentOS 7.6+） | ⚠️ 构建时间稍长 | ⭐⭐⭐ 生产环境 |
+| 原生构建 | ✅ 构建速度快 | ❌ 受限于 GitHub Actions runner<br>❌ 最低 ubuntu-20.04（GLIBC 2.31） | 测试环境 |
+
+**Docker 镜像 GLIBC 版本对照**
+
+| Docker 镜像 | GLIBC 版本 | 兼容的最老系统 |
+|------------|-----------|--------------|
+| ubuntu:18.04 | **2.27** | **CentOS 7.6+, RHEL 7.6+, Debian 10+** ⭐ |
+| ubuntu:20.04 | 2.31 | CentOS 8+, RHEL 8+, Debian 11+ |
+| ubuntu:22.04 | 2.35 | Ubuntu 22.04+, Debian 12+ |
+| ubuntu:24.04 | 2.39 | Ubuntu 24.04+ |
 
 ### 常见配置场景
 
-#### 场景 1: 标准国密构建（默认）✓
+#### 场景 1: 最大兼容性（生产推荐）✓✓✓
 ```
 API_VERSION: default
-LINUX_UBUNTU_VERSION: ubuntu-20.04
+USE_DOCKER_BUILD: true
+LINUX_DOCKER_IMAGE: ubuntu:18.04
 ☑ ENABLE_NTLS
-适用于: 标准国密应用（使用 Tongsuo 默认 API）
+适用于: 生产环境，需要在老系统运行（CentOS 7.6+, RHEL 7.6+）
+GLIBC 要求: 2.27+
 ```
 
-#### 场景 2: OpenSSL 1.1.1 兼容 + 国密 ⭐
+#### 场景 2: 标准国密构建
+```
+API_VERSION: default
+USE_DOCKER_BUILD: true
+LINUX_DOCKER_IMAGE: ubuntu:20.04
+☑ ENABLE_NTLS
+适用于: 标准国密应用（CentOS 8+, RHEL 8+）
+GLIBC 要求: 2.31+
+```
+
+#### 场景 3: OpenSSL 1.1.1 兼容 + 国密
 ```
 API_VERSION: 1.1.1
-LINUX_UBUNTU_VERSION: ubuntu-20.04
+USE_DOCKER_BUILD: true
+LINUX_DOCKER_IMAGE: ubuntu:18.04
 ☑ ENABLE_NTLS
-适用于: 需要兼容 OpenSSL 1.1.1 API 的应用
+适用于: 需要兼容 OpenSSL 1.1.1 API 的老系统
+GLIBC 要求: 2.27+
 ```
 
-#### 场景 3: 完整国密算法支持
+#### 场景 4: 完整国密算法支持
 ```
 API_VERSION: default
-LINUX_UBUNTU_VERSION: ubuntu-20.04
+USE_DOCKER_BUILD: true
+LINUX_DOCKER_IMAGE: ubuntu:18.04
 ☑ ENABLE_NTLS
 ☑ ENABLE_SM2
 ☑ ENABLE_SM3
 ☑ ENABLE_SM4
 适用于: 需要完整国密算法栈
+GLIBC 要求: 2.27+
 ```
 
-#### 场景 4: 最大兼容性（老系统）
+#### 场景 5: 快速测试（原生构建）
 ```
-API_VERSION: 1.1.1
-LINUX_UBUNTU_VERSION: ubuntu-20.04
+API_VERSION: default
+USE_DOCKER_BUILD: false
 ☑ ENABLE_NTLS
-适用于: 需要在 CentOS 8 / RHEL 8 等老系统运行
-说明: ubuntu-20.04 编译的二进制文件可以在更多老系统上运行
+适用于: 快速测试，不关心老系统兼容性
+GLIBC 要求: 2.31+（GitHub Actions runner）
 ```
 
 #### 场景 4: 纯 OpenSSL 兼容（无国密）
