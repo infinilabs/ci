@@ -360,6 +360,16 @@ jobs:
         shell: bash
         run: |
           set -e
+          
+          # For Windows, ensure we use Strawberry Perl
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            export PATH="/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"
+            echo "Windows: Using Strawberry Perl"
+            which perl
+            perl -v
+            perl -MLocale::Maketext::Simple -e "print 'Module check OK\n'" || echo "WARNING: Module not found"
+          fi
+          
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Building Tongsuo"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
