@@ -37,11 +37,8 @@ configure(project(':tongsuo-openjdk')) {
                 groupId = 'com.infinilabs'
                 artifactId = 'tongsuo-openjdk'
                 
-                // Use the Java component (includes main JAR automatically)
-                from components.java
-                
-                // Override artifact classifiers
-                artifacts.clear()
+                // Don't use components.java - configure artifacts manually
+                // to ensure proper classifiers
                 
                 // Add main JAR with platform classifier
                 artifact(tasks.jar) {
