@@ -95,7 +95,7 @@ jobs:
             os: ubuntu-22.04
             arch: linux-aarch_64
             tongsuo_base_config: "--prefix=$HOME/tongsuo --cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -static -Wl,--no-as-needed -ldl"
-            cc_prefix: "aarch64-linux-gnu-"
+            cc_prefix: ""
             
           - platform_name: osx-x86_64
             os: macos-14
