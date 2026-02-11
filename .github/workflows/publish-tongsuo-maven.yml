@@ -152,7 +152,7 @@ jobs:
 
       - name: Checkout tongsuo-java-sdk
         run: |
-          git clone --depth 1 --branch ${{ inputs.BRANCH }} infinilabs/tongsuo-java-sdk $GITHUB_WORKSPACE/tongsuo-java-sdk
+          git clone --depth 1 --branch ${{ inputs.BRANCH }} ${{ vars.GIT_REPO }}/tongsuo-java-sdk $GITHUB_WORKSPACE/tongsuo-java-sdk
 
       - name: Build Tongsuo
         shell: bash
