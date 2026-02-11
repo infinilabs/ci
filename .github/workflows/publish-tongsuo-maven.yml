@@ -158,6 +158,32 @@ jobs:
             sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user-static
           fi
 
+      - name: Install build dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install perl
+
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install strawberryperl -y
+          choco install nasm -y
+          
+          # Refresh environment to get perl in PATH
+          refreshenv
+          
+          # Install required Perl modules
+          cpan -T Locale::Maketext::Simple
+
+      - name: Checkout tongsuo-java-sdk
+        uses: actions/checkout@v6
+        with:
+          repository: 'infinilabs/tongsuo-java-sdk'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ref: ${{ inputs.BRANCH }}
+          path: tongsuo-java-sdk
+
       - name: Build with Docker (Linux)
         if: runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker
         run: |
@@ -187,7 +213,7 @@ jobs:
           fi
           
           # Build Tongsuo
-          cd /workspace
+          cd /build
           echo "Building Tongsuo ${{ inputs.TONGSUO_VERSION }}..."
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
@@ -235,13 +261,13 @@ jobs:
           make install_sw
           
           echo "✅ Tongsuo built successfully"
-          ls -lh $HOME/tongsuo/lib/
+          ls -lh /root/tongsuo/lib/
           
           # Build Java SDK
-          cd /workspace/tongsuo-java-sdk
+          cd /build/tongsuo-java-sdk
           
           # Copy build.gradle override
-          cp -f /workspace/products/tongsuo/build.gradle ./
+          cp -f /build/products/tongsuo/build.gradle ./
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
@@ -249,7 +275,7 @@ jobs:
                     :tongsuo-openjdk:publishToMavenLocal
           
           echo "✅ Published to Maven local repository"
-          find ~/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
+          find /root/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
           
           DOCKER_BUILD_SCRIPT
           
@@ -257,37 +283,11 @@ jobs:
           
           # Run build in Docker
           docker run --rm \
-            -v $PWD:/workspace \
+            -v $GITHUB_WORKSPACE:/build \
             -v $HOME/.m2:/root/.m2 \
-            -w /workspace \
+            -w /build \
             ${{ inputs.LINUX_DOCKER_IMAGE }} \
-            /workspace/docker-build.sh
-
-      - name: Install build dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install perl
-
-      - name: Install build dependencies (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install strawberryperl -y
-          choco install nasm -y
-          
-          # Refresh environment to get perl in PATH
-          refreshenv
-          
-          # Install required Perl modules
-          cpan -T Locale::Maketext::Simple
-
-      - name: Checkout tongsuo-java-sdk
-        uses: actions/checkout@v6
-        with:
-          repository: 'infinilabs/tongsuo-java-sdk'
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ref: ${{ inputs.BRANCH }}
-          path: tongsuo-java-sdk
+            /build/docker-build.sh
 
       - name: Show build environment info (Native)
         if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) }}
