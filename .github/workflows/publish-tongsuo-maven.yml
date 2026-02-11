@@ -42,38 +42,38 @@ on:
       
       # Feature Flags
       ENABLE_NTLS:
-        description: '✓ Enable NTLS (国密 TLS 协议)'
+        description: 'Enable NTLS (国密)'
         required: false
         type: boolean
         default: true
       
       ENABLE_SM2:
-        description: '✓ Enable SM2 algorithm (SM2 算法)'
+        description: 'Enable SM2'
         required: false
         type: boolean
         default: false
       
       ENABLE_SM3:
-        description: '✓ Enable SM3 algorithm (SM3 哈希算法)'
+        description: 'Enable SM3'
         required: false
         type: boolean
         default: false
       
       ENABLE_SM4:
-        description: '✓ Enable SM4 algorithm (SM4 对称加密)'
+        description: 'Enable SM4'
         required: false
         type: boolean
         default: false
       
       ENABLE_DEBUG:
-        description: '✓ Enable debug symbols (调试符号, for gdb/lldb)'
+        description: 'Enable debug symbols'
         required: false
         type: boolean
         default: false
       
       # Advanced Options
       EXTRA_CONFIG_OPTS:
-        description: 'Extra compile options (高级选项, optional)'
+        description: 'Extra options (optional)'
         required: false
         type: string
         default: ''
