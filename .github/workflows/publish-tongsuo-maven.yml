@@ -167,21 +167,31 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          # Install Strawberry Perl and NASM
           choco install strawberryperl -y
           choco install nasm -y
           
-          # Update PATH to include Strawberry Perl
+          # Add Strawberry Perl to PATH for this and subsequent steps
+          echo "C:\Strawberry\perl\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\Strawberry\c\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          
+          # Also update PATH for current step
           $env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path
           
           # Show perl version
+          Write-Host "Perl version:"
           perl -v
           
-          # Install required Perl modules using cpanm (faster than cpan)
-          echo "Installing Locale::Maketext::Simple..."
+          # Show perl installation path
+          Write-Host "`nPerl location:"
+          where.exe perl
+          
+          # Install required Perl modules
+          Write-Host "`nInstalling Locale::Maketext::Simple..."
           cpan -T Locale::Maketext::Simple
           
-          # Verify installation
-          perl -MLocale::Maketext::Simple -e "print qq{Module installed successfully\n}"
+          Write-Host "`nVerifying installation..."
+          perl -MLocale::Maketext::Simple -e "print qq{✅ Module installed successfully\n}"
 
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
