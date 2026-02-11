@@ -1,12 +1,11 @@
 // This build configuration overrides tongsuo-java-sdk settings
 // to publish with com.infinilabs groupId for Maven Central
 
-allprojects {
+// Only configure the tongsuo-openjdk project
+project(':tongsuo-openjdk') {
+    // Override group for this project only
     group = 'com.infinilabs'
-}
-
-// Configure publishing for tongsuo-openjdk module
-configure(project(':tongsuo-openjdk')) {
+    
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
     

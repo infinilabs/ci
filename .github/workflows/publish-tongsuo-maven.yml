@@ -361,13 +361,19 @@ jobs:
         run: |
           set -e
           
-          # For Windows, ensure we use Strawberry Perl
+          # For Windows, ensure we use Strawberry Perl and NASM
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            export PATH="/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"
-            echo "Windows: Using Strawberry Perl"
+            export PATH="/c/Strawberry/perl/bin:/c/Strawberry/c/bin:/c/Program Files/NASM:$PATH"
+            echo "Windows: Setting up build environment"
+            echo "Perl location:"
             which perl
             perl -v
-            perl -MLocale::Maketext::Simple -e "print 'Module check OK\n'" || echo "WARNING: Module not found"
+            echo ""
+            echo "NASM location:"
+            which nasm || echo "WARNING: NASM not in PATH"
+            nasm -v || echo "WARNING: NASM not available"
+            echo ""
+            perl -MLocale::Maketext::Simple -e "print 'Perl module check OK\n'" || echo "WARNING: Module not found"
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
