@@ -28,11 +28,55 @@ on:
         required: true
         type: string
         default: 'master'
-      TONGSUO_CONFIG_OPTS:
-        description: 'Tongsuo compile options (e.g., "enable-ntls enable-sm2 --api=1.1.1")'
+      
+      # API Version
+      API_VERSION:
+        description: 'API compatibility version'
+        required: true
+        type: choice
+        options:
+          - '3.0'
+          - '1.1.1'
+          - '1.0.2'
+        default: '3.0'
+      
+      # Feature Flags
+      ENABLE_NTLS:
+        description: '✓ Enable NTLS (国密 TLS 协议)'
+        required: false
+        type: boolean
+        default: true
+      
+      ENABLE_SM2:
+        description: '✓ Enable SM2 algorithm (SM2 算法)'
+        required: false
+        type: boolean
+        default: false
+      
+      ENABLE_SM3:
+        description: '✓ Enable SM3 algorithm (SM3 哈希算法)'
+        required: false
+        type: boolean
+        default: false
+      
+      ENABLE_SM4:
+        description: '✓ Enable SM4 algorithm (SM4 对称加密)'
+        required: false
+        type: boolean
+        default: false
+      
+      ENABLE_DEBUG:
+        description: '✓ Enable debug symbols (调试符号, for gdb/lldb)'
+        required: false
+        type: boolean
+        default: false
+      
+      # Advanced Options
+      EXTRA_CONFIG_OPTS:
+        description: 'Extra compile options (高级选项, optional)'
         required: false
         type: string
-        default: 'enable-ntls'
+        default: ''
 
 jobs:
   build-all-platforms:
@@ -120,7 +164,13 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "  Version: ${{ inputs.TONGSUO_VERSION }}"
           echo "  Platform: ${{ matrix.platform_name }}"
-          echo "  Custom options: ${{ inputs.TONGSUO_CONFIG_OPTS }}"
+          echo "  API Version: ${{ inputs.API_VERSION }}"
+          echo "  Features:"
+          echo "    - NTLS: ${{ inputs.ENABLE_NTLS }}"
+          echo "    - SM2: ${{ inputs.ENABLE_SM2 }}"
+          echo "    - SM3: ${{ inputs.ENABLE_SM3 }}"
+          echo "    - SM4: ${{ inputs.ENABLE_SM4 }}"
+          echo "    - Debug: ${{ inputs.ENABLE_DEBUG }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
@@ -131,13 +181,47 @@ jobs:
             export CXX=${{ matrix.cc_prefix }}g++
           fi
           
-          # Merge base config with user options
+          # Build configuration from inputs
           CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
-          if [[ -n "${{ inputs.TONGSUO_CONFIG_OPTS }}" ]]; then
-            CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.TONGSUO_CONFIG_OPTS }}"
+          
+          # API Version
+          if [[ "${{ inputs.API_VERSION }}" != "3.0" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
           fi
           
-          echo "Full config command: ./config $CONFIG_OPTS"
+          # Feature flags
+          if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-ntls"
+          else
+            CONFIG_OPTS="$CONFIG_OPTS no-ntls"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM2 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm2"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM3 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm3"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM4 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm4"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_DEBUG }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --debug"
+          fi
+          
+          # Extra options
+          if [[ -n "${{ inputs.EXTRA_CONFIG_OPTS }}" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.EXTRA_CONFIG_OPTS }}"
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Full config command:"
+          echo "  ./config $CONFIG_OPTS"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
           ./config $CONFIG_OPTS
           
           make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)

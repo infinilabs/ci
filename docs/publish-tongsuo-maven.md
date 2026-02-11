@@ -58,57 +58,72 @@
 1. 进入 infinilabs/ci 仓库的 GitHub Actions 页面
 2. 选择 "Publish Tongsuo Java SDK to Maven Central" workflow
 3. 点击 "Run workflow"
-4. 填写参数：
-   - **PUBLISH_VERSION**: 版本号（如 `1.1.0`）
-   - **BRANCH**: tongsuo-java-sdk 分支（如 `master` 或 `multiplatform`）
-   - **TONGSUO_VERSION**: Tongsuo 版本（如 `master`, `8.4-stable`, `8.3.3`）
-   - **TONGSUO_CONFIG_OPTS**: Tongsuo 编译选项（可选，默认 `enable-ntls`）
+4. 配置参数（通过直观的界面）：
 
-#### Tongsuo 版本说明
+#### 基础参数
 
-- `master`: 最新开发版本
-- `8.4-stable`: 8.4.x 稳定分支
-- `8.3.3`: 特定标签版本
-- 可以使用任何有效的 Git 分支名或标签名
+- **PUBLISH_VERSION**: 版本号（如 `1.1.0`）
+- **BRANCH**: tongsuo-java-sdk 分支（如 `master` 或 `multiplatform`）
+- **TONGSUO_VERSION**: Tongsuo 版本（如 `master`, `8.4-stable`, `8.3.3`）
 
-#### Tongsuo 编译选项说明
+#### API 版本选择（下拉选择）
 
-通过 `TONGSUO_CONFIG_OPTS` 可以自定义 Tongsuo 的编译特性。常用选项：
+- **API_VERSION**: 
+  - `3.0` - OpenSSL 3.0 API（默认）
+  - `1.1.1` - OpenSSL 1.1.1 兼容 ⭐
+  - `1.0.2` - OpenSSL 1.0.2 兼容
 
-**启用特性 (enable-)：**
-- `enable-ntls`: 编译国密功能（默认）
-- `enable-sm2`: 编译 SM2 算法
-- `enable-sm3`: 编译 SM3 算法  
-- `enable-sm4`: 编译 SM4 算法
+#### 功能开关（Checkbox 复选框）
 
-**禁用特性 (no-)：**
-- `no-ntls`: 不编译国密功能
-- `no-sm2`: 不编译 SM2 算法
+- ☑ **ENABLE_NTLS**: 启用国密 TLS 协议（默认开启）
+- ☐ **ENABLE_SM2**: 启用 SM2 算法
+- ☐ **ENABLE_SM3**: 启用 SM3 哈希算法
+- ☐ **ENABLE_SM4**: 启用 SM4 对称加密
+- ☐ **ENABLE_DEBUG**: 启用调试符号（用于 gdb/lldb）
 
-**API 兼容性：**
-- `--api=1.1.1`: 编译与 OpenSSL 1.1.1 兼容的 API（用于兼容旧版本）
-- `--api=3.0`: 使用 OpenSSL 3.0 API（默认）
+#### 高级选项（可选）
 
-**其他选项：**
-- `--debug`: 添加调试符号（用于 gdb/lldb 调试）
-- `--symbol-prefix=PREFIX`: 导出符号前缀（多版本共存场景）
+- **EXTRA_CONFIG_OPTS**: 其他编译选项（如 `--symbol-prefix=tongsuo_`）
 
-**示例配置：**
-```bash
-# 默认（国密支持）
-enable-ntls
+### 常见配置场景
 
-# OpenSSL 1.1.1 兼容 + 国密
-enable-ntls --api=1.1.1
+#### 场景 1: 标准国密构建（默认）✓
+```
+API_VERSION: 3.0
+☑ ENABLE_NTLS
+适用于: 标准国密应用
+```
 
-# 完整国密算法支持
-enable-ntls enable-sm2 enable-sm3 enable-sm4
+#### 场景 2: OpenSSL 1.1.1 兼容 + 国密 ⭐
+```
+API_VERSION: 1.1.1
+☑ ENABLE_NTLS
+适用于: 需要兼容 OpenSSL 1.1.1 API 的应用
+```
 
-# 调试模式 + 国密
-enable-ntls --debug
+#### 场景 3: 完整国密算法支持
+```
+API_VERSION: 3.0
+☑ ENABLE_NTLS
+☑ ENABLE_SM2
+☑ ENABLE_SM3
+☑ ENABLE_SM4
+适用于: 需要完整国密算法栈
+```
 
-# 不启用国密（纯 OpenSSL 兼容）
-no-ntls
+#### 场景 4: 纯 OpenSSL 兼容（无国密）
+```
+API_VERSION: 3.0
+☐ ENABLE_NTLS (取消勾选)
+适用于: 不需要国密功能
+```
+
+#### 场景 5: 调试构建
+```
+API_VERSION: 3.0
+☑ ENABLE_NTLS
+☑ ENABLE_DEBUG
+适用于: Native 代码调试
 ```
 
 ### 步骤 2: 等待构建
