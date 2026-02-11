@@ -37,18 +37,24 @@ configure(project(':tongsuo-openjdk')) {
                 groupId = 'com.infinilabs'
                 artifactId = 'tongsuo-openjdk'
                 
+                // Use the Java component (includes main JAR automatically)
+                from components.java
+                
+                // Override artifact classifiers
+                artifacts.clear()
+                
                 // Add main JAR with platform classifier
-                artifact(jar) {
+                artifact(tasks.jar) {
                     classifier = platformClassifier
                 }
                 
                 // Add sources JAR
-                artifact(tasks.named('sourcesJar').get()) {
+                artifact(tasks.sourcesJar) {
                     classifier = platformClassifier + '-sources'
                 }
                 
                 // Add javadoc JAR
-                artifact(tasks.named('javadocJar').get()) {
+                artifact(tasks.javadocJar) {
                     classifier = platformClassifier + '-javadoc'
                 }
                 
@@ -76,15 +82,6 @@ configure(project(':tongsuo-openjdk')) {
                         connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
                     }
                 }
-                
-                // Generate POM with platform classifier in artifact coordinates
-                pom.withXml {
-                    def root = asNode()
-                    // Update artifact section in dependencies if needed
-                    root.dependencies.'*'.findAll {
-                        // Keep dependencies clean
-                    }
-                }
             }
         }
         
@@ -108,8 +105,10 @@ configure(project(':tongsuo-openjdk')) {
         }
     }
     
-    // Ensure sources and javadoc tasks exist
-    tasks.named('publishToMavenLocal') {
-        dependsOn 'sourcesJar', 'javadocJar'
+    // Ensure sources and javadoc tasks exist before publishing
+    afterEvaluate {
+        tasks.named('publishToMavenLocal') {
+            dependsOn tasks.jar, tasks.sourcesJar, tasks.javadocJar
+        }
     }
 }
