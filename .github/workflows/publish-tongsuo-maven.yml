@@ -79,13 +79,13 @@ on:
       
       # Build Environment
       USE_DOCKER_BUILD:
-        description: 'Use Docker for Linux builds (better GLIBC control)'
+        description: 'Use Docker for Linux'
         required: true
         type: boolean
         default: true
       
       LINUX_DOCKER_IMAGE:
-        description: 'Docker image for Linux builds (when USE_DOCKER_BUILD=true)'
+        description: 'Docker image (GLIBC)'
         required: true
         type: choice
         options:
