@@ -8,14 +8,17 @@
 
 - **Group ID**: `com.infinilabs`
 - **Artifact ID**: `tongsuo-openjdk`
-- **Classifiers**: 
-  - `linux-x86_64`
-  - `linux-aarch_64`
-  - `osx-x86_64`
-  - `osx-aarch_64`
-  - `windows-x86_64`
-  - `static-uber` (自包含，约 15-20 MB)
-  - `dynamic-uber` (需要系统安装 Tongsuo，约 1-2 MB)
+- **平台分类器**: 
+  - `linux-x86_64` - Linux x86-64 with static linking
+  - `linux-aarch_64` - Linux ARM64 with static linking
+  - `osx-x86_64` - macOS Intel
+  - `osx-aarch_64` - macOS Apple Silicon
+  - `windows-x86_64` - Windows x64
+
+每个平台会发布三个 artifact：
+- `tongsuo-openjdk-{version}-{platform}.jar` - 主 JAR（包含 native 库）
+- `tongsuo-openjdk-{version}-{platform}-sources.jar` - 源代码
+- `tongsuo-openjdk-{version}-{platform}-javadoc.jar` - JavaDoc
 
 ### 构建流程
 
@@ -24,29 +27,24 @@
 │ 1. Build All Platforms (5 jobs)        │
 │    - Linux x86_64                       │
 │    - Linux aarch64 (cross-compile)      │
-│    - macOS x86_64                       │
-│    - macOS aarch64                      │
-│    - Windows x86_64                     │
-│    每个平台生成:                         │
-│    - main JAR                           │
+│    - macOS x86_64 (cross-compile)       │
+│    - macOS aarch64 (native)             │
+│    - Windows x86_64 (MSVC)              │
+│                                         │
+│    每个平台生成完整的 Maven 仓库:        │
+│    - JAR with platform classifier       │
 │    - sources JAR                        │
 │    - javadoc JAR                        │
+│    - POM file                           │
+│    - GPG signatures (.asc)              │
 └─────────────┬───────────────────────────┘
               │
               v
 ┌─────────────────────────────────────────┐
-│ 2. Build Uber JARs                      │
-│    - Static uber (所有平台 native libs)  │
-│    - Dynamic uber (只有 Java 类)        │
-└─────────────┬───────────────────────────┘
-              │
-              v
-┌─────────────────────────────────────────┐
-│ 3. Publish to Maven Central             │
-│    - 合并所有 artifacts                  │
-│    - GPG 签名                            │
-│    - 生成 Maven metadata                 │
-│    - 打包成 ZIP bundle                   │
+│ 2. Merge & Publish to Maven Central    │
+│    - 合并所有平台的 Maven 仓库           │
+│    - 验证必需文件（POM, JAR, 签名）      │
+│    - 打包成符合 Maven Central 的 ZIP    │
 │    - 上传到 Maven Central Portal        │
 └─────────────────────────────────────────┘
 ```
@@ -175,10 +173,15 @@ tongsuo-openjdk-1.1.0.zip
                 │
                 ├── ... (其他平台类似)
                 │
-                ├── tongsuo-openjdk-1.1.0-static-uber.jar
-                ├── tongsuo-openjdk-1.1.0-static-uber.jar.asc
-                ├── tongsuo-openjdk-1.1.0-dynamic-uber.jar
-                └── tongsuo-openjdk-1.1.0-dynamic-uber.jar.asc
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64.jar
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64.jar.asc
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64-sources.jar
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64-sources.jar.asc
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64-javadoc.jar
+                ├── tongsuo-openjdk-1.1.0-linux-x86_64-javadoc.jar.asc
+                ├── tongsuo-openjdk-1.1.0-osx-aarch_64.jar
+                ├── ... (其他平台类似)
+                └── tongsuo-openjdk-1.1.0.pom
 ```
 
 ## 使用已发布的 Artifact
@@ -187,14 +190,13 @@ tongsuo-openjdk-1.1.0.zip
 
 ```gradle
 dependencies {
-    // 平台特定 JAR
+    // 使用平台特定 JAR（推荐）
     implementation 'com.infinilabs:tongsuo-openjdk:1.1.0:linux-x86_64'
     
-    // 或使用 static uber JAR (推荐)
-    implementation 'com.infinilabs:tongsuo-openjdk:1.1.0:static-uber'
-    
-    // 或使用 dynamic uber JAR (需要系统安装 Tongsuo)
-    implementation 'com.infinilabs:tongsuo-openjdk:1.1.0:dynamic-uber'
+    // 或根据运行平台自动选择
+    implementation('com.infinilabs:tongsuo-openjdk:1.1.0') {
+        // 需要配置 Maven classifier resolution
+    }
 }
 ```
 
@@ -205,9 +207,11 @@ dependencies {
   <groupId>com.infinilabs</groupId>
   <artifactId>tongsuo-openjdk</artifactId>
   <version>1.1.0</version>
-  <classifier>static-uber</classifier>
+  <classifier>linux-x86_64</classifier>
 </dependency>
 ```
+
+**注意**: 当前版本发布的是平台特定的 JAR。每个 JAR 都包含对应平台的 native 库。用户需要根据目标平台选择合适的 classifier。
 
 ## 技术细节
 
