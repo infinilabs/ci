@@ -318,6 +318,7 @@ jobs:
         if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) }}
         shell: bash
         run: |
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Build Environment Information"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -341,15 +342,15 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Building Tongsuo"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "  Version: ${{ inputs.TONGSUO_VERSION }}"
-          echo "  Platform: ${{ matrix.platform_name }}"
-          echo "  API Version: ${{ inputs.API_VERSION }}"
-          echo "  Features:"
-          echo "    - NTLS: ${{ inputs.ENABLE_NTLS }}"
-          echo "    - SM2: ${{ inputs.ENABLE_SM2 }}"
-          echo "    - SM3: ${{ inputs.ENABLE_SM3 }}"
-          echo "    - SM4: ${{ inputs.ENABLE_SM4 }}"
-          echo "    - Debug: ${{ inputs.ENABLE_DEBUG }}"
+          echo "Version:     ${{ inputs.TONGSUO_VERSION }}"
+          echo "Platform:    ${{ matrix.platform_name }}"
+          echo "API Version: ${{ inputs.API_VERSION }}"
+          echo "Features:"
+          echo "  • NTLS:    ${{ inputs.ENABLE_NTLS }}"
+          echo "  • SM2:     ${{ inputs.ENABLE_SM2 }}"
+          echo "  • SM3:     ${{ inputs.ENABLE_SM3 }}"
+          echo "  • SM4:     ${{ inputs.ENABLE_SM4 }}"
+          echo "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
@@ -443,6 +444,7 @@ jobs:
       - name: Build Summary
         shell: bash
         run: |
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ Platform Build Complete: ${{ matrix.platform_name }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
