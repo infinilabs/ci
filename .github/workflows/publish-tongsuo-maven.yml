@@ -195,11 +195,15 @@ jobs:
           set -e
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Docker Build Environment"
+          echo "🐳 Docker Build Environment"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           cat /etc/os-release | grep PRETTY_NAME
-          echo "GLIBC: $(ldd --version | head -n1)"
+          
+          GLIBC_VERSION=$(ldd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+          echo "GLIBC Version: $GLIBC_VERSION"
           echo "Architecture: $(uname -m)"
+          echo ""
+          echo "⚠️  Binaries will require GLIBC $GLIBC_VERSION or higher"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           # Install dependencies
@@ -260,6 +264,7 @@ jobs:
           make -j$(nproc)
           make install_sw
           
+          echo ""
           echo "✅ Tongsuo built successfully"
           ls -lh /root/tongsuo/lib/
           
@@ -274,8 +279,21 @@ jobs:
                     -PcheckErrorQueue \
                     :tongsuo-openjdk:publishToMavenLocal
           
-          echo "✅ Published to Maven local repository"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Build Completed Successfully"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📦 Maven Artifacts:"
           find /root/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
+          echo ""
+          echo "📋 Build Information:"
+          echo "  Platform: ${{ matrix.platform_name }}"
+          echo "  GLIBC Version: $GLIBC_VERSION"
+          echo "  Tongsuo Version: ${{ inputs.TONGSUO_VERSION }}"
+          echo "  Publish Version: ${{ inputs.PUBLISH_VERSION }}"
+          echo ""
+          echo "⚠️  IMPORTANT: This binary requires GLIBC $GLIBC_VERSION or higher"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           DOCKER_BUILD_SCRIPT
           
@@ -414,6 +432,35 @@ jobs:
           name: maven-repo-${{ matrix.platform_name }}
           path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
           retention-days: 7
+
+      - name: Build Summary
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Platform Build Complete: ${{ matrix.platform_name }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [[ "${{ runner.os }}" == "Linux" && "${{ inputs.USE_DOCKER_BUILD }}" == "true" ]]; then
+            # Extract GLIBC version from Docker image name
+            IMAGE="${{ inputs.LINUX_DOCKER_IMAGE }}"
+            case "$IMAGE" in
+              "ubuntu:18.04") GLIBC="2.27" ;;
+              "ubuntu:20.04") GLIBC="2.31" ;;
+              "ubuntu:22.04") GLIBC="2.35" ;;
+              "ubuntu:24.04") GLIBC="2.39" ;;
+              *) GLIBC="unknown" ;;
+            esac
+            echo "🐳 Build Method: Docker ($IMAGE)"
+            echo "📦 GLIBC Requirement: $GLIBC or higher"
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            GLIBC=$(ldd --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo "unknown")
+            echo "🔨 Build Method: Native"
+            echo "📦 GLIBC Requirement: $GLIBC or higher"
+          else
+            echo "🔨 Build Method: Native (${{ runner.os }})"
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   publish:
     name: Create Maven Central Bundle
