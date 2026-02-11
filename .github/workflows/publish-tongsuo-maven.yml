@@ -19,7 +19,12 @@ on:
         type: string
         default: '1.1.0'
       BRANCH:
-        description: 'Branch to build from'
+        description: 'tongsuo-java-sdk branch to build from'
+        required: true
+        type: string
+        default: 'master'
+      TONGSUO_VERSION:
+        description: 'Tongsuo branch/tag to build (e.g., master, 8.4-stable, 8.3.3)'
         required: true
         type: string
         default: 'master'
@@ -105,7 +110,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          git clone --depth 1 --branch master https://github.com/Tongsuo-Project/Tongsuo.git
+          echo "Building Tongsuo version: ${{ inputs.TONGSUO_VERSION }}"
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
           if [[ -n "${{ matrix.cc_prefix }}" ]]; then
@@ -119,6 +125,9 @@ jobs:
           make install_sw
           
           echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
+          
+          # Show Tongsuo version
+          $HOME/tongsuo/bin/openssl version
 
       - name: Build JAR with custom groupId
         shell: bash

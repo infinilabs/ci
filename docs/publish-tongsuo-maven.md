@@ -60,7 +60,14 @@
 3. 点击 "Run workflow"
 4. 填写参数：
    - **PUBLISH_VERSION**: 版本号（如 `1.1.0`）
-   - **BRANCH**: 要构建的分支（如 `master` 或 `multiplatform`）
+   - **BRANCH**: tongsuo-java-sdk 分支（如 `master` 或 `multiplatform`）
+   - **TONGSUO_VERSION**: Tongsuo 版本（如 `master`, `8.4-stable`, `8.3.3`）
+
+**Tongsuo 版本说明：**
+- `master`: 最新开发版本
+- `8.4-stable`: 8.4.x 稳定分支
+- `8.3.3`: 特定标签版本
+- 可以使用任何有效的 Git 分支名或标签名
 
 ### 步骤 2: 等待构建
 
