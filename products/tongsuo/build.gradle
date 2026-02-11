@@ -1,0 +1,23 @@
+// This build configuration overrides tongsuo-java-sdk settings
+// to publish with com.infinilabs groupId
+
+allprojects {
+    // Override group ID for com.infinilabs publishing
+    group = 'com.infinilabs'
+    
+    // Version will be set via command line: -Pversion=x.x.x
+}
+
+// Add distribution task to create Maven Central bundle
+task distribution(type: Zip) {
+    dependsOn ':tongsuo-openjdk:publish'
+    
+    def archiveFileName = "tongsuo-openjdk-${version}.zip"
+    destinationDirectory = file("$buildDir/release")
+    from "$buildDir/repo"
+    exclude("**/maven-metadata*.*")
+    
+    doLast {
+        println "Finish Generating distribution zip file $archiveFileName"
+    }
+}
