@@ -170,11 +170,18 @@ jobs:
           choco install strawberryperl -y
           choco install nasm -y
           
-          # Refresh environment to get perl in PATH
-          refreshenv
+          # Update PATH to include Strawberry Perl
+          $env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path
           
-          # Install required Perl modules
+          # Show perl version
+          perl -v
+          
+          # Install required Perl modules using cpanm (faster than cpan)
+          echo "Installing Locale::Maketext::Simple..."
           cpan -T Locale::Maketext::Simple
+          
+          # Verify installation
+          perl -MLocale::Maketext::Simple -e "print qq{Module installed successfully\n}"
 
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
@@ -199,7 +206,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           cat /etc/os-release | grep PRETTY_NAME
           
-          GLIBC_VERSION=$(ldd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+          GLIBC_VERSION=$(ldd --version 2>&1 | awk 'NR==1 {print $NF}')
           echo "GLIBC Version: $GLIBC_VERSION"
           echo "Architecture: $(uname -m)"
           echo ""
@@ -319,9 +326,9 @@ jobs:
           
           if [[ "${{ runner.os }}" == "Linux" ]]; then
             echo "Distribution: $(lsb_release -d | cut -f2-)"
-            echo "GLIBC Version: $(ldd --version | head -n1)"
+            echo "GLIBC Version: $(ldd --version 2>&1 | awk 'NR==1 {print $NF}')"
             echo ""
-            echo "⚠️  Binaries built on this system require GLIBC $(ldd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+$') or higher"
+            echo "⚠️  Binaries built on this system require GLIBC $(ldd --version 2>&1 | awk 'NR==1 {print $NF}') or higher"
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -453,7 +460,7 @@ jobs:
             echo "🐳 Build Method: Docker ($IMAGE)"
             echo "📦 GLIBC Requirement: $GLIBC or higher"
           elif [[ "${{ runner.os }}" == "Linux" ]]; then
-            GLIBC=$(ldd --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo "unknown")
+            GLIBC=$(ldd --version 2>&1 | awk 'NR==1 {print $NF}')
             echo "🔨 Build Method: Native"
             echo "📦 GLIBC Requirement: $GLIBC or higher"
           else
