@@ -72,7 +72,6 @@
   - `default` - Tongsuo 默认 API（推荐，不添加 --api 参数）
   - `1.1.1` - OpenSSL 1.1.1 兼容 ⭐
   - `1.0.2` - OpenSSL 1.0.2 兼容
-  - `3.0` - OpenSSL 3.0 API
 
 #### 功能开关（Checkbox 复选框）
 

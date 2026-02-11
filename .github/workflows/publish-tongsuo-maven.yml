@@ -38,7 +38,6 @@ on:
           - 'default'
           - '1.1.1'
           - '1.0.2'
-          - '3.0'
         default: 'default'
       
       # Feature Flags
