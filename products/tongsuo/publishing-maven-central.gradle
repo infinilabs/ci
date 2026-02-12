@@ -1,0 +1,118 @@
+// Maven Central Publishing Configuration for CI
+// This file is designed to be used in CI pipelines to publish platform-specific artifacts
+// to Maven Central with custom groupId and classifiers.
+//
+// Usage: ./gradlew -c settings-maven-central.gradle build publishToMavenLocal
+//
+// This configuration differs from the SDK's default publishing.gradle:
+// - Uses custom groupId: com.infinilabs (vs net.tongsuo)
+// - Adds platform-specific classifiers (linux-x86_64, osx-aarch_64, etc.)
+// - Publishes to Maven Local for bundle creation
+// - Optimized for multi-platform CI builds
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// Detect current platform for classifier
+def osName = System.getProperty('os.name').toLowerCase()
+def osArch = System.getProperty('os.arch').toLowerCase()
+
+def platformClassifier = ''
+if (osName.contains('linux')) {
+    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'linux-aarch_64' : 'linux-x86_64'
+} else if (osName.contains('mac') || osName.contains('darwin')) {
+    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'osx-aarch_64' : 'osx-x86_64'
+} else if (osName.contains('win')) {
+    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'windows-aarch_64' : 'windows-x86_64'
+}
+
+println ""
+println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+println "Maven Central Publishing Configuration"
+println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+println "Group:      com.infinilabs"
+println "Artifact:   tongsuo-openjdk"
+println "Version:    ${project.version}"
+println "Classifier: ${platformClassifier}"
+println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+println ""
+
+// Override group for Maven Central
+project.group = 'com.infinilabs'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.infinilabs'
+            artifactId = 'tongsuo-openjdk'
+            
+            // Main JAR with platform classifier
+            artifact(tasks.jar) {
+                classifier = platformClassifier
+            }
+            
+            // Sources JAR with platform classifier
+            artifact(tasks.sourcesJar) {
+                classifier = platformClassifier + '-sources'
+            }
+            
+            // Javadoc JAR with platform classifier
+            artifact(tasks.javadocJar) {
+                classifier = platformClassifier + '-javadoc'
+            }
+            
+            pom {
+                name = 'Tongsuo Java SDK - OpenJDK Provider'
+                description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
+                url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id = 'infinilabs'
+                        name = 'INFINI Labs'
+                        email = 'hello@infini.ltd'
+                        url = 'https://www.infinilabs.com/'
+                        organization = 'INFINI Labs'
+                        organizationUrl = 'https://www.infinilabs.com/'
+                    }
+                }
+                
+                scm {
+                    connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                    developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                    url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                }
+            }
+        }
+    }
+    
+    repositories {
+        mavenLocal()
+    }
+}
+
+signing {
+    required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
+    
+    def signingKey = System.getenv("SIGNING_KEY")
+    def signingPassword = System.getenv("SIGNING_PASSWORD")
+    
+    if (signingKey && signingPassword) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.maven
+    } else {
+        logger.warn("⚠️  Signing credentials not found - artifacts will not be signed")
+    }
+}
+
+// Ensure dependent tasks are executed
+tasks.named('publishToMavenLocal') {
+    dependsOn tasks.jar, tasks.sourcesJar, tasks.javadocJar
+}

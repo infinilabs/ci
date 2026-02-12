@@ -325,8 +325,11 @@ jobs:
           # Build Java SDK
           cd /build/tongsuo-java-sdk
           
-          # Copy the init script for publishing
-          cp -f /build/products/tongsuo/build.gradle init-publish.gradle
+          # Replace the default publishing.gradle with our Maven Central version
+          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          
+          # Backup and modify openjdk/build.gradle to use our publishing config
+          sed -i.bak 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' openjdk/build.gradle
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
@@ -338,8 +341,7 @@ jobs:
             GRADLE_ARGS="-PcrossCompilePrefix=aarch64-linux-gnu-"
           fi
           
-          ./gradlew --init-script init-publish.gradle \
-                    -Pversion=${{ inputs.PUBLISH_VERSION }} \
+          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome=/root/tongsuo \
                     -PcheckErrorQueue \
                     $GRADLE_ARGS \
@@ -559,8 +561,11 @@ jobs:
         run: |
           set -e
           
-          # Use init script instead of replacing build.gradle
-          cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle init-publish.gradle
+          # Replace the default publishing.gradle with our Maven Central version
+          cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          
+          # Backup and modify openjdk/build.gradle to use our publishing config
+          sed -i.bak 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' openjdk/build.gradle
           
           # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
           GRADLE_CMD="./gradlew"
@@ -582,8 +587,7 @@ jobs:
           fi
           
           # Build and publish to Maven local repository
-          $GRADLE_CMD --init-script init-publish.gradle \
-                      -Pversion=${{ inputs.PUBLISH_VERSION }} \
+          $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
                       -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
                       -PcheckErrorQueue \
                       $GRADLE_ARGS \
