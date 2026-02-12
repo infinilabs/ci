@@ -854,11 +854,7 @@ jobs:
             use_docker: true
     
     steps:
-      - name: Checkout CI repo
-        uses: actions/checkout@v6
-        with:
-          repository: infinilabs/ci
-          ref: ${{ inputs.BRANCH }}
+      - uses: actions/checkout@v4
       
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
