@@ -7,9 +7,14 @@
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
+// Capture the version from command line property
+def overrideVersion = project.hasProperty('version') ? project.property('version') : null
+
 // Override version if provided via -Pversion
-if (project.hasProperty('version')) {
-    project.version = project.property('version')
+// Do this immediately to override SDK's hardcoded version
+if (overrideVersion) {
+    project.version = overrideVersion
+    println "📦 Version override applied: ${overrideVersion}"
 }
 
 // Override group for Maven Central

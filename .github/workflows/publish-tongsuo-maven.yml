@@ -245,6 +245,15 @@ jobs:
           # Use our pre-configured build.gradle that has publishing conflicts removed
           cp $GITHUB_WORKSPACE/products/tongsuo/openjdk-build.gradle tongsuo-java-sdk/openjdk/build.gradle
           echo "✅ Replaced SDK's build.gradle with Maven Central compatible version"
+      
+      - name: Remove hardcoded version from SDK
+        run: |
+          # Remove hardcoded version = "1.1.0" from SDK's root build.gradle
+          # This allows -Pversion to work correctly
+          cd tongsuo-java-sdk
+          sed -i.bak '/^[[:space:]]*version[[:space:]]*=[[:space:]]*"1\.1\.0"/d' build.gradle
+          echo "✅ Removed hardcoded version from SDK's build.gradle"
+          echo "   Version will be set via -Pversion=${{ inputs.PUBLISH_VERSION }}"
 
       - name: Build with Docker (Linux)
         if: runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker
@@ -675,6 +684,15 @@ jobs:
           # Use our pre-configured build.gradle that has publishing conflicts removed
           cp $GITHUB_WORKSPACE/products/tongsuo/openjdk-build.gradle tongsuo-java-sdk/openjdk/build.gradle
           echo "✅ Replaced SDK's build.gradle with Maven Central compatible version"
+      
+      - name: Remove hardcoded version from SDK
+        run: |
+          # Remove hardcoded version = "1.1.0" from SDK's root build.gradle
+          # This allows -Pversion to work correctly
+          cd tongsuo-java-sdk
+          sed -i.bak '/^[[:space:]]*version[[:space:]]*=[[:space:]]*"1\.1\.0"/d' build.gradle
+          echo "✅ Removed hardcoded version from SDK's build.gradle"
+          echo "   Version will be set via -Pversion=${{ inputs.PUBLISH_VERSION }}"
       
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
