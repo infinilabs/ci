@@ -28,17 +28,6 @@ on:
         type: string
         default: 'master'
       
-      # API Version
-      API_VERSION:
-        description: 'API compatibility version'
-        required: true
-        type: choice
-        options:
-          - 'default'
-          - '1.1.1'
-          - '1.0.2'
-        default: 'default'
-      
       # Feature Flags
       ENABLE_NTLS:
         description: 'Enable NTLS (国密)'
@@ -273,14 +262,6 @@ jobs:
             fi
           fi
           
-          # API Version from inputs (optional override)
-          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
-            # Remove auto-detected --api if exists
-            CONFIG_OPTS=$(echo "$CONFIG_OPTS" | sed 's/--api=[^ ]*//')
-            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
-            echo "  → Override: using --api=${{ inputs.API_VERSION }} from input"
-          fi
-          
           if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
             CONFIG_OPTS="$CONFIG_OPTS enable-ntls"
           else
@@ -470,7 +451,6 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Version:     ${{ inputs.TONGSUO_VERSION }}"
           echo "Platform:    ${{ matrix.platform_name }}"
-          echo "API Version: ${{ inputs.API_VERSION }}"
           echo "Features:"
           echo "  • NTLS:    ${{ inputs.ENABLE_NTLS }}"
           echo "  • SM2:     ${{ inputs.ENABLE_SM2 }}"
@@ -504,14 +484,6 @@ jobs:
             else
               echo "  → No --api parameter needed (OpenSSL >= 3.0)"
             fi
-          fi
-          
-          # API Version from inputs (optional override)
-          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
-            # Remove auto-detected --api if exists
-            CONFIG_OPTS=$(echo "$CONFIG_OPTS" | sed 's/--api=[^ ]*//')
-            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
-            echo "  → Override: using --api=${{ inputs.API_VERSION }} from input"
           fi
           
           # Feature flags
@@ -600,7 +572,6 @@ jobs:
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           Write-Host "Version:     ${{ inputs.TONGSUO_VERSION }}"
           Write-Host "Platform:    ${{ matrix.platform_name }}"
-          Write-Host "API Version: ${{ inputs.API_VERSION }}"
           Write-Host "Features:"
           Write-Host "  • NTLS:    ${{ inputs.ENABLE_NTLS }}"
           Write-Host "  • SM2:     ${{ inputs.ENABLE_SM2 }}"
@@ -630,14 +601,6 @@ jobs:
             }
           } catch {
             Write-Host "No system OpenSSL detected (Windows), will use default API"
-          }
-          
-          # API Version from inputs (optional override)
-          if ("${{ inputs.API_VERSION }}" -ne "default") {
-            # Remove auto-detected --api if exists
-            $CONFIG_OPTS = $CONFIG_OPTS -replace '--api=[^ ]*', ''
-            $CONFIG_OPTS += " --api=${{ inputs.API_VERSION }}"
-            Write-Host "  → Override: using --api=${{ inputs.API_VERSION }} from input"
           }
           
           # Feature flags
@@ -862,7 +825,6 @@ jobs:
           else
             echo "  Version: (not found)"
           fi
-          echo "  API:     ${{ inputs.API_VERSION }}"
           echo "  NTLS:    ${{ inputs.ENABLE_NTLS }}"
           echo "  SM2/3/4: ${{ inputs.ENABLE_SM2 }}/${{ inputs.ENABLE_SM3 }}/${{ inputs.ENABLE_SM4 }}"
           
