@@ -834,20 +834,24 @@ jobs:
 
   build-linux-dynamic:
     name: Build Dynamic - ${{ matrix.platform_name }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.use_docker && 'ubuntu-latest' || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform_name: linux-x86_64-dynamic
+            os: ubuntu-22.04
             arch: linux-x86_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
-            docker_image: ${{ inputs.LINUX_DOCKER_IMAGE }}
+            cc_prefix: ""
+            use_docker: true
             
           - platform_name: linux-aarch_64-dynamic
+            os: ubuntu-22.04-arm64
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
-            docker_image: ${{ inputs.LINUX_DOCKER_IMAGE }}
+            cc_prefix: ""
+            use_docker: true
     
     steps:
       - name: Checkout CI repo
@@ -864,11 +868,12 @@ jobs:
           path: tongsuo-java-sdk
       
       - name: Build in Docker (Linux Dynamic)
+        if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/build" \
             -w /build/tongsuo-java-sdk \
-            ${{ matrix.docker_image }} \
+            ${{ inputs.LINUX_DOCKER_IMAGE }} \
             /bin/bash -c '
           set -e
           
