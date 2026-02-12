@@ -44,6 +44,48 @@ def drop_deployment(deployment_id, headers):
     except Exception as e:
         print(f"⚠️ Drop error: {e}")
 
+def cleanup_failed_deployments(headers):
+    """Clean up any FAILED deployments before starting new upload"""
+    print("\n🧹 Checking for failed deployments to clean up...")
+    
+    # Try to list deployments (may not be available in API)
+    list_url = f"{BASE_URL}/deployments"
+    
+    try:
+        resp = requests.get(list_url, headers=headers)
+        
+        if resp.status_code == 200:
+            deployments = resp.json()
+            failed = [d for d in deployments if d.get('deploymentState') == 'FAILED']
+            
+            if not failed:
+                print("✅ No failed deployments found")
+                return
+            
+            print(f"📦 Found {len(failed)} FAILED deployment(s)")
+            
+            for dep in failed:
+                dep_id = dep.get('deploymentId')
+                name = dep.get('deploymentName', 'unknown')
+                print(f"   🗑️  Dropping: {name} ({dep_id[:8]}...)")
+                drop_deployment(dep_id, headers)
+        
+        elif resp.status_code == 404:
+            # List endpoint not available, that's OK
+            if DEBUG:
+                debug_log("List endpoint not available - skipping cleanup")
+            pass
+        
+        else:
+            if DEBUG:
+                debug_log(f"List returned {resp.status_code} - skipping cleanup")
+    
+    except Exception as e:
+        if DEBUG:
+            debug_log(f"Cleanup check failed: {e}")
+        # Don't fail the whole publish if cleanup fails
+        pass
+
 def main():
     username = os.environ.get('OSSRH_USERNAME')
     password = os.environ.get('OSSRH_PASSWORD')
@@ -57,8 +99,14 @@ def main():
     b64_auth = base64.b64encode(auth_str.encode()).decode()
     headers = {"Authorization": f"UserToken {b64_auth}"}
 
+    # ================= 0. Cleanup =================
+    cleanup_failed_deployments(headers)
+    
+    print("\n" + "="*50)
+
     # ================= 1. Upload =================
     upload_url = f"{BASE_URL}/upload"
+    print(f"📤 Uploading bundle to Maven Central Portal")
     print(f"🚀 [POST] {upload_url}")
     print(f"   File: {os.path.basename(zip_path)}")
     
