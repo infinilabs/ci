@@ -331,8 +331,8 @@ jobs:
               print "apply from: \"build.gradle.custom\""
               next
             }
-            /^publishing\.publications\.maven \{$/ { in_block=1; print "// " $0; next }
-            in_block==1 && /^\}$/ { print "// " $0; in_block=0; next }
+            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
+            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
             in_block==1 { print "// " $0; next }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
@@ -570,8 +570,8 @@ jobs:
               print "apply from: \"build.gradle.custom\""
               next
             }
-            /^publishing\.publications\.maven \{$/ { in_block=1; print "// " $0; next }
-            in_block==1 && /^\}$/ { print "// " $0; in_block=0; next }
+            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
+            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
             in_block==1 { print "// " $0; next }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
@@ -581,7 +581,7 @@ jobs:
           GRADLE_ARGS=""
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             GRADLE_CMD="arch -x86_64 ./gradlew"
-            GRADLE_ARGS="-Parch=x86_64 -PldFlags=\"-arch x86_64\" -PcFlags=\"-arch x86_64\" -PcppFlags=\"-arch x86_64\""
+            GRADLE_ARGS='-Parch=x86_64 -PldFlags="-arch x86_64" -PcFlags="-arch x86_64" -PcppFlags="-arch x86_64"'
           fi
           
           # Windows path normalization
