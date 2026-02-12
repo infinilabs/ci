@@ -52,61 +52,116 @@ println ""
 // Override SDK's publishing configuration
 // Use afterEvaluate to run after SDK's build.gradle is evaluated
 afterEvaluate {
-    // Reconfigure the existing 'maven' publication created by SDK's publishing.gradle
+    // Configure maven publication - create if doesn't exist, reconfigure if it does
     publishing {
         publications {
-            // Use named() to explicitly access the existing maven publication
-            // This is more reliable across different Gradle versions than maven { }
-            named('maven', MavenPublication) {
-                // Override group and artifact
-                groupId = 'com.infinilabs'
-                artifactId = 'tongsuo-openjdk'
-                
-                // Clear any existing artifacts to avoid duplicates
-                artifacts.clear()
-                
-                // Main JAR with platform classifier
-                artifact(tasks.jar) {
-                    classifier = platformClassifier
-                }
-                
-                // Sources JAR with platform classifier
-                artifact(tasks.sourcesJar) {
-                    classifier = platformClassifier + '-sources'
-                }
-                
-                // Javadoc JAR with platform classifier
-                artifact(tasks.javadocJar) {
-                    classifier = platformClassifier + '-javadoc'
-                }
-                
-                pom {
-                    name = 'Tongsuo Java SDK - OpenJDK Provider'
-                    description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
-                    url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+            // Check if maven publication exists
+            def mavenPub = publications.findByName('maven')
+            
+            if (mavenPub) {
+                // Publication exists - reconfigure it
+                named('maven', MavenPublication) {
+                    // Override group and artifact
+                    groupId = 'com.infinilabs'
+                    artifactId = 'tongsuo-openjdk'
                     
-                    licenses {
-                        license {
-                            name = 'The Apache License, Version 2.0'
-                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        }
+                    // Clear any existing artifacts to avoid duplicates
+                    artifacts.clear()
+                    
+                    // Main JAR with platform classifier
+                    artifact(tasks.jar) {
+                        classifier = platformClassifier
                     }
                     
-                    developers {
-                        developer {
-                            id = 'infinilabs'
-                            name = 'INFINI Labs'
-                            email = 'hello@infini.ltd'
-                            url = 'https://www.infinilabs.com/'
-                            organization = 'INFINI Labs'
-                            organizationUrl = 'https://www.infinilabs.com/'
-                        }
+                    // Sources JAR with platform classifier
+                    artifact(tasks.sourcesJar) {
+                        classifier = platformClassifier + '-sources'
                     }
                     
-                    scm {
-                        connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
-                        developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                    // Javadoc JAR with platform classifier
+                    artifact(tasks.javadocJar) {
+                        classifier = platformClassifier + '-javadoc'
+                    }
+                    
+                    pom {
+                        name = 'Tongsuo Java SDK - OpenJDK Provider'
+                        description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
                         url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+                        
+                        developers {
+                            developer {
+                                id = 'infinilabs'
+                                name = 'INFINI Labs'
+                                email = 'hello@infini.ltd'
+                                url = 'https://www.infinilabs.com/'
+                                organization = 'INFINI Labs'
+                                organizationUrl = 'https://www.infinilabs.com/'
+                            }
+                        }
+                        
+                        scm {
+                            connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                            developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                            url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        }
+                    }
+                }
+            } else {
+                // Publication doesn't exist - create it
+                maven(MavenPublication) {
+                    groupId = 'com.infinilabs'
+                    artifactId = 'tongsuo-openjdk'
+                    
+                    // Main JAR with platform classifier
+                    artifact(tasks.jar) {
+                        classifier = platformClassifier
+                    }
+                    
+                    // Sources JAR with platform classifier
+                    artifact(tasks.sourcesJar) {
+                        classifier = platformClassifier + '-sources'
+                    }
+                    
+                    // Javadoc JAR with platform classifier
+                    artifact(tasks.javadocJar) {
+                        classifier = platformClassifier + '-javadoc'
+                    }
+                    
+                    pom {
+                        name = 'Tongsuo Java SDK - OpenJDK Provider'
+                        description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
+                        url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+                        
+                        developers {
+                            developer {
+                                id = 'infinilabs'
+                                name = 'INFINI Labs'
+                                email = 'hello@infini.ltd'
+                                url = 'https://www.infinilabs.com/'
+                                organization = 'INFINI Labs'
+                                organizationUrl = 'https://www.infinilabs.com/'
+                            }
+                        }
+                        
+                        scm {
+                            connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                            developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                            url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        }
                     }
                 }
             }
