@@ -243,8 +243,8 @@ jobs:
       - name: Build with Docker (Linux)
         if: runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker
         run: |
-          # Copy predefined build script
-          cp ci/products/tongsuo/docker-build.sh tongsuo-java-sdk/docker-build.sh
+          # Copy predefined build script from CI repo
+          cp $GITHUB_WORKSPACE/products/tongsuo/docker-build.sh tongsuo-java-sdk/docker-build.sh
           chmod +x tongsuo-java-sdk/docker-build.sh
           
           # Run build in Docker with environment variables
@@ -667,8 +667,8 @@ jobs:
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
         run: |
-          # Copy predefined dynamic build script
-          cp ci/products/tongsuo/docker-build-dynamic.sh tongsuo-java-sdk/docker-build-dynamic.sh
+          # Copy predefined dynamic build script from CI repo
+          cp $GITHUB_WORKSPACE/products/tongsuo/docker-build-dynamic.sh tongsuo-java-sdk/docker-build-dynamic.sh
           chmod +x tongsuo-java-sdk/docker-build-dynamic.sh
           
           # Run dynamic build in Docker with environment variables
@@ -818,7 +818,7 @@ jobs:
           
           # Run the uber JAR creation script
           export VERSION ARTIFACT_ID REPO_PATH TEMP_DIR
-          bash ci/products/tongsuo/create-uber-jars.sh
+          bash $GITHUB_WORKSPACE/products/tongsuo/create-uber-jars.sh
           
           # Cleanup temp directory
           rm -rf "$TEMP_DIR"
