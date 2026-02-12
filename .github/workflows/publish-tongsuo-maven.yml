@@ -403,6 +403,15 @@ jobs:
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
+          # Set architecture-specific flags for macOS x86_64 cross-compilation
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            export CC="clang -arch x86_64"
+            export CXX="clang++ -arch x86_64"
+            export CFLAGS="-arch x86_64"
+            export CXXFLAGS="-arch x86_64"
+            export LDFLAGS="-arch x86_64"
+          fi
+          
           if [[ -n "${{ matrix.cc_prefix }}" ]]; then
             export CC=${{ matrix.cc_prefix }}gcc
             export CXX=${{ matrix.cc_prefix }}g++
@@ -478,11 +487,22 @@ jobs:
           # Use init script instead of replacing build.gradle
           cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle init-publish.gradle
           
+          # Set up architecture-specific build for macOS x86_64
+          GRADLE_CMD="./gradlew"
+          GRADLE_ARGS=""
+          
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            # Use Rosetta 2 to run x86_64 Gradle on ARM64 host
+            GRADLE_CMD="arch -x86_64 ./gradlew"
+            GRADLE_ARGS="-Parch=x86_64 -PldFlags=\"-arch x86_64\" -PcFlags=\"-arch x86_64\" -PcppFlags=\"-arch x86_64\""
+          fi
+          
           # Build and publish to Maven local repository
-          ./gradlew --init-script init-publish.gradle \
+          eval $GRADLE_CMD --init-script init-publish.gradle \
                     -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome="$HOME/tongsuo" \
                     -PcheckErrorQueue \
+                    $GRADLE_ARGS \
                     :tongsuo-openjdk:publishToMavenLocal
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
