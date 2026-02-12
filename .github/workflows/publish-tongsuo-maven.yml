@@ -235,6 +235,12 @@ jobs:
           GLIBC_VERSION=$(ldd --version 2>&1 | awk 'NR==1 {print $NF}')
           echo "GLIBC Version: $GLIBC_VERSION"
           echo "Architecture: $(uname -m)"
+          
+          # Show OpenSSL version (system default)
+          if command -v openssl >/dev/null 2>&1; then
+            echo "OpenSSL Version: $(openssl version)"
+          fi
+          
           echo ""
           echo "⚠️  Binaries will require GLIBC $GLIBC_VERSION or higher"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -371,6 +377,7 @@ jobs:
           echo "  Platform: ${{ matrix.platform_name }}"
           echo "  GLIBC Version: $GLIBC_VERSION"
           echo "  Tongsuo Version: ${{ inputs.TONGSUO_VERSION }}"
+          echo "  Tongsuo Built: $(/root/tongsuo/bin/openssl version)"
           echo "  Publish Version: ${{ inputs.PUBLISH_VERSION }}"
           echo ""
           echo "⚠️  IMPORTANT: This binary requires GLIBC $GLIBC_VERSION or higher"
@@ -404,6 +411,11 @@ jobs:
             echo "GLIBC Version: $(ldd --version 2>&1 | awk 'NR==1 {print $NF}')"
             echo ""
             echo "⚠️  Binaries built on this system require GLIBC $(ldd --version 2>&1 | awk 'NR==1 {print $NF}') or higher"
+          fi
+          
+          # Show system OpenSSL version
+          if command -v openssl >/dev/null 2>&1; then
+            echo "System OpenSSL: $(openssl version)"
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -697,6 +709,10 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]] && command -v cl >/dev/null 2>&1; then
             CL_VERSION=$(cl 2>&1 | head -1)
             echo "  MSVC: $CL_VERSION"
+          fi
+          if command -v openssl >/dev/null 2>&1; then
+            SYSTEM_OPENSSL=$(openssl version)
+            echo "  System OpenSSL: $SYSTEM_OPENSSL"
           fi
           
           # Java Information
