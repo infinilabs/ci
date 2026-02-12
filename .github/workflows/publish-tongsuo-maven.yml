@@ -832,9 +832,202 @@ jobs:
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+  build-linux-dynamic:
+    name: Build Dynamic - ${{ matrix.platform_name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform_name: linux-x86_64-dynamic
+            arch: linux-x86_64
+            tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
+            docker_image: ${{ inputs.LINUX_DOCKER_IMAGE }}
+            
+          - platform_name: linux-aarch_64-dynamic
+            arch: linux-aarch_64
+            tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
+            docker_image: ${{ inputs.LINUX_DOCKER_IMAGE }}
+    
+    steps:
+      - name: Checkout CI repo
+        uses: actions/checkout@v6
+        with:
+          repository: infinilabs/ci
+          ref: ${{ inputs.BRANCH }}
+      
+      - name: Checkout tongsuo-java-sdk
+        uses: actions/checkout@v6
+        with:
+          repository: infinilabs/tongsuo-java-sdk
+          ref: ${{ inputs.BRANCH }}
+          path: tongsuo-java-sdk
+      
+      - name: Build in Docker (Linux Dynamic)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/build" \
+            -w /build/tongsuo-java-sdk \
+            ${{ matrix.docker_image }} \
+            /bin/bash -c '
+          set -e
+          
+          # Display environment
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🐳 Docker Build Environment (Dynamic)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cat /etc/os-release | grep -E "PRETTY_NAME|VERSION_ID"
+          GLIBC_VERSION=$(ldd --version 2>&1 | awk "NR==1 {print \$NF}")
+          echo "GLIBC Version: $GLIBC_VERSION"
+          echo "Architecture: $(uname -m)"
+          if command -v openssl >/dev/null 2>&1; then
+            echo "OpenSSL Version: $(openssl version)"
+          fi
+          
+          echo ""
+          echo "⚠️  Binaries will require GLIBC $GLIBC_VERSION or higher"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Install dependencies
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y build-essential perl patchelf git wget curl openjdk-11-jdk-headless
+          
+          # Build Tongsuo (dynamic/shared library)
+          cd /build
+          echo "Building Tongsuo ${{ inputs.TONGSUO_VERSION }} (dynamic)..."
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
+          cd Tongsuo
+          
+          # Configure with --prefix and base config options (for dynamic library)
+          CONFIG_OPTS="--prefix=/root/tongsuo ${{ matrix.tongsuo_base_config }}"
+          
+          # Add API version parameter if specified
+          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "Using --api=${{ inputs.API_VERSION }} for API compatibility"
+          else
+            echo "Using default API (no --api parameter)"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-ntls"
+          else
+            CONFIG_OPTS="$CONFIG_OPTS no-ntls"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM2 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm2"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM3 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm3"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM4 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm4"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_DEBUG }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --debug"
+          fi
+          
+          echo "Configuration: $CONFIG_OPTS"
+          ./config $CONFIG_OPTS shared
+          make -j$(nproc)
+          make install_sw
+          
+          # Show Tongsuo version
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Tongsuo build completed (dynamic):"
+          /root/tongsuo/bin/openssl version
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Build Java SDK (dynamic linking)
+          cd /build/tongsuo-java-sdk
+          
+          # Replace the default publishing.gradle with our Maven Central version
+          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          
+          # Override hardcoded version in build.gradle
+          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
+          sed -i "s/version = \".*\"/version = \"${{ inputs.PUBLISH_VERSION }}\"/" build.gradle
+          
+          # Backup and modify openjdk/build.gradle to use our publishing config
+          cp openjdk/build.gradle openjdk/build.gradle.bak
+          
+          awk '\''
+            /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
+              print "apply from: \"build.gradle.custom\""
+              next
+            }
+            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
+              in_block=1
+              print "// " $0
+              next 
+            }
+            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
+              print "// " $0
+              in_block=0
+              next 
+            }
+            in_block==1 { 
+              print "// " $0
+              next 
+            }
+            /publishing\.publications\.maven\.artifact jarTask/ { 
+              print "    // " $0
+              next 
+            }
+            { print }
+          '\'' openjdk/build.gradle.bak > openjdk/build.gradle
+          
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+          
+          # Build with dynamic linking flag
+          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                    -PtongsuoHome=/root/tongsuo \
+                    -PtongsuoDynamic=1 \
+                    -PcheckErrorQueue \
+                    :tongsuo-openjdk:publishToMavenLocal
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Build Completed Successfully (Dynamic)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📦 Maven Artifacts:"
+          find /root/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
+          echo ""
+          echo "📋 Build Information:"
+          echo "  Platform: ${{ matrix.platform_name }}"
+          echo "  GLIBC Version: $GLIBC_VERSION"
+          echo "  Tongsuo Version: ${{ inputs.TONGSUO_VERSION }}"
+          echo "  Tongsuo Built:"
+          /root/tongsuo/bin/openssl version | sed "s/^/    /"
+          echo "  Publish Version: ${{ inputs.PUBLISH_VERSION }}"
+          echo "  Linking: Dynamic"
+          echo ""
+          echo "⚠️  IMPORTANT: This binary requires GLIBC $GLIBC_VERSION or higher"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          '
+      
+      - name: Upload Maven repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-repo-${{ matrix.platform_name }}
+          path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
+          retention-days: 7
+      
+      - name: Build Summary
+        shell: bash
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Platform Build Complete: ${{ matrix.platform_name }} (Dynamic)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
   publish:
     name: Create Maven Central Bundle
-    needs: build-all-platforms
+    needs: [build-all-platforms, build-linux-dynamic]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI repo
@@ -896,6 +1089,110 @@ jobs:
           echo "✅ Merged repository contents:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           find "$MERGED_REPO" -type f | head -50
+
+      - name: Create Uber JARs
+        run: |
+          set -e
+          
+          VERSION="${{ inputs.PUBLISH_VERSION }}"
+          GROUP_ID="com.infinilabs"
+          ARTIFACT_ID="tongsuo-openjdk"
+          GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
+          
+          REPO_PATH="$GITHUB_WORKSPACE/merged-repo/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
+          TEMP_DIR="$GITHUB_WORKSPACE/temp-uber"
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Creating Uber JARs"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # 1. Create Static Uber JAR (all platforms except dynamic)
+          echo "📦 Creating Static Uber JAR..."
+          mkdir -p "$TEMP_DIR/static"
+          cd "$TEMP_DIR/static"
+          
+          # Extract all static platform JARs
+          for jar in "$REPO_PATH"/*-linux-x86_64.jar \
+                     "$REPO_PATH"/*-linux-aarch_64.jar \
+                     "$REPO_PATH"/*-osx-x86_64.jar \
+                     "$REPO_PATH"/*-osx-aarch_64.jar \
+                     "$REPO_PATH"/*-windows-x86_64.jar; do
+            if [ -f "$jar" ]; then
+              echo "  Extracting $(basename $jar)..."
+              jar xf "$jar"
+            fi
+          done
+          
+          # Create uber JAR
+          STATIC_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION.jar"
+          jar cf "$STATIC_UBER" .
+          echo "✅ Static Uber JAR created: $(basename $STATIC_UBER)"
+          echo "   Size: $(du -h $STATIC_UBER | cut -f1)"
+          
+          # 2. Create Dynamic Uber JAR (Linux dynamic only)
+          echo ""
+          echo "📦 Creating Dynamic Uber JAR..."
+          mkdir -p "$TEMP_DIR/dynamic"
+          cd "$TEMP_DIR/dynamic"
+          
+          # Extract all dynamic platform JARs
+          for jar in "$REPO_PATH"/*-linux-x86_64-dynamic.jar \
+                     "$REPO_PATH"/*-linux-aarch_64-dynamic.jar; do
+            if [ -f "$jar" ]; then
+              echo "  Extracting $(basename $jar)..."
+              jar xf "$jar"
+            fi
+          done
+          
+          # Create dynamic uber JAR
+          DYNAMIC_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION-dynamic.jar"
+          jar cf "$DYNAMIC_UBER" .
+          echo "✅ Dynamic Uber JAR created: $(basename $DYNAMIC_UBER)"
+          echo "   Size: $(du -h $DYNAMIC_UBER | cut -f1)"
+          
+          # 3. Create sources and javadoc uber JARs (combine all platforms)
+          echo ""
+          echo "📦 Creating Uber Sources JAR..."
+          mkdir -p "$TEMP_DIR/sources"
+          cd "$TEMP_DIR/sources"
+          
+          for jar in "$REPO_PATH"/*-sources.jar; do
+            if [ -f "$jar" ]; then
+              jar xf "$jar"
+            fi
+          done
+          
+          SOURCES_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION-sources.jar"
+          jar cf "$SOURCES_UBER" .
+          echo "✅ Uber Sources JAR created: $(basename $SOURCES_UBER)"
+          
+          echo ""
+          echo "📦 Creating Uber Javadoc JAR..."
+          mkdir -p "$TEMP_DIR/javadoc"
+          cd "$TEMP_DIR/javadoc"
+          
+          for jar in "$REPO_PATH"/*-javadoc.jar; do
+            if [ -f "$jar" ]; then
+              jar xf "$jar"
+            fi
+          done
+          
+          JAVADOC_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION-javadoc.jar"
+          jar cf "$JAVADOC_UBER" .
+          echo "✅ Uber Javadoc JAR created: $(basename $JAVADOC_UBER)"
+          
+          # Cleanup
+          rm -rf "$TEMP_DIR"
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Uber JAR Summary:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Static Uber:  $ARTIFACT_ID-$VERSION.jar"
+          echo "Dynamic Uber: $ARTIFACT_ID-$VERSION-dynamic.jar"
+          echo "Sources Uber: $ARTIFACT_ID-$VERSION-sources.jar"
+          echo "Javadoc Uber: $ARTIFACT_ID-$VERSION-javadoc.jar"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Verify Maven Central requirements
         run: |
