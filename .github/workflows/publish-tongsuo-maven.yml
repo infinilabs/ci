@@ -772,9 +772,11 @@ jobs:
               platform=$(basename "$repo_dir" | sed 's/maven-repo-//')
               echo "📦 Merging platform: $platform"
               
-              # Copy all files from this platform's repo (including .md5, .sha1, .asc)
+              # Recursively copy all files from this platform's repo
+              # The artifact structure is: maven-repo-XXX/$VERSION/*.jar
               if [ -d "$repo_dir" ]; then
-                cp -v "$repo_dir"/* "$REPO_PATH/" 2>/dev/null || true
+                # Find all files and copy them to merged repo
+                find "$repo_dir" -type f -exec cp -v {} "$REPO_PATH/" \; 2>/dev/null || true
               fi
             fi
           done

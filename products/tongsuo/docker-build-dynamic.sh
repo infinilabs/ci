@@ -124,5 +124,5 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # Copy artifacts to mounted volume for upload
 echo ""
 echo "📤 Copying artifacts to host..."
-mkdir -p /build/artifacts
-cp -r /root/.m2/repository/com/infinilabs/tongsuo-openjdk/"${PUBLISH_VERSION}" /build/artifacts/ || true
+mkdir -p /build/tongsuo-java-sdk/artifacts
+cp -r /root/.m2/repository/com/infinilabs/tongsuo-openjdk/"${PUBLISH_VERSION}" /build/tongsuo-java-sdk/artifacts/ || true
