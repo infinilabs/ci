@@ -121,7 +121,19 @@ def main():
 
                 if state == 'PUBLISHED':
                     print("\n🎉 PUBLISHED Successfully!")
+                    print("✅ Artifacts are live on Maven Central")
                     sys.exit(0)
+                
+                elif state == 'PUBLISHING':
+                    # Check how long we've been publishing
+                    elapsed = time.time() - start_time
+                    if elapsed > 300:  # After 5 minutes of PUBLISHING, consider it success
+                        print(f"\n✅ PUBLISHING in progress ({int(elapsed/60)} minutes)")
+                        print("📦 Package validation passed and is being synced to Maven Central")
+                        print("⏰ This may take 10-30 minutes to complete")
+                        print("🔍 Check status at: https://central.sonatype.com/publishing")
+                        print(f"   Deployment ID: {deployment_id}")
+                        sys.exit(0)
                 
                 elif state == 'FAILED':
                     print("\n❌ FAILED.")
