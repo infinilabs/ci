@@ -1070,7 +1070,8 @@ jobs:
           GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
           
           MERGED_REPO="$GITHUB_WORKSPACE/merged-repo"
-          mkdir -p "$MERGED_REPO/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
+          REPO_PATH="$MERGED_REPO/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
+          mkdir -p "$REPO_PATH"
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Merging Maven repositories from all platforms"
@@ -1082,10 +1083,28 @@ jobs:
               platform=$(basename "$repo_dir" | sed 's/maven-repo-//')
               echo "📦 Merging platform: $platform"
               
-              # Copy all files from this platform's repo
+              # Copy all files from this platform's repo (including .md5, .sha1, .asc)
               if [ -d "$repo_dir" ]; then
-                cp -rv "$repo_dir"/* "$MERGED_REPO/$GROUP_PATH/$ARTIFACT_ID/$VERSION/" || true
+                cp -v "$repo_dir"/* "$REPO_PATH/" 2>/dev/null || true
               fi
+            fi
+          done
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Generating checksums for all files"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Generate checksums for all JAR and POM files
+          cd "$REPO_PATH"
+          for file in *.jar *.pom; do
+            if [ -f "$file" ]; then
+              echo "📝 Generating checksums for: $file"
+              # Generate all required checksums
+              md5sum "$file" | cut -d' ' -f1 > "${file}.md5"
+              sha1sum "$file" | cut -d' ' -f1 > "${file}.sha1"
+              sha256sum "$file" | cut -d' ' -f1 > "${file}.sha256"
+              sha512sum "$file" | cut -d' ' -f1 > "${file}.sha512"
             fi
           done
           
@@ -1191,6 +1210,22 @@ jobs:
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Generating checksums for Uber JARs"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          cd "$REPO_PATH"
+          for jar in "$ARTIFACT_ID-$VERSION.jar" "$ARTIFACT_ID-$VERSION-dynamic.jar" "$ARTIFACT_ID-$VERSION-sources.jar" "$ARTIFACT_ID-$VERSION-javadoc.jar"; do
+            if [ -f "$jar" ]; then
+              echo "📝 Generating checksums for: $jar"
+              md5sum "$jar" | cut -d' ' -f1 > "${jar}.md5"
+              sha1sum "$jar" | cut -d' ' -f1 > "${jar}.sha1"
+              sha256sum "$jar" | cut -d' ' -f1 > "${jar}.sha256"
+              sha512sum "$jar" | cut -d' ' -f1 > "${jar}.sha512"
+            fi
+          done
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ Uber JAR Summary:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Static Uber:  $ARTIFACT_ID-$VERSION.jar"
@@ -1198,6 +1233,58 @@ jobs:
           echo "Sources Uber: $ARTIFACT_ID-$VERSION-sources.jar"
           echo "Javadoc Uber: $ARTIFACT_ID-$VERSION-javadoc.jar"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Sign artifacts with GPG
+        run: |
+          set -e
+          
+          VERSION="${{ inputs.PUBLISH_VERSION }}"
+          GROUP_ID="com.infinilabs"
+          ARTIFACT_ID="tongsuo-openjdk"
+          GROUP_PATH=$(echo $GROUP_ID | tr '.' '/')
+          REPO_PATH="$GITHUB_WORKSPACE/merged-repo/$GROUP_PATH/$ARTIFACT_ID/$VERSION"
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Signing artifacts with GPG"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Import GPG key
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+            
+            cd "$REPO_PATH"
+            
+            # Sign all JAR and POM files
+            for file in *.jar *.pom; do
+              if [ -f "$file" ] && [ ! -f "${file}.asc" ]; then
+                echo "🔏 Signing: $file"
+                gpg --batch --yes --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+                    --pinentry-mode loopback \
+                    --detach-sign --armor "$file"
+              fi
+            done
+            
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Generating checksums for signature files"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            
+            # Generate checksums for all .asc files
+            for asc in *.asc; do
+              if [ -f "$asc" ]; then
+                echo "📝 Generating checksums for: $asc"
+                md5sum "$asc" | cut -d' ' -f1 > "${asc}.md5"
+                sha1sum "$asc" | cut -d' ' -f1 > "${asc}.sha1"
+                sha256sum "$asc" | cut -d' ' -f1 > "${asc}.sha256"
+                sha512sum "$asc" | cut -d' ' -f1 > "${asc}.sha512"
+              fi
+            done
+            
+            echo "✅ All artifacts signed and checksums generated"
+          else
+            echo "⚠️  GPG_PRIVATE_KEY not found - skipping signing"
+            echo "   Maven Central will reject unsigned artifacts"
+          fi
 
       - name: Verify Maven Central requirements
         run: |
@@ -1219,13 +1306,25 @@ jobs:
           POM_COUNT=$(find "$REPO_PATH" -name "*.pom" | wc -l)
           SOURCES_COUNT=$(find "$REPO_PATH" -name "*-sources.jar" | wc -l)
           JAVADOC_COUNT=$(find "$REPO_PATH" -name "*-javadoc.jar" | wc -l)
+          MD5_COUNT=$(find "$REPO_PATH" -name "*.md5" | wc -l)
+          SHA1_COUNT=$(find "$REPO_PATH" -name "*.sha1" | wc -l)
+          SHA256_COUNT=$(find "$REPO_PATH" -name "*.sha256" | wc -l)
+          SHA512_COUNT=$(find "$REPO_PATH" -name "*.sha512" | wc -l)
           ASC_COUNT=$(find "$REPO_PATH" -name "*.asc" | wc -l)
           
           echo "Main JARs:    $JAR_COUNT"
           echo "POM files:    $POM_COUNT"
           echo "Sources JARs: $SOURCES_COUNT"
           echo "Javadoc JARs: $JAVADOC_COUNT"
+          echo "MD5 files:    $MD5_COUNT"
+          echo "SHA1 files:   $SHA1_COUNT"
+          echo "SHA256 files: $SHA256_COUNT"
+          echo "SHA512 files: $SHA512_COUNT"
           echo "Signatures:   $ASC_COUNT"
+          
+          echo ""
+          echo "📋 Sample file structure:"
+          ls -lh "$REPO_PATH" | head -20
           
           if [ "$POM_COUNT" -eq 0 ]; then
             echo "❌ ERROR: No POM files found!"
