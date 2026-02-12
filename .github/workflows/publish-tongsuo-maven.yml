@@ -113,7 +113,7 @@ jobs:
           - platform_name: linux-aarch_64
             os: ubuntu-22.04-arm64
             arch: linux-aarch_64
-            tongsuo_base_config: "--cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -fPIC -static -Wl,--no-as-needed -ldl"
+            tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             use_docker: true
             
@@ -244,11 +244,6 @@ jobs:
           apt-get update
           apt-get install -y build-essential perl patchelf git wget curl openjdk-11-jdk-headless
           
-          ARCH_PARAM="${{ matrix.arch }}"
-          if [[ "$ARCH_PARAM" == "linux-aarch_64" ]]; then
-            apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user-static
-          fi
-          
           # Build Tongsuo
           cd /build
           echo "Building Tongsuo ${{ inputs.TONGSUO_VERSION }}..."
@@ -307,18 +302,7 @@ jobs:
           echo "✅ Tongsuo built successfully"
           echo ""
           echo "🔐 Tongsuo Version:"
-          # For cross-compiled binaries, use file command to show architecture
-          # and try to run with qemu if available
-          if [[ "${{ matrix.arch }}" == "linux-aarch_64" ]]; then
-            echo "Architecture: $(file /root/tongsuo/bin/openssl | cut -d: -f2-)"
-            if command -v qemu-aarch64-static >/dev/null 2>&1; then
-              qemu-aarch64-static /root/tongsuo/bin/openssl version || echo "(Cross-compiled for aarch64)"
-            else
-              echo "(Cross-compiled for aarch64 - cannot execute on x86_64)"
-            fi
-          else
-            /root/tongsuo/bin/openssl version
-          fi
+          /root/tongsuo/bin/openssl version
           echo ""
           echo "Installation directory contents:"
           ls -lh /root/tongsuo/
@@ -355,18 +339,9 @@ jobs:
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
-          # Set up cross-compilation for aarch64 if needed
-          GRADLE_ARGS=""
-          if [[ "${{ matrix.arch }}" == "linux-aarch_64" ]]; then
-            export CC=aarch64-linux-gnu-gcc
-            export CXX=aarch64-linux-gnu-g++
-            GRADLE_ARGS="-PcrossCompilePrefix=aarch64-linux-gnu-"
-          fi
-          
           ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome=/root/tongsuo \
                     -PcheckErrorQueue \
-                    $GRADLE_ARGS \
                     :tongsuo-openjdk:publishToMavenLocal
           
           echo ""
