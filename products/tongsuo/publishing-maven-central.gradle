@@ -47,11 +47,11 @@ println ""
 // Clear any existing publishing configuration to avoid conflicts
 // Use afterEvaluate to run after SDK's build.gradle is evaluated
 afterEvaluate {
-    // Remove SDK's publishing config by redefining it
+    // Clear SDK's publications and recreate with our config
     publishing {
+        publications.clear()
         publications {
-            // Recreate 'maven' publication with our configuration
-            // This replaces whatever the SDK defined
+            // Create 'maven' publication with our configuration
             maven(MavenPublication) {
                 groupId = 'com.infinilabs'
                 artifactId = 'tongsuo-openjdk'

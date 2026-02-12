@@ -253,10 +253,11 @@ artifacts {
     platform platformJar
 }
 
-// Publishing configuration is provided by init.gradle
-// which applies publishing-maven-central.gradle
-// Lines below are commented out to avoid conflicts:
-// apply from: "$rootDir/gradle/publishing.gradle"
+// Apply SDK's publishing config to get maven-publish plugin
+// Our publishing-maven-central.gradle (via init.gradle) will override the publications
+apply from: "$rootDir/gradle/publishing.gradle"
+
+// Don't add sourcesJar/javadocJar here - our publishing config handles it
 // publishing.publications.maven {
 //     artifact sourcesJar
 //     artifact javadocJar
