@@ -240,28 +240,11 @@ jobs:
           ref: ${{ inputs.BRANCH }}
           path: tongsuo-java-sdk
 
-      - name: Patch SDK build.gradle for Maven Central
+      - name: Replace SDK build.gradle with Maven Central version
         run: |
-          # Comment out conflicting publishing configuration in SDK's build.gradle
-          # This prevents SDK from defining publishing config that conflicts with ours
-          cd tongsuo-java-sdk/openjdk
-          
-          # Backup original
-          cp build.gradle build.gradle.original
-          
-          # Comment out the apply publishing.gradle line (around line 256)
-          sed -i '/^apply from:.*gradle\/publishing\.gradle/s/^/\/\/ /' build.gradle
-          
-          # Comment out the publishing.publications.maven block (lines 257-260)
-          # This block adds sourcesJar and javadocJar which we handle in our config
-          sed -i '/^publishing\.publications\.maven {/,/^}/s/^/\/\/ /' build.gradle
-          
-          echo "✅ Patched SDK build.gradle:"
-          echo "   - Commented out apply publishing.gradle"
-          echo "   - Commented out publishing.publications.maven block"
-          
-          # Show what was changed
-          diff -u build.gradle.original build.gradle || true
+          # Use our pre-configured build.gradle that has publishing conflicts removed
+          cp $GITHUB_WORKSPACE/products/tongsuo/openjdk-build.gradle tongsuo-java-sdk/openjdk/build.gradle
+          echo "✅ Replaced SDK's build.gradle with Maven Central compatible version"
 
       - name: Build with Docker (Linux)
         if: runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker
@@ -687,21 +670,11 @@ jobs:
           ref: ${{ inputs.BRANCH }}
           path: tongsuo-java-sdk
       
-      - name: Patch SDK build.gradle for Maven Central
+      - name: Replace SDK build.gradle with Maven Central version
         run: |
-          # Comment out conflicting publishing configuration in SDK's build.gradle
-          cd tongsuo-java-sdk/openjdk
-          
-          # Backup original
-          cp build.gradle build.gradle.original
-          
-          # Comment out the apply publishing.gradle line
-          sed -i '/^apply from:.*gradle\/publishing\.gradle/s/^/\/\/ /' build.gradle
-          
-          # Comment out the publishing.publications.maven block
-          sed -i '/^publishing\.publications\.maven {/,/^}/s/^/\/\/ /' build.gradle
-          
-          echo "✅ Patched SDK build.gradle to avoid publishing conflicts"
+          # Use our pre-configured build.gradle that has publishing conflicts removed
+          cp $GITHUB_WORKSPACE/products/tongsuo/openjdk-build.gradle tongsuo-java-sdk/openjdk/build.gradle
+          echo "✅ Replaced SDK's build.gradle with Maven Central compatible version"
       
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
