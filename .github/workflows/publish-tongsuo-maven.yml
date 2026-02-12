@@ -97,7 +97,7 @@ on:
 jobs:
   build-all-platforms:
     name: Build ${{ matrix.platform_name }}
-    runs-on: ${{ matrix.use_docker && 'ubuntu-latest' || matrix.os }}
+    runs-on: ${{ matrix.use_docker && 'ubuntu-22.04' || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -650,7 +650,7 @@ jobs:
 
   build-linux-dynamic:
     name: Build Dynamic - ${{ matrix.platform_name }}
-    runs-on: ${{ matrix.use_docker && 'ubuntu-latest' || matrix.os }}
+    runs-on: ${{ matrix.use_docker && 'ubuntu-22.04' || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -752,10 +752,9 @@ jobs:
     needs: [build-all-platforms, build-linux-dynamic]
     # Allow publish to run even if dynamic build fails (for testing)
     if: always() && needs.build-all-platforms.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout CI repo
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
