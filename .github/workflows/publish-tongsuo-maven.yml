@@ -846,40 +846,86 @@ jobs:
             fi
           done
           
-          # 1. Create Static Uber JAR
+          # 1. Create Static Uber JAR (merge native libraries from all platforms)
           if [ ${#STATIC_JARS[@]} -gt 0 ]; then
             echo ""
             echo "📦 Creating Static Uber JAR from ${#STATIC_JARS[@]} platform(s)..."
-            mkdir -p "$TEMP_DIR/static"
-            cd "$TEMP_DIR/static"
+            mkdir -p "$TEMP_DIR/static-base"
+            mkdir -p "$TEMP_DIR/static-temp"
+            cd "$TEMP_DIR/static-base"
             
+            # Extract first JAR to get base structure (classes, resources, etc.)
+            FIRST_JAR="${STATIC_JARS[0]}"
+            echo "   Using $FIRST_JAR as base..."
+            unzip -q "$REPO_PATH/$FIRST_JAR"
+            
+            # Extract native libraries from all platform JARs
             for jar in "${STATIC_JARS[@]}"; do
-              echo "   Extracting $jar..."
-              jar xf "$REPO_PATH/$jar"
+              echo "   Extracting native libraries from $jar..."
+              cd "$TEMP_DIR/static-temp"
+              unzip -q "$REPO_PATH/$jar" "META-INF/native/*" 2>/dev/null || true
+              if [ -d META-INF/native ]; then
+                mkdir -p "$TEMP_DIR/static-base/META-INF/native"
+                cp -v META-INF/native/* "$TEMP_DIR/static-base/META-INF/native/" 2>/dev/null || true
+                rm -rf META-INF
+              fi
             done
             
+            # Create uber JAR with enhanced manifest
+            cd "$TEMP_DIR/static-base"
+            echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
+            echo "Implementation-Title: Tongsuo Java SDK (Static Uber)" >> META-INF/MANIFEST.MF
+            echo "Implementation-Version: $VERSION" >> META-INF/MANIFEST.MF
+            echo "Implementation-Vendor: Infinilabs" >> META-INF/MANIFEST.MF
+            echo "Jar-Type: uber-static" >> META-INF/MANIFEST.MF
+            echo "Platforms: ${STATIC_JARS[@]}" | sed 's/.jar//g' >> META-INF/MANIFEST.MF
+            
             STATIC_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION.jar"
-            jar cf "$STATIC_UBER" .
+            jar cfm "$STATIC_UBER" META-INF/MANIFEST.MF .
             echo "✅ Static Uber JAR: $(basename $STATIC_UBER) ($(du -h $STATIC_UBER | cut -f1))"
+            echo "   Native libraries: $(find META-INF/native -type f 2>/dev/null | wc -l)"
           else
             echo "⚠️  No static platform JARs - skipping static uber"
           fi
           
-          # 2. Create Dynamic Uber JAR
+          # 2. Create Dynamic Uber JAR (merge native libraries from all platforms)
           if [ ${#DYNAMIC_JARS[@]} -gt 0 ]; then
             echo ""
             echo "📦 Creating Dynamic Uber JAR from ${#DYNAMIC_JARS[@]} platform(s)..."
-            mkdir -p "$TEMP_DIR/dynamic"
-            cd "$TEMP_DIR/dynamic"
+            mkdir -p "$TEMP_DIR/dynamic-base"
+            mkdir -p "$TEMP_DIR/dynamic-temp"
+            cd "$TEMP_DIR/dynamic-base"
             
+            # Extract first JAR to get base structure
+            FIRST_JAR="${DYNAMIC_JARS[0]}"
+            echo "   Using $FIRST_JAR as base..."
+            unzip -q "$REPO_PATH/$FIRST_JAR"
+            
+            # Extract native libraries from all platform JARs
             for jar in "${DYNAMIC_JARS[@]}"; do
-              echo "   Extracting $jar..."
-              jar xf "$REPO_PATH/$jar"
+              echo "   Extracting native libraries from $jar..."
+              cd "$TEMP_DIR/dynamic-temp"
+              unzip -q "$REPO_PATH/$jar" "META-INF/native/*" 2>/dev/null || true
+              if [ -d META-INF/native ]; then
+                mkdir -p "$TEMP_DIR/dynamic-base/META-INF/native"
+                cp -v META-INF/native/* "$TEMP_DIR/dynamic-base/META-INF/native/" 2>/dev/null || true
+                rm -rf META-INF
+              fi
             done
             
+            # Create uber JAR with enhanced manifest
+            cd "$TEMP_DIR/dynamic-base"
+            echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
+            echo "Implementation-Title: Tongsuo Java SDK (Dynamic Uber)" >> META-INF/MANIFEST.MF
+            echo "Implementation-Version: $VERSION" >> META-INF/MANIFEST.MF
+            echo "Implementation-Vendor: Infinilabs" >> META-INF/MANIFEST.MF
+            echo "Jar-Type: uber-dynamic" >> META-INF/MANIFEST.MF
+            echo "Platforms: ${DYNAMIC_JARS[@]}" | sed 's/.jar//g' >> META-INF/MANIFEST.MF
+            
             DYNAMIC_UBER="$REPO_PATH/$ARTIFACT_ID-$VERSION-dynamic.jar"
-            jar cf "$DYNAMIC_UBER" .
+            jar cfm "$DYNAMIC_UBER" META-INF/MANIFEST.MF .
             echo "✅ Dynamic Uber JAR: $(basename $DYNAMIC_UBER) ($(du -h $DYNAMIC_UBER | cut -f1))"
+            echo "   Native libraries: $(find META-INF/native -type f 2>/dev/null | wc -l)"
           else
             echo "⚠️  No dynamic platform JARs - skipping dynamic uber"
           fi
