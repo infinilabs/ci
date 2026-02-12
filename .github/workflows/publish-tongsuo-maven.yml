@@ -713,11 +713,20 @@ jobs:
           # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             echo "🔧 Building Java SDK under Rosetta 2 (x86_64)..."
-            # Environment variables already set in "Set environment variables" step
+            echo "  Architecture: $(uname -m)"
+            echo "  CC: $CC"
+            echo "  CFLAGS: $CFLAGS"
+            echo "  LDFLAGS: $LDFLAGS"
+            
+            # Explicitly pass architecture flags to Gradle (don't rely on env vars)
             # Run Gradle under Rosetta 2
             arch -x86_64 ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                                    -PtongsuoHome="$TONGSUO_HOME" \
                                    -PcheckErrorQueue \
+                                   -Parch=x86_64 \
+                                   -PldFlags="-arch x86_64" \
+                                   -PcFlags="-arch x86_64" \
+                                   -PcppFlags="-arch x86_64" \
                                    :tongsuo-openjdk:publishToMavenLocal
           else
             # Other platforms: standard build
