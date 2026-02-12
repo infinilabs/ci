@@ -193,6 +193,12 @@ jobs:
           Write-Host "`nVerifying installation..."
           perl -MLocale::Maketext::Simple -e "print qq{✅ Module installed successfully\n}"
 
+      - name: Setup MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
         with:
