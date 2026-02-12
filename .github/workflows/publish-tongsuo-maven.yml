@@ -305,6 +305,7 @@ jobs:
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           ./gradlew --init-script init-publish.gradle \
                     -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                    -PtongsuoHome=/root/tongsuo \
                     -PcheckErrorQueue \
                     :tongsuo-openjdk:publishToMavenLocal
           
@@ -442,8 +443,14 @@ jobs:
           
           ./config $CONFIG_OPTS
           
-          make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
-          make install_sw
+          # Use nmake on Windows, make on Unix
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            nmake
+            nmake install_sw
+          else
+            make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+            make install_sw
+          fi
           
           echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
           
@@ -466,6 +473,7 @@ jobs:
           # Build and publish to Maven local repository
           ./gradlew --init-script init-publish.gradle \
                     -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                    -PtongsuoHome="$HOME/tongsuo" \
                     -PcheckErrorQueue \
                     :tongsuo-openjdk:publishToMavenLocal
           
