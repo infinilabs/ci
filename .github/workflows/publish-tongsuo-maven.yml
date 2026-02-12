@@ -199,6 +199,32 @@ jobs:
         with:
           arch: x64
 
+      - name: Setup Environment Variables
+        shell: bash
+        run: |
+          # Set TONGSUO_HOME
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
+          else
+            echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
+          fi
+          
+          # Set architecture-specific flags for macOS x86_64 cross-compilation
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            echo "CC=clang -arch x86_64" >> $GITHUB_ENV
+            echo "CXX=clang++ -arch x86_64" >> $GITHUB_ENV
+            echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
+            echo "CXXFLAGS=-arch x86_64" >> $GITHUB_ENV
+            echo "LDFLAGS=-arch x86_64" >> $GITHUB_ENV
+            echo "ORG_GRADLE_PROJECT_arch=x86_64" >> $GITHUB_ENV
+            echo "ORG_GRADLE_PROJECT_ldFlags=-arch x86_64" >> $GITHUB_ENV
+            echo "ORG_GRADLE_PROJECT_cFlags=-arch x86_64" >> $GITHUB_ENV
+            echo "ORG_GRADLE_PROJECT_cppFlags=-arch x86_64" >> $GITHUB_ENV
+            echo "✅ Configured cross-compilation for x86_64"
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "✅ Building natively for ARM64"
+          fi
+
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
         with:
@@ -403,15 +429,7 @@ jobs:
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
-          # Set architecture-specific flags for macOS x86_64 cross-compilation
-          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            export CC="clang -arch x86_64"
-            export CXX="clang++ -arch x86_64"
-            export CFLAGS="-arch x86_64"
-            export CXXFLAGS="-arch x86_64"
-            export LDFLAGS="-arch x86_64"
-          fi
-          
+          # cc_prefix is used for Linux cross-compilation
           if [[ -n "${{ matrix.cc_prefix }}" ]]; then
             export CC=${{ matrix.cc_prefix }}gcc
             export CXX=${{ matrix.cc_prefix }}g++
@@ -487,23 +505,18 @@ jobs:
           # Use init script instead of replacing build.gradle
           cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle init-publish.gradle
           
-          # Set up architecture-specific build for macOS x86_64
+          # For macOS x86_64, use Rosetta 2 to run Gradle
           GRADLE_CMD="./gradlew"
-          GRADLE_ARGS=""
-          
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            # Use Rosetta 2 to run x86_64 Gradle on ARM64 host
             GRADLE_CMD="arch -x86_64 ./gradlew"
-            GRADLE_ARGS="-Parch=x86_64 -PldFlags=\"-arch x86_64\" -PcFlags=\"-arch x86_64\" -PcppFlags=\"-arch x86_64\""
           fi
           
           # Build and publish to Maven local repository
-          eval $GRADLE_CMD --init-script init-publish.gradle \
-                    -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                    -PtongsuoHome="$HOME/tongsuo" \
-                    -PcheckErrorQueue \
-                    $GRADLE_ARGS \
-                    :tongsuo-openjdk:publishToMavenLocal
+          $GRADLE_CMD --init-script init-publish.gradle \
+                      -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                      -PtongsuoHome="$TONGSUO_HOME" \
+                      -PcheckErrorQueue \
+                      :tongsuo-openjdk:publishToMavenLocal
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Published to Maven local repository"
