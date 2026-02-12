@@ -315,6 +315,12 @@ jobs:
           make -j$(nproc)
           make install_sw
           
+          # Create symlink if lib64 exists but lib doesn't
+          if [ -d /root/tongsuo/lib64 ] && [ ! -d /root/tongsuo/lib ]; then
+            echo "Creating symlink: lib -> lib64"
+            ln -s lib64 /root/tongsuo/lib
+          fi
+          
           echo ""
           echo "✅ Tongsuo built successfully"
           echo "Installation directory contents:"
@@ -485,6 +491,12 @@ jobs:
           else
             make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
             make install_sw
+          fi
+          
+          # Create symlink if lib64 exists but lib doesn't (Linux)
+          if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
+            echo "Creating symlink: lib -> lib64"
+            cd "$TONGSUO_HOME" && ln -s lib64 lib
           fi
           
           echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
