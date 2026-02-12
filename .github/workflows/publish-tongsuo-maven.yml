@@ -398,25 +398,10 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build Tongsuo (Native)
-        if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) }}
+        if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) && runner.os != 'Windows' }}
         shell: bash
         run: |
           set -e
-          
-          # For Windows, ensure we use Strawberry Perl and NASM
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            export PATH="/c/Strawberry/perl/bin:/c/Strawberry/c/bin:/c/Program Files/NASM:$PATH"
-            echo "Windows: Setting up build environment"
-            echo "Perl location:"
-            which perl
-            perl -v
-            echo ""
-            echo "NASM location:"
-            which nasm || echo "WARNING: NASM not in PATH"
-            nasm -v || echo "WARNING: NASM not available"
-            echo ""
-            perl -MLocale::Maketext::Simple -e "print 'Perl module check OK\n'" || echo "WARNING: Module not found"
-          fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Building Tongsuo"
@@ -484,14 +469,8 @@ jobs:
           
           ./config $CONFIG_OPTS
           
-          # Use nmake on Windows, make on Unix
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            nmake
-            nmake install_sw
-          else
-            make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
-            make install_sw
-          fi
+          make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+          make install_sw
           
           # Create symlink if lib64 exists but lib doesn't (Linux)
           if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
@@ -506,6 +485,82 @@ jobs:
           echo "Tongsuo build completed:"
           $HOME/tongsuo/bin/openssl version
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Build Tongsuo (Native - Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          Write-Host "Building Tongsuo for Windows"
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          Write-Host "Version:     ${{ inputs.TONGSUO_VERSION }}"
+          Write-Host "Platform:    ${{ matrix.platform_name }}"
+          Write-Host "API Version: ${{ inputs.API_VERSION }}"
+          Write-Host "Features:"
+          Write-Host "  • NTLS:    ${{ inputs.ENABLE_NTLS }}"
+          Write-Host "  • SM2:     ${{ inputs.ENABLE_SM2 }}"
+          Write-Host "  • SM3:     ${{ inputs.ENABLE_SM3 }}"
+          Write-Host "  • SM4:     ${{ inputs.ENABLE_SM4 }}"
+          Write-Host "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
+          cd Tongsuo
+          
+          # Build configuration
+          $CONFIG_OPTS = "${{ matrix.tongsuo_base_config }}"
+          
+          # API Version
+          if ("${{ inputs.API_VERSION }}" -ne "default") {
+            $CONFIG_OPTS += " --api=${{ inputs.API_VERSION }}"
+          }
+          
+          # Feature flags
+          if ("${{ inputs.ENABLE_NTLS }}" -eq "true") {
+            $CONFIG_OPTS += " enable-ntls"
+          } else {
+            $CONFIG_OPTS += " no-ntls"
+          }
+          
+          if ("${{ inputs.ENABLE_SM2 }}" -eq "true") {
+            $CONFIG_OPTS += " enable-sm2"
+          }
+          
+          if ("${{ inputs.ENABLE_SM3 }}" -eq "true") {
+            $CONFIG_OPTS += " enable-sm3"
+          }
+          
+          if ("${{ inputs.ENABLE_SM4 }}" -eq "true") {
+            $CONFIG_OPTS += " enable-sm4"
+          }
+          
+          if ("${{ inputs.ENABLE_DEBUG }}" -eq "true") {
+            $CONFIG_OPTS += " --debug"
+          }
+          
+          # Extra options
+          if ("${{ inputs.EXTRA_CONFIG_OPTS }}") {
+            $CONFIG_OPTS += " ${{ inputs.EXTRA_CONFIG_OPTS }}"
+          }
+          
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          Write-Host "Full config command:"
+          Write-Host "  perl Configure $CONFIG_OPTS"
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Use perl Configure instead of ./config on Windows
+          perl Configure ($CONFIG_OPTS -split ' ')
+          nmake
+          nmake install_sw
+          
+          # Set environment variable for next steps
+          $env:TONGSUO_HOME = "$env:HOME\tongsuo"
+          "TONGSUO_HOME=$env:HOME\tongsuo" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          Write-Host "Tongsuo build completed:"
+          & "$env:HOME\tongsuo\bin\openssl.exe" version
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build and publish JAR with custom groupId (Native)
         if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) }}
