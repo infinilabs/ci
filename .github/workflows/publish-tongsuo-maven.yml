@@ -259,8 +259,26 @@ jobs:
           # Configure with --prefix and base config options
           CONFIG_OPTS="--prefix=/root/tongsuo ${{ matrix.tongsuo_base_config }}"
           
+          # Auto-detect API version based on system OpenSSL version
+          if command -v openssl >/dev/null 2>&1; then
+            OPENSSL_VERSION=$(openssl version | awk '{print $2}' | cut -d. -f1)
+            echo "Detected system OpenSSL major version: $OPENSSL_VERSION"
+            
+            # If major version < 3, use API 1.1.1 for compatibility
+            if [[ "$OPENSSL_VERSION" =~ ^[0-2]$ ]]; then
+              CONFIG_OPTS="$CONFIG_OPTS --api=1.1.1"
+              echo "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
+            else
+              echo "  → No --api parameter needed (OpenSSL >= 3.0)"
+            fi
+          fi
+          
+          # API Version from inputs (optional override)
           if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            # Remove auto-detected --api if exists
+            CONFIG_OPTS=$(echo "$CONFIG_OPTS" | sed 's/--api=[^ ]*//')
             CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "  → Override: using --api=${{ inputs.API_VERSION }} from input"
           fi
           
           if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
@@ -473,9 +491,27 @@ jobs:
           # Build configuration from inputs
           CONFIG_OPTS="--prefix=$TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
-          # API Version (skip if 'default')
+          # Auto-detect API version based on system OpenSSL/LibreSSL version
+          # Only add --api parameter if system has OpenSSL/LibreSSL < 3.0
+          if command -v openssl >/dev/null 2>&1; then
+            OPENSSL_VERSION=$(openssl version | awk '{print $2}' | cut -d. -f1)
+            echo "Detected system OpenSSL/LibreSSL major version: $OPENSSL_VERSION"
+            
+            # If major version < 3, use API 1.1.1 for compatibility
+            if [[ "$OPENSSL_VERSION" =~ ^[0-2]$ ]]; then
+              CONFIG_OPTS="$CONFIG_OPTS --api=1.1.1"
+              echo "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
+            else
+              echo "  → No --api parameter needed (OpenSSL >= 3.0)"
+            fi
+          fi
+          
+          # API Version from inputs (optional override)
           if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            # Remove auto-detected --api if exists
+            CONFIG_OPTS=$(echo "$CONFIG_OPTS" | sed 's/--api=[^ ]*//')
             CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "  → Override: using --api=${{ inputs.API_VERSION }} from input"
           fi
           
           # Feature flags
@@ -545,9 +581,11 @@ jobs:
           if [[ "${{ runner.os }}" == "macOS" ]]; then
             echo ""
             echo "Library architectures:"
-            for lib in $TONGSUO_HOME/lib/*.a $TONGSUO_HOME/lib/*.dylib 2>/dev/null; do
+            # Use find to avoid glob expansion issues
+            find "$TONGSUO_HOME/lib" -name "*.a" -o -name "*.dylib" 2>/dev/null | while read -r lib; do
               if [ -f "$lib" ]; then
-                echo "  $(basename $lib): $(lipo -info "$lib" 2>&1 | grep -o 'x86_64\|arm64' || echo 'unknown')"
+                ARCH=$(lipo -info "$lib" 2>&1 | grep -o 'x86_64\|arm64' || echo 'unknown')
+                echo "  $(basename "$lib"): $ARCH"
               fi
             done
           fi
@@ -577,9 +615,29 @@ jobs:
           # Build configuration - use Env:TONGSUO_HOME (already set to runner.temp/tongsuo)
           $CONFIG_OPTS = "--prefix=$Env:TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
-          # API Version
+          # Auto-detect API version based on system OpenSSL version (if available)
+          # Windows runners typically don't have OpenSSL pre-installed, so this may not detect anything
+          try {
+            $opensslVersion = & openssl version 2>&1 | Select-String -Pattern "OpenSSL (\d+)\." | ForEach-Object { $_.Matches.Groups[1].Value }
+            if ($opensslVersion) {
+              Write-Host "Detected system OpenSSL major version: $opensslVersion"
+              if ([int]$opensslVersion -lt 3) {
+                $CONFIG_OPTS += " --api=1.1.1"
+                Write-Host "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
+              } else {
+                Write-Host "  → No --api parameter needed (OpenSSL >= 3.0)"
+              }
+            }
+          } catch {
+            Write-Host "No system OpenSSL detected (Windows), will use default API"
+          }
+          
+          # API Version from inputs (optional override)
           if ("${{ inputs.API_VERSION }}" -ne "default") {
+            # Remove auto-detected --api if exists
+            $CONFIG_OPTS = $CONFIG_OPTS -replace '--api=[^ ]*', ''
             $CONFIG_OPTS += " --api=${{ inputs.API_VERSION }}"
+            Write-Host "  → Override: using --api=${{ inputs.API_VERSION }} from input"
           }
           
           # Feature flags
