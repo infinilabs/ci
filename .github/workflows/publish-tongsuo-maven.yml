@@ -534,7 +534,7 @@ jobs:
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Published to Maven local repository"
-          find ~/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
+          find ~/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20 || true
 
       - name: Upload Maven repository
         uses: actions/upload-artifact@v4
@@ -725,7 +725,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           if [ -d "$GITHUB_WORKSPACE/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}" ]; then
             echo "✅ Artifacts found:"
-            find "$GITHUB_WORKSPACE/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}" -type f | head -10
+            find "$GITHUB_WORKSPACE/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}" -type f | head -10 || true
           else
             echo "❌ No artifacts found"
             ls -la "$GITHUB_WORKSPACE/tongsuo-java-sdk/" || true
@@ -833,7 +833,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ Merged repository contents:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          find "$MERGED_REPO" -type f | head -50
+          find "$MERGED_REPO" -type f | head -50 || true
 
       - name: Create Uber JARs
         run: |
