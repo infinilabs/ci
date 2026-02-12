@@ -12,6 +12,17 @@ initscript {
 gradle.projectsLoaded {
     rootProject.subprojects.each { subproject ->
         if (subproject.name == 'tongsuo-openjdk') {
+            // Intercept when SDK tries to apply publishing.gradle and skip it
+            def originalApply = subproject.&apply
+            subproject.metaClass.apply = { Map args ->
+                if (args.from?.toString()?.contains('publishing.gradle')) {
+                    println "⚠️  Skipping SDK's publishing.gradle (using Maven Central config instead)"
+                    return
+                }
+                originalApply.call(args)
+            }
+            
+            // Apply our Maven Central publishing config
             subproject.apply from: new File(initscript.sourceFile.parentFile, 'publishing-maven-central.gradle')
         }
     }
