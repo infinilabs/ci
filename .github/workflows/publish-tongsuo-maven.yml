@@ -324,7 +324,9 @@ jobs:
           cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
           # Backup and modify openjdk/build.gradle to use our publishing config
-          # Comment out lines 256-260 (publishing.publications.maven block)
+          # Need to comment out duplicate artifact additions:
+          # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
+          # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
@@ -334,13 +336,21 @@ jobs:
             /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
             in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
             in_block==1 { print "// " $0; next }
+            /publishing\.publications\.maven\.artifact jarTask/ { print "    // " $0; next }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📝 Modified openjdk/build.gradle (lines 255-262):"
+          echo "📝 Modified openjdk/build.gradle (key lines):"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          sed -n '255,262p' openjdk/build.gradle
+          echo "Line 256 (apply publishing.gradle):"
+          sed -n '256p' openjdk/build.gradle
+          echo ""
+          echo "Lines 257-260 (publishing.publications.maven block):"
+          sed -n '257,260p' openjdk/build.gradle
+          echo ""
+          echo "Line 327 (artifact jarTask):"
+          sed -n '327p' openjdk/build.gradle
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
@@ -568,8 +578,9 @@ jobs:
           cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
           # Backup and modify openjdk/build.gradle to use our publishing config
-          # Comment out lines 256-260 (publishing.publications.maven block)
-          # Use awk for cross-platform compatibility (works on macOS, Linux, Windows)
+          # Need to comment out duplicate artifact additions:
+          # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
+          # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
@@ -579,14 +590,22 @@ jobs:
             /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
             in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
             in_block==1 { print "// " $0; next }
+            /publishing\.publications\.maven\.artifact jarTask/ { print "    // " $0; next }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📝 Modified openjdk/build.gradle (lines 255-262):"
+          echo "📝 Modified openjdk/build.gradle (key lines):"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          sed -n '255,262p' openjdk/build.gradle
+          echo "Line 256 (apply publishing.gradle):"
+          sed -n '256p' openjdk/build.gradle
+          echo ""
+          echo "Lines 257-260 (publishing.publications.maven block):"
+          sed -n '257,260p' openjdk/build.gradle
+          echo ""
+          echo "Line 327 (artifact jarTask):"
+          sed -n '327p' openjdk/build.gradle
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
           
