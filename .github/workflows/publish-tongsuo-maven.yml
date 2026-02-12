@@ -873,6 +873,9 @@ jobs:
             /bin/bash -c '
           set -e
           
+          # Set library path for dynamic linking (needed throughout the build)
+          export LD_LIBRARY_PATH=/root/tongsuo/lib64:/root/tongsuo/lib:$LD_LIBRARY_PATH
+          
           # Display environment
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🐳 Docker Build Environment (Dynamic)"
