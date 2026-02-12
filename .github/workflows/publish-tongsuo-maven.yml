@@ -506,6 +506,19 @@ jobs:
             CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.EXTRA_CONFIG_OPTS }}"
           fi
           
+          # For macOS x86_64 cross-compilation on arm64 runner
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            export CFLAGS="-arch x86_64"
+            export CXXFLAGS="-arch x86_64"
+            export LDFLAGS="-arch x86_64"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⚙️  Cross-compiling for x86_64 on arm64 macOS"
+            echo "  CFLAGS=$CFLAGS"
+            echo "  CXXFLAGS=$CXXFLAGS"
+            echo "  LDFLAGS=$LDFLAGS"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          fi
+          
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Full config command:"
           echo "  ./config $CONFIG_OPTS"
@@ -526,6 +539,17 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Tongsuo build completed:"
           $TONGSUO_HOME/bin/openssl version
+          
+          # Verify architecture for macOS
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo ""
+            echo "Library architectures:"
+            for lib in $TONGSUO_HOME/lib/*.a $TONGSUO_HOME/lib/*.dylib 2>/dev/null; do
+              if [ -f "$lib" ]; then
+                echo "  $(basename $lib): $(lipo -info "$lib" 2>&1 | grep -o 'x86_64\|arm64' || echo 'unknown')"
+              fi
+            done
+          fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build Tongsuo (Native - Windows)
