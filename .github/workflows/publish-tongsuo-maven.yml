@@ -307,7 +307,18 @@ jobs:
           echo "✅ Tongsuo built successfully"
           echo ""
           echo "🔐 Tongsuo Version:"
-          /root/tongsuo/bin/openssl version
+          # For cross-compiled binaries, use file command to show architecture
+          # and try to run with qemu if available
+          if [[ "${{ matrix.arch }}" == "linux-aarch_64" ]]; then
+            echo "Architecture: $(file /root/tongsuo/bin/openssl | cut -d: -f2-)"
+            if command -v qemu-aarch64-static >/dev/null 2>&1; then
+              qemu-aarch64-static /root/tongsuo/bin/openssl version || echo "(Cross-compiled for aarch64)"
+            else
+              echo "(Cross-compiled for aarch64 - cannot execute on x86_64)"
+            fi
+          else
+            /root/tongsuo/bin/openssl version
+          fi
           echo ""
           echo "Installation directory contents:"
           ls -lh /root/tongsuo/
@@ -329,7 +340,11 @@ jobs:
           cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
           # Backup and modify openjdk/build.gradle to use our publishing config
-          sed -i.bak 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' openjdk/build.gradle
+          # Also comment out the artifact additions that follow (lines 257-260)
+          sed -i.bak \
+            -e 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' \
+            -e '/^publishing\.publications\.maven {$/,/^}$/s/^/\/\/ /' \
+            openjdk/build.gradle
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
@@ -565,14 +580,18 @@ jobs:
           cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
           # Backup and modify openjdk/build.gradle to use our publishing config
-          sed -i.bak 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' openjdk/build.gradle
+          # Also comment out the artifact additions that follow (lines 257-260)
+          sed -i.bak \
+            -e 's|apply from: "$rootDir/gradle/publishing.gradle"|apply from: "build.gradle.custom"|' \
+            -e '/^publishing\.publications\.maven {$/,/^}$/s/^/\/\/ /' \
+            openjdk/build.gradle
           
           # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
           GRADLE_CMD="./gradlew"
           GRADLE_ARGS=""
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             GRADLE_CMD="arch -x86_64 ./gradlew"
-            GRADLE_ARGS="-Parch=x86_64"
+            GRADLE_ARGS="-Parch=x86_64 -PldFlags=\"-arch x86_64\" -PcFlags=\"-arch x86_64\" -PcppFlags=\"-arch x86_64\""
           fi
           
           # Windows path normalization
