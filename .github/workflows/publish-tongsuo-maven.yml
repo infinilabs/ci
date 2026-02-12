@@ -592,10 +592,10 @@ jobs:
           
           # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
           GRADLE_CMD="./gradlew"
-          GRADLE_ARGS=""
+          EXTRA_ARGS=""
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             GRADLE_CMD="arch -x86_64 ./gradlew"
-            GRADLE_ARGS='-Parch=x86_64 -PldFlags="-arch x86_64" -PcFlags="-arch x86_64" -PcppFlags="-arch x86_64"'
+            EXTRA_ARGS="-Parch=x86_64"
           fi
           
           # Windows path normalization
@@ -610,11 +610,23 @@ jobs:
           fi
           
           # Build and publish to Maven local repository
-          $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                      -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
-                      -PcheckErrorQueue \
-                      $GRADLE_ARGS \
-                      :tongsuo-openjdk:publishToMavenLocal
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            # macOS x86_64: need architecture flags for cross-compilation
+            $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                        -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
+                        -PcheckErrorQueue \
+                        -Parch=x86_64 \
+                        -PldFlags="-arch x86_64" \
+                        -PcFlags="-arch x86_64" \
+                        -PcppFlags="-arch x86_64" \
+                        :tongsuo-openjdk:publishToMavenLocal
+          else
+            # Other platforms: standard build
+            $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                        -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
+                        -PcheckErrorQueue \
+                        :tongsuo-openjdk:publishToMavenLocal
+          fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Published to Maven local repository"
