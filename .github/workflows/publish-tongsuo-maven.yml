@@ -337,6 +337,12 @@ jobs:
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
           
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📝 Modified openjdk/build.gradle (lines 255-262):"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          sed -n '255,262p' openjdk/build.gradle
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
           ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
@@ -575,6 +581,14 @@ jobs:
             in_block==1 { print "// " $0; next }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📝 Modified openjdk/build.gradle (lines 255-262):"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          sed -n '255,262p' openjdk/build.gradle
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
           
           # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
           GRADLE_CMD="./gradlew"
