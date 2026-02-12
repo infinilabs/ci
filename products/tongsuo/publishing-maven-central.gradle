@@ -44,82 +44,85 @@ println "Classifier: ${platformClassifier}"
 println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 println ""
 
-// Remove any existing publishing configuration to avoid conflicts
-project.extensions.findByName('publishing')?.publications?.clear()
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'com.infinilabs'
-            artifactId = 'tongsuo-openjdk'
-            
-            // Main JAR with platform classifier
-            artifact(tasks.jar) {
-                classifier = platformClassifier
-            }
-            
-            // Sources JAR with platform classifier
-            artifact(tasks.sourcesJar) {
-                classifier = platformClassifier + '-sources'
-            }
-            
-            // Javadoc JAR with platform classifier
-            artifact(tasks.javadocJar) {
-                classifier = platformClassifier + '-javadoc'
-            }
-            
-            pom {
-                name = 'Tongsuo Java SDK - OpenJDK Provider'
-                description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
-                url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+// Clear any existing publishing configuration to avoid conflicts
+// This ensures our configuration is the only one that applies
+afterEvaluate {
+    publishing.publications.clear()
+    
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = 'com.infinilabs'
+                artifactId = 'tongsuo-openjdk'
                 
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
+                // Main JAR with platform classifier
+                artifact(tasks.jar) {
+                    classifier = platformClassifier
                 }
                 
-                developers {
-                    developer {
-                        id = 'infinilabs'
-                        name = 'INFINI Labs'
-                        email = 'hello@infini.ltd'
-                        url = 'https://www.infinilabs.com/'
-                        organization = 'INFINI Labs'
-                        organizationUrl = 'https://www.infinilabs.com/'
-                    }
+                // Sources JAR with platform classifier
+                artifact(tasks.sourcesJar) {
+                    classifier = platformClassifier + '-sources'
                 }
                 
-                scm {
-                    connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
-                    developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                // Javadoc JAR with platform classifier
+                artifact(tasks.javadocJar) {
+                    classifier = platformClassifier + '-javadoc'
+                }
+                
+                pom {
+                    name = 'Tongsuo Java SDK - OpenJDK Provider'
+                    description = 'Tongsuo JCE Provider for OpenJDK - A Java security provider implementation based on Tongsuo cryptographic library'
                     url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                    
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id = 'infinilabs'
+                            name = 'INFINI Labs'
+                            email = 'hello@infini.ltd'
+                            url = 'https://www.infinilabs.com/'
+                            organization = 'INFINI Labs'
+                            organizationUrl = 'https://www.infinilabs.com/'
+                        }
+                    }
+                    
+                    scm {
+                        connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                        developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                        url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                    }
                 }
             }
         }
+        
+        repositories {
+            mavenLocal()
+        }
     }
     
-    repositories {
-        mavenLocal()
+    signing {
+        required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
+        
+        def signingKey = System.getenv("SIGNING_KEY")
+        def signingPassword = System.getenv("SIGNING_PASSWORD")
+        
+        if (signingKey && signingPassword) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign publishing.publications.maven
+        } else {
+            logger.warn("⚠️  Signing credentials not found - artifacts will not be signed")
+        }
     }
-}
-
-signing {
-    required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
     
-    def signingKey = System.getenv("SIGNING_KEY")
-    def signingPassword = System.getenv("SIGNING_PASSWORD")
-    
-    if (signingKey && signingPassword) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign publishing.publications.maven
-    } else {
-        logger.warn("⚠️  Signing credentials not found - artifacts will not be signed")
+    // Ensure dependent tasks are executed
+    tasks.named('publishToMavenLocal') {
+        dependsOn tasks.jar, tasks.sourcesJar, tasks.javadocJar
     }
-}
-
-// Ensure dependent tasks are executed
-tasks.named('publishToMavenLocal') {
-    dependsOn tasks.jar, tasks.sourcesJar, tasks.javadocJar
 }

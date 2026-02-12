@@ -1,0 +1,9 @@
+// Maven Central Publishing Override for tongsuo-java-sdk
+// This file replaces the SDK's default publishing configuration
+// Just copy this to openjdk/build.gradle - no sed needed!
+
+// Original line:
+// apply from: "$rootDir/gradle/publishing.gradle"
+
+// Replaced with:
+apply from: "$rootDir/../products/tongsuo/publishing-maven-central.gradle"

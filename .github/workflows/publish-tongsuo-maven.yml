@@ -353,21 +353,11 @@ jobs:
           # Build Java SDK
           cd /build/tongsuo-java-sdk
           
-          # Apply our Maven Central publishing configuration
-          echo "🔧 Applying Maven Central publishing config..."
-          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/
-          
-          # Replace SDK's default publishing with ours (simple sed replacement)
-          sed -i 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "publishing-maven-central.gradle"|' openjdk/build.gradle
-          
-          # Comment out conflicting artifact declarations
-          sed -i '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
-          sed -i '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
-          sed -i '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
-          
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
-          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+          # Use Gradle init script to apply our publishing config (NO file modifications!)
+          ./gradlew -I /build/products/tongsuo/init.gradle \
+                    -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome=/root/tongsuo \
                     -PcheckErrorQueue \
                     :tongsuo-openjdk:publishToMavenLocal
@@ -625,17 +615,8 @@ jobs:
         run: |
           set -e
           
-          # Apply our Maven Central publishing configuration
-          echo "🔧 Applying Maven Central publishing config..."
-          cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/
-          
-          # Replace SDK's default publishing with ours (simple sed replacement)
-          sed -i.bak 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "publishing-maven-central.gradle"|' openjdk/build.gradle
-          
-          # Comment out conflicting artifact declarations
-          sed -i.bak2 '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
-          sed -i.bak3 '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
-          sed -i.bak4 '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
+          # Replace SDK's default publishing with our Maven Central version (ONE line!)
+          sed -i.bak 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "$rootDir/../products/tongsuo/publishing-maven-central.gradle"|' openjdk/build.gradle
           
           # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
@@ -902,22 +883,11 @@ jobs:
           # Build Java SDK (dynamic linking)
           cd /build/tongsuo-java-sdk
           
-          # Apply our Maven Central publishing configuration
-          echo "🔧 Applying Maven Central publishing config..."
-          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/
-          
-          # Replace SDK's default publishing with ours (simple sed replacement)
-          sed -i "s|apply from: \"\\\$rootDir/gradle/publishing.gradle\"|apply from: \"publishing-maven-central.gradle\"|" openjdk/build.gradle
-          
-          # Comment out conflicting artifact declarations
-          sed -i '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
-          sed -i '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
-          sed -i '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
-          
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
-          # Build with dynamic linking flag
-          ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+          # Use Gradle init script to apply our publishing config (NO file modifications!)
+          ./gradlew -I /build/products/tongsuo/init.gradle \
+                    -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome=/root/tongsuo \
                     -PtongsuoDynamic=1 \
                     -PcheckErrorQueue \

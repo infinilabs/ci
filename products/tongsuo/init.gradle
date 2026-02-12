@@ -1,0 +1,18 @@
+// Gradle Initialization Script for Maven Central Publishing
+// This automatically applies our custom publishing configuration
+// Usage: ./gradlew -I /path/to/this/init.gradle ...
+
+initscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+// Apply to the tongsuo-openjdk subproject
+gradle.projectsLoaded {
+    rootProject.subprojects.each { subproject ->
+        if (subproject.name == 'tongsuo-openjdk') {
+            subproject.apply from: new File(initscript.sourceFile.parentFile, 'publishing-maven-central.gradle')
+        }
+    }
+}
