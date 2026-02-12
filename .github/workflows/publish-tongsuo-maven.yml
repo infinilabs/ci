@@ -334,17 +334,38 @@ jobs:
           # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
           # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
+          
+          echo "🔍 Debugging AWK script execution..."
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
               print "apply from: \"build.gradle.custom\""
               next
             }
-            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
-            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
-            in_block==1 { print "// " $0; next }
-            /publishing\.publications\.maven\.artifact jarTask/ { print "    // " $0; next }
+            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
+              print "[AWK] Matched publishing.publications.maven block at line " NR > "/dev/stderr"
+              in_block=1
+              print "// " $0
+              next 
+            }
+            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
+              print "[AWK] Matched closing brace at line " NR > "/dev/stderr"
+              print "// " $0
+              in_block=0
+              next 
+            }
+            in_block==1 { 
+              print "[AWK] In block at line " NR > "/dev/stderr"
+              print "// " $0
+              next 
+            }
+            /publishing\.publications\.maven\.artifact jarTask/ { 
+              print "[AWK] Matched jarTask line at line " NR > "/dev/stderr"
+              print "    // " $0
+              next 
+            }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
+          echo "✅ AWK script completed"
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "📝 Modified openjdk/build.gradle (key lines):"
@@ -594,17 +615,38 @@ jobs:
           # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
           # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
+          
+          echo "🔍 Debugging AWK script execution..."
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
               print "apply from: \"build.gradle.custom\""
               next
             }
-            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { in_block=1; print "// " $0; next }
-            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { print "// " $0; in_block=0; next }
-            in_block==1 { print "// " $0; next }
-            /publishing\.publications\.maven\.artifact jarTask/ { print "    // " $0; next }
+            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
+              print "[AWK] Matched publishing.publications.maven block at line " NR > "/dev/stderr"
+              in_block=1
+              print "// " $0
+              next 
+            }
+            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
+              print "[AWK] Matched closing brace at line " NR > "/dev/stderr"
+              print "// " $0
+              in_block=0
+              next 
+            }
+            in_block==1 { 
+              print "[AWK] In block at line " NR > "/dev/stderr"
+              print "// " $0
+              next 
+            }
+            /publishing\.publications\.maven\.artifact jarTask/ { 
+              print "[AWK] Matched jarTask line at line " NR > "/dev/stderr"
+              print "    // " $0
+              next 
+            }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
+          echo "✅ AWK script completed"
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
