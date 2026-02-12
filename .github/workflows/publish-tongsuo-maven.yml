@@ -709,9 +709,11 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
           
-          # For macOS x86_64, use Rosetta 2 to run Gradle
+          # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             echo "🔧 Building Java SDK under Rosetta 2 (x86_64)..."
+            # Environment variables already set in "Set environment variables" step
+            # Run Gradle under Rosetta 2
             arch -x86_64 ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                                    -PtongsuoHome="$TONGSUO_HOME" \
                                    -PcheckErrorQueue \
