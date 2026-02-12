@@ -1374,8 +1374,8 @@ jobs:
           echo "Signatures:   $ASC_COUNT"
           
           echo ""
-          echo "📋 Sample file structure:"
-          ls -lh "$REPO_PATH" | head -20
+          echo "📋 Sample files (first 15):"
+          ls -lh "$REPO_PATH" 2>/dev/null | head -n 16 || true
           
           if [ "$POM_COUNT" -eq 0 ]; then
             echo "❌ ERROR: No POM files found!"
