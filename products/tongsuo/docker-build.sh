@@ -115,11 +115,17 @@ cd /build/tongsuo-java-sdk
 
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
+# Pass Git information to Gradle for MANIFEST.MF
+export GIT_COMMIT="${GIT_COMMIT:-unknown}"
+export GIT_BRANCH="${GIT_BRANCH:-unknown}"
+
 # Use Gradle init script to apply our publishing config (NO file modifications!)
 ./gradlew -I /build/products/tongsuo/init.gradle \
           -Pversion="${PUBLISH_VERSION}" \
           -PtongsuoHome=/root/tongsuo \
           -PcheckErrorQueue \
+          -PgitCommit="${GIT_COMMIT}" \
+          -PgitBranch="${GIT_BRANCH}" \
           :tongsuo-openjdk:publishToMavenLocal
 
 echo ""

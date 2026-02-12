@@ -254,6 +254,16 @@ jobs:
           sed -i.bak '/^[[:space:]]*version[[:space:]]*=[[:space:]]*"1\.1\.0"/d' build.gradle
           echo "✅ Removed hardcoded version from SDK's build.gradle"
           echo "   Version will be set via -Pversion=${{ inputs.PUBLISH_VERSION }}"
+      
+      - name: Get Git information
+        id: git_info
+        run: |
+          cd tongsuo-java-sdk
+          GIT_COMMIT=$(git rev-parse --short HEAD)
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+          echo "branch=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          echo "📝 Git Info: ${GIT_BRANCH}@${GIT_COMMIT}"
 
       - name: Build with Docker (Linux)
         if: runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker
@@ -278,6 +288,8 @@ jobs:
             -e ENABLE_SM4="${{ inputs.ENABLE_SM4 }}" \
             -e ENABLE_DEBUG="${{ inputs.ENABLE_DEBUG }}" \
             -e EXTRA_CONFIG_OPTS="${{ inputs.EXTRA_CONFIG_OPTS }}" \
+            -e GIT_COMMIT="${{ steps.git_info.outputs.commit }}" \
+            -e GIT_BRANCH="${{ steps.git_info.outputs.branch }}" \
             ${{ inputs.LINUX_DOCKER_IMAGE }} \
             /build/tongsuo-java-sdk/docker-build.sh
 
@@ -694,6 +706,16 @@ jobs:
           echo "✅ Removed hardcoded version from SDK's build.gradle"
           echo "   Version will be set via -Pversion=${{ inputs.PUBLISH_VERSION }}"
       
+      - name: Get Git information
+        id: git_info_dynamic
+        run: |
+          cd tongsuo-java-sdk
+          GIT_COMMIT=$(git rev-parse --short HEAD)
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+          echo "branch=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          echo "📝 Git Info: ${GIT_BRANCH}@${GIT_COMMIT}"
+      
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
         run: |
@@ -716,6 +738,8 @@ jobs:
             -e ENABLE_SM4="${{ inputs.ENABLE_SM4 }}" \
             -e ENABLE_DEBUG="${{ inputs.ENABLE_DEBUG }}" \
             -e EXTRA_CONFIG_OPTS="${{ inputs.EXTRA_CONFIG_OPTS }}" \
+            -e GIT_COMMIT="${{ steps.git_info_dynamic.outputs.commit }}" \
+            -e GIT_BRANCH="${{ steps.git_info_dynamic.outputs.branch }}" \
             ${{ inputs.LINUX_DOCKER_IMAGE }} \
             /build/tongsuo-java-sdk/docker-build-dynamic.sh
           

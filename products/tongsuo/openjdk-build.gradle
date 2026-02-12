@@ -264,8 +264,11 @@ apply from: "$rootDir/gradle/publishing.gradle"
 // }
 
 jar.manifest {
-    def gitCommit = 'git rev-parse --short HEAD'.execute().text.trim() ?: 'unknown'
-    def gitBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim() ?: 'unknown'
+    // Use Gradle properties if provided (for CI), otherwise execute git commands
+    def gitCommit = project.hasProperty('gitCommit') ? project.property('gitCommit') : 
+                    'git rev-parse --short HEAD'.execute().text.trim() ?: 'unknown'
+    def gitBranch = project.hasProperty('gitBranch') ? project.property('gitBranch') : 
+                    'git rev-parse --abbrev-ref HEAD'.execute().text.trim() ?: 'unknown'
     def buildTime = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("UTC"))
     
     attributes ('Automatic-Module-Name' : 'org.conscrypt',

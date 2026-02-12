@@ -38,6 +38,29 @@ if (project.hasProperty('tongsuoDynamic') && project.property('tongsuoDynamic') 
     platformClassifier += '-dynamic'
 }
 
+// Convert platform classifier to JAR task name format
+// Classifier: "linux-x86_64" -> Task: "linuxX86_64Jar"
+// Classifier: "osx-aarch_64" -> Task: "osxAarch_64Jar"
+// Classifier: "windows-x86_64" -> Task: "windowsX86_64Jar"
+// Dynamic builds don't have separate tasks, use base platform task
+def classifierToTaskName(String classifier) {
+    // Remove -dynamic suffix for task lookup (dynamic builds use same tasks as static)
+    def baseClassifier = classifier.replace('-dynamic', '')
+    
+    // Split by hyphen and capitalize each part
+    def parts = baseClassifier.split('-')
+    def taskName = parts.collect { part ->
+        // Capitalize first letter, rest lowercase
+        part.capitalize()
+    }.join('')
+    
+    // Special case: x86_64 -> X86_64 (keep underscore, capitalize X)
+    taskName = taskName.replace('X86_64', 'X86_64')
+    taskName = taskName.replace('Aarch_64', 'Aarch_64')
+    
+    return taskName + 'Jar'
+}
+
 println ""
 println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 println "Maven Central Publishing Configuration"
@@ -54,11 +77,12 @@ println ""
 afterEvaluate {
     // Find the platform-specific JAR task created by addNativeJar()
     // This JAR includes the native libraries in META-INF/native/
-    def platformJarTaskName = "${platformClassifier}Jar"
+    def platformJarTaskName = classifierToTaskName(platformClassifier)
     def platformJarTask = tasks.findByName(platformJarTaskName)
     
     if (!platformJarTask) {
         println "⚠️  Platform JAR task '${platformJarTaskName}' not found!"
+        println "   Classifier: ${platformClassifier}"
         println "   Available JAR tasks: ${tasks.findAll { it.name.endsWith('Jar') }.collect { it.name }}"
         println "   Falling back to main JAR task (may not include native libraries)"
         platformJarTask = tasks.jar
