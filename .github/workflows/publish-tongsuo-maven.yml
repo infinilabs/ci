@@ -506,28 +506,29 @@ jobs:
             CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.EXTRA_CONFIG_OPTS }}"
           fi
           
-          # For macOS x86_64 cross-compilation on arm64 runner
-          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            export CFLAGS="-arch x86_64"
-            export CXXFLAGS="-arch x86_64"
-            export LDFLAGS="-arch x86_64"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "⚙️  Cross-compiling for x86_64 on arm64 macOS"
-            echo "  CFLAGS=$CFLAGS"
-            echo "  CXXFLAGS=$CXXFLAGS"
-            echo "  LDFLAGS=$LDFLAGS"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          fi
-          
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Full config command:"
           echo "  ./config $CONFIG_OPTS"
+          
+          # For macOS x86_64, run under Rosetta 2
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            echo ""
+            echo "⚙️  Running under Rosetta 2 (x86_64 emulation)"
+            echo "  Current arch: $(uname -m)"
+            echo "  Build arch: x86_64"
+          fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          ./config $CONFIG_OPTS
-          
-          make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
-          make install_sw
+          # Configure and build - use arch -x86_64 for macOS x86_64
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
+            arch -x86_64 /bin/bash -c "./config $CONFIG_OPTS"
+            arch -x86_64 /bin/bash -c "make -j$(sysctl -n hw.ncpu)"
+            arch -x86_64 /bin/bash -c "make install_sw"
+          else
+            ./config $CONFIG_OPTS
+            make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+            make install_sw
+          fi
           
           # Create symlink if lib64 exists but lib doesn't (Linux)
           if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
@@ -687,42 +688,19 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
           
-          # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
-          GRADLE_CMD="./gradlew"
-          EXTRA_ARGS=""
+          # For macOS x86_64, use Rosetta 2 to run Gradle
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            GRADLE_CMD="arch -x86_64 ./gradlew"
-            EXTRA_ARGS="-Parch=x86_64"
-          fi
-          
-          # Windows path normalization
-          TONGSUO_HOME_GRADLE="$TONGSUO_HOME"
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            if command -v cygpath >/dev/null 2>&1; then
-              TONGSUO_HOME_GRADLE=$(cygpath -m "$TONGSUO_HOME")
-            else
-              TONGSUO_HOME_GRADLE=$(echo "$TONGSUO_HOME" | sed 's|\\|/|g')
-            fi
-            echo "Normalized TONGSUO_HOME for Gradle: $TONGSUO_HOME -> $TONGSUO_HOME_GRADLE"
-          fi
-          
-          # Build and publish to Maven local repository
-          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            # macOS x86_64: need architecture flags for cross-compilation
-            $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                        -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
-                        -PcheckErrorQueue \
-                        -Parch=x86_64 \
-                        -PldFlags="-arch x86_64" \
-                        -PcFlags="-arch x86_64" \
-                        -PcppFlags="-arch x86_64" \
-                        :tongsuo-openjdk:publishToMavenLocal
+            echo "🔧 Building Java SDK under Rosetta 2 (x86_64)..."
+            arch -x86_64 ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                                   -PtongsuoHome="$TONGSUO_HOME" \
+                                   -PcheckErrorQueue \
+                                   :tongsuo-openjdk:publishToMavenLocal
           else
             # Other platforms: standard build
-            $GRADLE_CMD -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                        -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
-                        -PcheckErrorQueue \
-                        :tongsuo-openjdk:publishToMavenLocal
+            ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+                      -PtongsuoHome="$TONGSUO_HOME" \
+                      -PcheckErrorQueue \
+                      :tongsuo-openjdk:publishToMavenLocal
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
