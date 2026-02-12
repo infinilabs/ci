@@ -8,6 +8,32 @@ initscript {
     }
 }
 
+// Add fallback repositories to handle mirror outages
+allprojects {
+    buildscript {
+        repositories {
+            // Keep Aliyun mirrors first (faster in China)
+            maven { url 'https://maven.aliyun.com/repository/google' }
+            maven { url 'https://maven.aliyun.com/repository/central' }
+            maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+            // Add official repos as fallback
+            google()
+            mavenCentral()
+            gradlePluginPortal()
+        }
+    }
+    
+    repositories {
+        // Keep Aliyun mirrors first (faster in China)
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        // Add official repos as fallback
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
 // Apply to the tongsuo-openjdk subproject
 gradle.projectsLoaded {
     rootProject.subprojects.each { subproject ->

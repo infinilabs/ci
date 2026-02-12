@@ -327,7 +327,8 @@ def addNativeJar(NativeBuildInfo nativeBuild) {
     jar.dependsOn jarTask
 
     // Add it to the publishing archives list.
-    publishing.publications.maven.artifact jarTask.get()
+    // This is handled by publishing-maven-central.gradle which auto-detects platform
+    // publishing.publications.maven.artifact jarTask.get()
 }
 
 test {
