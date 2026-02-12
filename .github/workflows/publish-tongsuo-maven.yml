@@ -21,7 +21,7 @@ on:
         description: 'tongsuo-java-sdk branch to build from'
         required: true
         type: string
-        default: 'dev_publish'
+        default: 'master'
       TONGSUO_VERSION:
         description: 'Tongsuo version (branch/tag)'
         required: true

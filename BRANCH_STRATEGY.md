@@ -6,30 +6,22 @@ This document explains the branch strategy used between the `infinilabs/tongsuo-
 
 ```
 tongsuo-java-sdk repository:
-├── master          # Main development branch
-├── dev_publish     # Maven Central publishing branch (used by CI)
+├── master          # Main development & Maven publishing branch
 └── multiplatform   # Reserved for PRs to official Tongsuo-Project/tongsuo-java-sdk
 ```
 
 ## Branch Purposes
 
 ### `master` Branch
-- **Purpose**: Main development branch
-- **Contains**: All general development work
-- **Updates**: Regular commits, feature development
-- **Used by**: Developers, general CI/CD
+- **Purpose**: Main development and Maven Central publishing
+- **Contains**: All development work + publishing optimizations
+- **Updates**: Regular commits, feature development, releases
+- **Used by**: 
+  - Developers for development
+  - CI for Maven Central publishing
+  - General CI/CD workflows
 
-### `dev_publish` Branch  
-- **Purpose**: Dedicated branch for Maven Central publishing
-- **Contains**: `master` + Maven-specific optimizations
-- **Updates**: Periodically merged from `master`
-- **Used by**: CI publish-tongsuo-maven.yml workflow
-
-**Why separate?**
-- Keeps Maven-specific changes isolated
-- Allows CI-specific optimizations without polluting master
-- Can have different release cadence than master
-- Easier to maintain and troubleshoot publishing issues
+**Simplicity**: One branch for both development and publishing keeps things simple.
 
 ### `multiplatform` Branch
 - **Purpose**: Reserved for syncing PRs to official Tongsuo repository
@@ -39,7 +31,7 @@ tongsuo-java-sdk repository:
 
 **Why reserved?**
 - Keeps clean history for upstream contributions
-- No CI-specific or INFINI-specific changes
+- No INFINI-specific changes
 - Maintains good relationship with upstream project
 - Can be deleted after successful upstream merge
 
@@ -55,14 +47,8 @@ git commit -m "Feature: ..."
 git push origin master
 ```
 
-### Updating dev_publish
-```bash
-# Periodically merge master into dev_publish
-git checkout dev_publish
-git pull
-git merge master -m "Merge master into dev_publish"
-git push origin dev_publish
-```
+### Maven Publishing
+CI automatically uses `master` branch for publishing builds.
 
 ### Creating Upstream PR
 ```bash
@@ -81,54 +67,37 @@ The CI workflow `publish-tongsuo-maven.yml` uses:
 inputs:
   BRANCH:
     description: 'tongsuo-java-sdk branch to build from'
-    default: 'dev_publish'
+    default: 'master'
 ```
 
 This means:
-- ✅ Manual triggers default to `dev_publish`
+- ✅ Manual triggers default to `master`
 - ✅ Can override to test other branches
-- ✅ Scheduled builds use `dev_publish`
+- ✅ Scheduled builds use `master`
 
-## Key Differences: dev_publish vs master
+## Key Features in master
 
-| Aspect | master | dev_publish |
-|--------|--------|-------------|
-| **Javadoc** | `failOnError = false` | Same (merged from master) |
-| **Publishing Config** | SDK's default | Overridden by CI |
-| **Release Workflow** | GitHub releases | Maven Central |
-| **Update Frequency** | Continuous | As needed for releases |
-| **Stability** | Development | Release-ready |
+| Feature | Status | Purpose |
+|---------|--------|---------|
+| **Javadoc failOnError** | ✅ Disabled | Allows publishing with javadoc warnings |
+| **Multi-platform support** | ✅ Enabled | x86_64, aarch64, macOS, Windows |
+| **GLIBC compatibility** | ✅ 2.27 | Via Ubuntu 18.04 Docker |
+| **Publishing config** | 🔄 Overridden by CI | CI uses custom publishing-maven-central.gradle |
 
-## Future Considerations
+## Removed: dev_publish Branch
 
-### Option 1: Merge Back to Master (Recommended)
-After upstream sync is complete and `multiplatform` branch is deleted:
-```bash
-# dev_publish becomes unnecessary
-# All changes can go directly to master
-# CI can use master directly
-```
+**Previous approach**: Had separate `dev_publish` branch for Maven publishing.
 
-### Option 2: Keep Separate (Current)
-If we continue having CI-specific needs:
-- Keep `dev_publish` for Maven Central
-- Keep `master` for development
-- Merge `master` → `dev_publish` before each release
-
-## Migration Notes
-
-**Previous Setup:**
-- Used `multiplatform` branch for CI builds
-- Mixed upstream-sync and CI-specific changes
-- Confusing when trying to create clean upstream PRs
-
-**New Setup:**
-- `dev_publish` for CI builds
-- `multiplatform` reserved for upstream
-- Clear separation of purposes
+**Why removed**: 
+- ❌ Unnecessary complexity
+- ❌ Need to sync between master and dev_publish
+- ❌ Confusing which branch to use
+- ✅ master already has all necessary fixes
+- ✅ Simpler to maintain one branch
 
 ## Related Files
 
-- `ci/.github/workflows/publish-tongsuo-maven.yml` - Uses dev_publish
+- `ci/.github/workflows/publish-tongsuo-maven.yml` - Uses master branch
 - `ci/products/tongsuo/publishing-maven-central.gradle` - Maven publishing config
 - `ci/products/tongsuo/README.md` - Publishing documentation
+
