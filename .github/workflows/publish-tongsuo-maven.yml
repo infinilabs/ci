@@ -163,33 +163,23 @@ jobs:
         run: |
           brew install perl
 
-      - name: Install Strawberry Perl (Windows)
+      - name: Install build dependencies (Windows)
         if: runner.os == 'Windows'
-        uses: shogo82148/actions-setup-perl@v1
-        with:
-          perl-version: '5.38'
-          distribution: strawberry
+        shell: pwsh
+        run: |
+          # Install Strawberry Perl
+          choco install strawberryperl -y
+          
+          # Install required Perl modules
+          cpan -T Locale::Maketext::Simple
+          
+          # Verify
+          perl -MLocale::Maketext::Simple -e "print qq{✅ Perl module installed\n}"
+          perl -v
       
       - name: Install NASM (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
-
-      - name: Install Perl modules (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # Install required Perl modules
-          Write-Host "Installing Locale::Maketext::Simple..."
-          cpan -T Locale::Maketext::Simple
-          
-          Write-Host "`nVerifying installation..."
-          perl -MLocale::Maketext::Simple -e "print qq{✅ Module installed successfully\n}"
-          
-          Write-Host "`nPerl version:"
-          perl -v
-          
-          Write-Host "`nNASM version:"
-          nasm -v
 
       - name: Setup MSVC environment (Windows)
         if: runner.os == 'Windows'
@@ -315,6 +305,10 @@ jobs:
           
           echo ""
           echo "✅ Tongsuo built successfully"
+          echo ""
+          echo "🔐 Tongsuo Version:"
+          /root/tongsuo/bin/openssl version
+          echo ""
           echo "Installation directory contents:"
           ls -lh /root/tongsuo/
           if [ -d /root/tongsuo/lib ]; then
@@ -335,10 +329,20 @@ jobs:
           cp -f /build/products/tongsuo/build.gradle init-publish.gradle
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+          
+          # Set up cross-compilation for aarch64 if needed
+          GRADLE_ARGS=""
+          if [[ "${{ matrix.arch }}" == "linux-aarch_64" ]]; then
+            export CC=aarch64-linux-gnu-gcc
+            export CXX=aarch64-linux-gnu-g++
+            GRADLE_ARGS="-PcrossCompilePrefix=aarch64-linux-gnu-"
+          fi
+          
           ./gradlew --init-script init-publish.gradle \
                     -Pversion=${{ inputs.PUBLISH_VERSION }} \
                     -PtongsuoHome=/root/tongsuo \
                     -PcheckErrorQueue \
+                    $GRADLE_ARGS \
                     :tongsuo-openjdk:publishToMavenLocal
           
           echo ""
@@ -558,17 +562,31 @@ jobs:
           # Use init script instead of replacing build.gradle
           cp -f $GITHUB_WORKSPACE/products/tongsuo/build.gradle init-publish.gradle
           
-          # For macOS x86_64, use Rosetta 2 to run Gradle
+          # For macOS x86_64, use Rosetta 2 to run Gradle and pass architecture flags
           GRADLE_CMD="./gradlew"
+          GRADLE_ARGS=""
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             GRADLE_CMD="arch -x86_64 ./gradlew"
+            GRADLE_ARGS="-Parch=x86_64"
+          fi
+          
+          # Windows path normalization
+          TONGSUO_HOME_GRADLE="$TONGSUO_HOME"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            if command -v cygpath >/dev/null 2>&1; then
+              TONGSUO_HOME_GRADLE=$(cygpath -m "$TONGSUO_HOME")
+            else
+              TONGSUO_HOME_GRADLE=$(echo "$TONGSUO_HOME" | sed 's|\\|/|g')
+            fi
+            echo "Normalized TONGSUO_HOME for Gradle: $TONGSUO_HOME -> $TONGSUO_HOME_GRADLE"
           fi
           
           # Build and publish to Maven local repository
           $GRADLE_CMD --init-script init-publish.gradle \
                       -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                      -PtongsuoHome="$TONGSUO_HOME" \
+                      -PtongsuoHome="$TONGSUO_HOME_GRADLE" \
                       -PcheckErrorQueue \
+                      $GRADLE_ARGS \
                       :tongsuo-openjdk:publishToMavenLocal
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

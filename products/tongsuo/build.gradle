@@ -6,9 +6,6 @@ gradle.projectsLoaded {
         if (proj.name == 'tongsuo-openjdk') {
             proj.group = 'com.infinilabs'
             
-            proj.apply plugin: 'maven-publish'
-            proj.apply plugin: 'signing'
-            
             // Detect current platform for classifier
             def osName = System.getProperty('os.name').toLowerCase()
             def osArch = System.getProperty('os.arch').toLowerCase()
@@ -32,56 +29,58 @@ gradle.projectsLoaded {
                 println "  Classifier: ${platformClassifier}"
                 println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
                 
-                proj.publishing {
-                    publications {
-                        maven(MavenPublication) {
-                            groupId = 'com.infinilabs'
-                            artifactId = 'tongsuo-openjdk'
-                            
-                            artifact(proj.tasks.jar) {
-                                classifier = platformClassifier
-                            }
-                            
-                            artifact(proj.tasks.sourcesJar) {
-                                classifier = platformClassifier + '-sources'
-                            }
-                            
-                            artifact(proj.tasks.javadocJar) {
-                                classifier = platformClassifier + '-javadoc'
-                            }
-                            
-                            pom {
-                                name = 'Tongsuo Java SDK'
-                                description = 'Tongsuo Provider - Java Security Provider using Tongsuo'
-                                url = 'https://github.com/infinilabs/tongsuo-java-sdk'
-                                
-                                licenses {
-                                    license {
-                                        name = 'The Apache License, Version 2.0'
-                                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                                    }
-                                }
-                                
-                                developers {
-                                    developer {
-                                        name = 'INFINI Labs'
-                                        url = 'https://www.infinilabs.com/'
-                                    }
-                                }
-                                
-                                scm {
-                                    url = 'https://github.com/infinilabs/tongsuo-java-sdk'
-                                    connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
-                                }
-                            }
-                        }
+                // Modify the existing 'maven' publication instead of creating a new one
+                proj.publishing.publications.maven {
+                    groupId = 'com.infinilabs'
+                    artifactId = 'tongsuo-openjdk'
+                    
+                    // Clear default artifacts to avoid duplicates
+                    artifacts.clear()
+                    
+                    // Add artifacts with platform-specific classifiers
+                    artifact(proj.tasks.jar) {
+                        classifier = platformClassifier
                     }
                     
-                    repositories {
-                        maven {
-                            name = 'mavenLocal'
-                            url = "${System.getProperty('user.home')}/.m2/repository"
+                    artifact(proj.tasks.sourcesJar) {
+                        classifier = platformClassifier + '-sources'
+                    }
+                    
+                    artifact(proj.tasks.javadocJar) {
+                        classifier = platformClassifier + '-javadoc'
+                    }
+                    
+                    pom {
+                        name = 'Tongsuo Java SDK'
+                        description = 'Tongsuo Provider - Java Security Provider using Tongsuo'
+                        url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                        
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
                         }
+                        
+                        developers {
+                            developer {
+                                name = 'INFINI Labs'
+                                url = 'https://www.infinilabs.com/'
+                            }
+                        }
+                        
+                        scm {
+                            url = 'https://github.com/infinilabs/tongsuo-java-sdk'
+                            connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
+                        }
+                    }
+                }
+                
+                // Update the mavenLocal repository
+                proj.publishing.repositories {
+                    mavenLocal {
+                        name = 'mavenLocal'
+                        url = "${System.getProperty('user.home')}/.m2/repository"
                     }
                 }
                 
