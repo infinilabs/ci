@@ -21,7 +21,7 @@ on:
         description: 'tongsuo-java-sdk branch to build from'
         required: true
         type: string
-        default: 'multiplatform'
+        default: 'dev_publish'
       TONGSUO_VERSION:
         description: 'Tongsuo version (branch/tag)'
         required: true
@@ -111,7 +111,7 @@ jobs:
             use_docker: true
             
           - platform_name: linux-aarch_64
-            os: ubuntu-22.04
+            os: ubuntu-22.04-arm64
             arch: linux-aarch_64
             tongsuo_base_config: "--cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
