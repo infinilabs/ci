@@ -44,17 +44,20 @@ println "Classifier: ${platformClassifier}"
 println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 println ""
 
-// Clear any existing publishing configuration to avoid conflicts
+// Override SDK's publishing configuration
 // Use afterEvaluate to run after SDK's build.gradle is evaluated
 afterEvaluate {
-    // Clear SDK's publications and recreate with our config
+    // Reconfigure the existing 'maven' publication instead of recreating it
     publishing {
-        publications.clear()
         publications {
-            // Create 'maven' publication with our configuration
-            maven(MavenPublication) {
+            // Access and reconfigure the existing maven publication
+            maven {
+                // Override group and artifact
                 groupId = 'com.infinilabs'
                 artifactId = 'tongsuo-openjdk'
+                
+                // Clear any existing artifacts to avoid duplicates
+                artifacts.clear()
                 
                 // Main JAR with platform classifier
                 artifact(tasks.jar) {
