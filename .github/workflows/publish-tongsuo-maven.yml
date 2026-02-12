@@ -106,35 +106,35 @@ jobs:
           - platform_name: linux-x86_64
             os: ubuntu-22.04
             arch: linux-x86_64
-            tongsuo_base_config: "--prefix=$HOME/tongsuo -static -Wl,--no-as-needed -ldl"
+            tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             use_docker: true
             
           - platform_name: linux-aarch_64
             os: ubuntu-22.04
             arch: linux-aarch_64
-            tongsuo_base_config: "--prefix=$HOME/tongsuo --cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -static -Wl,--no-as-needed -ldl"
+            tongsuo_base_config: "--cross-compile-prefix=aarch64-linux-gnu- linux-aarch64 -fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             use_docker: true
             
           - platform_name: osx-x86_64
             os: macos-14
             arch: darwin64-x86_64
-            tongsuo_base_config: "--prefix=$HOME/tongsuo darwin64-x86_64"
+            tongsuo_base_config: "darwin64-x86_64"
             cc_prefix: ""
             cross_compile: true
             
           - platform_name: osx-aarch_64
             os: macos-14
             arch: darwin64-arm64
-            tongsuo_base_config: "--prefix=$HOME/tongsuo darwin64-arm64"
+            tongsuo_base_config: "darwin64-arm64"
             cc_prefix: ""
             cross_compile: false
             
           - platform_name: windows-x86_64
             os: windows-2022
             arch: VC-WIN64A
-            tongsuo_base_config: "--prefix=$HOME/tongsuo VC-WIN64A"
+            tongsuo_base_config: "VC-WIN64A"
             cc_prefix: ""
 
     steps:
@@ -163,35 +163,33 @@ jobs:
         run: |
           brew install perl
 
-      - name: Install build dependencies (Windows)
+      - name: Install Strawberry Perl (Windows)
+        if: runner.os == 'Windows'
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.38'
+          distribution: strawberry
+      
+      - name: Install NASM (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Install Perl modules (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # Install Strawberry Perl and NASM
-          choco install strawberryperl -y
-          choco install nasm -y
-          
-          # Add Strawberry Perl to PATH for this and subsequent steps
-          echo "C:\Strawberry\perl\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "C:\Strawberry\c\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          
-          # Also update PATH for current step
-          $env:Path = "C:\Strawberry\perl\bin;C:\Strawberry\c\bin;" + $env:Path
-          
-          # Show perl version
-          Write-Host "Perl version:"
-          perl -v
-          
-          # Show perl installation path
-          Write-Host "`nPerl location:"
-          where.exe perl
-          
           # Install required Perl modules
-          Write-Host "`nInstalling Locale::Maketext::Simple..."
+          Write-Host "Installing Locale::Maketext::Simple..."
           cpan -T Locale::Maketext::Simple
           
           Write-Host "`nVerifying installation..."
           perl -MLocale::Maketext::Simple -e "print qq{✅ Module installed successfully\n}"
+          
+          Write-Host "`nPerl version:"
+          perl -v
+          
+          Write-Host "`nNASM version:"
+          nasm -v
 
       - name: Setup MSVC environment (Windows)
         if: runner.os == 'Windows'
@@ -202,12 +200,8 @@ jobs:
       - name: Setup Environment Variables
         shell: bash
         run: |
-          # Set TONGSUO_HOME
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
-          else
-            echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
-          fi
+          # Set TONGSUO_HOME using runner.temp (works cross-platform)
+          echo "TONGSUO_HOME=${{ runner.temp }}/tongsuo" >> $GITHUB_ENV
           
           # Set architecture-specific flags for macOS x86_64 cross-compilation
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
@@ -271,10 +265,8 @@ jobs:
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
-          # Configure based on inputs - replace $HOME with /root for Docker
-          CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
-          CONFIG_OPTS="${CONFIG_OPTS//\$HOME\/tongsuo/\/root\/tongsuo}"
-          CONFIG_OPTS="${CONFIG_OPTS//\$\{HOME\}\/tongsuo/\/root\/tongsuo}"
+          # Configure with --prefix and base config options
+          CONFIG_OPTS="--prefix=/root/tongsuo ${{ matrix.tongsuo_base_config }}"
           
           if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
             CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
@@ -427,7 +419,7 @@ jobs:
           fi
           
           # Build configuration from inputs
-          CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
+          CONFIG_OPTS="--prefix=$TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
           # API Version (skip if 'default')
           if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
@@ -478,12 +470,10 @@ jobs:
             cd "$TONGSUO_HOME" && ln -s lib64 lib
           fi
           
-          echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
-          
           # Show Tongsuo version and features
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Tongsuo build completed:"
-          $HOME/tongsuo/bin/openssl version
+          $TONGSUO_HOME/bin/openssl version
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build Tongsuo (Native - Windows)
@@ -507,8 +497,8 @@ jobs:
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
-          # Build configuration
-          $CONFIG_OPTS = "${{ matrix.tongsuo_base_config }}"
+          # Build configuration - use Env:TONGSUO_HOME (already set to runner.temp/tongsuo)
+          $CONFIG_OPTS = "--prefix=$Env:TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
           # API Version
           if ("${{ inputs.API_VERSION }}" -ne "default") {
@@ -553,13 +543,9 @@ jobs:
           nmake
           nmake install_sw
           
-          # Set environment variable for next steps
-          $env:TONGSUO_HOME = "$env:HOME\tongsuo"
-          "TONGSUO_HOME=$env:HOME\tongsuo" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           Write-Host "Tongsuo build completed:"
-          & "$env:HOME\tongsuo\bin\openssl.exe" version
+          & "$Env:TONGSUO_HOME\bin\openssl.exe" version
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Build and publish JAR with custom groupId (Native)
@@ -670,12 +656,17 @@ jobs:
           # Tongsuo Information
           echo ""
           echo "🔐 Tongsuo:"
-          if [ -f "$HOME/tongsuo/bin/openssl" ]; then
-            TONGSUO_VER=$($HOME/tongsuo/bin/openssl version)
+          if [[ "${{ runner.os }}" == "Windows" ]] && [ -f "$TONGSUO_HOME/bin/openssl.exe" ]; then
+            TONGSUO_VER=$("$TONGSUO_HOME/bin/openssl.exe" version)
+            echo "  Version: $TONGSUO_VER"
+          elif [ -f "$TONGSUO_HOME/bin/openssl" ]; then
+            TONGSUO_VER=$("$TONGSUO_HOME/bin/openssl" version)
             echo "  Version: $TONGSUO_VER"
           elif [ -f "/root/tongsuo/bin/openssl" ]; then
             TONGSUO_VER=$(/root/tongsuo/bin/openssl version)
             echo "  Version: $TONGSUO_VER"
+          else
+            echo "  Version: (not found)"
           fi
           echo "  API:     ${{ inputs.API_VERSION }}"
           echo "  NTLS:    ${{ inputs.ENABLE_NTLS }}"
