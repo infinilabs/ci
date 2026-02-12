@@ -28,6 +28,16 @@ on:
         type: string
         default: 'master'
       
+      API_VERSION:
+        description: 'API compatibility version'
+        required: true
+        type: choice
+        options:
+          - 'default'   # No --api parameter
+          - '1.1.1'     # OpenSSL 1.1.1 API
+          - '1.0.2'     # OpenSSL 1.0.2 API
+        default: '1.1.1'
+      
       # Feature Flags
       ENABLE_NTLS:
         description: 'Enable NTLS (国密)'
@@ -78,7 +88,7 @@ on:
         required: true
         type: choice
         options:
-          - 'ubuntu:18.04'
+          - 'ubuntu:18.04'  # GLIBC 2.27, 为 OpenSSL 1.1.1 环境构建
           - 'ubuntu:20.04'
           - 'ubuntu:22.04'
           - 'ubuntu:24.04'
@@ -248,18 +258,12 @@ jobs:
           # Configure with --prefix and base config options
           CONFIG_OPTS="--prefix=/root/tongsuo ${{ matrix.tongsuo_base_config }}"
           
-          # Auto-detect API version based on system OpenSSL version
-          if command -v openssl >/dev/null 2>&1; then
-            OPENSSL_VERSION=$(openssl version | awk '{print $2}' | cut -d. -f1)
-            echo "Detected system OpenSSL major version: $OPENSSL_VERSION"
-            
-            # If major version < 3, use API 1.1.1 for compatibility
-            if [[ "$OPENSSL_VERSION" =~ ^[0-2]$ ]]; then
-              CONFIG_OPTS="$CONFIG_OPTS --api=1.1.1"
-              echo "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
-            else
-              echo "  → No --api parameter needed (OpenSSL >= 3.0)"
-            fi
+          # Add API version parameter if specified
+          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "Using --api=${{ inputs.API_VERSION }} for API compatibility"
+          else
+            echo "Using default API (no --api parameter)"
           fi
           
           if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
@@ -328,56 +332,41 @@ jobs:
           # Replace the default publishing.gradle with our Maven Central version
           cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
+          # Override hardcoded version in build.gradle
+          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
+          sed -i 's/version = ".*"/version = "${{ inputs.PUBLISH_VERSION }}"/' build.gradle
+          
           # Backup and modify openjdk/build.gradle to use our publishing config
           # Need to comment out duplicate artifact additions:
           # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
           # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
           
-          echo "🔍 Debugging AWK script execution..."
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
               print "apply from: \"build.gradle.custom\""
               next
             }
             /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
-              print "[AWK] Matched publishing.publications.maven block at line " NR > "/dev/stderr"
               in_block=1
               print "// " $0
               next 
             }
             in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
-              print "[AWK] Matched closing brace at line " NR > "/dev/stderr"
               print "// " $0
               in_block=0
               next 
             }
             in_block==1 { 
-              print "[AWK] In block at line " NR > "/dev/stderr"
               print "// " $0
               next 
             }
             /publishing\.publications\.maven\.artifact jarTask/ { 
-              print "[AWK] Matched jarTask line at line " NR > "/dev/stderr"
               print "    // " $0
               next 
             }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
-          echo "✅ AWK script completed"
-          
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📝 Modified openjdk/build.gradle (key lines):"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Line 256 (apply publishing.gradle):"
-          sed -n '256p' openjdk/build.gradle
-          echo ""
-          echo "Lines 257-260 (publishing.publications.maven block):"
-          sed -n '257,260p' openjdk/build.gradle
-          echo ""
-          echo "Line 327 (artifact jarTask):"
-          sed -n '327p' openjdk/build.gradle
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
@@ -472,19 +461,12 @@ jobs:
           # Build configuration from inputs
           CONFIG_OPTS="--prefix=$TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
-          # Auto-detect API version based on system OpenSSL/LibreSSL version
-          # Only add --api parameter if system has OpenSSL/LibreSSL < 3.0
-          if command -v openssl >/dev/null 2>&1; then
-            OPENSSL_VERSION=$(openssl version | awk '{print $2}' | cut -d. -f1)
-            echo "Detected system OpenSSL/LibreSSL major version: $OPENSSL_VERSION"
-            
-            # If major version < 3, use API 1.1.1 for compatibility
-            if [[ "$OPENSSL_VERSION" =~ ^[0-2]$ ]]; then
-              CONFIG_OPTS="$CONFIG_OPTS --api=1.1.1"
-              echo "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
-            else
-              echo "  → No --api parameter needed (OpenSSL >= 3.0)"
-            fi
+          # Add API version parameter if specified
+          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "Using --api=${{ inputs.API_VERSION }} for API compatibility"
+          else
+            echo "Using default API (no --api parameter)"
           fi
           
           # Feature flags
@@ -530,9 +512,16 @@ jobs:
           
           # Configure and build - use arch -x86_64 for macOS x86_64
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            arch -x86_64 /bin/bash -c "./config $CONFIG_OPTS"
-            arch -x86_64 /bin/bash -c "make -j$(sysctl -n hw.ncpu)"
-            arch -x86_64 /bin/bash -c "make install_sw"
+            # Export environment variables for cross-compilation
+            export CC="clang -arch x86_64"
+            export CXX="clang++ -arch x86_64"
+            export CFLAGS="-arch x86_64"
+            export CXXFLAGS="-arch x86_64"
+            export LDFLAGS="-arch x86_64"
+            
+            arch -x86_64 /bin/bash -c "export CC='clang -arch x86_64' CXX='clang++ -arch x86_64' CFLAGS='-arch x86_64' CXXFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' && ./config $CONFIG_OPTS"
+            arch -x86_64 /bin/bash -c "export CC='clang -arch x86_64' CXX='clang++ -arch x86_64' CFLAGS='-arch x86_64' CXXFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' && make -j$(sysctl -n hw.ncpu)"
+            arch -x86_64 /bin/bash -c "export CC='clang -arch x86_64' CXX='clang++ -arch x86_64' CFLAGS='-arch x86_64' CXXFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' && make install_sw"
           else
             ./config $CONFIG_OPTS
             make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
@@ -587,21 +576,12 @@ jobs:
           # Build configuration - use Env:TONGSUO_HOME (already set to runner.temp/tongsuo)
           $CONFIG_OPTS = "--prefix=$Env:TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
           
-          # Auto-detect API version based on system OpenSSL version (if available)
-          # Windows runners typically don't have OpenSSL pre-installed, so this may not detect anything
-          try {
-            $opensslVersion = & openssl version 2>&1 | Select-String -Pattern "OpenSSL (\d+)\." | ForEach-Object { $_.Matches.Groups[1].Value }
-            if ($opensslVersion) {
-              Write-Host "Detected system OpenSSL major version: $opensslVersion"
-              if ([int]$opensslVersion -lt 3) {
-                $CONFIG_OPTS += " --api=1.1.1"
-                Write-Host "  → Using --api=1.1.1 for OpenSSL < 3.0 compatibility"
-              } else {
-                Write-Host "  → No --api parameter needed (OpenSSL >= 3.0)"
-              }
-            }
-          } catch {
-            Write-Host "No system OpenSSL detected (Windows), will use default API"
+          # Add API version parameter if specified
+          if ("${{ inputs.API_VERSION }}" -ne "default") {
+            $CONFIG_OPTS += " --api=${{ inputs.API_VERSION }}"
+            Write-Host "Using --api=${{ inputs.API_VERSION }} for API compatibility"
+          } else {
+            Write-Host "Using default API (no --api parameter)"
           }
           
           # Feature flags
@@ -657,70 +637,56 @@ jobs:
           # Replace the default publishing.gradle with our Maven Central version
           cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
           
+          # Override hardcoded version in build.gradle
+          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
+          sed -i.bak 's/version = ".*"/version = "${{ inputs.PUBLISH_VERSION }}"/' build.gradle
+          
           # Backup and modify openjdk/build.gradle to use our publishing config
           # Need to comment out duplicate artifact additions:
           # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
           # - Line 327: publishing.publications.maven.artifact jarTask.get()
           cp openjdk/build.gradle openjdk/build.gradle.bak
           
-          echo "🔍 Debugging AWK script execution..."
           awk '
             /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
               print "apply from: \"build.gradle.custom\""
               next
             }
             /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
-              print "[AWK] Matched publishing.publications.maven block at line " NR > "/dev/stderr"
               in_block=1
               print "// " $0
               next 
             }
             in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
-              print "[AWK] Matched closing brace at line " NR > "/dev/stderr"
               print "// " $0
               in_block=0
               next 
             }
             in_block==1 { 
-              print "[AWK] In block at line " NR > "/dev/stderr"
               print "// " $0
               next 
             }
             /publishing\.publications\.maven\.artifact jarTask/ { 
-              print "[AWK] Matched jarTask line at line " NR > "/dev/stderr"
               print "    // " $0
               next 
             }
             { print }
           ' openjdk/build.gradle.bak > openjdk/build.gradle
-          echo "✅ AWK script completed"
-          
-          echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📝 Modified openjdk/build.gradle (key lines):"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Line 256 (apply publishing.gradle):"
-          sed -n '256p' openjdk/build.gradle
-          echo ""
-          echo "Lines 257-260 (publishing.publications.maven block):"
-          sed -n '257,260p' openjdk/build.gradle
-          echo ""
-          echo "Line 327 (artifact jarTask):"
-          sed -n '327p' openjdk/build.gradle
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo ""
           
           # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
-            echo "🔧 Building Java SDK under Rosetta 2 (x86_64)..."
+            echo "🔧 Building Java SDK for x86_64 (cross-compilation)..."
             echo "  Architecture: $(uname -m)"
-            echo "  CC: $CC"
-            echo "  CFLAGS: $CFLAGS"
-            echo "  LDFLAGS: $LDFLAGS"
             
-            # Explicitly pass architecture flags to Gradle (don't rely on env vars)
-            # Run Gradle under Rosetta 2
-            arch -x86_64 ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
+            # Explicitly export environment variables for cross-compilation
+            export CC="clang -arch x86_64"
+            export CXX="clang++ -arch x86_64"
+            export CFLAGS="-arch x86_64"
+            export CXXFLAGS="-arch x86_64"
+            export LDFLAGS="-arch x86_64"
+            
+            # Run Gradle with explicit architecture flags (don't use arch -x86_64 for Gradle)
+            ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                                    -PtongsuoHome="$TONGSUO_HOME" \
                                    -PcheckErrorQueue \
                                    -Parch=x86_64 \
