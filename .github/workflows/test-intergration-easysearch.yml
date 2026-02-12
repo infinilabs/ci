@@ -173,6 +173,7 @@ jobs:
                   --tests com.infinilabs.security.dlic.rest.api.AuditApiActionTest \
                   --tests com.infinilabs.security.configuration.AuditIndexSearcherWrapperTest \
                   --tests com.infinilabs.security.dlic.rest.api.AuditLogIndexAccessTest \
+                  --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest.doesNotExcludeDataStreamNameForLocalAll \
                   --tests com.infinilabs.security.auditlog.integration.BasicAuditlogTest.testAuditLogTemplateAndDataStream \
                   --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
                   --rerun-tasks --info
