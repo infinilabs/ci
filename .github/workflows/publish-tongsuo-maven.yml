@@ -1018,13 +1018,32 @@ jobs:
           echo ""
           echo "⚠️  IMPORTANT: This binary requires GLIBC $GLIBC_VERSION or higher"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Copy artifacts to mounted volume for upload
+          echo ""
+          echo "📤 Copying artifacts to host..."
+          mkdir -p /build/artifacts
+          cp -r /root/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }} /build/artifacts/ || true
           '
+          
+          # Verify artifacts were copied from Docker
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Verifying copied artifacts from Docker"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ -d "$GITHUB_WORKSPACE/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}" ]; then
+            echo "✅ Artifacts found:"
+            find "$GITHUB_WORKSPACE/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}" -type f | head -10
+          else
+            echo "❌ No artifacts found"
+            ls -la "$GITHUB_WORKSPACE/tongsuo-java-sdk/" || true
+          fi
       
       - name: Upload Maven repository
+        if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
         uses: actions/upload-artifact@v4
         with:
           name: maven-repo-${{ matrix.platform_name }}
-          path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
+          path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
           retention-days: 7
       
       - name: Build Summary
