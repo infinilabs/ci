@@ -47,11 +47,12 @@ println ""
 // Override SDK's publishing configuration
 // Use afterEvaluate to run after SDK's build.gradle is evaluated
 afterEvaluate {
-    // Reconfigure the existing 'maven' publication instead of recreating it
+    // Reconfigure the existing 'maven' publication created by SDK's publishing.gradle
     publishing {
         publications {
-            // Access and reconfigure the existing maven publication
-            maven {
+            // Use named() to explicitly access the existing maven publication
+            // This is more reliable across different Gradle versions than maven { }
+            named('maven', MavenPublication) {
                 // Override group and artifact
                 groupId = 'com.infinilabs'
                 artifactId = 'tongsuo-openjdk'
