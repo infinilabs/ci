@@ -673,24 +673,17 @@ jobs:
             echo "  Host Architecture: $(uname -m)"
             echo "  Target Architecture: x86_64"
             
-            # Run Gradle under Rosetta 2 with explicit environment variables
-            # Note: Environment variables from $GITHUB_ENV are inherited
-            arch -x86_64 /bin/bash -c "
-              export CC='clang -arch x86_64'
-              export CXX='clang++ -arch x86_64'
-              export CFLAGS='-arch x86_64'
-              export CXXFLAGS='-arch x86_64'
-              export LDFLAGS='-arch x86_64'
-              
-              ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \\
-                        -PtongsuoHome=\"$TONGSUO_HOME\" \\
-                        -PcheckErrorQueue \\
-                        -Parch=x86_64 \\
-                        -PldFlags='-arch x86_64' \\
-                        -PcFlags='-arch x86_64' \\
-                        -PcppFlags='-arch x86_64' \\
-                        :tongsuo-openjdk:publishToMavenLocal
-            "
+            # Run Gradle under Rosetta 2 (this will use x86_64 JDK)
+            # Pass architecture flags as Gradle properties
+            arch -x86_64 ./gradlew \
+              -Pversion=${{ inputs.PUBLISH_VERSION }} \
+              -PtongsuoHome="$TONGSUO_HOME" \
+              -PcheckErrorQueue \
+              -Parch=x86_64 \
+              -PldFlags="-arch x86_64" \
+              -PcFlags="-arch x86_64" \
+              -PcppFlags="-arch x86_64" \
+              :tongsuo-openjdk:publishToMavenLocal
           else
             # Other platforms: standard build
             ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
