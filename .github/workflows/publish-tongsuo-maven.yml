@@ -239,8 +239,10 @@ jobs:
           git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
           cd Tongsuo
           
-          # Configure based on inputs
+          # Configure based on inputs - replace $HOME with /root for Docker
           CONFIG_OPTS="${{ matrix.tongsuo_base_config }}"
+          CONFIG_OPTS="${CONFIG_OPTS//\$HOME\/tongsuo/\/root\/tongsuo}"
+          CONFIG_OPTS="${CONFIG_OPTS//\$\{HOME\}\/tongsuo/\/root\/tongsuo}"
           
           if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
             CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
