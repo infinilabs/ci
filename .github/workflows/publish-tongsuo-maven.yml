@@ -397,7 +397,8 @@ jobs:
           echo "  Platform: ${{ matrix.platform_name }}"
           echo "  GLIBC Version: $GLIBC_VERSION"
           echo "  Tongsuo Version: ${{ inputs.TONGSUO_VERSION }}"
-          echo "  Tongsuo Built: $(/root/tongsuo/bin/openssl version)"
+          echo "  Tongsuo Built:"
+          /root/tongsuo/bin/openssl version | sed 's/^/    /'
           echo "  Publish Version: ${{ inputs.PUBLISH_VERSION }}"
           echo ""
           echo "⚠️  IMPORTANT: This binary requires GLIBC $GLIBC_VERSION or higher"
