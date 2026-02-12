@@ -353,44 +353,17 @@ jobs:
           # Build Java SDK
           cd /build/tongsuo-java-sdk
           
-          # Replace the default publishing.gradle with our Maven Central version
-          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          # Apply our Maven Central publishing configuration
+          echo "🔧 Applying Maven Central publishing config..."
+          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/
           
-          # Override hardcoded version in build.gradle
-          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
-          sed -i 's/version = ".*"/version = "${{ inputs.PUBLISH_VERSION }}"/' build.gradle
+          # Replace SDK's default publishing with ours (simple sed replacement)
+          sed -i 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "publishing-maven-central.gradle"|' openjdk/build.gradle
           
-          # Backup and modify openjdk/build.gradle to use our publishing config
-          # Need to comment out duplicate artifact additions:
-          # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
-          # - Line 327: publishing.publications.maven.artifact jarTask.get()
-          cp openjdk/build.gradle openjdk/build.gradle.bak
-          
-          awk '
-            /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
-              print "apply from: \"build.gradle.custom\""
-              next
-            }
-            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
-              in_block=1
-              print "// " $0
-              next 
-            }
-            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
-              print "// " $0
-              in_block=0
-              next 
-            }
-            in_block==1 { 
-              print "// " $0
-              next 
-            }
-            /publishing\.publications\.maven\.artifact jarTask/ { 
-              print "    // " $0
-              next 
-            }
-            { print }
-          ' openjdk/build.gradle.bak > openjdk/build.gradle
+          # Comment out conflicting artifact declarations
+          sed -i '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
+          sed -i '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
+          sed -i '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
@@ -652,44 +625,17 @@ jobs:
         run: |
           set -e
           
-          # Replace the default publishing.gradle with our Maven Central version
-          cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          # Apply our Maven Central publishing configuration
+          echo "🔧 Applying Maven Central publishing config..."
+          cp -f $GITHUB_WORKSPACE/products/tongsuo/publishing-maven-central.gradle openjdk/
           
-          # Override hardcoded version in build.gradle
-          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
-          sed -i.bak 's/version = ".*"/version = "${{ inputs.PUBLISH_VERSION }}"/' build.gradle
+          # Replace SDK's default publishing with ours (simple sed replacement)
+          sed -i.bak 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "publishing-maven-central.gradle"|' openjdk/build.gradle
           
-          # Backup and modify openjdk/build.gradle to use our publishing config
-          # Need to comment out duplicate artifact additions:
-          # - Lines 257-260: publishing.publications.maven { artifact sourcesJar/javadocJar }
-          # - Line 327: publishing.publications.maven.artifact jarTask.get()
-          cp openjdk/build.gradle openjdk/build.gradle.bak
-          
-          awk '
-            /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
-              print "apply from: \"build.gradle.custom\""
-              next
-            }
-            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
-              in_block=1
-              print "// " $0
-              next 
-            }
-            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
-              print "// " $0
-              in_block=0
-              next 
-            }
-            in_block==1 { 
-              print "// " $0
-              next 
-            }
-            /publishing\.publications\.maven\.artifact jarTask/ { 
-              print "    // " $0
-              next 
-            }
-            { print }
-          ' openjdk/build.gradle.bak > openjdk/build.gradle
+          # Comment out conflicting artifact declarations
+          sed -i.bak2 '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
+          sed -i.bak3 '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
+          sed -i.bak4 '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
           
           # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
@@ -956,41 +902,17 @@ jobs:
           # Build Java SDK (dynamic linking)
           cd /build/tongsuo-java-sdk
           
-          # Replace the default publishing.gradle with our Maven Central version
-          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/build.gradle.custom
+          # Apply our Maven Central publishing configuration
+          echo "🔧 Applying Maven Central publishing config..."
+          cp -f /build/products/tongsuo/publishing-maven-central.gradle openjdk/
           
-          # Override hardcoded version in build.gradle
-          echo "🔧 Setting version to ${{ inputs.PUBLISH_VERSION }}..."
-          sed -i "s/version = \".*\"/version = \"${{ inputs.PUBLISH_VERSION }}\"/" build.gradle
+          # Replace SDK's default publishing with ours (simple sed replacement)
+          sed -i "s|apply from: \"\\\$rootDir/gradle/publishing.gradle\"|apply from: \"publishing-maven-central.gradle\"|" openjdk/build.gradle
           
-          # Backup and modify openjdk/build.gradle to use our publishing config
-          cp openjdk/build.gradle openjdk/build.gradle.bak
-          
-          awk '\''
-            /apply from: "\$rootDir\/gradle\/publishing.gradle"/ {
-              print "apply from: \"build.gradle.custom\""
-              next
-            }
-            /^[[:space:]]*publishing\.publications\.maven[[:space:]]*\{/ { 
-              in_block=1
-              print "// " $0
-              next 
-            }
-            in_block==1 && /^[[:space:]]*\}[[:space:]]*$/ { 
-              print "// " $0
-              in_block=0
-              next 
-            }
-            in_block==1 { 
-              print "// " $0
-              next 
-            }
-            /publishing\.publications\.maven\.artifact jarTask/ { 
-              print "    // " $0
-              next 
-            }
-            { print }
-          '\'' openjdk/build.gradle.bak > openjdk/build.gradle
+          # Comment out conflicting artifact declarations
+          sed -i '/publishing\.publications\.maven\.artifact.*sourcesJar/s/^/\/\/ /' openjdk/build.gradle
+          sed -i '/publishing\.publications\.maven\.artifact.*javadocJar/s/^/\/\/ /' openjdk/build.gradle  
+          sed -i '/publishing\.publications\.maven\.artifact jarTask/s/^/    \/\/ /' openjdk/build.gradle
           
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
           
