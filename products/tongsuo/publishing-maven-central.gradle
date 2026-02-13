@@ -28,16 +28,27 @@ if (overrideVersion) {
 project.group = 'com.infinilabs'
 
 // Detect current platform for classifier
-def osName = System.getProperty('os.name').toLowerCase()
-def osArch = System.getProperty('os.arch').toLowerCase()
+// First check if PLATFORM_NAME environment variable is set (from Docker builds)
+def envPlatformName = System.getenv('PLATFORM_NAME')
 
 def platformClassifier = ''
-if (osName.contains('linux')) {
-    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'linux-aarch_64' : 'linux-x86_64'
-} else if (osName.contains('mac') || osName.contains('darwin')) {
-    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'osx-aarch_64' : 'osx-x86_64'
-} else if (osName.contains('win')) {
-    platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'windows-aarch_64' : 'windows-x86_64'
+if (envPlatformName != null && !envPlatformName.isEmpty()) {
+    // Use PLATFORM_NAME from environment (Docker builds pass the correct platform)
+    platformClassifier = envPlatformName
+    println "🎯 Using platform from PLATFORM_NAME env: ${platformClassifier}"
+} else {
+    // Fallback to auto-detection (for native builds)
+    def osName = System.getProperty('os.name').toLowerCase()
+    def osArch = System.getProperty('os.arch').toLowerCase()
+    
+    if (osName.contains('linux')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'linux-aarch_64' : 'linux-x86_64'
+    } else if (osName.contains('mac') || osName.contains('darwin')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'osx-aarch_64' : 'osx-x86_64'
+    } else if (osName.contains('win')) {
+        platformClassifier = osArch.contains('aarch64') || osArch.contains('arm') ? 'windows-aarch_64' : 'windows-x86_64'
+    }
+    println "🎯 Auto-detected platform: ${platformClassifier}"
 }
 
 // Add -dynamic suffix if building dynamic
