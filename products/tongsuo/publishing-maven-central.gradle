@@ -103,12 +103,15 @@ afterEvaluate {
                     groupId = 'com.infinilabs'
                     artifactId = 'tongsuo-openjdk'
                     
-                    // Clear any existing artifacts to avoid duplicates
-                    artifacts.clear()
+                    // DON'T clear artifacts - SDK's addNativeJar() has already added platform JAR
+                    // We just reconfigure the existing artifacts with our classifiers
                     
-                    // Main JAR with platform classifier (includes native libraries)
-                    artifact(platformJarTask) {
-                        classifier = platformClassifier
+                    // Find and reconfigure the main JAR artifact to add platform classifier
+                    artifacts.each { artifact ->
+                        if (artifact.extension == 'jar' && !artifact.classifier) {
+                            // This is the main JAR added by SDK, set our platform classifier
+                            artifact.classifier = platformClassifier
+                        }
                     }
                     
                     // Sources JAR with platform classifier
