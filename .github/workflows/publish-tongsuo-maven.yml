@@ -534,6 +534,7 @@ jobs:
             # Run Gradle under Rosetta 2 (this will use x86_64 JDK)
             # Pass architecture flags as Gradle properties
             arch -x86_64 ./gradlew \
+              -I ../products/tongsuo/init.gradle \
               -Pversion=${{ inputs.PUBLISH_VERSION }} \
               -PtongsuoHome="$TONGSUO_HOME" \
               -PcheckErrorQueue \
@@ -546,12 +547,14 @@ jobs:
               :tongsuo-openjdk:publishToMavenLocal
           else
             # Other platforms: standard build
-            ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
-                      -PtongsuoHome="$TONGSUO_HOME" \
-                      -PcheckErrorQueue \
-                      -PgitCommit="${{ steps.git_info.outputs.commit }}" \
-                      -PgitBranch="${{ steps.git_info.outputs.branch }}" \
-                      :tongsuo-openjdk:publishToMavenLocal
+            ./gradlew \
+              -I ../products/tongsuo/init.gradle \
+              -Pversion=${{ inputs.PUBLISH_VERSION }} \
+              -PtongsuoHome="$TONGSUO_HOME" \
+              -PcheckErrorQueue \
+              -PgitCommit="${{ steps.git_info.outputs.commit }}" \
+              -PgitBranch="${{ steps.git_info.outputs.branch }}" \
+              :tongsuo-openjdk:publishToMavenLocal
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

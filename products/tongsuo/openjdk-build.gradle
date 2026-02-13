@@ -256,8 +256,9 @@ artifacts {
 // Apply SDK's publishing config first (creates maven publication)
 apply from: "$rootDir/gradle/publishing.gradle"
 
-// Then apply our Maven Central config (overrides metadata)
-apply from: "$rootDir/../products/tongsuo/publishing-maven-central.gradle"
+// NOTE: Do NOT apply publishing-maven-central.gradle here!
+// It should be applied via init.gradle (using -I parameter in workflow)
+// This ensures it's applied only once, avoiding duplicate artifact errors
 
 // Don't add sourcesJar/javadocJar here - our publishing config handles it
 // publishing.publications.maven {
