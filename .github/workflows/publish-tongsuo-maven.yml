@@ -25,8 +25,11 @@ on:
       TONGSUO_VERSION:
         description: 'Tongsuo version (branch/tag)'
         required: true
-        type: string
-        default: 'master'
+        type: choice
+        options:
+          - 'master'
+          - '8.4-stable'
+        default: '8.4-stable'
       
       API_VERSION:
         description: 'API compatibility version'
