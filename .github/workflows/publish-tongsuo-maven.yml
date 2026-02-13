@@ -117,7 +117,7 @@ jobs:
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
-            use_docker: false
+            use_docker: true
             
           - platform_name: osx-x86_64
             os: macos-14
@@ -282,6 +282,16 @@ jobs:
           fi
           echo "🐳 Using Docker platform: $DOCKER_PLATFORM"
           
+          # Verify script before running
+          echo "📝 Script info:"
+          file tongsuo-java-sdk/docker-build.sh
+          head -1 tongsuo-java-sdk/docker-build.sh
+          
+          # Debug: Check what image we'll get
+          echo "🔍 Inspecting Docker image for ${{ inputs.LINUX_DOCKER_IMAGE }}..."
+          docker pull --platform $DOCKER_PLATFORM ${{ inputs.LINUX_DOCKER_IMAGE }}
+          docker inspect --format='{{.Os}}/{{.Architecture}}' ${{ inputs.LINUX_DOCKER_IMAGE }}
+          
           # Run build in Docker with environment variables
           docker run --rm \
             --platform $DOCKER_PLATFORM \
@@ -302,7 +312,7 @@ jobs:
             -e GIT_COMMIT="${{ steps.git_info.outputs.commit }}" \
             -e GIT_BRANCH="${{ steps.git_info.outputs.branch }}" \
             ${{ inputs.LINUX_DOCKER_IMAGE }} \
-            /build/tongsuo-java-sdk/docker-build.sh
+            bash -c "echo 'Container arch:' && uname -m && exec /build/tongsuo-java-sdk/docker-build.sh"
 
       - name: Show build environment info (Native)
         if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) }}
@@ -703,7 +713,7 @@ jobs:
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
             cc_prefix: ""
-            use_docker: false
+            use_docker: true
     
     steps:
       - uses: actions/checkout@v4
@@ -754,6 +764,16 @@ jobs:
           fi
           echo "🐳 Using Docker platform: $DOCKER_PLATFORM"
           
+          # Verify script before running
+          echo "📝 Script info:"
+          file tongsuo-java-sdk/docker-build-dynamic.sh
+          head -1 tongsuo-java-sdk/docker-build-dynamic.sh
+          
+          # Debug: Check what image we'll get
+          echo "🔍 Inspecting Docker image for ${{ inputs.LINUX_DOCKER_IMAGE }}..."
+          docker pull --platform $DOCKER_PLATFORM ${{ inputs.LINUX_DOCKER_IMAGE }}
+          docker inspect --format='{{.Os}}/{{.Architecture}}' ${{ inputs.LINUX_DOCKER_IMAGE }}
+          
           # Run dynamic build in Docker with environment variables
           docker run --rm \
             --platform $DOCKER_PLATFORM \
@@ -773,6 +793,7 @@ jobs:
             -e GIT_COMMIT="${{ steps.git_info_dynamic.outputs.commit }}" \
             -e GIT_BRANCH="${{ steps.git_info_dynamic.outputs.branch }}" \
             ${{ inputs.LINUX_DOCKER_IMAGE }} \
+            bash -c "echo 'Container arch:' && uname -m && exec /build/tongsuo-java-sdk/docker-build-dynamic.sh"
             /build/tongsuo-java-sdk/docker-build-dynamic.sh
           
           # Verify artifacts were copied from Docker
