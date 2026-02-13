@@ -220,10 +220,14 @@ afterEvaluate {
     }
     
     signing {
-        required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
-        
         def signingKey = System.getenv("SIGNING_KEY")
         def signingPassword = System.getenv("SIGNING_PASSWORD")
+        
+        // Only require signing if credentials are available
+        required { 
+            (gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal")) && 
+            signingKey && signingPassword 
+        }
         
         if (signingKey && signingPassword) {
             useInMemoryPgpKeys(signingKey, signingPassword)
