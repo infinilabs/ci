@@ -326,24 +326,6 @@ def addNativeJar(NativeBuildInfo nativeBuild) {
         // add OSGI headers
         t.convention.plugins.bundle = new BundleTaskConvention(t)
         
-        doFirst {
-            println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            println "🔍 ${sourceSet.jarTaskName} Debug Info:"
-            println "  SourceSet name: ${sourceSet.name}"
-            println "  SourceSet output dirs:"
-            sourceSet.output.files.each { file ->
-                println "    - ${file}"
-                if (file.exists() && file.isDirectory()) {
-                    file.eachFileRecurse { f ->
-                        if (f.name.endsWith('.so') || f.name.endsWith('.dll') || f.name.endsWith('.dylib')) {
-                            println "      NATIVE: ${f}"
-                        }
-                    }
-                }
-            }
-            println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        }
-        
         t.doLast {
             t.buildBundle()
         }
@@ -570,18 +552,6 @@ model {
                 rename '(.+)(\\.[^\\.]+)', "\$1-$classifier\$2"
                 // Everything under will be included in the native jar.
                 into nativeBuild.jarNativeResourcesDir()
-                
-                doFirst {
-                    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                    println "🔍 copyNativeLib${classifier} Debug Info:"
-                    // binary.sharedLibraryFile is already a File, not a FileProperty
-                    def sourceFile = source instanceof File ? source : source.asFile.get()
-                    println "  Source file: ${sourceFile}"
-                    println "  Source exists: ${sourceFile.exists()}"
-                    println "  Source size: ${sourceFile.exists() ? sourceFile.length() : 'N/A'}"
-                    println "  Destination: ${nativeBuild.jarNativeResourcesDir()}"
-                    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                }
             }
             
             processResources {
