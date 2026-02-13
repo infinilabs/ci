@@ -106,14 +106,14 @@ jobs:
       matrix:
         include:
           - platform_name: linux-x86_64
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             arch: linux-x86_64
             tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             use_docker: true
             
           - platform_name: linux-aarch_64
-            os: ubuntu-22.04-arm64
+            os: ubuntu-24.04-arm64
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
@@ -635,7 +635,7 @@ jobs:
               case "$IMAGE" in
                 "ubuntu:18.04") GLIBC="2.27" ;;
                 "ubuntu:20.04") GLIBC="2.31" ;;
-                "ubuntu:22.04") GLIBC="2.35" ;;
+                "ubuntu:24.04") GLIBC="2.35" ;;
                 "ubuntu:24.04") GLIBC="2.39" ;;
                 *) GLIBC="unknown" ;;
               esac
@@ -687,14 +687,14 @@ jobs:
       matrix:
         include:
           - platform_name: linux-x86_64-dynamic
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             arch: linux-x86_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
             cc_prefix: ""
             use_docker: true
             
           - platform_name: linux-aarch_64-dynamic
-            os: ubuntu-22.04-arm64
+            os: ubuntu-24.04-arm64
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
             cc_prefix: ""
@@ -798,7 +798,7 @@ jobs:
     needs: [build-all-platforms, build-linux-dynamic]
     # Allow publish to run even if dynamic build fails (for testing)
     if: always() && needs.build-all-platforms.result == 'success'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
 
