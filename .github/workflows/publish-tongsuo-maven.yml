@@ -117,7 +117,7 @@ jobs:
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -static -Wl,--no-as-needed -ldl"
             cc_prefix: ""
-            use_docker: true
+            use_docker: false
             
           - platform_name: osx-x86_64
             os: macos-14
@@ -703,7 +703,7 @@ jobs:
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
             cc_prefix: ""
-            use_docker: true
+            use_docker: false
     
     steps:
       - uses: actions/checkout@v4
