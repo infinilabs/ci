@@ -735,6 +735,171 @@ jobs:
           echo "branch=${GIT_BRANCH}" >> $GITHUB_OUTPUT
           echo "📝 Git Info: ${GIT_BRANCH}@${GIT_COMMIT}"
       
+      - name: Install build dependencies (Linux Native)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential perl patchelf
+      
+      - name: Set up JDK 11 (Linux Native)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 11
+      
+      - name: Set TONGSUO_HOME (Native)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        run: |
+          echo "TONGSUO_HOME=$HOME/tongsuo" >> $GITHUB_ENV
+      
+      - name: Show build environment info (Native)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Build Environment Information"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "OS: $(uname -s)"
+          echo "Architecture: $(uname -m)"
+          echo "Distribution: $(lsb_release -d | cut -f2-)"
+          echo "GLIBC Version: $(ldd --version 2>&1 | awk 'NR==1 {print $NF}')"
+          echo ""
+          echo "⚠️  Binaries built on this system require GLIBC $(ldd --version 2>&1 | awk 'NR==1 {print $NF}') or higher"
+          
+          if command -v openssl >/dev/null 2>&1; then
+            echo "System OpenSSL: $(openssl version)"
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Build Tongsuo (Native - Dynamic)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        run: |
+          set -e
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Building Tongsuo (Dynamic Linking)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Version:     ${{ inputs.TONGSUO_VERSION }}"
+          echo "Platform:    ${{ matrix.platform_name }}"
+          echo "Features:"
+          echo "  • NTLS:    ${{ inputs.ENABLE_NTLS }}"
+          echo "  • SM2:     ${{ inputs.ENABLE_SM2 }}"
+          echo "  • SM3:     ${{ inputs.ENABLE_SM3 }}"
+          echo "  • SM4:     ${{ inputs.ENABLE_SM4 }}"
+          echo "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
+          cd Tongsuo
+          
+          # Build configuration for dynamic linking
+          CONFIG_OPTS="--prefix=$TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
+          
+          # Add API version parameter if specified
+          if [[ "${{ inputs.API_VERSION }}" != "default" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --api=${{ inputs.API_VERSION }}"
+            echo "Using --api=${{ inputs.API_VERSION }} for API compatibility"
+          else
+            echo "Using default API (no --api parameter)"
+          fi
+          
+          # Feature flags
+          if [[ "${{ inputs.ENABLE_NTLS }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-ntls"
+          else
+            CONFIG_OPTS="$CONFIG_OPTS no-ntls"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM2 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm2"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM3 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm3"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_SM4 }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS enable-sm4"
+          fi
+          
+          if [[ "${{ inputs.ENABLE_DEBUG }}" == "true" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS --debug"
+          fi
+          
+          # Extra options
+          if [[ -n "${{ inputs.EXTRA_CONFIG_OPTS }}" ]]; then
+            CONFIG_OPTS="$CONFIG_OPTS ${{ inputs.EXTRA_CONFIG_OPTS }}"
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Full config command:"
+          echo "  ./config $CONFIG_OPTS"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Configure and build
+          ./config $CONFIG_OPTS
+          make -j$(nproc)
+          make install_sw
+          
+          # Create symlink if lib64 exists but lib doesn't
+          if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
+            echo "Creating symlink: lib -> lib64"
+            cd "$TONGSUO_HOME" && ln -s lib64 lib
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Tongsuo build completed:"
+          $TONGSUO_HOME/bin/openssl version
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Build and publish JAR (Native - Dynamic)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        working-directory: tongsuo-java-sdk
+        run: |
+          set -e
+          
+          # Replace SDK's build.gradle with our pre-configured version
+          echo "Replacing openjdk/build.gradle with pre-configured version..."
+          cp -f ../products/tongsuo/openjdk-build.gradle openjdk/build.gradle
+          
+          # Remove hardcoded version from root build.gradle
+          if [[ -f build.gradle ]]; then
+            grep -v '^[[:space:]]*version[[:space:]]*=' build.gradle > build.gradle.tmp && mv build.gradle.tmp build.gradle || true
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Building Java SDK with dynamic linking"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          ./gradlew \
+            -I ../products/tongsuo/init.gradle \
+            -Pversion=${{ inputs.PUBLISH_VERSION }} \
+            -PtongsuoHome="$TONGSUO_HOME" \
+            -PtongsuoDynamic=1 \
+            -PcheckErrorQueue \
+            -PgitCommit="${{ steps.git_info_dynamic.outputs.commit }}" \
+            -PgitBranch="${{ steps.git_info_dynamic.outputs.branch }}" \
+            :tongsuo-openjdk:publishToMavenLocal
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Published to Maven local repository"
+          find $HOME/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/ -type f 2>/dev/null || true
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Copy artifacts for upload
+          mkdir -p artifacts/${{ inputs.PUBLISH_VERSION }}
+          cp -r $HOME/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/* \
+               artifacts/${{ inputs.PUBLISH_VERSION }}/
+      
+      - name: Upload Maven repository (Native)
+        if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-repo-${{ matrix.platform_name }}
+          path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
+          retention-days: 7
+      
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
         run: |
