@@ -49,14 +49,20 @@ def classifierToTaskName(String classifier) {
     
     // Split by hyphen and capitalize each part
     def parts = baseClassifier.split('-')
-    def taskName = parts.collect { part ->
-        // Capitalize first letter, rest lowercase
-        part.capitalize()
-    }.join('')
+    def taskName = ''
+    parts.eachWithIndex { part, index ->
+        if (index == 0) {
+            // First part: lowercase
+            taskName += part.toLowerCase()
+        } else {
+            // Other parts: capitalize
+            taskName += part.capitalize()
+        }
+    }
     
     // Special case: x86_64 -> X86_64 (keep underscore, capitalize X)
-    taskName = taskName.replace('X86_64', 'X86_64')
-    taskName = taskName.replace('Aarch_64', 'Aarch_64')
+    taskName = taskName.replace('x86_64', 'X86_64')
+    taskName = taskName.replace('aarch_64', 'Aarch_64')
     
     return taskName + 'Jar'
 }

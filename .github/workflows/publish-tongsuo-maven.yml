@@ -516,8 +516,14 @@ jobs:
         run: |
           set -e
           
-          # Replace SDK's default publishing with our Maven Central version (ONE line!)
-          sed -i.bak 's|apply from: "\$rootDir/gradle/publishing.gradle"|apply from: "$rootDir/../products/tongsuo/publishing-maven-central.gradle"|' openjdk/build.gradle
+          # Replace SDK's build.gradle with our pre-configured version
+          echo "Replacing openjdk/build.gradle with pre-configured version..."
+          cp -f ../products/tongsuo/openjdk-build.gradle openjdk/build.gradle
+          
+          # Remove hardcoded version from root build.gradle
+          if [[ -f build.gradle ]]; then
+            grep -v '^[[:space:]]*version[[:space:]]*=' build.gradle > build.gradle.tmp && mv build.gradle.tmp build.gradle || true
+          fi
           
           # Build and publish to Maven local repository
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
@@ -531,6 +537,8 @@ jobs:
               -Pversion=${{ inputs.PUBLISH_VERSION }} \
               -PtongsuoHome="$TONGSUO_HOME" \
               -PcheckErrorQueue \
+              -PgitCommit="${{ steps.git_info.outputs.commit }}" \
+              -PgitBranch="${{ steps.git_info.outputs.branch }}" \
               -Parch=x86_64 \
               -PldFlags="-arch x86_64" \
               -PcFlags="-arch x86_64" \
@@ -541,6 +549,8 @@ jobs:
             ./gradlew -Pversion=${{ inputs.PUBLISH_VERSION }} \
                       -PtongsuoHome="$TONGSUO_HOME" \
                       -PcheckErrorQueue \
+                      -PgitCommit="${{ steps.git_info.outputs.commit }}" \
+                      -PgitBranch="${{ steps.git_info.outputs.branch }}" \
                       :tongsuo-openjdk:publishToMavenLocal
           fi
           

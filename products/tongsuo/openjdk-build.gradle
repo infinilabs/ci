@@ -349,8 +349,14 @@ def addNativeJar(NativeBuildInfo nativeBuild) {
     // Add the jar task to the standard build.
     jar.dependsOn jarTask
 
-    // Add it to the publishing archives list.
-    publishing.publications.maven.artifact jarTask.get()
+    // Add it to the publishing archives list (after publication is created)
+    afterEvaluate {
+        if (publishing.publications.findByName('maven')) {
+            publishing.publications.maven.artifact jarTask.get()
+        } else {
+            logger.warn("Maven publication not found when adding ${nativeBuild.mavenClassifier()} JAR")
+        }
+    }
 }
 
 test {
