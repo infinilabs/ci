@@ -135,6 +135,24 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📦 Maven Artifacts:"
 find /root/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20
 echo ""
+
+# Debug: Check JAR contents for native libraries
+echo "🔍 Checking JAR contents for native libraries:"
+JAR_FILE=$(find /root/.m2/repository/com/infinilabs/tongsuo-openjdk/${PUBLISH_VERSION} -name "*${PLATFORM_NAME}.jar" | head -1)
+if [ -f "$JAR_FILE" ]; then
+    echo "  JAR file: $JAR_FILE"
+    echo "  Contents:"
+    unzip -l "$JAR_FILE" | grep -E "META-INF/native|\.so|\.dll|\.dylib" || echo "  ⚠️  No native libraries found in JAR!"
+else
+    echo "  ⚠️  JAR file not found!"
+fi
+echo ""
+
+# Debug: Check if native library was built
+echo "🔍 Checking build directory for native libraries:"
+find /build/tongsuo-java-sdk/openjdk/build -name "*.so" -o -name "*.dll" -o -name "*.dylib" 2>/dev/null | head -10 || echo "  ⚠️  No native libraries found in build directory!"
+echo ""
+
 echo "📋 Build Information:"
 echo "  Platform: ${PLATFORM_NAME}"
 echo "  GLIBC Version: $GLIBC_VERSION"
