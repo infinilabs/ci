@@ -113,7 +113,19 @@ fi
 # Build Java SDK
 cd /build/tongsuo-java-sdk
 
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+# Auto-detect JAVA_HOME based on architecture
+if [ -d "/usr/lib/jvm/java-11-openjdk-amd64" ]; then
+  export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+elif [ -d "/usr/lib/jvm/java-11-openjdk-arm64" ]; then
+  export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+elif [ -d "/usr/lib/jvm/java-11-openjdk-aarch64" ]; then
+  export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-aarch64
+else
+  # Fallback: find any java-11-openjdk directory
+  export JAVA_HOME=$(find /usr/lib/jvm -maxdepth 1 -name "java-11-openjdk-*" -type d | head -1)
+fi
+
+echo "Using JAVA_HOME: $JAVA_HOME"
 
 # Pass Git information to Gradle for MANIFEST.MF
 export GIT_COMMIT="${GIT_COMMIT:-unknown}"
