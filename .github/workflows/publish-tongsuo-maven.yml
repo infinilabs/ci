@@ -850,12 +850,17 @@ jobs:
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Tongsuo build completed:"
+          # Set LD_LIBRARY_PATH to use Tongsuo's own libraries
+          export LD_LIBRARY_PATH="$TONGSUO_HOME/lib64:$TONGSUO_HOME/lib:$LD_LIBRARY_PATH"
           $TONGSUO_HOME/bin/openssl version
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
       - name: Build and publish JAR (Native - Dynamic)
         if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
         working-directory: tongsuo-java-sdk
+        env:
+          # Critical: Set LD_LIBRARY_PATH for dynamic linking
+          LD_LIBRARY_PATH: ${{ env.TONGSUO_HOME }}/lib64:${{ env.TONGSUO_HOME }}/lib
         run: |
           set -e
           
