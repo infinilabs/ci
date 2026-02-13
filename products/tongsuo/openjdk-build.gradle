@@ -255,7 +255,7 @@ artifacts {
 
 // Apply SDK's publishing config to get maven-publish plugin
 // Our publishing-maven-central.gradle (via init.gradle) will override the publications
-apply from: "$rootDir/gradle/publishing.gradle"
+apply from: "$rootDir/../products/tongsuo/publishing-maven-central.gradle"
 
 // Don't add sourcesJar/javadocJar here - our publishing config handles it
 // publishing.publications.maven {
