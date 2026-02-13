@@ -322,6 +322,25 @@ def addNativeJar(NativeBuildInfo nativeBuild) {
 
         // add OSGI headers
         t.convention.plugins.bundle = new BundleTaskConvention(t)
+        
+        doFirst {
+            println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            println "🔍 ${sourceSet.jarTaskName} Debug Info:"
+            println "  SourceSet name: ${sourceSet.name}"
+            println "  SourceSet output dirs:"
+            sourceSet.output.files.each { file ->
+                println "    - ${file}"
+                if (file.exists() && file.isDirectory()) {
+                    file.eachFileRecurse { f ->
+                        if (f.name.endsWith('.so') || f.name.endsWith('.dll') || f.name.endsWith('.dylib')) {
+                            println "      NATIVE: ${f}"
+                        }
+                    }
+                }
+            }
+            println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        }
+        
         t.doLast {
             t.buildBundle()
         }
@@ -542,6 +561,16 @@ model {
                 rename '(.+)(\\.[^\\.]+)', "\$1-$classifier\$2"
                 // Everything under will be included in the native jar.
                 into nativeBuild.jarNativeResourcesDir()
+                
+                doFirst {
+                    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    println "🔍 copyNativeLib${classifier} Debug Info:"
+                    println "  Source file: ${source.asFile.get()}"
+                    println "  Source exists: ${source.asFile.get().exists()}"
+                    println "  Source size: ${source.asFile.get().exists() ? source.asFile.get().length() : 'N/A'}"
+                    println "  Destination: ${nativeBuild.jarNativeResourcesDir()}"
+                    println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                }
             }
             
             processResources {
