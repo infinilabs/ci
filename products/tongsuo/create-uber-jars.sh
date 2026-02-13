@@ -102,8 +102,13 @@ for jar in *.jar; do
   [[ "$jar" == *-sources.jar ]] && continue
   [[ "$jar" == *-javadoc.jar ]] && continue
   
+  # Skip uber JARs (from previous runs)
+  [[ "$jar" == "$ARTIFACT_ID-$VERSION.jar" ]] && continue
+  [[ "$jar" == "$ARTIFACT_ID-$VERSION-dynamic.jar" ]] && continue
+  
   # Classify as static or dynamic
-  if [[ "$jar" == *-dynamic.jar ]]; then
+  # Dynamic JARs have -dynamic somewhere in the classifier part
+  if [[ "$jar" == *-dynamic*.jar ]]; then
     DYNAMIC_JARS+=("$jar")
     echo "  ✓ Dynamic: $jar"
   else

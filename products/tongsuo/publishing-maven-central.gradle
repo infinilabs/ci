@@ -51,9 +51,11 @@ if (envPlatformName != null && !envPlatformName.isEmpty()) {
     println "🎯 Auto-detected platform: ${platformClassifier}"
 }
 
-// Add -dynamic suffix if building dynamic
+// Add -dynamic suffix if building dynamic (but only if not already present)
 if (project.hasProperty('tongsuoDynamic') && project.property('tongsuoDynamic') == '1') {
-    platformClassifier += '-dynamic'
+    if (!platformClassifier.endsWith('-dynamic')) {
+        platformClassifier += '-dynamic'
+    }
 }
 
 // Convert platform classifier to JAR task name format
