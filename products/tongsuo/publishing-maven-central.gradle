@@ -219,22 +219,22 @@ afterEvaluate {
         }
     }
     
-    signing {
-        def signingKey = System.getenv("SIGNING_KEY")
-        def signingPassword = System.getenv("SIGNING_PASSWORD")
-        
-        // Only require signing if credentials are available
-        required { 
-            (gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal")) && 
-            signingKey && signingPassword 
-        }
-        
-        if (signingKey && signingPassword) {
+    // Configure signing only if credentials are available
+    def signingKey = System.getenv("SIGNING_KEY")
+    def signingPassword = System.getenv("SIGNING_PASSWORD")
+    
+    if (signingKey && signingPassword) {
+        signing {
+            required { gradle.taskGraph.hasTask("publish") || gradle.taskGraph.hasTask("publishToMavenLocal") }
             useInMemoryPgpKeys(signingKey, signingPassword)
             sign publishing.publications.maven
-        } else {
-            logger.warn("⚠️  Signing credentials not found - artifacts will not be signed")
         }
+    } else {
+        // Disable signing when no credentials
+        signing {
+            required = false
+        }
+        logger.warn("⚠️  Signing credentials not found - artifacts will not be signed")
     }
     
     // Ensure dependent tasks are executed
