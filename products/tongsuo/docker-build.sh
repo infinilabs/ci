@@ -138,13 +138,13 @@ echo ""
 
 # Debug: Check JAR contents for native libraries
 echo "🔍 Checking JAR contents for native libraries:"
-JAR_FILE=$(find /root/.m2/repository/com/infinilabs/tongsuo-openjdk/${PUBLISH_VERSION} -name "*${PLATFORM_NAME}.jar" | head -1)
-if [ -f "$JAR_FILE" ]; then
+JAR_FILE=$(find /root/.m2/repository/com/infinilabs/tongsuo-openjdk/ -name "tongsuo-openjdk-*-${PLATFORM_NAME}.jar" 2>/dev/null | head -1)
+if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
     echo "  JAR file: $JAR_FILE"
-    echo "  Contents:"
+    echo "  Contents (native libraries):"
     unzip -l "$JAR_FILE" | grep -E "META-INF/native|\.so|\.dll|\.dylib" || echo "  ⚠️  No native libraries found in JAR!"
 else
-    echo "  ⚠️  JAR file not found!"
+    echo "  ⚠️  JAR file not found! (Looking for: *-${PLATFORM_NAME}.jar)"
 fi
 echo ""
 
