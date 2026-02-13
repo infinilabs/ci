@@ -694,7 +694,7 @@ jobs:
             use_docker: true
             
           - platform_name: linux-aarch_64-dynamic
-            os: ubuntu-22.04-arm64
+            os: ubuntu-22.04-arm
             arch: linux-aarch_64
             tongsuo_base_config: "-fPIC -Wl,--no-as-needed -ldl"
             cc_prefix: ""
