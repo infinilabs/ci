@@ -4,6 +4,13 @@
 //
 // Usage in CI: Just apply this file and all publishing is configured.
 
+// Guard against double application
+if (project.hasProperty('mavenCentralPublishingApplied')) {
+    logger.warn("⚠️  Maven Central publishing config already applied - skipping to avoid duplicates")
+    return
+}
+project.ext.mavenCentralPublishingApplied = true
+
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
