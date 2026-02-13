@@ -109,12 +109,21 @@ afterEvaluate {
                 
                 // SDK's addNativeJar() adds the platform JAR
                 // We need to add sources and javadoc JARs with platform classifier
-                artifact(tasks.sourcesJar) {
-                    classifier = platformClassifier + '-sources'
+                // Note: sourcesJar and javadocJar tasks are created by SDK's root build.gradle
+                if (tasks.findByName('sourcesJar')) {
+                    artifact(tasks.sourcesJar) {
+                        classifier = platformClassifier + '-sources'
+                    }
+                } else {
+                    logger.warn("⚠️  sourcesJar task not found - sources will not be published")
                 }
                 
-                artifact(tasks.javadocJar) {
-                    classifier = platformClassifier + '-javadoc'
+                if (tasks.findByName('javadocJar')) {
+                    artifact(tasks.javadocJar) {
+                        classifier = platformClassifier + '-javadoc'
+                    }
+                } else {
+                    logger.warn("⚠️  javadocJar task not found - javadoc will not be published")
                 }
                 
                 // Only configure POM metadata
