@@ -541,7 +541,7 @@ jobs:
             # Pass architecture flags as Gradle properties
             arch -x86_64 ./gradlew \
               -I ../products/tongsuo/init.gradle \
-              -Pversion=${{ inputs.PUBLISH_VERSION }} \
+              -Pversion="${{ inputs.PUBLISH_VERSION }}" \
               -PtongsuoHome="$TONGSUO_HOME" \
               -PcheckErrorQueue \
               -PgitCommit="${{ steps.git_info.outputs.commit }}" \
@@ -555,7 +555,7 @@ jobs:
             # Other platforms: standard build
             ./gradlew \
               -I ../products/tongsuo/init.gradle \
-              -Pversion=${{ inputs.PUBLISH_VERSION }} \
+              -Pversion="${{ inputs.PUBLISH_VERSION }}" \
               -PtongsuoHome="$TONGSUO_HOME" \
               -PcheckErrorQueue \
               -PgitCommit="${{ steps.git_info.outputs.commit }}" \
@@ -879,7 +879,7 @@ jobs:
           
           ./gradlew \
             -I ../products/tongsuo/init.gradle \
-            -Pversion=${{ inputs.PUBLISH_VERSION }} \
+            -Pversion="${{ inputs.PUBLISH_VERSION }}" \
             -PtongsuoHome="$TONGSUO_HOME" \
             -PtongsuoDynamic=1 \
             -PcheckErrorQueue \
