@@ -78,7 +78,19 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
     for p in ${plugins[@]}; do
       echo "Installing plugin $p-$VERSION ..."
-      $WORK/$PNAME/bin/$PNAME-plugin install --batch file:///$DEST/plugins/$p/$p-$VERSION.zip >/dev/null 2>&1
+      
+      PLUGIN_FILE="$DEST/plugins/$p/$p-$VERSION.zip"
+      if [ ! -f "$PLUGIN_FILE" ]; then
+          echo "Error: Plugin file not found: $PLUGIN_FILE"
+          exit 1
+      fi
+
+      if $WORK/$PNAME-$t/bin/$PNAME-plugin install --batch "file:///$PLUGIN_FILE"; then
+          echo "Plugin $p installed successfully."
+      else
+          echo "Error: Failed to install plugin $p"
+          exit 1
+      fi
     done
 
     # for debug

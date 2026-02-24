@@ -212,7 +212,10 @@ jobs:
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
           # Only for rules plugin build aarch64 platform package, because it has native code
-          cd $GITHUB_WORKSPACE/$PNAME/plugins/rules && gradle assemble -x test -x javadoc -Pplatform=linux-aarch64
+          cd $GITHUB_WORKSPACE/$PNAME/plugins/rules && rm -rf $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/downloads
+          gradle assemble -x test -x javadoc -Pplatform=linux-aarch64
+          # Check the build zip file
+          find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec ls -lh {} \;
 
       - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
         run: |
