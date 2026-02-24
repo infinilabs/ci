@@ -42,7 +42,7 @@ on:
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "2.1.0-2604"
+        default: "2.1.0-2607"
       PUBLISH_COCO_APP_VERSION:
         description: 'Publish Coco App Version'
         required: false
