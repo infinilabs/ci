@@ -215,7 +215,7 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME/plugins/rules && rm -rf $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/downloads
           gradle assemble -x test -x javadoc -Pplatform=linux-aarch64
           # Check the build zip file
-          find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec ls -lh {} \;
+          find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec basename {} \;
 
       - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
         run: |

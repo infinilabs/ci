@@ -62,7 +62,6 @@ done
 #插件
 plugins=(sql jieba analysis-hanlp analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui rules)
 for p in ${plugins[@]}; do
-  f=$DEST/plugins/$p/$p-$VERSION.zip
   if [ ! -d $DEST/plugins/$p ]; then
     mkdir -p $DEST/plugins/$p
   fi
@@ -83,6 +82,9 @@ for p in ${plugins[@]}; do
     fi
     cp -rf $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar $DEST/archive/plugins
   fi
+
+  dist_dir="$SRC/plugins/$q/build/distributions"
+  files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
 
   for zip in "${files[@]}"; do
     if [ -e "$zip" ]; then
