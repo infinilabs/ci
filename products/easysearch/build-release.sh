@@ -91,14 +91,13 @@ for p in ${plugins[@]}; do
       cp -rf "$zip" "$f"
       (cd "$(dirname "$f")" && sha512sum "$filename" > "$filename.sha512")
 
-        if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-          if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-            echo "Publish Docker <Only> image no need to upload with $p"
-          else
-            echo Upload plugin $p to oss
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
-          fi
+      if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+        if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          echo "Publish Docker <Only> image no need to upload with $p"
+        else
+          echo Upload plugin $p to oss
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
         fi
       fi
     fi
