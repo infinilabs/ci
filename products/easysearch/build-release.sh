@@ -97,7 +97,7 @@ for p in ${plugins[@]}; do
         if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
           echo "Publish Docker <Only> image no need to upload with $p"
         else
-          echo Upload plugin $p to oss
+          echo Upload plugin $filename to oss
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f -k $PNAME/stable/plugins/$p
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $f.sha512 -k $PNAME/stable/plugins/$p
         fi

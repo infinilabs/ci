@@ -69,7 +69,7 @@ for p in ${plugins[@]}; do
   if [ "$p" == "sql" ]; then
     q=search-sql
   fi
-  
+
   # 为了让打镜像的时候能够找到插件包，所以这里的插件包名字不带 SNAPSHOT，但是实际上是 SNAPSHOT 版本，所以打镜像时一定要先 build
   dist_dir="$SRC/plugins/$q/build/distributions"
   files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
@@ -85,7 +85,7 @@ for p in ${plugins[@]}; do
         if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
           echo "Publish Docker <Only> image no need to upload with $p"
         else
-          echo Upload $p to oss
+          echo Upload $filename to oss
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f" -k $PNAME/snapshot/plugins/$p
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f.sha512" -k $PNAME/snapshot/plugins/$p
         fi

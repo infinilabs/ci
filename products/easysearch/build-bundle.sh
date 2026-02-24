@@ -85,7 +85,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
           exit 1
       fi
 
-      if $WORK/$PNAME-$t/bin/$PNAME-plugin install --batch "file:///$PLUGIN_FILE"; then
+      if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$PLUGIN_FILE"; then
           echo "Plugin $p installed successfully."
       else
           echo "Error: Failed to install plugin $p"
