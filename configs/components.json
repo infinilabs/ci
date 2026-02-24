@@ -21,7 +21,7 @@
     "adapter_script": false,
     "components": {
       "ui-web-cli": {
-        "current_version": "0.0.43",
+        "current_version": "0.0.44",
         "work_dir": ".",
         "dist_dir": "."
       }
