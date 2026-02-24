@@ -61,7 +61,6 @@ done
 #插件
 plugins=(sql jieba analysis-hanlp analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui rules)
 for p in ${plugins[@]}; do
-  f=$DEST/plugins/$p/$p-$VERSION.zip
   if [ ! -d $DEST/plugins/$p ]; then
     mkdir -p $DEST/plugins/$p
   fi
@@ -71,20 +70,27 @@ for p in ${plugins[@]}; do
     q=search-sql
   fi
   # 为了让打镜像的时候能够找到插件包，所以这里的插件包名字不带 SNAPSHOT，但是实际上是 SNAPSHOT 版本，所以打镜像时一定要先 build
-  cp -rf $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip $f
-  sha512sum $f |awk -F'/' '{print $1$NF}' > $f.sha512
+  dist_dir="$SRC/plugins/$q/build/distributions"
+  files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
 
-  if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-    if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-      echo "Publish Docker <Only> image no need to upload with $p"
-    else
-      echo Upload $p to oss
-      sha512sum $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip |awk -F'/' '{print $1$NF}' > $p-$VERSION-SNAPSHOT.zip.sha512
-      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/build/distributions/$p-$VERSION-SNAPSHOT.zip -k $PNAME/snapshot/plugins/$p
-      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $p-$VERSION-SNAPSHOT.zip.sha512 -k $PNAME/snapshot/plugins/$p
+  for zip in "${files[@]}"; do
+    if [ -e "$zip" ]; then
+      filename=$(basename "$zip")
+      f="$DEST/plugins/$p/$filename"
+      cp -rf "$zip" "$f"
+      (cd "$(dirname "$f")" && sha512sum "$filename" > "$filename.sha512")
+
+      if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
+        if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          echo "Publish Docker <Only> image no need to upload with $p"
+        else
+          echo Upload $p to oss
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f" -k $PNAME/snapshot/plugins/$p
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f.sha512" -k $PNAME/snapshot/plugins/$p
+        fi
+      fi
     fi
-  fi
-  
+  done
 done
 
 # Refresh snapshot and stable cache page

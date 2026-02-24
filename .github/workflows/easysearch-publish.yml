@@ -182,16 +182,6 @@ jobs:
           echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
           echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
 
-      - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
-        run: |
-          echo "Build $PNAME start..."
-          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinAarch64Tar
-
-      - name: Build Darwin with ${{ env.STEP_VERSION}}
-        run: |
-          echo "Build $PNAME start..."          
-          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinTar
-
       - name: Build linux with ${{ env.STEP_VERSION}}
         run: |
           echo "Build $PNAME start..."          
@@ -202,6 +192,16 @@ jobs:
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxAarch64Tar
 
+      - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
+        run: |
+          echo "Build $PNAME start..."
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinAarch64Tar
+
+      - name: Build Darwin with ${{ env.STEP_VERSION}}
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinTar
+
       - name: Build win with ${{ env.STEP_VERSION}}
         run: |
           echo "Build $PNAME start..."          
@@ -211,6 +211,8 @@ jobs:
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
+          # Only for rules plugin build aarch64 platform package, because it has native code
+          # cd $GITHUB_WORKSPACE/$PNAME/plugins/rules && gradle assemble -x test -x javadoc -Pplatform=linux-aarch64
 
       - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
         run: |
@@ -257,7 +259,7 @@ jobs:
 
           echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
 
-          # 重新整理与生成 SHA256
+          # build release or snapshot
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             $GITHUB_WORKSPACE/products/$PNAME/build-release.sh
             $GITHUB_WORKSPACE/products/$PNAME/build-bundle.sh
