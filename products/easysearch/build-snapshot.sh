@@ -78,6 +78,8 @@ for p in ${plugins[@]}; do
     if [ -e "$zip" ]; then
       filename=$(basename "$zip")
       f="$DEST/plugins/$p/$filename"
+
+      echo "Processing plugin file: $zip"
       cp -rf "$zip" "$f"
       (cd "$(dirname "$f")" && sha512sum "$filename" > "$filename.sha512")
 
@@ -85,7 +87,7 @@ for p in ${plugins[@]}; do
         if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
           echo "Publish Docker <Only> image no need to upload with $p"
         else
-          echo Upload $filename to oss
+          echo "Upload plugin $filename to oss"
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f" -k $PNAME/snapshot/plugins/$p
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f "$f.sha512" -k $PNAME/snapshot/plugins/$p
         fi
