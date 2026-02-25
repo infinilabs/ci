@@ -69,8 +69,7 @@ for p in ${plugins[@]}; do
   if [ "$p" == "sql" ]; then
     q=search-sql
   fi
-
-  # 为了让打镜像的时候能够找到插件包，所以这里的插件包名字不带 SNAPSHOT，但是实际上是 SNAPSHOT 版本，所以打镜像时一定要先 build
+  
   dist_dir="$SRC/plugins/$q/build/distributions"
   files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
 
