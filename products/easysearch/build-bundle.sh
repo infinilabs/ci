@@ -82,16 +82,13 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
       for zip in "${files[@]}"; do
         echo "Installing plugin $zip ..."
 
-        if [ ! -f "$zip" ]; then
-            echo "Error: Plugin file not found: $zip"
-            exit 1
-        fi
-
-        if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$zip"; then
-            echo "Plugin $p installed successfully."
-        else
-            echo "Error: Failed to install plugin $p"
-            exit 1
+        if [ -f "$zip" ]; then
+          if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$zip"; then
+              echo "Plugin $p installed successfully."
+          else
+              echo "Error: Failed to install plugin $p"
+              exit 1
+          fi
         fi
       done
     done
