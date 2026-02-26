@@ -33,7 +33,7 @@ on:
       CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.11" }
       AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.6" }
       MARKDOWN_VERSION: { description: 'markdown Version', required: true, default: "0.0.2" }
-      DISCOVER_VERSION: { description: 'discover Version', required: true, default: "0.0.7" }
+      DISCOVER_VERSION: { description: 'discover Version', required: true, default: "0.0.8" }
 
 jobs:
   prepare-matrix:
