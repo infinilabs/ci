@@ -1,4 +1,4 @@
-name: Publish Easysearch Files & Docker
+name: Publish Easysearch With Fix Branch
 
 defaults:
   run:
@@ -72,7 +72,7 @@ on:
 
 jobs:
   publish:
-    name: Publish easysearch files and docker
+    name: Publish easysearch files with branch ${{ inputs.PUBLISH_BRANCH }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
