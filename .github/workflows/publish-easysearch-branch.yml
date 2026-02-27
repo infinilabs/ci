@@ -55,6 +55,10 @@ on:
         description: "Publish Branch"
         required: true
         default: "fix-v1.13.1"
+      PUBLISH_BUILD_NUMBER:
+        description: "Publish Build Number"
+        required: true
+        default: "2181"
       PUBLISH_AGENT_VERSION:
         description: "Publish With Agent Version"
         required: false
@@ -63,7 +67,7 @@ on:
         description: "Publish Release"
         required: false
         type: boolean
-        default: false
+        default: true
       ONLY_DOCKER:
         description: "Publish Docker <Only>"
         required: false
@@ -254,6 +258,9 @@ jobs:
           fi
 
           DYNAMIC_BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+          # Set build number by inputs vaule
+          DYNAMIC_BUILD_NUMBER="${{ inputs.PUBLISH_BUILD_NUMBER}}"
 
           export VERSION=$DYNAMIC_VERSION
           export BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER
