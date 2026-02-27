@@ -131,8 +131,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Check nodejs toolchain
         run: |
