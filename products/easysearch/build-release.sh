@@ -59,9 +59,12 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
   cd $WORKDIR && rm -rvf $WORKDIR/$FNAME && rm -rf $WORKDIR/$PNAME-$VERSION
 done
 
-#插件
-plugins=($(find $SRC/plugins -mindepth 1 -maxdepth 1 -type d -exec basename {} \;))
-for q in ${plugins[@]}; do
+#插件 exclude some plugins for release fast-terms filter-distinct
+plugins=($(find $SRC/plugins -mindepth 1 -maxdepth 1 -type d \
+  ! -name "fast-terms" \
+  ! -name "filter-distinct" \
+  -exec basename {} \;))
+for q in "${plugins[@]}"; do
   p=$q
   if [ "$p" == "search-sql" ]; then
     p=sql
