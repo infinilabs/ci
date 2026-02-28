@@ -79,6 +79,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
       ! -name "jieba" \
+      ! -name "rules" \
       -exec basename {} \;))
     for p in "${plugins[@]}"; do
       dist_dir="$DEST/plugins/$p"

@@ -70,6 +70,7 @@ for t in amd64 arm64; do
     plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
       ! -name "jieba" \
+      ! -name "rules" \
       -exec basename {} \;))
     for p in "${plugins[@]}"; do
       dist_dir="$DEST/plugins/$p"
