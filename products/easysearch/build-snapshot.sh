@@ -59,15 +59,15 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
 done
 
 #插件
-plugins=(sql jieba analysis-hanlp analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui rules)
-for p in ${plugins[@]}; do
-  if [ ! -d $DEST/plugins/$p ]; then
-    mkdir -p $DEST/plugins/$p
+plugins=($(find $SRC/plugins -mindepth 1 -maxdepth 1 -type d -exec basename {} \;))
+for q in ${plugins[@]}; do
+  p=$q
+  if [ "$p" == "search-sql" ]; then
+    p=sql
   fi
 
-  q=$p
-  if [ "$p" == "sql" ]; then
-    q=search-sql
+  if [ ! -d $DEST/plugins/$p ]; then
+    mkdir -p $DEST/plugins/$p
   fi
   
   dist_dir="$SRC/plugins/$q/build/distributions"

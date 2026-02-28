@@ -50,7 +50,7 @@ on:
       PUBLISH_VERSION:
         description: "Publish Version"
         required: true
-        default: "1.13.1"
+        default: "1.13.2"
       PUBLISH_BRANCH:
         description: "Publish Branch"
         required: true

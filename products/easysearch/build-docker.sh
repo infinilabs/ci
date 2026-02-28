@@ -66,8 +66,14 @@ for t in amd64 arm64; do
 
   #plugin install
   if [ -z "$(ls -A $WORK/$PNAME-$t/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
+    plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d -exec basename {} \;))
     for p in ${plugins[@]}; do
+      # Skip some plugins for bundle edition  analysis-hanlp jeieba fast-terms filter-distinct 
+      if [[ "$p" == "analysis-hanlp" || "$p" == "jeieba" || "$p" == "fast-term" || "$p" == "filter-distinct" ]]; then
+        echo "Skip plugin $p for bundle edition"
+        continue
+      fi
+      
       dist_dir="$DEST/plugins/$p"
       files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
       for zip in "${files[@]}"; do

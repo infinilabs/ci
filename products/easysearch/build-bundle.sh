@@ -75,8 +75,14 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
-    plugins=(sql analysis-ik analysis-icu analysis-stconvert analysis-pinyin analysis-morphology ingest-common ingest-geoip ingest-user-agent mapper-annotated-text mapper-murmur3 mapper-size transport-nio knn ai ui)
+    plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d -exec basename {} \;))
     for p in ${plugins[@]}; do
+      # Skip some plugins for bundle edition  analysis-hanlp jeieba fast-terms filter-distinct 
+      if [[ "$p" == "analysis-hanlp" || "$p" == "jeieba" || "$p" == "fast-term" || "$p" == "filter-distinct" ]]; then
+        echo "Skip plugin $p for bundle edition"
+        continue
+      fi
+
       dist_dir="$DEST/plugins/$p"
       files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
       for zip in "${files[@]}"; do
