@@ -40,11 +40,6 @@ env:
   PNPM_VERSION: "latest"
 
 on:
-  push:
-    tags:
-      - "release*"
-  schedule:
-    - cron: "30 16 * * *"
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
