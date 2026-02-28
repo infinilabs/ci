@@ -99,7 +99,7 @@ on:
 
 jobs:
   build-all-platforms:
-    name: Build ${{ matrix.platform_name }}
+    name: Build ${{ matrix.platform_name }}@${{ inputs.PUBLISH_VERSION }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -680,7 +680,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-linux-dynamic:
-    name: Build Dynamic - ${{ matrix.platform_name }}
+    name: Build Dynamic - ${{ matrix.platform_name }}@${{ inputs.PUBLISH_VERSION}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -955,7 +955,7 @@ jobs:
           path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
           retention-days: 7
       
-      - name: Build Summary
+      - name: Build Summary with ${{ inputs.PUBLISH_VERSION }} (Dynamic)
         shell: bash
         run: |
           echo ""
@@ -964,7 +964,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   publish:
-    name: Create Maven Central Bundle
+    name: Create Maven Central Bundle with ${{ inputs.PUBLISH_VERSION }}
     needs: [build-all-platforms, build-linux-dynamic]
     # Allow publish to run even if dynamic build fails (for testing)
     if: always() && needs.build-all-platforms.result == 'success'
@@ -1050,7 +1050,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           find "$MERGED_REPO" -type f | head -50 || true
 
-      - name: Create Uber JARs
+      - name: Create Uber JARs with ${{ inputs.PUBLISH_VERSION }}
         run: |
           set -e
           
@@ -1104,7 +1104,7 @@ jobs:
             echo "Javadoc: (skipped)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Sign artifacts with GPG
+      - name: Sign artifacts with GPG with ${{ inputs.PUBLISH_VERSION }}
         run: |
           set -e
           
@@ -1211,7 +1211,7 @@ jobs:
           echo "✅ Bundle validation passed"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Create Maven Central bundle ZIP
+      - name: Create Maven Central bundle ZIP with ${{ inputs.PUBLISH_VERSION }}
         run: |
           set -e
           
@@ -1246,7 +1246,7 @@ jobs:
           export ZIP_FILE_PATH="$ZIP_FILE"
           python3 $GITHUB_WORKSPACE/scripts/publish_central.py
         env:
-          DEBUG: true
+          DEBUG: false
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
