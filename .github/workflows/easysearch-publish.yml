@@ -174,7 +174,7 @@ jobs:
             echo "Publish release version $STEP_VERSION with ${{ github.event_name }}"
           else
             export BUILD_TYPE="${{ github.event_name }}"
-            export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
+            export PUBLISHED_VERSION="$STEP_VERSION"
             $GITHUB_WORKSPACE/products/$PNAME/init-snapshot.sh
             echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
           fi
