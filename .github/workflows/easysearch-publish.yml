@@ -54,7 +54,7 @@ on:
       PUBLISH_AGENT_VERSION:
         description: "Publish With Agent Version"
         required: false
-        default: "1.30.2-2333"
+        default: "1.30.2-2391"
       PUBLISH_RELEASE:
         description: "Publish Release"
         required: false
