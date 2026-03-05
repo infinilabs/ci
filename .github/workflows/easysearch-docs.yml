@@ -7,7 +7,6 @@ env:
   PNAME: easysearch
   HUGO_VERSION: 0.79.1
   DOCS_URL: ${{ vars.DOCS_URL }}
-  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
