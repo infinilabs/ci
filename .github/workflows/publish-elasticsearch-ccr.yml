@@ -33,7 +33,11 @@ on:
       PUBLISH_VERSION:
         description: "Publish Version"
         required: true
-        default: "7.10.2"
+        type: choice
+        options:
+          - "7.10.0"
+          - "7.10.2"
+        default: "7.10.0"
       PUBLISH_BRANCH:
         description: "Publish Branch"
         required: true
@@ -97,11 +101,11 @@ jobs:
           
           # Check the build zip file
           echo "Built plugin zip files ..."
-          find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec basename {} \;
+          find $GITHUB_WORKSPACE/$PNAME -name "*-$VERSION*.zip" -exec basename {} \;
 
       - name: Upload Plubin to OSS
         run: |
-          target_dir=$GITHUB_WORKSPACE/$PNAME/plugins
+          target_dir=$GITHUB_WORKSPACE/$PNAME
           find "$target_dir" -maxdepth 3 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
             echo "Uploading ${zip_file##*/} with path $zip_file..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file"
