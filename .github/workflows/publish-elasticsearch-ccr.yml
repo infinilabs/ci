@@ -37,10 +37,18 @@ on:
         options:
           - "7.10.0"
           - "7.10.2"
+          - "7.16.2"
+          - "7.17.27"
         default: "7.10.0"
       PUBLISH_BRANCH:
         description: "Publish Branch"
         required: true
+        type: choice
+        options:
+          - "dev_710"
+          - "dev_7102"
+          - "dev_7162"
+          - "dev_71727_gf"
         default: "dev_710"
 
 jobs:
