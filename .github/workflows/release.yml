@@ -479,6 +479,52 @@ jobs:
             echo "Republish trigger sent."
           fi
 
+  release-files:
+    if: ${{ inputs.OPERATION == 'RELEASE' }}
+    name: Update Release files from snapshot to stable
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Move products files from snapshot to stable
+        env:
+          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+        run: |
+          ver=${{ env.PUBLISH_VERSION }}
+          if [[ "$DO_PROD" == "true" ]]; then
+            for p in agent gateway console loadgen; do
+              echo "Move Products $p-$ver from snapshot to stable"
+              oss move -p $p --prefix $p-$ver
+            done
+          fi
+
+      - name: Move easysearch files from snapshot to stable
+        env:
+          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+        run: |
+          if [[ "$DO_EZS" == "true" ]]; then
+            echo "Move Easysearch from snapshot to stable"
+          fi
+
+      - name: Move coco files from snapshot to stable
+        env:
+          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+        run: |
+          if [[ "$DO_COCO" == "true" ]]; then
+            echo "Move Coco from snapshot to stable"
+          fi
   publish-coco-website:
     needs: release-metadata
     if: ${{ inputs.OPERATION == 'RELEASE' && inputs.COCO_PUBLISH == true }}
