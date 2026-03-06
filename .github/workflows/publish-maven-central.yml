@@ -123,6 +123,7 @@ jobs:
   
           echo "Cloning component repository: $REPO_NAME"
           git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
       
       - name: Prepare publish version ${{ env.PNAME}}@${{env.PUBLISH_VERSION }}
         working-directory: ${{ env.PNAME}}

@@ -1,4 +1,4 @@
-name: Publish Tongsuo Java SDK to Maven Central
+name: Publish $PNAME Java SDK to Maven Central
 
 defaults:
   run:
@@ -6,6 +6,7 @@ defaults:
 
 env:
   TZ: Asia/Shanghai
+  PNAME: Tongsuo
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
 
@@ -23,7 +24,7 @@ on:
         type: string
         default: 'master'
       TONGSUO_VERSION:
-        description: 'Tongsuo version (branch/tag)'
+        description: '$PNAME version (branch/tag)'
         required: true
         type: choice
         options:
@@ -324,14 +325,14 @@ jobs:
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Build Tongsuo (Native)
+      - name: Build $PNAME (Native)
         if: ${{ !(runner.os == 'Linux' && inputs.USE_DOCKER_BUILD && matrix.use_docker) && runner.os != 'Windows' }}
         shell: bash
         run: |
           set -e
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Building Tongsuo"
+          echo "Building $PNAME"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Version:     ${{ inputs.TONGSUO_VERSION }}"
           echo "Platform:    ${{ matrix.platform_name }}"
@@ -343,8 +344,8 @@ jobs:
           echo "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
-          cd Tongsuo
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/$PNAME-Project/$PNAME.git $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           
           # cc_prefix is used for Linux cross-compilation
           if [[ -n "${{ matrix.cc_prefix }}" ]]; then
@@ -407,7 +408,7 @@ jobs:
           # Configure and build
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "darwin64-x86_64" ]]; then
             # For macOS x86_64: Run under Rosetta 2, environment variables already set in $GITHUB_ENV
-            echo "Building Tongsuo for x86_64 under Rosetta 2..."
+            echo "Building $PNAME for x86_64 under Rosetta 2..."
             arch -x86_64 /bin/bash -c "./config $CONFIG_OPTS && make -j$(sysctl -n hw.ncpu) && make install_sw"
           else
             # Other platforms: standard build
@@ -422,9 +423,9 @@ jobs:
             cd "$TONGSUO_HOME" && ln -s lib64 lib
           fi
           
-          # Show Tongsuo version and features
+          # Show $PNAME version and features
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Tongsuo build completed:"
+          echo "$PNAME build completed:"
           $TONGSUO_HOME/bin/openssl version
           
           # Verify architecture for macOS
@@ -441,12 +442,12 @@ jobs:
           fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Build Tongsuo (Native - Windows)
+      - name: Build $PNAME (Native - Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          Write-Host "Building Tongsuo for Windows"
+          Write-Host "Building $PNAME for Windows"
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           Write-Host "Version:     ${{ inputs.TONGSUO_VERSION }}"
           Write-Host "Platform:    ${{ matrix.platform_name }}"
@@ -458,8 +459,8 @@ jobs:
           Write-Host "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
-          cd Tongsuo
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/$PNAME-Project/$PNAME.git $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           
           # Build configuration - use Env:TONGSUO_HOME (already set to runner.temp/tongsuo)
           $CONFIG_OPTS = "--prefix=$Env:TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
@@ -511,7 +512,7 @@ jobs:
           nmake install_sw
           
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          Write-Host "Tongsuo build completed:"
+          Write-Host "$PNAME build completed:"
           & "$Env:TONGSUO_HOME\bin\openssl.exe" version
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -649,9 +650,9 @@ jobs:
             fi
           fi
           
-          # Tongsuo Information
+          # $PNAME Information
           echo ""
-          echo "🔐 Tongsuo:"
+          echo "🔐 $PNAME:"
           if [[ "${{ runner.os }}" == "Windows" ]] && [ -f "$TONGSUO_HOME/bin/openssl.exe" ]; then
             TONGSUO_VER=$("$TONGSUO_HOME/bin/openssl.exe" version)
             echo "  Version: $TONGSUO_VER"
@@ -772,13 +773,13 @@ jobs:
           fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
-      - name: Build Tongsuo (Native - Dynamic)
+      - name: Build $PNAME (Native - Dynamic)
         if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
         run: |
           set -e
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Building Tongsuo (Dynamic Linking)"
+          echo "Building $PNAME (Dynamic Linking)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Version:     ${{ inputs.TONGSUO_VERSION }}"
           echo "Platform:    ${{ matrix.platform_name }}"
@@ -790,8 +791,8 @@ jobs:
           echo "  • Debug:   ${{ inputs.ENABLE_DEBUG }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/Tongsuo-Project/Tongsuo.git
-          cd Tongsuo
+          git clone --depth 1 --branch ${{ inputs.TONGSUO_VERSION }} https://github.com/$PNAME-Project/$PNAME.git $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           
           # Build configuration for dynamic linking
           CONFIG_OPTS="--prefix=$TONGSUO_HOME ${{ matrix.tongsuo_base_config }}"
@@ -849,8 +850,8 @@ jobs:
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Tongsuo build completed:"
-          # Set LD_LIBRARY_PATH to use Tongsuo's own libraries
+          echo "$PNAME build completed:"
+          # Set LD_LIBRARY_PATH to use $PNAME's own libraries
           export LD_LIBRARY_PATH="$TONGSUO_HOME/lib64:$TONGSUO_HOME/lib:$LD_LIBRARY_PATH"
           $TONGSUO_HOME/bin/openssl version
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

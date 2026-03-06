@@ -29,7 +29,7 @@ clone_repo() {
     echo "  Cloning $repo_url into $target_dir"
     # 执行克隆，--depth 1 只获取最新提交，加快速度
     git clone --depth 1 "$repo_url" "$target_dir" || { echo "  Error: Failed to clone $repo_url"; return 1; }
-    echo "  Successfully cloned $target_path."
+    echo "  Successfully cloned $target_path at $(git log -1 --pretty=format:"%h, %ad" --date=iso)."
   else
     echo "  Directory $target_dir already exists, skipping clone."
   fi

@@ -37,7 +37,7 @@ apt-get install -y build-essential perl patchelf git wget curl openjdk-11-jdk-he
 cd /build
 echo "Building Tongsuo ${TONGSUO_VERSION}..."
 git clone --depth 1 --branch "${TONGSUO_VERSION}" https://github.com/Tongsuo-Project/Tongsuo.git
-cd Tongsuo
+cd Tongsuo && echo Checkout Tongsuo repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
 # Configure with --prefix and base config options
 CONFIG_OPTS="--prefix=/root/tongsuo ${TONGSUO_BASE_CONFIG}"
