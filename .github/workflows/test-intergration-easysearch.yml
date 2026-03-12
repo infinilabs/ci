@@ -12,7 +12,7 @@ env:
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
-  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
@@ -141,11 +141,14 @@ jobs:
         timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :rest-api-spec:yamlRestTest \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                   --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
                   --info --stacktrace
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="rest"
           report_dir="$GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest"
@@ -157,11 +160,13 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Run Security tests
         timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :modules:security:test \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
@@ -179,6 +184,8 @@ jobs:
                   --tests com.infinilabs.security.auditlog.integration.BasicAuditlogTest.testAuditLogTemplateAndDataStream \
                   --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
                   --rerun-tasks --info
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="security"
           report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
@@ -190,10 +197,12 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
       
       - name: Run DataStream tests
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :server:test \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
@@ -206,6 +215,8 @@ jobs:
                   --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsResponseTests \
                   --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
                   --rerun-tasks --info
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="datastream"
           report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
@@ -217,11 +228,13 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Run IndexingPressureIT tests
         timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :server:clean :server:internalClusterTest \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
@@ -231,6 +244,8 @@ jobs:
                   --tests org.easysearch.indexingpressure.IndexingPressureIT \
                   --tests org.easysearch.index.IndexingPressureIT \
                   --rerun-tasks --info
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="indexing-pressure"
           report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest"
@@ -242,17 +257,21 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Run Read old lucene index tests
         timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :server:test \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                   --tests org.easysearch.index.engine.InternalEngineTests \
                   --tests org.easysearch.index.store.StoreTests \
                   --rerun-tasks --info
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="read-old-lucene-index"
           report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
@@ -264,6 +283,7 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Run Rules Plugin Compiler tests
         timeout-minutes: 30
@@ -273,11 +293,14 @@ jobs:
           PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :plugins:rules:test \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                   --tests org.easysearch.rules.compiler.RuleCompilerTests \
                   --rerun-tasks --info
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="rules-plugin"
           report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test"
@@ -289,6 +312,7 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Run Rules Plugin Multi-Node IT tests
         timeout-minutes: 30
@@ -298,12 +322,15 @@ jobs:
           PATH: ${{env.PLUGIN_HOME}}/rules/ruledb-pkg/bin:${{env.PATH}} 
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :plugins:rules:internalClusterTest \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                   --tests org.easysearch.rules.sync.RulesMultiNodeIT \
                   --rerun-tasks --info
-           # Copy test reports
+          exit_code=$?
+          set -e
+          # Copy test reports
           test_name="rules-plugin-multi-node"
           report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest"
           target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
@@ -314,17 +341,20 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
       
       - name: Run zstd lucence index tests
         timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
+          set +e
           gradle clean :modules:custom-codecs:test :modules:custom-codecs:internalClusterTest \
                   -Deasysearch.version=$STEP_VERSION \
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests '*Zstd*'
+                  --tests '*Zstd*' \
                   --rerun-tasks --info
-
+          exit_code=$?
+          set -e
           # Copy test reports
           test_name="zstd-lucene-index"
           report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
@@ -336,6 +366,7 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code
 
       - name: Upload Test Reports
         if: always()
