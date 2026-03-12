@@ -104,13 +104,15 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
+          package_json_file: "${{ env.PNAME }}/package.json"
 
       - name: Set up nodejs toolchain
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
+          check-latest: false
           cache: "pnpm"
-          cache-dependency-path: "**/pnpm-lock.yaml"
+          cache-dependency-path: "${{ env.PNAME }}/pnpm-lock.yaml"
 
       - name: Check nodejs toolchain
         run: |
@@ -314,6 +316,28 @@ jobs:
             echo "No $test_name test reports found in $report_dir"
           fi
       
+      - name: Run zstd lucence index tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          gradle clean :modules:custom-codecs:test :modules:custom-codecs:internalClusterTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests '*Zstd*'
+                  --rerun-tasks --info
+                  
+          # Copy test reports
+          test_name="zstd-lucene-index"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v6

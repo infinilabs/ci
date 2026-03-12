@@ -1,4 +1,4 @@
-name: Publish $PNAME Java SDK to Maven Central
+name: Publish Tongsuo Java SDK to Maven Central
 
 defaults:
   run:
