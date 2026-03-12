@@ -111,8 +111,6 @@ jobs:
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           check-latest: false
-          cache: "pnpm"
-          cache-dependency-path: "${{ env.PNAME }}/pnpm-lock.yaml"
 
       - name: Check nodejs toolchain
         run: |
@@ -120,6 +118,7 @@ jobs:
             npm install -g pnpm
           fi
           node -v && npm -v && pnpm -v
+
       - name: Cache Gradle packages and jdks
         uses: actions/cache@v5
         with:
@@ -325,7 +324,7 @@ jobs:
                   -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                   --tests '*Zstd*'
                   --rerun-tasks --info
-                  
+
           # Copy test reports
           test_name="zstd-lucene-index"
           report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"

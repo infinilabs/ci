@@ -61,8 +61,6 @@ jobs:
       with:
         node-version: ${{ env.NODEJS_VERSION }}
         check-latest: false
-        cache: "pnpm"
-        cache-dependency-path: "${{ env.PNAME }}/pnpm-lock.yaml"
   
     - name: Update data.json with latest versions and publish dates
       working-directory: ${{ env.PNAME }}
