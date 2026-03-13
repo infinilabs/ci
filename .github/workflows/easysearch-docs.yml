@@ -150,7 +150,7 @@ jobs:
             git pull origin main
             
             # Build Docs for Main Branch (latest)
-            (cd docs && OUTPUT=$(pwd)/../../docs-output VERSION="main" BRANCH="main" make docs-build docs-place-redirect)
+            (cd docs && OUTPUT=$(pwd)/../../docs-output VERSION="main" BRANCH="main" && rm -rif "$(OUTPUT)/$(PRODUCT)/$(VERSION)/*" && make docs-build docs-place-redirect)
 
             # Commit and Push Latest Docs to Main
             cd $GITHUB_WORKSPACE/docs-output
