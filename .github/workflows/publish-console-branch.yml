@@ -80,7 +80,7 @@ jobs:
 
   publish:
     needs: generate-matrix
-    name: Publish ${{ matrix.product }} Docker With Branch
+    name: Publish ${{ matrix.product }}@${{inputs.PUBLISH_BRANCH}}
     runs-on: ubuntu-latest
     env:
         OSS_EP: ${{ secrets.OSS_EP }}
