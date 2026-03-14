@@ -1,4 +1,4 @@
-name: Publish Products Files & Docker 
+name: Publish Products Docker With Branch
 defaults:
   run:
     shell: bash
@@ -27,7 +27,7 @@ on:
         description: 'Console'
         required: false
         type: boolean
-        default: false
+        default: true
       GATEWAY_PUBLISH:
         description: 'Gateway'
         required: false
@@ -80,7 +80,7 @@ jobs:
 
   publish:
     needs: generate-matrix
-    name: Publish ${{ matrix.product }}
+    name: Publish ${{ matrix.product }} Docker With Branch
     runs-on: ubuntu-latest
     env:
         OSS_EP: ${{ secrets.OSS_EP }}
