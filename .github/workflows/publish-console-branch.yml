@@ -55,7 +55,7 @@ on:
       PUBLISH_BRANCH:
         description: 'Publish With Branch'
         required: false
-        default: ""
+        default: "main"
 
 jobs:
   generate-matrix: 
@@ -383,14 +383,9 @@ jobs:
           FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
-          update_yaml_version "easysearch-publish.yml"        "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
-          update_yaml_version "publish-cloud.yml"             "GATEWAY_VERSION"       "$VERSION"
           update_yaml_version "publish-docker.yml"            "PUBLISH_VERSION"       "$VERSION"
-          update_yaml_version "publish-elasticsearch.yml"     "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
           update_yaml_version "publish-files.yml"             "PUBLISH_VERSION"       "$VERSION"
-          update_yaml_version "release.yml"                   "PUBLISH_VERSION"       "$FULL_VERSION"
-          update_yaml_version "test-gateway.yml"              "PRODUCT_VERSION"       "$VERSION"
-          update_yaml_version "test-integration-products.yml" "PRODUCT_VERSION"       "$VERSION"
+          update_yaml_version "publish-console-branch.yml"       "PUBLISH_VERSION"       "$VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v7
