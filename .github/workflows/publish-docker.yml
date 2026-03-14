@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: true
+        default: "1.30.3"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -41,7 +41,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.30.2"
+        default: "1.30.3"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
