@@ -22,36 +22,40 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: true
+        default: false
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
         type: boolean
-        default: true
+        default: false
       GATEWAY_PUBLISH:
         description: 'Gateway'
         required: false
         type: boolean
-        default: true
+        default: false
       LOADGEN_PUBLISH:
         description: 'Loadgen'
+        required: false
+        type: boolean
+        default: false
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: true
+      ONLY_DOCKER:
+        description: 'Publish Docker <Only>'
         required: false
         type: boolean
         default: true
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.30.2"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+        default: "1.30.3"
+      PUBLISH_BRANCH:
+        description: 'Publish With Branch'
         required: false
-        type: boolean
-        default: false       
-      ONLY_DOCKER:
-        description: 'Publish Docker <Only>'
-        required: false
-        type: boolean
-        default: false         
+        default: ""
 
 jobs:
   generate-matrix: 
@@ -125,7 +129,7 @@ jobs:
         uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
-          ref: main
+          ref: ${{ inputs.PUBLISH_BRANCH}}
           path: ${{ matrix.product }}
 
       - name: Setup ${{ matrix.product }} env
