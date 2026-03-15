@@ -1,0 +1,95 @@
+# PyPI Trusted Publisher settings:
+#   - Owner:     infinilabs
+#   - Repo:      ci
+#   - Workflow:  publish-easysearch-py.yml
+#   - Env:       
+
+name: Publish easysearch-py to pypi
+
+on:
+  # Triggered by easysearch-py when a v* tag is pushed
+  repository_dispatch:
+    types:
+      - easysearch-py-release
+
+  # Also supports manual dispatch from the ci repo
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.1.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: Build distribution packages
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+
+    steps:
+      - name: Resolve tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            TAG="${{ github.event.client_payload.tag }}"
+          else
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Publishing tag: ${TAG}"
+
+      - name: Checkout easysearch-py at tag
+        uses: actions/checkout@v6
+        with:
+          repository: infinilabs/easysearch-py
+          ref: ${{ steps.vars.outputs.tag }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.8"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Verify distribution with twine
+        run: twine check --strict dist/*
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.vars.outputs.tag }}
+          path: dist/
+          retention-days: 7
+
+  publish:
+    name: Publish to PyPI via OIDC
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ needs.build.outputs.tag }}
+          path: dist/
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Publish to PyPI (OIDC, no token required)
+        uses: pypa/gh-action-pypi-publish@release/v1
