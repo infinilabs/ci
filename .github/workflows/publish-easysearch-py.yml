@@ -4,7 +4,7 @@
 #   - Workflow:  publish-easysearch-py.yml
 #   - Env:       
 
-name: Publish easysearch-py to pypi
+name: Publish easysearch-py to PyPI
 
 on:
   # Triggered by easysearch-py when a v* tag is pushed
@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to publish (e.g. v0.1.1)"
+        description: "Tag to publish (e.g. 0.1.0)"
         required: true
         type: string
 
