@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to publish (e.g. 0.1.0)"
+        description: "Tag to publish (e.g. v0.1.0)"
         required: true
         type: string
 
@@ -50,10 +50,18 @@ jobs:
           repository: infinilabs/easysearch-py
           ref: ${{ steps.vars.outputs.tag }}
 
+      - name: Sync version from tag into _version.py
+        run: |
+          VERSION="${{ steps.vars.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/__versionstr__ = \"[^\"]*\"/__versionstr__ = \"${VERSION}\"/" easysearch/_version.py
+          echo "Version set to: ${VERSION}"
+          grep __versionstr__ easysearch/_version.py
+        
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.8"
+          python-version: "3.11"
 
       - name: Install build tools
         run: |
