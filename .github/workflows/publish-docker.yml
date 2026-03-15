@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: "1.30.3"
+        default: false
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
