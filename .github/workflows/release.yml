@@ -418,8 +418,10 @@ jobs:
           IN_COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
           fname=".latest"
-          echo "Downloading current .latest from $RELEASE_URL/$fname..."
-          wget -q -nc --show-progress --progress=bar:force:noscroll $RELEASE_URL/$fname -P /tmp
+          if [[ ! -f "/tmp/$fname" ]]; then
+            echo "Downloading current .latest from $RELEASE_URL/$fname..."
+            wget -q --show-progress --progress=bar:force:noscroll "$RELEASE_URL/$fname" -P /tmp
+          fi
 
           if [[ "$DO_PROD" == "true" ]]; then
             FINAL_PROD_VER="$IN_VER"
@@ -508,23 +510,24 @@ jobs:
               oss move -p $p --prefix $p-${PROD_VER}
             done
           fi
-          # Easysearch
-          if [[ "$DO_EZS" == "true" ]]; then
-            p=easysearch
-            echo "Move $p-${PROD_VER} from snapshot to stable"
-            oss move -p $p --prefix $p-$${PROD_VER}
-            echo "Move $p-${PROD_VER} bundle from snapshot/bundle to stable/bundle"
-            oss move -p $p -s bundle --prefix $p-${PROD_VER}
-          fi
 
       - name: Move easysearch files from snapshot to stable
         env:
           DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
           DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
+          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
+          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
+          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
         run: |
+          # Easysearch
+          p=easysearch
           if [[ "$DO_EZS" == "true" ]]; then
-            echo "Move Easysearch from snapshot to stable"
+            echo "Move $p-${PROD_VER} from snapshot to stable"
+            oss move -p $p --prefix $p-$${PROD_VER}
+            echo "Move $p-${PROD_VER} bundle from snapshot/bundle to stable/bundle"
+            oss move -p $p -s bundle --prefix $p-${PROD_VER}
           fi
 
       - name: Move coco files from snapshot to stable
@@ -532,6 +535,10 @@ jobs:
           DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
           DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
+          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
+          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
+          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
         run: |
           if [[ "$DO_COCO" == "true" ]]; then
             echo "Move Coco from snapshot to stable"
