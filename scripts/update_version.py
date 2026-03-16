@@ -74,14 +74,26 @@ def get_tags():
 
 # 更新官网信息
 def update_publish():
+    # Always update quick_start.yaml with version only (no build number)
+    try:
+        quick_start_data.write_yaml_data(product, build_version)
+        print(f'{product} quick_start updated to {build_version}.')
+    except Exception as e:
+        logger.warning(f'quick_start update skipped for {product}: {e}')
+
+    # Update download.yaml only if the product exists in the list
+    found = False
     for p in download_data.get_yaml_data()['list']:
         if p['key'] == product:
-            print(f'{product} update {build_version}-{build_number} at {build_date}.')
-            quick_start_data.write_yaml_data(product, f'{build_version}-{build_number}')
-            if p['version'] != build_version or p['number'] != build_number:
+            found = True
+            print(f'{product} download updated to {build_version}-{build_number} at {build_date}.')
+            if p.get('version') != build_version or str(p.get('number', '')) != build_number:
                 download_data.write_yaml_data(product, "version", build_version)
                 download_data.write_yaml_data(product, "number", build_number)
                 download_data.write_yaml_data(product, "build_date", build_date)
+            break
+    if not found:
+        logger.info(f'{product} not found in download.yaml, skipping download update.')
 
 if __name__ == '__main__':
 
