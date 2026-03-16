@@ -521,7 +521,7 @@ jobs:
           p=easysearch
           if [[ "$DO_EZS" == "true" ]]; then
             echo "Move $p-${EZS_VER} from snapshot to stable"
-            oss move -p $p --prefix $p-$${EZS_VER}
+            oss move -p $p --prefix $p-${EZS_VER}
             echo "Move $p-${EZS_VER} bundle from snapshot/bundle to stable/bundle"
             oss move -p $p -s bundle --prefix $p-${EZS_VER}
           fi
