@@ -497,13 +497,24 @@ jobs:
           DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
           DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
+          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
+          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
+          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
         run: |
-          ver=${{ env.PUBLISH_VERSION }}
           if [[ "$DO_PROD" == "true" ]]; then
             for p in agent gateway console loadgen; do
-              echo "Move Products $p-$ver from snapshot to stable"
-              oss move -p $p --prefix $p-$ver
+              echo "Move Products $p-${PROD_VER} from snapshot to stable"
+              oss move -p $p --prefix $p-${PROD_VER}
             done
+          fi
+          # Easysearch
+          if [[ "$DO_EZS" == "true" ]]; then
+            p=easysearch
+            echo "Move $p-${PROD_VER} from snapshot to stable"
+            oss move -p $p --prefix $p-$${PROD_VER}
+            echo "Move $p-${PROD_VER} bundle from snapshot/bundle to stable/bundle"
+            oss move -p $p -s bundle --prefix $p-${PROD_VER}
           fi
 
       - name: Move easysearch files from snapshot to stable
