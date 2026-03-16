@@ -520,10 +520,10 @@ jobs:
           # Easysearch
           p=easysearch
           if [[ "$DO_EZS" == "true" ]]; then
-            echo "Move $p-${PROD_VER} from snapshot to stable"
-            oss move -p $p --prefix $p-$${PROD_VER}
-            echo "Move $p-${PROD_VER} bundle from snapshot/bundle to stable/bundle"
-            oss move -p $p -s bundle --prefix $p-${PROD_VER}
+            echo "Move $p-${EZS_VER} from snapshot to stable"
+            oss move -p $p --prefix $p-$${EZS_VER}
+            echo "Move $p-${EZS_VER} bundle from snapshot/bundle to stable/bundle"
+            oss move -p $p -s bundle --prefix $p-${EZS_VER}
           fi
 
       - name: Move coco files from snapshot to stable
