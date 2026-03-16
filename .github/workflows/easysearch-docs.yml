@@ -24,6 +24,13 @@ on:
   schedule:
     - cron: '30 16 * * *'
   workflow_dispatch:
+    inputs:
+      REBUILD_MAIN:
+        description: 'Remove main for rebuild'
+        required: false
+        type: boolean
+        default: false
+
 
 jobs:
   build-deploy-docs:
@@ -113,6 +120,15 @@ jobs:
           path: docs-output
           token: ${{ secrets.REPO_PAT }}
 
+      - name: Remove history build
+        if: ${{ inputs.REBUILD_MAIN }}
+        working-directory: docs-output
+        run: |
+          exit_folders=`find $PNAME -maxdepth 1 -type d | wc -l`
+          rm -rf $PNAME/main
+          cur_folders=`find $PNAME -maxdepth 1 -type d | wc -l`
+          echo "remove main from $exit_folders -> $cur_folders"
+
       - name: Build Documentation
         working-directory: ${{ env.PNAME }}
         run: |
@@ -150,7 +166,7 @@ jobs:
             git pull origin main
             
             # Build Docs for Main Branch (latest)
-            (cd docs && OUTPUT=$(pwd)/../../docs-output VERSION="main" BRANCH="main" && rm -rif "$(OUTPUT)/$(PRODUCT)/$(VERSION)/*" && make docs-build docs-place-redirect)
+            (cd docs && OUTPUT=$(pwd)/../../docs-output VERSION="main" BRANCH="main" && rm -rif "$(OUTPUT)/$(PNAME)/$(VERSION)/*" && make docs-build docs-place-redirect)
 
             # Commit and Push Latest Docs to Main
             cd $GITHUB_WORKSPACE/docs-output
