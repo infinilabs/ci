@@ -63,8 +63,8 @@ build_date = os.getenv('BUILD_DATE')
 product = os.getenv('PNAME')
 product_vers = {}
 
-download_data = Yaml(file_dir=f'{code_base_path}/publish/download.yaml')
-quick_start_data = YamlUpdater(file_dir=f'{code_base_path}/publish/quick_start.yaml')
+download_data = Yaml(file_dir=f'{code_base_path}/data/download.yaml')
+quick_start_data = YamlUpdater(file_dir=f'{code_base_path}/data/quick_start.yaml')
 
 # 获取最新发布的版本信息
 def get_tags():
