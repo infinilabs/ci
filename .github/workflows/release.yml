@@ -475,10 +475,6 @@ jobs:
           else
             echo "Files are different, uploading to OSS..."
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
-            
-            echo "Triggering republish hook..."
-            curl -s -H "X-Token: $TOKEN" "$RELEASE_URL/_republish?versions=$FINAL_COCO_APP_VER,$FINAL_COCO_VER,$FINAL_EZS_VER,$FINAL_PROD_VER" > /dev/null
-            echo "Republish trigger sent."
           fi
 
   release-files:
