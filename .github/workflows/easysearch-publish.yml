@@ -268,6 +268,14 @@ jobs:
             $GITHUB_WORKSPACE/products/$PNAME/build-snapshot.sh
           fi
 
+      - name: Upload snapshot versions artifact
+        if: ${{ !(inputs.PUBLISH_RELEASE == true) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-versions
+          path: ${{ github.workspace }}/products/easysearch/publish/.snapshot-versions.json
+          if-no-files-found: ignore
+
       - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -401,6 +409,43 @@ jobs:
           add-paths: |
             .github/workflows/*.yml
             resources/easysearch-*.json
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --auto --squash
+
+  update_snapshot_versions:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: ${{ success() && !(github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.REPO_PAT }}
+
+      - name: Download snapshot versions artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snapshot-versions
+          path: products/easysearch/publish/
+
+      - name: Create snapshot versions pull request
+        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "chore: update easysearch snapshot versions [skip ci]"
+          branch: "snapshot/update-easysearch-versions-${{ github.run_id }}"
+          title: "chore: update easysearch snapshot versions"
+          body: "Automated update of easysearch snapshot versions after build ${{ github.run_id }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            products/easysearch/publish/.snapshot-versions.json
 
       - name: Auto-merge the pr
         if: ${{ steps.create-pr.outputs.pull-request-url }}
