@@ -58,9 +58,10 @@ on:
         description: 'Publish Artifacts'
         type: choice
         options:
-          - 'easysearch-client'
           - 'license'
-        default: 'easysearch-client'
+          - 'easysearch'
+          - 'easysearch-client'
+        default: 'easysearch'
       PUBLISH_VERSION:
         description: 'Publish Version'
         required: true
@@ -146,7 +147,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           MAVEN_ARGS: "-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 
-      - name: Build with gradle
+      - name: Build ${{ env.PNAME }} with gradle
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch-client' }}
         working-directory: ${{ env.PNAME}}
         run: |
@@ -167,3 +168,21 @@ jobs:
           DEBUG: false
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+      - name: Build and publish ${{ env.PNAME }} with gradle
+        if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch' }}
+        working-directory: ${{ env.PNAME}}
+        run: |
+          ./gradlew :server:publishToSonatypeRepository \
+                    :buildSrc:publishToSonatypeRepository \
+                    :libs:easysearch-core:publishToSonatypeRepository \
+                    :libs:easysearch-lucene:publishToSonatypeRepository \
+                    :libs:easysearch-secure-sm:publishToSonatypeRepository \
+                    :libs:easysearch-x-content:publishToSonatypeRepository \
+                    :libs:easysearch-geo:publishToSonatypeRepository
+        env:
+          PUBLISH_TO_MAVEN_CENTRAL: true
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
