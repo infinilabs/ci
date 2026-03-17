@@ -480,7 +480,6 @@ jobs:
       - name: Update Easysearch .versions.json
         if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
         env:
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
           EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION }}
         run: |
           PNAME=easysearch
@@ -514,34 +513,36 @@ jobs:
           fi
 
           echo "$UPDATED" > "$VERSIONS_FILE"
+          echo "EZS_VER_CLEAN=$VER_CLEAN" >> $GITHUB_ENV
+          echo "EZS_BUILD_NUM=$BUILD_NUM" >> $GITHUB_ENV
 
-          PR_BRANCH="ci_release_ezs_versions_${VER_CLEAN}"
-          PR_MESSAGE="chore: update $PNAME .versions.json for $VER_CLEAN (build $BUILD_NUM)"
+      - name: Create pull request for .versions.json
+        if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
+        uses: peter-evans/create-pull-request@v7
+        id: create-versions-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: update easysearch .versions.json for ${{ env.EZS_VER_CLEAN }} (build ${{ env.EZS_BUILD_NUM }})"
+          branch: "release/easysearch-versions-${{ github.run_id }}"
+          title: "bumpver: update easysearch .versions.json for ${{ env.EZS_VER_CLEAN }} (build ${{ env.EZS_BUILD_NUM }})"
+          body: "Automated update of Easysearch versions metadata for ${{ env.EZS_VER_CLEAN }}-${{ env.EZS_BUILD_NUM }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            products/easysearch/publish/.versions.json
 
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
-          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
-            echo "Branch $PR_BRANCH already exists, deleting..."
-            git push origin --delete "$PR_BRANCH"
-          fi
-          git checkout -b "$PR_BRANCH"
-          git add "$VERSIONS_FILE"
-          if git diff --cached --quiet; then
-            echo "No changes to .versions.json, skipping PR."
-          else
-            # upload to oss
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME -f $VERSIONS_FILE
-            # auto commit pr for change
-            git commit -m "$PR_MESSAGE"
-            git push origin "$PR_BRANCH"
-            gh pr create --title "$PR_MESSAGE" \
-              --body "This PR was created by GitHub Actions to update the Easysearch versions metadata." \
-              --base main \
-              --head "$PR_BRANCH" \
-              --label "auto-merge" \
-              --label "automated"
-          fi
+      - name: Auto-merge versions.json PR
+        if: ${{ steps.create-versions-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-versions-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: |
+          PNAME=easysearch
+          VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/.versions.json"
+          # upload to oss
+          oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME -f $VERSIONS_FILE
+          # auto merge pr for change
+          gh pr merge "$PR_URL" --auto --squash
 
   release-files:
     if: ${{ inputs.OPERATION == 'RELEASE' }}
