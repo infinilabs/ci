@@ -1,0 +1,415 @@
+{
+  "2.0.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2499
+  },
+  "2.0.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2492
+  },
+  "2.0.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2469
+  },
+  "1.15.6": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2468
+  },
+  "1.15.5": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2398
+  },
+  "1.15.3": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2373
+  },
+  "1.15.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2363
+  },
+  "1.15.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2352
+  },
+  "1.15.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2346
+  },
+  "1.14.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2248
+  },
+  "1.14.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2228
+  },
+  "1.13.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2182
+  },
+  "1.13.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2180
+  },
+  "1.13.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2159
+  },
+  "1.12.3": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2143
+  },
+  "1.12.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2120
+  },
+  "1.12.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2019
+  },
+  "1.12.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2008
+  },
+  "1.11.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2000
+  },
+  "1.11.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1992
+  },
+  "1.10.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1986
+  },
+  "1.10.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1978
+  },
+  "1.10.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 2025
+  },
+  "1.9.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1966
+  },
+  "1.9.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1952
+  },
+  "1.9.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 1936
+  },
+  "1.8.3": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 321
+  },
+  "1.8.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 241
+  },
+  "1.8.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 233
+  },
+  "1.8.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 228
+  },
+  "1.7.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 226
+  },
+  "1.7.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 223
+  },
+  "1.6.2": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 222
+  },
+  "1.6.1": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 214
+  },
+  "1.6.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 213
+  },
+  "1.5.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 212
+  },
+  "1.4.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 209
+  },
+  "1.3.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 207
+  },
+  "1.2.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ]
+  },
+  "1.1.1": {
+    "platforms": [
+      "linux-amd64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ]
+  },
+  "1.1.0": {
+    "platforms": [
+      "linux-amd64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ]
+  },
+  "1.0.0": {
+    "platforms": [
+      "linux-amd64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ]
+  }
+}

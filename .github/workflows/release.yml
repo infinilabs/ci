@@ -477,6 +477,72 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $GITHUB_WORKSPACE/$fname
           fi
 
+      - name: Update Easysearch .versions.json
+        if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION }}
+        run: |
+          PNAME=easysearch
+          VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/.versions.json"
+
+          # Parse version and build number from format like "2.1.0-2661"
+          if [[ "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)$ ]]; then
+            VER_CLEAN="${BASH_REMATCH[1]}"
+            BUILD_NUM="${BASH_REMATCH[2]}"
+          elif [[ "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            VER_CLEAN="$EZS_VER"
+            BUILD_NUM=""
+          else
+            echo "::warning:: Invalid PUBLISH_EZS_VERSION format: $EZS_VER, skipping .versions.json update."
+            exit 0
+          fi
+
+          echo "Updating .versions.json for Easysearch $VER_CLEAN (build: $BUILD_NUM)"
+          DEFAULT_PLATFORMS='["linux-amd64","linux-arm64","mac-amd64","mac-arm64","windows-amd64"]'
+
+          if jq -e --arg ver "$VER_CLEAN" '.[$ver]' "$VERSIONS_FILE" > /dev/null 2>&1; then
+            echo "Version $VER_CLEAN exists, updating build_number to $BUILD_NUM"
+            UPDATED=$(jq --arg ver "$VER_CLEAN" --argjson bn "$BUILD_NUM" \
+              '.[$ver].build_number = $bn' "$VERSIONS_FILE")
+          else
+            echo "Version $VER_CLEAN not found, inserting new entry"
+            UPDATED=$(jq --arg ver "$VER_CLEAN" --argjson bn "$BUILD_NUM" \
+              --argjson platforms "$DEFAULT_PLATFORMS" \
+              '{($ver): {"platforms": $platforms, "build_number": $bn}} + .' \
+              "$VERSIONS_FILE")
+          fi
+
+          echo "$UPDATED" > "$VERSIONS_FILE"
+
+          PR_BRANCH="ci_release_ezs_versions_${VER_CLEAN}"
+          PR_MESSAGE="chore: update $PNAME .versions.json for $VER_CLEAN (build $BUILD_NUM)"
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
+            echo "Branch $PR_BRANCH already exists, deleting..."
+            git push origin --delete "$PR_BRANCH"
+          fi
+          git checkout -b "$PR_BRANCH"
+          git add "$VERSIONS_FILE"
+          if git diff --cached --quiet; then
+            echo "No changes to .versions.json, skipping PR."
+          else
+            # upload to oss
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME -f $VERSIONS_FILE
+            # auto commit pr for change
+            git commit -m "$PR_MESSAGE"
+            git push origin "$PR_BRANCH"
+            gh pr create --title "$PR_MESSAGE" \
+              --body "This PR was created by GitHub Actions to update the Easysearch versions metadata." \
+              --base main \
+              --head "$PR_BRANCH" \
+              --label "auto-merge" \
+              --label "automated"
+          fi
+
   release-files:
     if: ${{ inputs.OPERATION == 'RELEASE' }}
     name: Update Release files from snapshot to stable

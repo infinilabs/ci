@@ -1,4 +1,5 @@
 Dockerfile
 build-*.sh
 gradle/
+publish/
 config/*.yml
