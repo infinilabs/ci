@@ -632,7 +632,7 @@ jobs:
       - name: Checkout official-website-cn
         timeout-minutes: 30
         run: |
-          git clone --depth 1 --filter=blob:none --sparse ${{ secrets.SSH_GIT_REPO }}/official-website-cn $GITHUB_WORKSPACE/official-website-cn
+          git clone --depth 1 --sparse ${{ secrets.SSH_GIT_REPO }}/official-website-cn $GITHUB_WORKSPACE/official-website-cn
           cd $GITHUB_WORKSPACE/official-website-cn
           git sparse-checkout set data
           echo "Checkout repo $(git log -1 --pretty=format:'%h, %ad, %an, %s')"
