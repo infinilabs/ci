@@ -173,13 +173,13 @@ jobs:
         if: ${{ env.BUILD_TOOL == 'gradle' && env.PNAME == 'easysearch' }}
         working-directory: ${{ env.PNAME}}
         run: |
-          ./gradlew :server:publishToSonatypeRepository \
-                    :buildSrc:publishToSonatypeRepository \
-                    :libs:easysearch-core:publishToSonatypeRepository \
-                    :libs:easysearch-lucene:publishToSonatypeRepository \
-                    :libs:easysearch-secure-sm:publishToSonatypeRepository \
-                    :libs:easysearch-x-content:publishToSonatypeRepository \
-                    :libs:easysearch-geo:publishToSonatypeRepository
+          ./gradlew :server:publishNebulaPublicationToSonatypeRepository \
+                    :buildSrc:publishNebulaPublicationToSonatypeRepository \
+                    :libs:easysearch-core:publishNebulaPublicationToSonatypeRepository \
+                    :libs:easysearch-lucene:publishNebulaPublicationToSonatypeRepository \
+                    :libs:easysearch-secure-sm:publishNebulaPublicationToSonatypeRepository \
+                    :libs:easysearch-x-content:publpublishNebulaPublicationToSonatypeRepositoryishToSonatypeRepository \
+                    :libs:easysearch-geo:publishNebulaPublicationToSonatypeRepository
         env:
           PUBLISH_TO_MAVEN_CENTRAL: true
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
