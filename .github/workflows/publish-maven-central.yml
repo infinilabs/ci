@@ -174,7 +174,7 @@ jobs:
         working-directory: ${{ env.PNAME}}
         run: |
           ./gradlew :server:publishNebulaPublicationToSonatypeRepository \
-                    :buildSrc:publishNebulaPublicationToSonatypeRepository \
+                    :build-tools:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-core:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-lucene:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-secure-sm:publishNebulaPublicationToSonatypeRepository \
