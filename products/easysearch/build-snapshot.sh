@@ -98,4 +98,34 @@ for q in "${plugins[@]}"; do
   done
 done
 
+# Update and upload .snapshot-versions.json
+VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/.snapshot-versions.json"
+SNAPSHOT_KEY="${VERSION}-${BUILD_NUMBER%%-SNAPSHOT}"
+DEFAULT_PLATFORMS='["linux-amd64","linux-arm64","mac-amd64","mac-arm64","windows-amd64"]'
+
+echo "Updating .snapshot-versions.json with key: $SNAPSHOT_KEY"
+UPDATED=$(jq --arg key "$SNAPSHOT_KEY" \
+  --argjson platforms "$DEFAULT_PLATFORMS" \
+  '.[$key] = {"platforms": $platforms}' \
+  "$VERSIONS_FILE")
+
+# Keep only the latest snapshot per base version, retain only the 2 most recent base versions
+PRUNED=$(echo "$UPDATED" | jq '
+  to_entries |
+  map(. + {base: (.key | split("-")[0]), date: (.key | split("-")[1])}) |
+  group_by(.base) |
+  map(sort_by(.date) | last) |
+  sort_by(.base | split(".") | map(tonumber)) |
+  .[-2:] |
+  map({key: .key, value: .value}) |
+  from_entries
+')
+
+echo "$PRUNED" > "$VERSIONS_FILE"
+
+if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
+  echo "Uploading .snapshot-versions.json to OSS"
+  oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/snapshot -f $VERSIONS_FILE
+fi
+
 echo
