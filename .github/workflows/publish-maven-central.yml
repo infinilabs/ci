@@ -178,7 +178,7 @@ jobs:
                     :libs:easysearch-core:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-lucene:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-secure-sm:publishNebulaPublicationToSonatypeRepository \
-                    :libs:easysearch-x-content:publpublishNebulaPublicationToSonatypeRepositoryishToSonatypeRepository \
+                    :libs:easysearch-x-content:publishNebulaPublicationToSonatypeRepository \
                     :libs:easysearch-geo:publishNebulaPublicationToSonatypeRepository
         env:
           PUBLISH_TO_MAVEN_CENTRAL: true
