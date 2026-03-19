@@ -395,9 +395,17 @@ jobs:
             TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
             echo "Upload $PNAME with $VERSION-$BUILD_NUMBER at $PWD"
             if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+                if [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip ]; then
+                    (cd $WORK && sha512sum $PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip > $PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip.sha512)
+                    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip
+                    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip.sha512
+                fi
             else
-                [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ] && oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+                if [ -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz ]; then
+                    (cd $WORK && sha512sum $PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz > $PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz.sha512)
+                    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz
+                    oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -p $PNAME/server -f $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz.sha512
+                fi
             fi
           done
 

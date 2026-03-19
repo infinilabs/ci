@@ -50,7 +50,9 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
     if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo "Publish Docker <Only> image no need to upload with $DNAME"
     else
+      (cd $WORKDIR/$PNAME-$VERSION && sha512sum $DNAME > $DNAME.sha512)
       oss upload -c /tmp/.oss.yml -o -p $PNAME -f $WORKDIR/$PNAME-$VERSION/$DNAME
+      oss upload -c /tmp/.oss.yml -o -p $PNAME -f $WORKDIR/$PNAME-$VERSION/$DNAME.sha512
     fi
   fi
 
@@ -80,7 +82,9 @@ for q in "${plugins[@]}"; do
       if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         echo "Publish Docker <Only> image no need to upload with $p"
       else
+        (cd $SRC/plugins/$q/sql-jdbc/build/libs && sha512sum sql-jdbc-$VERSION.jar > sql-jdbc-$VERSION.jar.sha512)
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar -k $PNAME/archive/plugins
+        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar.sha512 -k $PNAME/archive/plugins
       fi
     fi
     if [ ! -d $DEST/archive/plugins ]; then

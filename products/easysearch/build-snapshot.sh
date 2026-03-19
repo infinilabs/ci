@@ -50,7 +50,9 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
   if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
     echo Upload $DNAME to oss
     [ ! -f /tmp/.oss.yml ] && cp -rf $GITHUB_WORKSPACE/.oss.yml /tmp
+    (cd $WORKDIR/$PNAME-$VERSION-SNAPSHOT && sha512sum $DNAME > $DNAME.sha512)
     oss upload -c /tmp/.oss.yml -o -k $PNAME/snapshot -f $WORKDIR/$PNAME-$VERSION-SNAPSHOT/$DNAME
+    oss upload -c /tmp/.oss.yml -o -k $PNAME/snapshot -f $WORKDIR/$PNAME-$VERSION-SNAPSHOT/$DNAME.sha512
   fi
 
   # 本地备份

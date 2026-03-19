@@ -127,10 +127,13 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     else
       # Upload to OSS if not only docker image and log the upload time with +8 zone
       echo "$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S') INFO Upload $DNAME to OSS"
+      (cd $WORK/$PNAME && sha512sum $DNAME > $DNAME.sha512)
       if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
+        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/snapshot/bundle
       else
         oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/stable/bundle
+        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/stable/bundle
       fi
     fi
   fi

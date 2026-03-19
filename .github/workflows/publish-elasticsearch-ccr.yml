@@ -117,6 +117,8 @@ jobs:
           target_dir=$GITHUB_WORKSPACE/$PNAME
           find "$target_dir" -maxdepth 3 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
             echo "Uploading ${zip_file##*/} with path $zip_file..."
+            (cd "$(dirname "$zip_file")" && sha512sum "$(basename "$zip_file")" > "$(basename "$zip_file").sha512")
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file"
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file.sha512"
           done
 
