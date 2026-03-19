@@ -19,6 +19,7 @@ on:
         description: "Tag to publish (e.g. v0.1.0)"
         required: true
         type: string
+        default: "v0.1.0"
 
 permissions:
   contents: read
@@ -125,3 +126,41 @@ jobs:
 
       - name: Publish to PyPI (OIDC, no token required)
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  update-repo:
+    name: Update version in CI repo
+    needs: [tag, publish]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update release version in workflow files
+        run: |
+          TAG="${{ needs.tag.outputs.tag }}"
+          cd $GITHUB_WORKSPACE/.github/workflows
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+          update_yaml_version "publish-easysearch-py.yml" "tag" "${TAG}"
+
+      - name: Create bumpver pull request
+        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"
+          branch: "release/publish-easysearch-py-${{ github.run_id }}"
+          title: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"
+          body: "Automated version update for easysearch-py ${{ needs.tag.outputs.tag }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            .github/workflows/publish-easysearch-py.yml
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --auto --squash
