@@ -50,7 +50,7 @@ on:
       PUBLISH_VERSION:
         description: "Publish Version"
         required: false
-        default: "2.1.0"
+        default: "2.1.1"
       PUBLISH_AGENT_VERSION:
         description: "Publish With Agent Version"
         required: false
