@@ -25,8 +25,8 @@ permissions:
   id-token: write
 
 jobs:
-  build:
-    name: Build distribution packages
+  tag:
+    name: Commit version and tag in easysearch-py
     runs-on: ubuntu-latest
 
     outputs:
@@ -44,20 +44,44 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Publishing tag: ${TAG}"
 
+      - name: Commit version and create tag in easysearch-py
+        env:
+          REPO_PAT: ${{ secrets.REPO_PAT }}
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          TAG_VERSION="${TAG#v}"
+          echo "Tagging ${TAG} (version ${TAG_VERSION}) in infinilabs/easysearch-py"
+          git clone https://x-access-token:${REPO_PAT}@github.com/infinilabs/easysearch-py.git
+          cd easysearch-py
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          if git rev-parse --verify "refs/tags/${TAG}" 2>/dev/null; then
+            echo "Tag ${TAG} already exists, skipping."
+          else
+            sed -i "s/__versionstr__ = \"[^\"]*\"/__versionstr__ = \"${TAG_VERSION}\"/" easysearch/_version.py
+            git add easysearch/_version.py
+            git commit -m "bumpver: release ${TAG}"
+            git tag -a ${TAG} -m "Release ${TAG}"
+            git push origin HEAD
+            git push origin ${TAG}
+            echo "Tag ${TAG} created successfully."
+          fi
+
+  build:
+    name: Build distribution packages
+    needs: tag
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag: ${{ needs.tag.outputs.tag }}
+
+    steps:
       - name: Checkout easysearch-py at tag
         uses: actions/checkout@v6
         with:
           repository: infinilabs/easysearch-py
-          ref: ${{ steps.vars.outputs.tag }}
+          ref: ${{ needs.tag.outputs.tag }}
 
-      - name: Sync version from tag into _version.py
-        run: |
-          VERSION="${{ steps.vars.outputs.tag }}"
-          VERSION="${VERSION#v}"
-          sed -i "s/__versionstr__ = \"[^\"]*\"/__versionstr__ = \"${VERSION}\"/" easysearch/_version.py
-          echo "Version set to: ${VERSION}"
-          grep __versionstr__ easysearch/_version.py
-        
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -77,7 +101,7 @@ jobs:
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ steps.vars.outputs.tag }}
+          name: dist-${{ needs.tag.outputs.tag }}
           path: dist/
           retention-days: 7
 
@@ -101,27 +125,3 @@ jobs:
 
       - name: Publish to PyPI (OIDC, no token required)
         uses: pypa/gh-action-pypi-publish@release/v1
-
-  tag:
-    name: Tag release in easysearch-py
-    needs: [build, publish]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout and create tag in easysearch-py
-        env:
-          REPO_PAT: ${{ secrets.REPO_PAT }}
-          TAG: ${{ needs.build.outputs.tag }}
-        run: |
-          echo "Ensuring tag ${TAG} exists in infinilabs/easysearch-py"
-          git clone https://x-access-token:${REPO_PAT}@github.com/infinilabs/easysearch-py.git
-          cd easysearch-py
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          if git rev-parse --verify "refs/tags/${TAG}" 2>/dev/null; then
-            echo "Tag ${TAG} already exists, skipping."
-          else
-            git tag -a ${TAG} -m "Release ${TAG}"
-            git push origin ${TAG}
-            echo "Tag ${TAG} created successfully."
-          fi
