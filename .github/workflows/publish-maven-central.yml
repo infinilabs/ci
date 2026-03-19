@@ -68,7 +68,7 @@ on:
         type: string
         default: '1.0.0'
       DRY_RUN:
-        description: 'Dry Run (Upload only)'
+        description: 'Dry Run (Archive on Github CI)'
         type: boolean
         default: true
 
