@@ -569,7 +569,7 @@ jobs:
           find ~/.m2/repository/com/infinilabs/tongsuo-openjdk -type f | head -20 || true
 
       - name: Upload Maven repository
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
@@ -900,7 +900,7 @@ jobs:
       
       - name: Upload Maven repository (Native)
         if: ${{ !inputs.USE_DOCKER_BUILD || !matrix.use_docker }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
@@ -950,7 +950,7 @@ jobs:
       
       - name: Upload Maven repository
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
@@ -989,7 +989,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Download all Maven repositories
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: maven-repos
           pattern: maven-repo-*
@@ -1252,7 +1252,7 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
       - name: Upload bundle as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maven-central-bundle
           path: tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}.zip

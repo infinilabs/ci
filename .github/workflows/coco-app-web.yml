@@ -221,7 +221,7 @@ jobs:
           done
 
       - name: Upload release info for ${{ env.REPO_NAME }} - ${{ env.COMPONENTS}}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-info-${{ env.REPO_NAME }}-${{ github.run_id }}
           path: release_info/*.txt
@@ -236,7 +236,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download all release infos
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: all_releases
           pattern: release-info-*

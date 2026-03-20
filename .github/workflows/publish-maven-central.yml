@@ -179,7 +179,7 @@ jobs:
 
       - name: Upload bundle artifact (dry-run)
         if: ${{ inputs.DRY_RUN == true && env.BUILD_TOOL == 'gradle' && (env.PNAME == 'easysearch-client' || env.PNAME == 'easysearch') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maven-central-bundle-${{ env.PNAME }}-${{ env.PUBLISH_VERSION }}
           path: ${{ env.PNAME }}/**/*.zip
@@ -188,7 +188,7 @@ jobs:
       - name: Upload to central portal
         if: ${{ inputs.DRY_RUN != true && env.BUILD_TOOL == 'gradle' && (env.PNAME == 'easysearch-client' || env.PNAME == 'easysearch') }}
         run: |
-          find $GITHUB_WORKSPACE/$PNAME -name "*.zip" | while read ZIP_FILE; do
+          find $GITHUB_WORKSPACE/$PNAME/build -name "*.zip" | while read ZIP_FILE; do
             echo "Uploading bundle: $(basename $ZIP_FILE)"
             export ZIP_FILE_PATH="$ZIP_FILE"
             python3 $GITHUB_WORKSPACE/scripts/publish_central.py

@@ -38,6 +38,8 @@ env:
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   PNPM_VERSION: "latest"
+  NODE_OPTIONS: "--max-old-space-size=8192"
+  GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=1g -Dorg.gradle.daemon=false"
 
 on:
   push:
@@ -270,11 +272,12 @@ jobs:
 
       - name: Upload snapshot versions artifact
         if: ${{ !(inputs.PUBLISH_RELEASE == true) }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: snapshot-versions
           path: ${{ github.workspace }}/products/easysearch/publish/.snapshot-versions.json
-          if-no-files-found: ignore
+          if-no-files-found: error
+          include-hidden-files: true
 
       - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
         env:
@@ -428,7 +431,7 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
 
       - name: Download snapshot versions artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: snapshot-versions
           path: products/easysearch/publish/
