@@ -1,13 +1,4 @@
 {
-  "2.2.0-20260317": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
   "2.1.0-20260316": {
     "platforms": [
       "linux-amd64",
@@ -17,106 +8,7 @@
       "windows-amd64"
     ]
   },
-  "2.1.0-20260315": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260314": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260313": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260312": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260311": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260310": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260309": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260308": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260307": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260306": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260305": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ]
-  },
-  "2.1.0-20260304": {
+  "2.2.0-20260321": {
     "platforms": [
       "linux-amd64",
       "linux-arm64",
