@@ -104,15 +104,17 @@ WORKDIR /
 # Install base OS tools and dependencies.
 RUN dnf clean all && \
     dnf install -y --allowerasing --setopt install_weak_deps=False \
-    which lsof net-tools nmap-ncat bind-utils procps-ng openssl gzip python-pip make gcc glibc-devel \
-    chromium \
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl \
+    curl wget gzip python-pip make gcc glibc-devel \
+    ca-certificates \
+    liberation-fonts \
+    google-noto-sans-cjk-fonts && \
+    dnf install -y --allowerasing chromium && \
+    dnf install -y --allowerasing \
     libreoffice-core \
     libreoffice-writer \
     libreoffice-impress \
     libreoffice-calc \
-    ca-certificates \
-    liberation-fonts \
-    google-noto-sans-cjk-fonts
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
