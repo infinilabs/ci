@@ -1,4 +1,4 @@
-name: Easysearch Security Dependency Scan
+name: Security Dependency Scan for easysearch
 
 defaults:
   run:
@@ -35,7 +35,7 @@ on:
 
 jobs:
   dependency-scan:
-    name: Easysearch Dependency Security Scan
+    name: Dependency Security Scan For Easysearch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Product Repo
