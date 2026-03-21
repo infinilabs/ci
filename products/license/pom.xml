@@ -48,7 +48,7 @@
         <skipTest>true</skipTest>
         
         <!-- Dependency Versions Management -->
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.25</logback.version>
         <jackson.version>2.15.3</jackson.version>
         <junit.version>4.13.2</junit.version>
