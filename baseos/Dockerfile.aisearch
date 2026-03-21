@@ -121,10 +121,10 @@ RUN dnf clean all && \
     dnf install -y --allowerasing --setopt install_weak_deps=False \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl \
     curl wget tar gzip python3-pip make gcc glibc-devel \
-    ca-certificates \
+    epel-release ca-certificates \
     liberation-fonts \
     google-noto-sans-cjk-fonts && \
-    dnf install -y --allowerasing chromium-headless && \
+    dnf install -y --allowerasing chromium && \
     dnf install -y --allowerasing \
     libreoffice-core \
     libreoffice-writer \
