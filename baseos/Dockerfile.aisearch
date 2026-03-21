@@ -79,8 +79,19 @@ RUN set -eux; \
             echo "jdk.incubator.vector NOT available, skipping."; \
         fi; \
     fi; \
+    # Filter JDK modules，avoid jlink error
+    AVAILABLE_MODULES=$(${JDK_DIR}/bin/java --list-modules 2>/dev/null | sed 's/@.*//'); \
+    FILTERED_MODULES=""; \
+    for mod in $(echo "${FINAL_MODULES}" | tr ',' ' '); do \
+        if echo "${AVAILABLE_MODULES}" | grep -qx "${mod}"; then \
+            FILTERED_MODULES="${FILTERED_MODULES},${mod}"; \
+        else \
+            echo "WARNING: module ${mod} not found, skipping."; \
+        fi; \
+    done; \
+    FINAL_MODULES="${FILTERED_MODULES#,}"; \
+    echo "Final modules to link: ${FINAL_MODULES}"; \
     \
-    echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
         --add-modules "${FINAL_MODULES}" \
         --output jdk-minimal \
