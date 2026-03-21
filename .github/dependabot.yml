@@ -11,11 +11,6 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "gradle"
-    directory: "/products/easysearch"
+    directory: "/products/easysearch/client"
     schedule:
       interval: "weekly"
-
-  - package-ecosystem: "gradle"
-    directory: "/products/tongsuo"
-    schedule:
-      interval: "weekly"      
