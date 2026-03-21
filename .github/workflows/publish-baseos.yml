@@ -51,16 +51,17 @@ jobs:
             PLATFORMS="linux/386,linux/arm/v6,linux/arm/v7,linux/amd64,linux/arm64,linux/riscv64,linux/s390x"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
             echo "IMAGE_TAG=${{env.IMAGE_BASE}}" >> $GITHUB_ENV
-            echo "JDK_TAG=${{env.IMAGE_BASE}}-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "IMAGE_JDK_TAG=${{env.IMAGE_BASE}}-${{ github.run_number }}" >> $GITHUB_ENV
           elif [ "${{ env.IMAGE_BASE }}" == "aisearch" ]; then
             PLATFORMS="linux/amd64,linux/arm64"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
-            echo "IMAGE_TAG=${{ github.run_number }}" >> $GITHUB_ENV
-            echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-${{ env.IMAGE_BASE }} >> $GITHUB_ENV
+            echo "IMAGE_TAG=${{ env.IMAGE_BASE }}" >> $GITHUB_ENV
+            echo "IMAGE_JDK_TAG=${{ env.IMAGE_BASE }}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
           else
             PLATFORMS="linux/amd64,linux/arm64"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
             echo "IMAGE_TAG=${{env.IMAGE_BASE}}-${{ env.JDK_TAG }}" >> $GITHUB_ENV
+            echo "IMAGE_JDK_TAG=${{ env.JDK_TAG }}" >> $GITHUB_ENV
           fi
 
       - name: Set up qemu
@@ -77,7 +78,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker Build and push with ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }} / ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
+      - name: Docker Build and push with ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }} and ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/deps
@@ -88,7 +89,7 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           tags: |
             ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }}
-            ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
+            ${{ env.REPO_NAME }}:${{ env.IMAGE_JDK_TAG }}
           push: true
           provenance: false
           #no-cache: true

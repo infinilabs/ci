@@ -117,8 +117,9 @@ RUN case "${TARGETARCH}" in \
         "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/rpm/${LO_ARCH2}/LibreOffice_${LO_VERSION}_Linux_${LO_ARCH}_rpm.tar.gz" && \
     tar -xzf /tmp/libreoffice.tar.gz -C /tmp && \
     dnf install -y /tmp/LibreOffice_*/RPMS/*.rpm && \
-    ln -s /opt/libreoffice*/program/soffice /usr/bin/libreoffice && \
-    ln -s /opt/libreoffice*/program/soffice /usr/bin/soffice && \
+    LO_BIN=$(ls /opt/libreoffice*/program/soffice | head -n 1) && \
+    ln -sf "${LO_BIN}" /usr/bin/libreoffice && \
+    ln -sf "${LO_BIN}" /usr/bin/soffice && \
     rm -rf /tmp/libreoffice.tar.gz /tmp/LibreOffice_*
 
 # =========================================================================
@@ -234,9 +235,9 @@ ENV JAVA_HOME=/usr/local/jdk \
     PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Testing install software
-RUN java -version && \
-    chromium --version && \
-    libreoffice --version
+RUN java -version || (echo "java not found"; exit 1) && \
+    chromium --version || (echo "chromium not found"; exit 1) && \
+    libreoffice --version || (echo "libreoffice not found"; exit 1)
 
 # =========================================================================
 # Stage 3: prod
