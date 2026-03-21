@@ -50,14 +50,13 @@ RUN set -eux; \
             ZULU_VERSION_NUM="17.0.17"; \
             ZULU_VERSION="17.62.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.graal.compiler,jdk.graal.compiler.management,jdk.incubator.vector"; \
-            ADD_INCUBATOR="true" ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management" ;; \
         "jdk-11") \
             echo "Selecting Zulu OpenJDK for JDK 11..."; \
             ZULU_VERSION_NUM="11.0.29"; \
             ZULU_VERSION="11.84.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.graal.compiler,jdk.graal.compiler.management,jdk.incubator.vector" ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management" ;; \
         *) \
             echo "ERROR: Unsupported JDK_TAG: ${JDK_TAG}"; \
             exit 1 ;; \
