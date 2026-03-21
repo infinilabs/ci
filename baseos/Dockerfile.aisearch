@@ -15,7 +15,7 @@ ARG JDK_TAG
 
 # Install necessary tools for downloading and archiving.
 RUN dnf clean all && \
-    dnf install -q -y --allowerasing --setopt install_weak_deps=False curl tar gzip
+    dnf install -q -y --allowerasing --setopt install_weak_deps=False curl tar gzip > /dev/null
 
 WORKDIR /tmp
 
@@ -128,9 +128,9 @@ RUN dnf clean all && \
     liberation-fonts \
     google-noto-sans-cjk-fonts
 
-RUN dnf install -q -y epel-release && \
-    dnf makecache && \
-    dnf install -q -y --allowerasing chromium && \
+RUN dnf install -q -y epel-release > /dev/null && \
+    dnf makecache -q > /dev/null && \
+    dnf install -q -y --allowerasing chromium > /dev/null && \
     ln -sf /usr/lib64/chromium-browser/chromium-browser /usr/bin/chromium
 
 # Install libreoffice
@@ -142,7 +142,7 @@ RUN case "${TARGETARCH}" in \
     curl -fsL -o /tmp/libreoffice.tar.gz \
         "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/rpm/${LO_ARCH2}/LibreOffice_${LO_VERSION}_Linux_${LO_ARCH}_rpm.tar.gz" && \
     tar -xzf /tmp/libreoffice.tar.gz -C /tmp && \
-    dnf install -q -y /tmp/LibreOffice_*/RPMS/*.rpm && \
+    dnf install -q -y /tmp/LibreOffice_*/RPMS/*.rpm > /dev/null && \
     LO_BIN=$(ls /opt/libreoffice*/program/soffice | head -n 1) && \
     ln -sf "${LO_BIN}" /usr/bin/libreoffice && \
     ln -sf "${LO_BIN}" /usr/bin/soffice && \
