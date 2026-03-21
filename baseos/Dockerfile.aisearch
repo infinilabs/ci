@@ -20,7 +20,7 @@ RUN dnf clean all && \
 WORKDIR /tmp
 
 # Download the correct JDK based on JDK_TAG, generate the minimal jdk, and package it.
-RUN set -eux; \
+RUN set -eu; \
     DOWNLOAD_URL=""; \
     # Define base modules required for all JDK versions
     BASE_MODULES="java.base,java.prefs,java.xml.crypto,jdk.hotspot.agent,jdk.net,java.compiler,java.xml,jdk.httpserver,jdk.jartool,jdk.jshell,java.datatransfer,java.scripting,jdk.accessibility,jdk.javadoc,jdk.jsobject,java.security.jgss,jdk.attach,jdk.jcmd,jdk.jstatd,jdk.sctp,java.instrument,java.security.sasl,jdk.charsets,jdk.internal.ed,jdk.jconsole,jdk.localedata,jdk.security.auth,java.logging,java.se,jdk.compiler,jdk.internal.jvmstat,jdk.jdeps,jdk.management.agent,jdk.security.jgss,java.management,java.smartcardio,jdk.crypto.cryptoki,jdk.internal.le,jdk.jdi,jdk.management.jfr,jdk.crypto.ec,jdk.internal.opt,jdk.jdwp.agent,jdk.management,jdk.unsupported,java.naming,jdk.dynalink,jdk.internal.vm.ci,jdk.jfr,jdk.naming.dns,jdk.xml.dom,java.net.http,java.transaction.xa,jdk.editpad,jdk.jlink,jdk.zipfs"; \
