@@ -55,8 +55,8 @@ jobs:
           elif [ "${{ env.IMAGE_BASE }}" == "aisearch" ]; then
             PLATFORMS="linux/amd64,linux/arm64"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
-            echo "IMAGE_TAG=${{env.IMAGE_BASE}}" >> $GITHUB_ENV
-            echo "JDK_TAG=${{env.IMAGE_BASE}}-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "IMAGE_TAG=${{ github.run_number }}" >> $GITHUB_ENV
+            echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-${{ env.IMAGE_BASE }} >> $GITHUB_ENV
           else
             PLATFORMS="linux/amd64,linux/arm64"
             echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
