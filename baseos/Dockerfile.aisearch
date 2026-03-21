@@ -97,14 +97,8 @@ RUN set -eux; \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
-        --compress=1 2>/jlink_error.txt \
-    || { \
-        echo "=== JLINK FAILED ==="; \
-        echo "--- modules attempted ---"; \
-        echo "${FINAL_MODULES}" | tr ',' '\n'; \
-        echo "--- jlink stderr ---"; \
-        cat /jlink_error.txt; \
-        echo "=== END ==="; \
+        --compress=1 || { \
+        echo "JLINK_FAILED"; \
         exit 1; \
     }; \
     \
