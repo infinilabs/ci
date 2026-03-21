@@ -121,11 +121,15 @@ RUN dnf clean all && \
     dnf install -y --allowerasing --setopt install_weak_deps=False \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl \
     curl wget tar gzip python3-pip make gcc glibc-devel \
-    epel-release ca-certificates \
+    ca-certificates \
     liberation-fonts \
-    google-noto-sans-cjk-fonts && \
-    dnf install -y --allowerasing chromium && \
-    dnf install -y --allowerasing \
+    google-noto-sans-cjk-fonts
+
+RUN dnf install -y epel-release && \
+    dnf makecache && \
+    dnf install -y --allowerasing chromium
+
+RUN dnf install -y --allowerasing \
     libreoffice-core \
     libreoffice-writer \
     libreoffice-impress \
