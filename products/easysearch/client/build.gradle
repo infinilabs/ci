@@ -60,7 +60,7 @@ dependencies {
     def jacksonVersion = "2.15.3"
     def jacksonDatabindVersion = "2.15.3"
     def hamcrestVersion = "3.0"
-    def randomizedrunnerVersion = "2.7.1"
+    def randomizedrunnerVersion = "2.8.4"
     def slf4jVersion = "1.7.36"
     implementation project(':rest')
     testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
