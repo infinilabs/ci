@@ -9,3 +9,18 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "maven"
+    directory: "/products/license"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "gradle"
+    directory: "/products/easysearch"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "gradle"
+    directory: "/products/tongsuo"
+    schedule:
+      interval: "weekly"      
