@@ -225,12 +225,12 @@ RUN find /etc/systemd/system \
 RUN mkdir -p /opt/pigo /opt/tika
 
 # Download facefinder model (face detection)
-RUN wget -q --show-progress -O /opt/pigo/facefinder \
+RUN wget -q -O /opt/pigo/facefinder \
     "https://release.infinilabs.com/easysearch/archive/.files/aisearch/facefinder" \
     && chmod +x /opt/pigo/facefinder
 
 # Download tika-server JAR (document parsing service)
-RUN wget -q --show-progress -O /opt/tika/tika-server-standard-3.2.3.jar \
+RUN wget -q -O /opt/tika/tika-server-standard-3.2.3.jar \
     "https://release.infinilabs.com/easysearch/archive/.files/aisearch/tika-server-standard-3.2.3.jar"
 
 # Set environment variables for runtime configuration
@@ -242,9 +242,9 @@ RUN which java || echo "java not in PATH" && \
     which chromium || which chromium-browser || echo "chromium not in PATH" && \
     which libreoffice || echo "libreoffice not in PATH"
 
-RUN java -version || (echo "java not found"; exit 1) && \
-    chromium --version || (echo "chromium not found"; exit 1) && \
-    libreoffice --version || (echo "libreoffice not found"; exit 1)
+RUN (java -version || (echo "java not found" && exit 1)) && \
+    (chromium --version || (echo "chromium not found" && exit 1)) && \
+    (libreoffice --version || (echo "libreoffice not found" && exit 1))
 
 # =========================================================================
 # Stage 3: prod
