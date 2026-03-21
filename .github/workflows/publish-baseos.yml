@@ -78,7 +78,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker Build and push with ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }} and ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
+      - name: Docker Build and push with ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }} and ${{ env.REPO_NAME }}:${{ env.IMAGE_JDK_TAG }}
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/deps
