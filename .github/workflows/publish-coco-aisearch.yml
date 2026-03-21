@@ -1,4 +1,4 @@
-name: Publish Coco Server Files & Docker 
+name: Publish Coco Server Files & Docker with branch (AI-Search)
 defaults:
   run:
     shell: bash
@@ -52,7 +52,7 @@ on:
 
 jobs:
   publish:
-    name: Publish coco server files and docker
+    name: Publish coco server files and docker with branch (AI-Search)
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
