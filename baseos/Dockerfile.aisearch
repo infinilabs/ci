@@ -98,7 +98,7 @@ RUN set -eux; \
         --strip-debug \
         --no-man-pages \
         --no-header-files \
-        --compress=1 2>&1 || (echo "jlink FAILED with above error"; exit 1); \
+        --compress=1 > /tmp/jlink.log 2>&1 || (cat /tmp/jlink.log; exit 1); \
     \
     tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
