@@ -48,7 +48,7 @@ on:
         description: 'Deploy Enterprise <Only Dev>'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   publish:
@@ -163,7 +163,7 @@ jobs:
         run: go version && go env
 
       - name: Set up with coco server pnpm toolchain
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set up with coco server nodejs toolchain
@@ -218,11 +218,6 @@ jobs:
 
       - name: Build coco server web
         run: |
-          # build web
-          echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web
-          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
-
           # build widgets
           for w in fullscreen searchbox; do
             cd $WORK/$PNAME/web/widgets/$w 
@@ -236,6 +231,11 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
+
+          # build web
+          echo "Build $PNAME web start..."
+          cd $WORK/$PNAME/web
+          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
       - name: Prepare coco server enterprise go mod
         continue-on-error: true

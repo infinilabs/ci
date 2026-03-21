@@ -169,7 +169,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: latest
 
