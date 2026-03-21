@@ -14,11 +14,6 @@ env:
   PROXY_RELEASE_INFINILABS: ${{ secrets.PROXY_RELEASE_INFINILABS }}
   
 on:
-  push:
-    tags:
-      - 'release*'  
-  schedule:
-    - cron: '30 16 * * *'    
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
@@ -218,6 +213,11 @@ jobs:
 
       - name: Build coco server web
         run: |
+          # build web
+          echo "Build $PNAME web start..."
+          cd $WORK/$PNAME/web
+          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
+
           # build widgets
           for w in fullscreen searchbox; do
             cd $WORK/$PNAME/web/widgets/$w 
@@ -231,11 +231,6 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
-
-          # build web
-          echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web
-          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
 
       - name: Prepare coco server enterprise go mod
         continue-on-error: true
