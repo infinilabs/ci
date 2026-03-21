@@ -37,37 +37,28 @@ RUN set -eux; \
     echo "Preparing to build jdk for tag: ${JDK_TAG}"; \
     case "${JDK_TAG}" in \
         "jdk-25") \
-            # Using the official Oracle GraalVM download link for JDK 25.
             echo "Selecting Oracle GraalVM for JDK 25..."; \
             DOWNLOAD_URL="https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-${JDK_ARCH}_bin.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector"; \
-            ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector" ;; \
         "jdk-21") \
-            # Using the official Oracle GraalVM download link for JDK 21.
             echo "Selecting Oracle GraalVM for JDK 21..."; \
             DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector"; \
-            ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector" ;; \
         "jdk-17") \
-            # Using updated, verified Zulu JDK 17 link.
             echo "Selecting Zulu OpenJDK for JDK 17..."; \
             ZULU_VERSION_NUM="17.0.17"; \
             ZULU_VERSION="17.62.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector"; \
-            ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector" ;; \
         "jdk-11") \
-            # Using updated, verified Zulu JDK 11 link.
             echo "Selecting Zulu OpenJDK for JDK 11..."; \
             ZULU_VERSION_NUM="11.0.29"; \
             ZULU_VERSION="11.84.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management"; \
-            ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management" ;; \
         *) \
-            echo "Unsupported JDK_TAG: ${JDK_TAG}"; \
-            exit 1; \
-            ;; \
+            echo "ERROR: Unsupported JDK_TAG: ${JDK_TAG}"; \
+            exit 1 ;; \
     esac; \
     \
     # --- Common Steps: Download, Extract, jlink, Package ---
@@ -217,7 +208,7 @@ RUN java -version && \
 FROM scratch AS prod
 
 # Add metadata labels to the image.
-LABEL description="A custom linux OS from almalinux with a custom jdk."
+LABEL description="A custom linux OS from almalinux with a custom jdk for aisearch."
 LABEL maintainer="Medcl、Hardy@INFINILabs <luohf@infinilabs.com>"
 
 # Copy the entire root filesystem from the 'builder' stage.
