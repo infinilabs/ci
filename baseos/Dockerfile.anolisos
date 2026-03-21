@@ -42,13 +42,15 @@ RUN set -eux; \
         "jdk-21") \
             echo "Selecting Oracle GraalVM for JDK 21..."; \
             DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector" ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management"; \
+            ADD_INCUBATOR="true" ;; \
         "jdk-17") \
             echo "Selecting Zulu OpenJDK for JDK 17..."; \
             ZULU_VERSION_NUM="17.0.17"; \
             ZULU_VERSION="17.62.17"; \
             DOWNLOAD_URL="https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${ZULU_VERSION_NUM}-linux_${JDK_ARCH}.tar.gz"; \
-            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management,jdk.incubator.vector" ;; \
+            FINAL_MODULES="${BASE_MODULES},jdk.internal.vm.compiler,jdk.internal.vm.compiler.management"; \
+            ADD_INCUBATOR="true" ;; \
         "jdk-11") \
             echo "Selecting Zulu OpenJDK for JDK 11..."; \
             ZULU_VERSION_NUM="11.0.29"; \
@@ -62,11 +64,20 @@ RUN set -eux; \
     \
     # --- Common Steps: Download, Extract, jlink, Package ---
     echo "Downloading JDK from ${DOWNLOAD_URL}"; \
-    curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}"; \
-    tar -mxzf jdk.tar.gz; \
-    rm jdk.tar.gz; \
-    # Find the extracted directory name, which can vary between providers.
+    curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}" || (echo "DOWNLOAD FAILED: ${DOWNLOAD_URL}"; exit 1); \
+    tar -mxzf jdk.tar.gz || (echo "EXTRACT FAILED"; exit 1); \
     JDK_DIR=$(ls -d ./*jdk* ./*graalvm* 2>/dev/null | head -n 1); \
+    echo "JDK_DIR resolved to: ${JDK_DIR}"; \
+    rm jdk.tar.gz; \
+    # just add jdk.incubator.vector for jdk 21
+    if [ "${ADD_INCUBATOR}" = "true" ]; then \
+        if ${JDK_DIR}/bin/java --list-modules 2>/dev/null | grep -q "jdk.incubator.vector"; then \
+            FINAL_MODULES="${FINAL_MODULES}"; \
+            echo "jdk.incubator.vector available, adding."; \
+        else \
+            echo "jdk.incubator.vector NOT available, skipping."; \
+        fi; \
+    fi; \
     \
     echo "Creating minimal jdk with jlink from ${JDK_DIR}..."; \
     ./${JDK_DIR}/bin/jlink \
