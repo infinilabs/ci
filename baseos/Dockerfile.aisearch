@@ -13,6 +13,9 @@ ARG TARGETARCH
 # Its value will be 'jdk-11', 'jdk-17', 'jdk-21', etc.
 ARG JDK_TAG
 
+# ARG LO_VERSION for libreoffice
+ARG LO_VERSION="26.2.1"
+
 # Install necessary tools for downloading and archiving.
 RUN dnf clean all && \
     dnf install -y --allowerasing --setopt install_weak_deps=False curl tar gzip
@@ -105,6 +108,18 @@ RUN set -eux; \
     tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
 
+RUN case "${TARGETARCH}" in \
+        "amd64") LO_ARCH="x86-64"; LO_ARCH2="x86_64"; ;; \
+        "arm64") LO_ARCH="aarch64"; LO_ARCH2="aarch64"; ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1; ;; \
+    esac; \
+    curl -fL -o /tmp/libreoffice.tar.gz \
+        "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/rpm/${LO_ARCH2}/LibreOffice_${LO_VERSION}_Linux_${LO_ARCH}_rpm.tar.gz" && \
+    tar -xzf /tmp/libreoffice.tar.gz -C /tmp && \
+    dnf install -y /tmp/LibreOffice_*/RPMS/*.rpm && \
+    ln -s /opt/libreoffice*/program/soffice /usr/bin/libreoffice && \
+    ln -s /opt/libreoffice*/program/soffice /usr/bin/soffice && \
+    rm -rf /tmp/libreoffice.tar.gz /tmp/LibreOffice_*
 
 # =========================================================================
 # Stage 2: builder
@@ -127,13 +142,7 @@ RUN dnf clean all && \
 
 RUN dnf install -y epel-release && \
     dnf makecache && \
-    dnf install -y --allowerasing chromium
-
-RUN dnf install -y --allowerasing \
-    libreoffice-core \
-    libreoffice-writer \
-    libreoffice-impress \
-    libreoffice-calc
+    dnf install -y --allowerasing chromium 
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
