@@ -13,12 +13,9 @@ ARG TARGETARCH
 # Its value will be 'jdk-11', 'jdk-17', 'jdk-21', etc.
 ARG JDK_TAG
 
-# ARG LO_VERSION for libreoffice
-ARG LO_VERSION="26.2.1"
-
 # Install necessary tools for downloading and archiving.
 RUN dnf clean all && \
-    dnf install -y --allowerasing --setopt install_weak_deps=False curl tar gzip
+    dnf install -q -y --allowerasing --setopt install_weak_deps=False curl tar gzip
 
 WORKDIR /tmp
 
@@ -67,7 +64,7 @@ RUN set -eux; \
     \
     # --- Common Steps: Download, Extract, jlink, Package ---
     echo "Downloading JDK from ${DOWNLOAD_URL}"; \
-    curl -fL -o jdk.tar.gz "${DOWNLOAD_URL}" || (echo "DOWNLOAD FAILED: ${DOWNLOAD_URL}"; exit 1); \
+    curl -fsL -o jdk.tar.gz "${DOWNLOAD_URL}" || (echo "DOWNLOAD FAILED: ${DOWNLOAD_URL}"; exit 1); \
     tar -mxzf jdk.tar.gz || (echo "EXTRACT FAILED"; exit 1); \
     JDK_DIR=$(ls -d ./*jdk* ./*graalvm* 2>/dev/null | head -n 1); \
     echo "JDK_DIR resolved to: ${JDK_DIR}"; \
@@ -108,20 +105,6 @@ RUN set -eux; \
     tar -czf /jdk-minimal.tar.gz jdk-minimal; \
     rm -rf /tmp/*;
 
-RUN case "${TARGETARCH}" in \
-        "amd64") LO_ARCH="x86-64"; LO_ARCH2="x86_64"; ;; \
-        "arm64") LO_ARCH="aarch64"; LO_ARCH2="aarch64"; ;; \
-        *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1; ;; \
-    esac; \
-    curl -fL -o /tmp/libreoffice.tar.gz \
-        "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/rpm/${LO_ARCH2}/LibreOffice_${LO_VERSION}_Linux_${LO_ARCH}_rpm.tar.gz" && \
-    tar -xzf /tmp/libreoffice.tar.gz -C /tmp && \
-    dnf install -y /tmp/LibreOffice_*/RPMS/*.rpm && \
-    LO_BIN=$(ls /opt/libreoffice*/program/soffice | head -n 1) && \
-    ln -sf "${LO_BIN}" /usr/bin/libreoffice && \
-    ln -sf "${LO_BIN}" /usr/bin/soffice && \
-    rm -rf /tmp/libreoffice.tar.gz /tmp/LibreOffice_*
-
 # =========================================================================
 # Stage 2: builder
 # Purpose: Prepare the main filesystem layer. The ADD/COPY paths in this stage
@@ -130,20 +113,40 @@ RUN case "${TARGETARCH}" in \
 FROM almalinux:10 AS builder
 
 ARG TARGETARCH
+
+# ARG LO_VERSION for libreoffice
+ARG LO_VERSION="26.2.1"
+
 WORKDIR /
 
 # Install base OS tools and dependencies.
 RUN dnf clean all && \
-    dnf install -y --allowerasing --setopt install_weak_deps=False \
+    dnf install -q -y --allowerasing --setopt install_weak_deps=False \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl \
     curl wget tar gzip python3-pip make gcc glibc-devel \
     ca-certificates \
     liberation-fonts \
     google-noto-sans-cjk-fonts
 
-RUN dnf install -y epel-release && \
+RUN dnf install -q -y epel-release && \
     dnf makecache && \
-    dnf install -y --allowerasing chromium 
+    dnf install -q -y --allowerasing chromium && \
+    ln -sf /usr/lib64/chromium-browser/chromium-browser /usr/bin/chromium
+
+# Install libreoffice
+RUN case "${TARGETARCH}" in \
+        "amd64") LO_ARCH="x86-64"; LO_ARCH2="x86_64"; ;; \
+        "arm64") LO_ARCH="aarch64"; LO_ARCH2="aarch64"; ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1; ;; \
+    esac; \
+    curl -fsL -o /tmp/libreoffice.tar.gz \
+        "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/rpm/${LO_ARCH2}/LibreOffice_${LO_VERSION}_Linux_${LO_ARCH}_rpm.tar.gz" && \
+    tar -xzf /tmp/libreoffice.tar.gz -C /tmp && \
+    dnf install -q -y /tmp/LibreOffice_*/RPMS/*.rpm && \
+    LO_BIN=$(ls /opt/libreoffice*/program/soffice | head -n 1) && \
+    ln -sf "${LO_BIN}" /usr/bin/libreoffice && \
+    ln -sf "${LO_BIN}" /usr/bin/soffice && \
+    rm -rf /tmp/libreoffice.tar.gz /tmp/LibreOffice_*
 
 # Create a non-root user and group for the application.
 RUN mkdir -p /app/easysearch \
@@ -235,6 +238,10 @@ ENV JAVA_HOME=/usr/local/jdk \
     PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Testing install software
+RUN which java || echo "java not in PATH" && \
+    which chromium || which chromium-browser || echo "chromium not in PATH" && \
+    which libreoffice || echo "libreoffice not in PATH"
+
 RUN java -version || (echo "java not found"; exit 1) && \
     chromium --version || (echo "chromium not found"; exit 1) && \
     libreoffice --version || (echo "libreoffice not found"; exit 1)
