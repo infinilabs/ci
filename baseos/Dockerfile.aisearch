@@ -124,7 +124,7 @@ RUN dnf clean all && \
     ca-certificates \
     liberation-fonts \
     google-noto-sans-cjk-fonts && \
-    dnf install -y --allowerasing chromium && \
+    dnf install -y --allowerasing chromium-headless && \
     dnf install -y --allowerasing \
     libreoffice-core \
     libreoffice-writer \

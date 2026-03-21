@@ -90,5 +90,5 @@ jobs:
             ${{ env.REPO_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.REPO_NAME }}:${{ env.JDK_TAG }}
           push: true
-          #provenance: false
-          no-cache: true
+          provenance: false
+          #no-cache: true
