@@ -338,7 +338,7 @@ jobs:
         if: ${{  github.event_name == 'schedule' ||inputs.PUBLISH_WITH_EASYSEARCH == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
-          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.aisearch
           target: prod
           platforms: |
             linux/amd64
