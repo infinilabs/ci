@@ -399,7 +399,7 @@ jobs:
           update_json_version "$GITHUB_WORKSPACE/ci/resources/easysearch-$VERSION-plugins.json" "version" "$FULL_VERSION"
 
       - name: Create bumpver pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
@@ -437,7 +437,7 @@ jobs:
           path: products/easysearch/publish/
 
       - name: Create snapshot versions pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
