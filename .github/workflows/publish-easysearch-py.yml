@@ -145,7 +145,7 @@ jobs:
           update_yaml_version "publish-easysearch-py.yml" "tag" "${TAG}"
 
       - name: Create bumpver pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
