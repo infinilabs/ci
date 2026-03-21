@@ -141,7 +141,7 @@ jobs:
             cc_prefix: ""
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK 11
         uses: actions/setup-java@v5
@@ -702,7 +702,7 @@ jobs:
             use_docker: true
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v6
