@@ -57,7 +57,7 @@ versionProps.each { key, value ->
 }
 
 dependencies {
-    def jacksonVersion = "2.15.3"
+    def jacksonVersion = "2.21"
     def jacksonDatabindVersion = "2.15.3"
     def hamcrestVersion = "2.1"
     def randomizedrunnerVersion = "2.7.1"
