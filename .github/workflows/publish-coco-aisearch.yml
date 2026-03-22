@@ -38,7 +38,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false
+        default: true
       ONLY_DOCKER:
         description: 'Publish Type <Only Docker>'
         required: false
