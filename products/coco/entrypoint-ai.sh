@@ -1,0 +1,135 @@
+#!/bin/bash
+set -e
+
+log() {
+  if [[ -n "$LOG" ]]; then
+    echo "$(date -Iseconds) [$(basename "$0")] $@"
+  fi
+}
+
+generate_safe_password() {
+  local length=${1:-16}
+  local char_set='A-Za-z0-9._-=+:,@#%^?~'
+  LC_ALL=C tr -dc "$char_set" < /dev/urandom | head -c "$length"
+}
+
+setup_coco() {
+  local WORK_DIR=/app/easysearch/data
+  local COCO_DIR=$WORK_DIR/coco
+
+  if [ ! -d "$WORK_DIR" ] ; then
+    mkdir -p "$WORK_DIR"
+  fi
+
+  if [ ! -d "$COCO_DIR" ]; then
+    cp -af /app/coco $COCO_DIR
+    log "Copied coco to $COCO_DIR"
+  fi
+
+  for dir in data config; do
+    if [ ! -d "$COCO_DIR/$dir" ]; then
+      mkdir -p "$COCO_DIR/$dir"
+      if [ "$(stat -c %U $COCO_DIR/$dir)" != "easysearch" ] ; then
+        chown -RLf 602:602 "$COCO_DIR/$dir"
+      fi
+      log "Created $COCO_DIR/$dir"
+    fi
+  done
+
+  cd $COCO_DIR
+  if [ ! -f ./start-coco.sh ]; then
+    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
+  fi
+  
+  if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
+    echo "$EASYSEARCH_INITIAL_ADMIN_PASSWORD" | ./coco keystore add --stdin ES_PASSWORD >/dev/null
+    chown -RLf 602:602 $WORK_DIR
+    log "Added ES_PASSWORD to keystore and changed ownership."
+  else
+    log "Keystore is already for coco."
+  fi
+  
+  if [ "$(stat -c %U $COCO_DIR)" != "easysearch" ] || [ -n "$(find "$COCO_DIR/data/coco/nodes" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)" ]; then
+    chown -RLf 602:602 $COCO_DIR
+  else
+    log "$COCO_DIR is already owned by easysearch."
+  fi
+
+  [ ! -d /opt/coco ] && mkdir -p /opt/coco
+  [ ! -d /opt/coco/server ] && ln -s /app/easysearch/data/coco /opt/coco/server
+
+  return 0
+}
+
+# --- Root-only functions ---
+
+setup_supervisor() {
+  if [ ! -f $COCO_DIR/supervisor/conf.d/coco.conf ]; then
+    mkdir -p $COCO_DIR/supervisor/conf.d
+    echo_supervisord_conf > $COCO_DIR/supervisor/supervisord.conf
+    # Set the user and enable includes
+    sed -i "/\[supervisord\]/a user = root" $COCO_DIR/supervisor/supervisord.conf
+    sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = conf.d/*.conf|' $COCO_DIR/supervisor/supervisord.conf
+    cp -rf /app/tpl/*.conf $COCO_DIR/supervisor/conf.d
+    log "Created Supervisor configuration for Coco/Tika at $COCO_DIR/supervisor/conf.d/coco.conf/$COCO_DIR/supervisor/conf.d/tika.conf"
+  fi
+
+  if ! supervisorctl status > /dev/null 2>&1; then
+    log "Starting Supervisor..."
+    if [ -f $COCO_DIR/supervisor/supervisord.conf ]; then
+      if [ ! -f /etc/supervisord.conf ]; then
+        ln -sf $COCO_DIR/supervisor /etc
+        log "Linked supervisor configuration to /etc/supervisord.conf"
+      fi
+    fi
+    /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    log "Supervisor started successfully."
+  fi
+
+  return 0
+}
+
+# --- Main Script ---
+
+# Trap signals for graceful shutdown
+trap "exit 0" SIGINT SIGTERM
+
+if [ "$(id -u)" = '0' ]; then
+  if [ -z "${EASYSEARCH_INITIAL_ADMIN_PASSWORD}" ]; then
+    log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Generating a random 20-character password..."
+    RANDOM_PASSWORD=$(generate_safe_password 16)
+
+    if [ -n "$RANDOM_PASSWORD" ]; then
+      export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-$RANDOM_PASSWORD"
+      log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
+    else
+      RANDOM_PASSWORD=$(openssl rand -base64 16)
+      if [ -n "$RANDOM_PASSWORD" ]; then
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-$RANDOM_PASSWORD"
+        log "Generated password: $EASYSEARCH_INITIAL_ADMIN_PASSWORD"
+      else
+        log "Error generating random password. Using default Coco-Server-Default-Password-0001."
+        export EASYSEARCH_INITIAL_ADMIN_PASSWORD="Coco-Server-Default-Password-0001"
+      fi
+    fi
+  fi
+  # for easysearch init
+  if [[ $(compgen -G "config/*.{crt,key}" 2>/dev/null) ]]; then
+    log "Certificates already exist. Skipping initialization."
+  else
+    gosu easysearch bash bin/initialize.sh -s
+  fi
+  # for coco
+  export ES_PASSWORD=$EASYSEARCH_INITIAL_ADMIN_PASSWORD
+  log "Setting up Coco..."
+  setup_coco
+  # start supervisor
+  log "Starting Supervisor Process..."
+  setup_supervisor
+  
+  # start easysearch
+  log "Starting Easysearch Process..."
+  exec gosu easysearch "$0" "$@"
+fi
+
+exec "$@"
