@@ -353,7 +353,7 @@ jobs:
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-enterprise:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without easysearch
+      - name: Docker build and push coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without easysearch
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/${{ env.PNAME }}/bin

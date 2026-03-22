@@ -4,7 +4,7 @@ defaults:
     shell: bash
 env:
   PNAME: coco
-  INCREMENT: 600
+  INCREMENT: 0
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -23,7 +23,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: "2.1.1-2666"
+        default: "2.1.1-2671"
       PUBLISH_WITH_EASYSEARCH:
         description: 'Publish With Easysearch'
         required: false
@@ -39,6 +39,11 @@ on:
         required: false
         type: boolean
         default: false
+      ONLY_DOCKER:
+        description: 'Publish Type <Only Docker>'
+        required: false
+        type: boolean
+        default: true
       ONLY_DEPLOY_STAGING:
         description: 'Deploy Enterprise <Only Dev>'
         required: false
@@ -330,7 +335,7 @@ jobs:
           
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v7
-        if: ${{  github.event_name == 'schedule' ||inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{ !inputs.ONLY_DOCKER && inputs.PUBLISH_RELEASE == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.aisearch
@@ -346,6 +351,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Docker build meta with ${{ env.PNAME }} enterprise
+        if: ${{ !inputs.ONLY_DOCKER}}
         id: ent-tags
         run: |
           echo ENT_REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-enterprise-ai >> $GITHUB_ENV
@@ -353,7 +359,8 @@ jobs:
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-enterprise-ai:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without easysearch
+      - name: Docker build and push coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without 
+        if: ${{ !inputs.ONLY_DOCKER}}
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/${{ env.PNAME }}/bin
@@ -370,6 +377,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Archive coco server files
+        if: ${{ !inputs.ONLY_DOCKER}}
         run: |
           cd $WORK/$PNAME/bin
           for tag in $TARGETS; do
@@ -388,6 +396,7 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload coco server files
+        if: ${{ !inputs.ONLY_DOCKER}}
         run: | 
           cd $WORK
           for tag in $TARGETS; do
