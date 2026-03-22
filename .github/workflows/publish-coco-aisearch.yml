@@ -29,6 +29,12 @@ on:
         required: false
         type: boolean
         default: true
+      
+      PUBLISH_WITHOUT_EASYSEARCH:
+        description: 'Publish without Easysearch'
+        required: false
+        type: boolean
+        default: false
       PUBLISH_BRANCH:
         description: 'Publish Branch'
         required: false
@@ -326,7 +332,7 @@ jobs:
 
       - name: Docker build meta with ${{ env.PNAME }}
         id: tags
-        if: ${{  github.event_name == 'schedule' || inputs.PUBLISH_WITH_EASYSEARCH == true }}
+        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-ai >> $GITHUB_ENV
           if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
@@ -335,7 +341,7 @@ jobs:
           
       - name: Docker build and push coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v7
-        if: ${{ !inputs.ONLY_DOCKER && inputs.PUBLISH_RELEASE == true }}
+        if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.aisearch
@@ -351,7 +357,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Docker build meta with ${{ env.PNAME }} enterprise
-        if: ${{ !inputs.ONLY_DOCKER}}
+        if: ${{ inputs.PUBLISH_WITHOUT_EASYSEARCH == true }}
         id: ent-tags
         run: |
           echo ENT_REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-enterprise-ai >> $GITHUB_ENV
@@ -359,8 +365,8 @@ jobs:
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-enterprise-ai:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Docker build and push coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without 
-        if: ${{ !inputs.ONLY_DOCKER}}
+      - name: Docker build and push coco server enterprise with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} without easysearch
+        if: ${{ inputs.PUBLISH_WITHOUT_EASYSEARCH == true }}
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/${{ env.PNAME }}/bin
