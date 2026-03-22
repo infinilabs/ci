@@ -137,17 +137,23 @@ jobs:
           restore-keys: |
             dependency-check-db-${{ runner.os }}-
  
+      - name: Install OWASP DependencyCheck
+        run: |
+          VERSION=$(curl -s https://jeremylong.github.io/DependencyCheck/current.txt)
+          curl -sL "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" -o /tmp/dc.zip
+          unzip -q /tmp/dc.zip -d $HOME
+
       - name: Run OWASP DependencyCheck
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: ${{ env.PNAME }}
-          path: ${{ env.PNAME }}
-          format: "HTML"
-          args: >
-            --enableRetired
-            --enableExperimental
-            --disableOssIndex
-            --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }}
+        run: |
+          $HOME/dependency-check/bin/dependency-check.sh \
+            --project "$PNAME" \
+            --scan "$GITHUB_WORKSPACE/$PNAME" \
+            --format HTML \
+            --enableRetired \
+            --enableExperimental \
+            --disableOssIndex \
+            --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }} \
+            --out reports/
  
       - name: Upload OWASP report
         uses: actions/upload-artifact@v7
