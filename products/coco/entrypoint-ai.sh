@@ -21,8 +21,8 @@ setup_coco() {
     mkdir -p "$WORK_DIR"
   fi
 
-  if [ ! -d "$COCO_DIR" ]; then
-    cp -af /app/coco $COCO_DIR
+  if [ ! -d "$COCO_DIR"  || ! -f "$COCO_DIR"/coco ]; then
+    cp -a --update=none /app/coco/. $COCO_DIR
     log "Copied coco to $COCO_DIR"
   fi
 
@@ -37,7 +37,7 @@ setup_coco() {
   done
 
   cd $COCO_DIR
-  if [ ! -f ./start-coco.sh ]; then
+  if [ ! -f ./start-coco.sh || ! -f ./start-tika.sh ]; then
     cp -rf /app/tpl/*.sh /app/easysearch/data/coco
   fi
   
@@ -70,7 +70,7 @@ setup_supervisor() {
     # Set the user and enable includes
     sed -i "/\[supervisord\]/a user = root" $COCO_DIR/supervisor/supervisord.conf
     sed -i 's|^;\(\[include\]\)|\1|; s|^;files.*|files = conf.d/*.conf|' $COCO_DIR/supervisor/supervisord.conf
-    cp -rf /app/tpl/*.conf $COCO_DIR/supervisor/conf.d
+    cp -rf /app/tpl/{coco,tika}.conf $COCO_DIR/supervisor/conf.d
     log "Created Supervisor configuration for Coco/Tika at $COCO_DIR/supervisor/conf.d/coco.conf/$COCO_DIR/supervisor/conf.d/tika.conf"
   fi
 

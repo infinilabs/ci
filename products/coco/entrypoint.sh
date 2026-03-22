@@ -21,8 +21,8 @@ setup_coco() {
     mkdir -p "$WORK_DIR"
   fi
 
-  if [ ! -d "$COCO_DIR" ]; then
-    cp -af /app/coco $COCO_DIR
+  if [ ! -d "$COCO_DIR" || ! -f "$COCO_DIR"/coco ]; then
+    cp -a --update=none /app/coco/. $COCO_DIR
     log "Copied coco to $COCO_DIR"
   fi
 
