@@ -18,6 +18,15 @@ env:
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
+  GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
+  ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
+  JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  PNPM_VERSION: "latest"
+  NODE_OPTIONS: "--max-old-space-size=8192"
+  GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=1g -Dorg.gradle.daemon=false"
 
 on:
   schedule:
@@ -50,12 +59,73 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5          
 
+      - name: Set up and check env
+        env:
+          PUBLISH_VERSION: 2.0.0
+        run: |
+          # Set GRADLE version and BRANCH based on PUBLISH_VERSION
+          BRANCH="1.x"
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            BRANCH="main"
+            GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
+            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+          fi
+          echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
+
       - name: Checkout ${{ env.PNAME }} repo
         timeout-minutes: 30
         run: |
           git clone $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME
           echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up gradle
+        run: |
+          if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
+            wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
+          fi
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
+          echo Gradle path is $HOME/gradle-$GRADLE_VERSION
+
+      - name: Set up with pnpm toolchain
+        uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up nodejs toolchain
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - name: Check nodejs toolchain
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+          node -v && npm -v && pnpm -v
+      - name: Cache Gradle packages and jdks
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            /root/.gradle/caches
+            ${{ github.workspace }}/jdks
+          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
+
+      - name: Build linux
+        run: |
+          echo "Build $PNAME start..."          
+          cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
 
       # ── OWASP DependencyCheck ──────────────────────────────────────────────
  
@@ -76,6 +146,7 @@ jobs:
           args: >
             --enableRetired
             --enableExperimental
+            --disableOssIndex
             --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }}
  
       - name: Upload OWASP report
