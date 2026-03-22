@@ -21,7 +21,7 @@ setup_coco() {
     mkdir -p "$WORK_DIR"
   fi
 
-  if [ ! -d "$COCO_DIR"  || ! -f "$COCO_DIR"/coco ]; then
+  if [ ! -d "$COCO_DIR" ] || [ ! -f "$COCO_DIR/coco" ]; then
     cp -a --update=none /app/coco/. $COCO_DIR
     log "Copied coco to $COCO_DIR"
   fi
@@ -37,7 +37,7 @@ setup_coco() {
   done
 
   cd $COCO_DIR
-  if [ ! -f ./start-coco.sh || ! -f ./start-tika.sh ]; then
+  if [ ! -f "./start-coco.sh" ] || [ ! -f "./start-tika.sh" ]; then
     cp -rf /app/tpl/*.sh /app/easysearch/data/coco
   fi
   
