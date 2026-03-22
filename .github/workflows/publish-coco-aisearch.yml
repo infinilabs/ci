@@ -29,6 +29,11 @@ on:
         description: 'Publish Release Easysearch Version'
         required: false
         default: "2.1.1-2671"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: true
       PUBLISH_WITH_EASYSEARCH:
         description: 'Publish With Easysearch'
         required: false
@@ -40,11 +45,6 @@ on:
         required: false
         type: boolean
         default: false
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
-        required: false
-        type: boolean
-        default: true
       ONLY_DOCKER:
         description: 'Publish Type <Only Docker>'
         required: false
