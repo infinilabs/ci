@@ -16,6 +16,11 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      PUBLISH_BRANCH:
+        description: 'Publish Branch'
+        required: false
+        type: string
+        default: "rebased-chore-ai-search"
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
@@ -35,11 +40,6 @@ on:
         required: false
         type: boolean
         default: false
-      PUBLISH_BRANCH:
-        description: 'Publish Branch'
-        required: false
-        type: string
-        default: "rebased-chore-ai-search"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
