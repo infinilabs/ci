@@ -9,8 +9,3 @@ updates:
     directory: "/products/license"
     schedule:
       interval: "weekly"
-
-  - package-ecosystem: "gradle"
-    directory: "/products/easysearch/client"
-    schedule:
-      interval: "weekly"

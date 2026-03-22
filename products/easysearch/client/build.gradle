@@ -3,7 +3,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
 group = 'com.infinilabs'
@@ -59,8 +59,8 @@ versionProps.each { key, value ->
 dependencies {
     def jacksonVersion = "2.15.3"
     def jacksonDatabindVersion = "2.15.3"
-    def hamcrestVersion = "3.0"
-    def randomizedrunnerVersion = "2.8.4"
+    def hamcrestVersion = "2.1"
+    def randomizedrunnerVersion = "2.7.1"
     def slf4jVersion = "1.7.36"
     implementation project(':rest')
     testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
@@ -72,7 +72,7 @@ dependencies {
     api("com.google.code.findbugs:jsr305:3.0.2")
     api("jakarta.json:jakarta.json-api:2.0.1")
 
-    implementation 'jakarta.json.bind:jakarta.json.bind-api:3.0.1'
+    implementation 'jakarta.json.bind:jakarta.json.bind-api:2.0.0'
 
     implementation "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
     implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
