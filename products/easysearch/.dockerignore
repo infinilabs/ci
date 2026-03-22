@@ -2,4 +2,5 @@ Dockerfile
 build-*.sh
 gradle/
 publish/
+security/
 config/*.yml

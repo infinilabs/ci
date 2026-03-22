@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!-- buildSrc jar 被误识别为 Gradle，实际是项目自身构建脚本 -->
+  <suppress>
+    <notes>False positive: buildSrc version matches project version, not Gradle version</notes>
+    <fileName regex="true">buildSrc-.*\.jar</fileName>
+    <cpe>cpe:/a:gradle:gradle</cpe>
+  </suppress>
+
+  <!-- async_search jar 被误识别为 async npm 包 -->
+  <suppress>
+    <notes>False positive: async_search is an Elasticsearch module, not async npm package</notes>
+    <fileName regex="true">async_search-.*\.jar</fileName>
+    <cpe>cpe:/a:async_project:async</cpe>
+  </suppress>
+
+  <!-- transport-netty4 版本号误判，实际 Netty 版本需单独核实 -->
+  <suppress>
+    <notes>False positive: jar version is project version, not Netty version</notes>
+    <fileName regex="true">transport-netty4-.*\.jar</fileName>
+    <cpe>cpe:/a:netty:netty</cpe>
+  </suppress>
+
+</suppressions>

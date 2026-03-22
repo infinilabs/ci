@@ -171,6 +171,7 @@ jobs:
             --disableOssIndex \
             --nvdApiKey ${{ secrets.NVD_API_KEY }} \
             --nvdApiDelay 6000 \
+            --suppression "$GITHUB_WORKSPACE/$PNAME/security/dependency-check-suppressions.xml" \
             --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }} \
             --out reports/
  
