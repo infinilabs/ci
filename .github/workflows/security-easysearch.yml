@@ -128,20 +128,37 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
 
       # ── OWASP DependencyCheck ──────────────────────────────────────────────
- 
+
+      - name: Get DependencyCheck version
+        id: dc-version
+        run: |
+          VERSION=$(curl -s https://dependency-check.github.io/DependencyCheck/current.txt)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache DependencyCheck installation
+        id: dc-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.HOME }}/dependency-check
+          key: dependency-check-install-${{ steps.dc-version.outputs.version }}
+
+      - name: Install OWASP DependencyCheck
+        if: steps.dc-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sL "https://github.com/dependency-check/DependencyCheck/releases/download/v${{ steps.dc-version.outputs.version }}/dependency-check-${{ steps.dc-version.outputs.version }}-release.zip" -o /tmp/dc.zip
+          unzip -q /tmp/dc.zip -d $HOME
+
+      - name: Get date for cache key
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
       - name: Cache OWASP DependencyCheck database
         uses: actions/cache@v5
         with:
           path: ~/.dependency-check/data
-          key: dependency-check-db-${{ runner.os }}-${{ github.run_id }}
+          key: dependency-check-db-${{ runner.os }}-${{ steps.date.outputs.date }}
           restore-keys: |
             dependency-check-db-${{ runner.os }}-
- 
-      - name: Install OWASP DependencyCheck
-        run: |
-          VERSION=$(curl -s https://dependency-check.github.io/DependencyCheck/current.txt)
-          curl -sL "https://github.com/dependency-check/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" -o /tmp/dc.zip
-          unzip -q /tmp/dc.zip -d $HOME
 
       - name: Run OWASP DependencyCheck
         run: |
@@ -152,6 +169,8 @@ jobs:
             --enableRetired \
             --enableExperimental \
             --disableOssIndex \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
+            --nvdApiDelay 6000 \
             --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }} \
             --out reports/
  
@@ -161,7 +180,7 @@ jobs:
         with:
           name: owasp-report-${{ github.run_number }}
           path: reports/
-          retention-days: 30
+          retention-days: 7
  
       # ── Trivy ──────────────────────────────────────────────────────────────
  
