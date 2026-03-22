@@ -6,7 +6,7 @@ ARG TARGETARCH
 WORKDIR /app/easysearch
 
 # 启动项与配置文件
-ADD entrypoint.sh /sbin
+ADD entrypoint-ai.sh /sbin/entrypoint.sh
 ADD tika/supervisor /app/tpl
 ADD tika/scripts /app/tpl
 
