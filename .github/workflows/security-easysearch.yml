@@ -127,6 +127,10 @@ jobs:
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
 
+      - name: Install UI dependencies
+        working-directory: easysearch/plugins/ui/web
+        run: pnpm install --frozen-lockfile
+
       # ── OWASP DependencyCheck ──────────────────────────────────────────────
 
       - name: Get DependencyCheck version
