@@ -95,6 +95,11 @@ setup_supervisor() {
 trap "exit 0" SIGINT SIGTERM
 
 if [ "$(id -u)" = '0' ]; then
+  # Setup Tika
+  if [ -f /opt/tika/tika-server-standard-3.2.3.jar ] && [ ! -f /opt/tika-server.jar ]; then
+    (cd /opt && ln -sf tika/tika-server-standard-3.2.3.jar tika-server.jar)
+  fi
+  # Setup Easysearch && coco
   if [ -z "${EASYSEARCH_INITIAL_ADMIN_PASSWORD}" ]; then
     log "WARNING: EASYSEARCH_INITIAL_ADMIN_PASSWORD is not set. Generating a random 20-character password..."
     RANDOM_PASSWORD=$(generate_safe_password 16)

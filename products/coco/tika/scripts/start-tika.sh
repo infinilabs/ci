@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-# 创建软链接
-if [ ! -f /opt/tika-server.jar ]; then
-  ln -s /opt/tika/tika-server-standard-3.2.3.jar /opt/tika-server.jar
-fi
-
 echo "[entrypoint] Starting Apache Tika ${TIKA_VERSION:-3.2.3} on port 9998..."
 
 # 健康检查：等待 Tika 就绪（在前台启动前先做预热判断）
