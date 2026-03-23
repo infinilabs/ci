@@ -4,8 +4,10 @@ set -e
 echo "[entrypoint] Starting Apache Tika ${TIKA_VERSION:-3.2.3} on port 9998..."
 
 # 健康检查：等待 Tika 就绪（在前台启动前先做预热判断）
-# 先后台启动做健康检查
-java -jar /opt/tika-server.jar --port 9998 &
+# 先后台启动做健康检查，设置好日志级别
+java -Dtika.log.level=WARN \
+     -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN \
+     -jar /opt/tika-server.jar --port 9998 &
 TIKA_PID=$!
 
 READY=false
@@ -19,7 +21,10 @@ for i in $(seq 1 30); do
         echo "[entrypoint] Tika process exited unexpectedly." >&2
         exit 1
     fi
-    echo "[entrypoint] Waiting for Tika... ($i/30)"
+    # 只在第 1、5、10、20、30 次输出，减少日志
+    if [[ $i =~ ^(1|5|10|20|30)$ ]]; then
+        log "Waiting for Tika... ($i/30)"
+    fi
     sleep 2
 done
 

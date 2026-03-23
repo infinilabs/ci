@@ -22,6 +22,9 @@ readonly WORKING_DIR="/app/easysearch/data/${TARGET_NAME}"
 # Define the parent directory where the dynamic node lock files are located.
 readonly NODES_DIR="${WORKING_DIR}/data/${TARGET_NAME}/nodes"
 
+# Binary path
+readonly COCO_BINARY="./${TARGET_NAME}"
+
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
@@ -97,7 +100,7 @@ fi
 
 # 4. Check permissions and ownership
 KS="$(find "$NODES_DIR" -type f -name ks -not -user "easysearch" -print -quit 2>/dev/null)"
-if [ "$(stat -c %U $WORKING_DIR)" != "easysearch" ] || [ -n "$KS" ]; then
+if [ "$(stat -c %U "$WORKING_DIR")" != "easysearch" ] || [ -n "$KS" ]; then
   log "Fixing permissions for ks file(s) and working directory..."
   chown -RLf 602:602 "$WORKING_DIR" || die "Failed to change ownership for working directory."
 fi
@@ -106,10 +109,24 @@ fi
 log "Changing directory to ${WORKING_DIR}."
 cd "${WORKING_DIR}" || die "Failed to change directory to ${WORKING_DIR}."
 
-# 6. Start the process.
-log "Starting ${TARGET_NAME} process..."
+# 6. Build coco command arguments
+log "Preparing ${TARGET_NAME} startup arguments..."
+COCO_ARGS=()
 
-# We don't create a lock file here because the process itself is expected
-# to create its own .lock file inside the nodes/*/ directory upon startup.
-# The 'exec' command replaces the current shell, which is crucial for supervisord.
-exec gosu easysearch "./${TARGET_NAME}"
+# Check if debug mode is enabled via environment variable
+# Supports: 1, true, yes, on (case-sensitive)
+if [[ -n "${COCO_DEBUG:-}" && "${COCO_DEBUG}" =~ ^(1|true|yes|on)$ ]]; then
+  COCO_ARGS+=("-debug" "-log" "debug")
+  log "Debug mode enabled: adding ${COCO_ARGS[*]} to command"
+fi
+
+# 7. Start the process with gosu
+if [ ${#COCO_ARGS[@]} -eq 0 ]; then
+  # No extra args: direct exec
+  log "Starting ${TARGET_NAME} process: ${COCO_BINARY}"
+  exec gosu easysearch "${COCO_BINARY}"
+else
+  # With args: expand array safely
+  log "Starting ${TARGET_NAME} process: ${COCO_BINARY} ${COCO_ARGS[*]}"
+  exec gosu easysearch "${COCO_BINARY}" "${COCO_ARGS[@]}"
+fi

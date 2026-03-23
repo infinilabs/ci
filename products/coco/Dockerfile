@@ -12,7 +12,7 @@ ADD config/scripts /app/tpl
 
 # 安装 Coco
 ADD --chown=602:602 coco-$TARGETARCH /app/coco
-RUN cd /app/coco && ln -sf coco-* coco && chown 602:602 /app/coco/coco
+RUN cd /app/coco && ln -sf coco-* coco && chown -h 602:602 coco
 
 # 安装 Easysearch
 ADD --chown=602:602 easysearch-$TARGETARCH /app/easysearch

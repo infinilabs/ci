@@ -11,7 +11,7 @@ COPY ["config", "/config"]
 COPY ["coco-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "coco.yml", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -sf coco-* coco
+RUN ln -sf coco-* coco && chown -h 602:602 coco
 
 # 最终阶段
 FROM scratch AS prod
