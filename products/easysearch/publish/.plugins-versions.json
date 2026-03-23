@@ -1,182 +1,188 @@
 {
-    "ai": {
-        "min_version": "1.14.1",
-        "max_version": "-",
-        "description": {
-            "en": "Provides AI capabilities to Easysearch, enabling intelligent features such as vector embeddings and AI-powered search.",
-            "zh_cn": "为 Easysearch 提供 AI 能力，支持向量嵌入和 AI 智能搜索等功能。"
-        }
+  "ai": {
+    "min_version": "1.14.1",
+    "max_version": "-",
+    "description": {
+      "en": "Provides AI capabilities to Easysearch, enabling intelligent features such as vector embeddings and AI-powered search.",
+      "zh_cn": "为 Easysearch 提供 AI 能力，支持向量嵌入和 AI 智能搜索等功能。"
     },
-    "analysis-hanlp": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "HanLP Analyzer for Easysearch, providing advanced Chinese text analysis with NLP capabilities.",
-            "zh_cn": "基于 HanLP 的 Easysearch 中文分词器，提供高级中文文本分析和 NLP 能力。"
-        }
-    },
-    "analysis-icu": {
-        "min_version": "1.8.1",
-        "max_version": "-",
-        "description": {
-            "en": "Integrates the Lucene ICU module into Easysearch, adding ICU-related analysis components for internationalization support.",
-            "zh_cn": "将 Lucene ICU 模块集成到 Easysearch 中，提供 ICU 相关的分析组件以支持国际化。"
-        }
-    },
-    "analysis-ik": {
-        "min_version": "1.0.0",
-        "max_version": "-",
-        "description": {
-            "en": "Integrates Lucene IK analyzer into Easysearch with support for customized dictionaries for Chinese text segmentation.",
-            "zh_cn": "将 Lucene IK 分词器集成到 Easysearch，支持自定义词典的中文分词。"
-        }
-    },
-    "analysis-morphology": {
-        "min_version": "2.0.3",
-        "max_version": "-",
-        "description": {
-            "en": "Provides Russian and English morphology analysis for Easysearch, enabling stemming and lemmatization.",
-            "zh_cn": "为 Easysearch 提供俄语和英语形态学分析，支持词干提取和词形还原。"
-        }
-    },
-    "analysis-pinyin": {
-        "min_version": "1.0.0",
-        "max_version": "-",
-        "description": {
-            "en": "Pinyin Analysis plugin for conversion between Chinese characters and Pinyin, useful for Chinese search by pronunciation.",
-            "zh_cn": "拼音分析插件，用于汉字和拼音之间的转换，支持按发音进行中文搜索。"
-        }
-    },
-    "analysis-stconvert": {
-        "min_version": "1.8.2",
-        "max_version": "-",
-        "description": {
-            "en": "STConvert analyzer that converts Chinese characters between Traditional and Simplified forms.",
-            "zh_cn": "简繁转换分析器，用于中文繁体字和简体字之间的相互转换。"
-        }
-    },
-    "async_search": {
-        "min_version": "1.11.0",
-        "max_version": "1.11.0",
-        "description": {
-            "en": "Provides asynchronous search for Easysearch",
-            "zh_cn": "为 Easysearch 提供异步搜索功能"
-        }
-    },
-    "cross-cluster-replication": {
-        "min_version": "1.2.0",
-        "max_version": "1.11.0",
-        "description": {
-            "en": "Provides cross-cluster-replication for Easysearch",
-            "zh_cn": "为 Easysearch 提供跨集群复制功能"
-        }
-    },
-    "index-management": {
-        "min_version": "1.0.0",
-        "max_version": "1.15.0",
-        "description": {
-            "en": "Provides index lifecycle management for Easysearch",
-            "zh_cn": "为 Easysearch 提供索引生命周期管理功能"
-        }
-    },
-    "ingest-common": {
-        "min_version": "1.0.0",
-        "max_version": "-",
-        "description": {
-            "en": "Provides common ingest processors for data preprocessing during document ingestion.",
-            "zh_cn": "提供通用的数据摄入处理器，用于文档摄入过程中的数据预处理。"
-        }
-    },
-    "ingest-geoip": {
-        "min_version": "1.0.0",
-        "max_version": "-",
-        "description": {
-            "en": "Ingest processor that looks up geographical data based on IP addresses using the MaxMind geo database.",
-            "zh_cn": "基于 IP 地址查找地理位置信息的摄入处理器，使用 MaxMind 地理数据库。"
-        }
-    },
-    "ingest-user-agent": {
-        "min_version": "1.0.0",
-        "max_version": "-",
-        "description": {
-            "en": "Ingest processor that extracts device and browser information from user agent strings.",
-            "zh_cn": "从用户代理字符串中提取设备和浏览器信息的摄入处理器。"
-        }
-    },
-    "jieba": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Jieba Chinese text segmentation plugin for Easysearch, providing accurate Chinese word segmentation.",
-            "zh_cn": "基于结巴分词的 Easysearch 中文分词插件，提供精准的中文分词功能。"
-        }
-    },
-    "knn": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Plugin for exact and approximate nearest neighbor search on sparse and dense vectors, enabling similarity search.",
-            "zh_cn": "支持稀疏和稠密向量的精确及近似最近邻搜索插件，用于相似度检索。"
-        }
-    },
-    "mapper-annotated-text": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Adds support for text fields with markup used to inject annotation tokens into the index.",
-            "zh_cn": "支持带有标记的文本字段，用于将注释令牌注入到索引中。"
-        }
-    },
-    "mapper-murmur3": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Allows computing Murmur3 hashes of field values at index-time and storing them in the index.",
-            "zh_cn": "在索引时计算字段值的 Murmur3 哈希值并存储在索引中。"
-        }
-    },
-    "mapper-size": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Allows documents to record their uncompressed size at index time for storage monitoring.",
-            "zh_cn": "允许文档在索引时记录其未压缩大小，用于存储监控。"
-        }
-    },
-    "rules": {
-        "min_version": "2.1.0",
-        "max_version": "-",
-        "platforms": [
-            "linux-aarch64",
-            "linux-amd64"
-        ],
-        "description": {
-            "en": "Matches streaming documents against pre-stored queries for real-time rule matching and alerting.",
-            "zh_cn": "将流式文档与预存储的查询进行匹配，用于实时规则匹配和告警。"
-        }
-    },
-    "sql": {
-        "min_version": "1.5.0",
-        "max_version": "-",
-        "description": {
-            "en": "Provides SQL query capability for Easysearch, allowing users to query data using familiar SQL syntax.",
-            "zh_cn": "为 Easysearch 提供 SQL 查询能力，允许用户使用熟悉的 SQL 语法查询数据。"
-        }
-    },
-    "transport-nio": {
-        "min_version": "1.3.0",
-        "max_version": "-",
-        "description": {
-            "en": "Provides NIO-based network transport for improved network performance and scalability.",
-            "zh_cn": "提供基于 NIO 的网络传输层，提升网络性能和可扩展性。"
-        }
-    },
-    "ui": {
-        "min_version": "1.14.2",
-        "max_version": "-",
-        "description": {
-            "en": "Provides static resource loading capability and serves the web management console for Easysearch.",
-            "zh_cn": "提供静态资源加载能力，并作为 Easysearch 的 Web 管理控制台。"
-        }
+    "dependencies": [
+      "knn"
+    ]
+  },
+  "analysis-hanlp": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "HanLP Analyzer for Easysearch, providing advanced Chinese text analysis with NLP capabilities.",
+      "zh_cn": "基于 HanLP 的 Easysearch 中文分词器，提供高级中文文本分析和 NLP 能力。"
     }
+  },
+  "analysis-icu": {
+    "min_version": "1.8.1",
+    "max_version": "-",
+    "description": {
+      "en": "Integrates the Lucene ICU module into Easysearch, adding ICU-related analysis components for internationalization support.",
+      "zh_cn": "将 Lucene ICU 模块集成到 Easysearch 中，提供 ICU 相关的分析组件以支持国际化。"
+    }
+  },
+  "analysis-ik": {
+    "min_version": "1.0.0",
+    "max_version": "-",
+    "description": {
+      "en": "Integrates Lucene IK analyzer into Easysearch with support for customized dictionaries for Chinese text segmentation.",
+      "zh_cn": "将 Lucene IK 分词器集成到 Easysearch，支持自定义词典的中文分词。"
+    },
+    "dependencies": [
+      "ingest-common"
+    ]
+  },
+  "analysis-morphology": {
+    "min_version": "2.0.3",
+    "max_version": "-",
+    "description": {
+      "en": "Provides Russian and English morphology analysis for Easysearch, enabling stemming and lemmatization.",
+      "zh_cn": "为 Easysearch 提供俄语和英语形态学分析，支持词干提取和词形还原。"
+    }
+  },
+  "analysis-pinyin": {
+    "min_version": "1.0.0",
+    "max_version": "-",
+    "description": {
+      "en": "Pinyin Analysis plugin for conversion between Chinese characters and Pinyin, useful for Chinese search by pronunciation.",
+      "zh_cn": "拼音分析插件，用于汉字和拼音之间的转换，支持按发音进行中文搜索。"
+    }
+  },
+  "analysis-stconvert": {
+    "min_version": "1.8.2",
+    "max_version": "-",
+    "description": {
+      "en": "STConvert analyzer that converts Chinese characters between Traditional and Simplified forms.",
+      "zh_cn": "简繁转换分析器，用于中文繁体字和简体字之间的相互转换。"
+    }
+  },
+  "async_search": {
+    "min_version": "1.11.0",
+    "max_version": "1.11.0",
+    "description": {
+      "en": "Provides asynchronous search for Easysearch",
+      "zh_cn": "为 Easysearch 提供异步搜索功能"
+    }
+  },
+  "cross-cluster-replication": {
+    "min_version": "1.2.0",
+    "max_version": "1.11.0",
+    "description": {
+      "en": "Provides cross-cluster-replication for Easysearch",
+      "zh_cn": "为 Easysearch 提供跨集群复制功能"
+    }
+  },
+  "index-management": {
+    "min_version": "1.0.0",
+    "max_version": "1.15.0",
+    "description": {
+      "en": "Provides index lifecycle management for Easysearch",
+      "zh_cn": "为 Easysearch 提供索引生命周期管理功能"
+    }
+  },
+  "ingest-common": {
+    "min_version": "1.0.0",
+    "max_version": "-",
+    "description": {
+      "en": "Provides common ingest processors for data preprocessing during document ingestion.",
+      "zh_cn": "提供通用的数据摄入处理器，用于文档摄入过程中的数据预处理。"
+    }
+  },
+  "ingest-geoip": {
+    "min_version": "1.0.0",
+    "max_version": "-",
+    "description": {
+      "en": "Ingest processor that looks up geographical data based on IP addresses using the MaxMind geo database.",
+      "zh_cn": "基于 IP 地址查找地理位置信息的摄入处理器，使用 MaxMind 地理数据库。"
+    }
+  },
+  "ingest-user-agent": {
+    "min_version": "1.0.0",
+    "max_version": "-",
+    "description": {
+      "en": "Ingest processor that extracts device and browser information from user agent strings.",
+      "zh_cn": "从用户代理字符串中提取设备和浏览器信息的摄入处理器。"
+    }
+  },
+  "jieba": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Jieba Chinese text segmentation plugin for Easysearch, providing accurate Chinese word segmentation.",
+      "zh_cn": "基于结巴分词的 Easysearch 中文分词插件，提供精准的中文分词功能。"
+    }
+  },
+  "knn": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Plugin for exact and approximate nearest neighbor search on sparse and dense vectors, enabling similarity search.",
+      "zh_cn": "支持稀疏和稠密向量的精确及近似最近邻搜索插件，用于相似度检索。"
+    }
+  },
+  "mapper-annotated-text": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Adds support for text fields with markup used to inject annotation tokens into the index.",
+      "zh_cn": "支持带有标记的文本字段，用于将注释令牌注入到索引中。"
+    }
+  },
+  "mapper-murmur3": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Allows computing Murmur3 hashes of field values at index-time and storing them in the index.",
+      "zh_cn": "在索引时计算字段值的 Murmur3 哈希值并存储在索引中。"
+    }
+  },
+  "mapper-size": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Allows documents to record their uncompressed size at index time for storage monitoring.",
+      "zh_cn": "允许文档在索引时记录其未压缩大小，用于存储监控。"
+    }
+  },
+  "rules": {
+    "min_version": "2.1.0",
+    "max_version": "-",
+    "platforms": [
+      "linux-aarch64",
+      "linux-amd64"
+    ],
+    "description": {
+      "en": "Matches streaming documents against pre-stored queries for real-time rule matching and alerting.",
+      "zh_cn": "将流式文档与预存储的查询进行匹配，用于实时规则匹配和告警。"
+    }
+  },
+  "sql": {
+    "min_version": "1.5.0",
+    "max_version": "-",
+    "description": {
+      "en": "Provides SQL query capability for Easysearch, allowing users to query data using familiar SQL syntax.",
+      "zh_cn": "为 Easysearch 提供 SQL 查询能力，允许用户使用熟悉的 SQL 语法查询数据。"
+    }
+  },
+  "transport-nio": {
+    "min_version": "1.3.0",
+    "max_version": "-",
+    "description": {
+      "en": "Provides NIO-based network transport for improved network performance and scalability.",
+      "zh_cn": "提供基于 NIO 的网络传输层，提升网络性能和可扩展性。"
+    }
+  },
+  "ui": {
+    "min_version": "1.14.2",
+    "max_version": "-",
+    "description": {
+      "en": "Provides static resource loading capability and serves the web management console for Easysearch.",
+      "zh_cn": "提供静态资源加载能力，并作为 Easysearch 的 Web 管理控制台。"
+    }
+  }
 }
