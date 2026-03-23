@@ -37,8 +37,8 @@ setup_coco() {
   done
 
   cd $COCO_DIR
-  if [ ! -f "./start-coco.sh" ] || [ ! -f "./start-tika.sh" ]; then
-    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
+  if [ ! -f "$COCO_DIR/start-coco.sh" ] || [ ! -f "$COCO_DIR/start-tika.sh" ]; then
+    cp -rf /app/tpl/*.sh /app/easysearch/data/coco && chmod +x $COCO_DIR/*.sh
   fi
   
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then

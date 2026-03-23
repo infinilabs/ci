@@ -21,7 +21,7 @@ setup_coco() {
     mkdir -p "$WORK_DIR"
   fi
 
-  if [ ! -d "$COCO_DIR" || ! -f "$COCO_DIR"/coco ]; then
+  if [ ! -d "$COCO_DIR" ] || [ ! -f "$COCO_DIR/coco" ]; then
     cp -a --update=none /app/coco/. $COCO_DIR
     log "Copied coco to $COCO_DIR"
   fi
@@ -37,8 +37,8 @@ setup_coco() {
   done
 
   cd $COCO_DIR
-  if [ ! -f ./start-coco.sh ]; then
-    cp -rf /app/tpl/*.sh /app/easysearch/data/coco
+  if [ ! -f $COCO_DIR/start-coco.sh ]; then
+    cp -rf /app/tpl/*.sh $COCO_DIR && chmod +x $COCO_DIR/*.sh
   fi
   
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
