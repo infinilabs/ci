@@ -80,7 +80,7 @@ make install_sw
 
 # Create lib symlink if lib64 exists (for Gradle compatibility)
 if [ -d /root/tongsuo/lib64 ] && [ ! -e /root/tongsuo/lib ]; then
-  ln -s lib64 /root/tongsuo/lib
+  ln -sf lib64 /root/tongsuo/lib
   echo "Created symlink: /root/tongsuo/lib -> lib64"
 fi
 

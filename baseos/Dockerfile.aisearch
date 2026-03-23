@@ -156,7 +156,7 @@ RUN mkdir -p /app/easysearch \
 
 # Install Supervisor for process management.
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
-    && ln -s /usr/local/bin/* /usr/bin \
+    && ln -sf /usr/local/bin/* /usr/bin \
     && supervisord -v
 
 # Copy the custom jdk tarball from the 'jdk-builder' stage.

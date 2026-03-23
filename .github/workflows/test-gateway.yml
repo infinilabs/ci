@@ -125,7 +125,7 @@ jobs:
         echo Home path is $HOME
         
         echo Check work folder $GITHUB_WORKSPACE
-        ln -s $GITHUB_WORKSPACE $WORK
+        ln -sf $GITHUB_WORKSPACE $WORK
         ls -al $WORK/
         
         # for products

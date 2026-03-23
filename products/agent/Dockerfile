@@ -13,7 +13,7 @@ RUN command -v tini || apk add --no-cache tini
 COPY ["agent-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "agent.yml", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -s agent-* agent && mkdir -p config
+RUN ln -sf agent-* agent && mkdir -p config
 
 # 最终阶段
 FROM scratch AS prod

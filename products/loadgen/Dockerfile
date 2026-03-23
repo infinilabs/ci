@@ -10,7 +10,7 @@ WORKDIR /
 COPY ["loadgen-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "loadgen.yml", "*.dsl", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -s loadgen-* loadgen
+RUN ln -sf loadgen-* loadgen
 
 # 最终阶段
 FROM scratch AS prod

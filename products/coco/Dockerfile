@@ -12,11 +12,11 @@ ADD config/scripts /app/tpl
 
 # 安装 Coco
 ADD --chown=602:602 coco-$TARGETARCH /app/coco
-RUN cd /app/coco && ln -s coco-* coco && chown 602:602 /app/coco/coco
+RUN cd /app/coco && ln -sf coco-* coco && chown 602:602 /app/coco/coco
 
 # 安装 Easysearch
 ADD --chown=602:602 easysearch-$TARGETARCH /app/easysearch
-RUN cd /app/easysearch && ln -s /usr/local/jdk .
+RUN cd /app/easysearch && ln -sf /usr/local/jdk .
 
 # 最终阶段
 FROM scratch AS prod

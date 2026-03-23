@@ -57,7 +57,7 @@ setup_coco() {
   fi
 
   [ ! -d $COCO_SRV ] && mkdir -p $COCO_SRV
-  [ ! -d $COCO_SRV/server ] && ln -s $COCO_DIR/coco $COCO_SRV/server
+  [ ! -d $COCO_SRV/server ] && ln -sf $COCO_DIR/coco $COCO_SRV/server
 
   return 0
 }

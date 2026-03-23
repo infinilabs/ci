@@ -6,7 +6,7 @@ export GOEXPERIMENT=greenteagc
 
 echo "Home path is $HOME"
 mkdir -p $WORKBASE
-ln -s $GITHUB_WORKSPACE $WORK
+ln -sf $GITHUB_WORKSPACE $WORK
 echo "Build path is $WORK"
 # update Makefile
 cp -rf $WORK/products/framework/Makefile $WORK/framework

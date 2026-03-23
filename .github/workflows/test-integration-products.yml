@@ -174,7 +174,7 @@ jobs:
                   fi
                 fi
                 curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
-                [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
+                [ -z "$JAVA_HOME" ] || ln -sf "$JAVA_HOME" $HOME/easysearch/jdk
                 # Initialize easysearch
                 echo "Initialize easysearch at $HOME/easysearch ..."
                 cd $HOME/easysearch && bin/initialize.sh -s
@@ -188,7 +188,7 @@ jobs:
                 echo Home path is $HOME
                 
                 echo Check work folder $GITHUB_WORKSPACE
-                ln -s $GITHUB_WORKSPACE $WORK
+                ln -sf $GITHUB_WORKSPACE $WORK
                 ls -al $WORK/
 
                 # for console web
@@ -560,7 +560,7 @@ jobs:
                   fi
                 fi
                 curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
-                [ -z "$JAVA_HOME" ] || ln -s "$JAVA_HOME" $HOME/easysearch/jdk
+                [ -z "$JAVA_HOME" ] || ln -sf "$JAVA_HOME" $HOME/easysearch/jdk
                 # Initialize easysearch
                 cd $HOME/easysearch && bin/initialize.sh -s
                 # Run easysearch

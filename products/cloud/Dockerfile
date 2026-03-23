@@ -11,7 +11,7 @@ COPY ["config", "/config"]
 COPY ["cloud-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "cloud.yml", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -s cloud-* cloud
+RUN ln -sf cloud-* cloud
 
 # 最终阶段
 FROM scratch AS prod

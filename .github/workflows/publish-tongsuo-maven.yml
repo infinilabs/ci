@@ -420,7 +420,7 @@ jobs:
           # Create symlink if lib64 exists but lib doesn't (Linux)
           if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
             echo "Creating symlink: lib -> lib64"
-            cd "$TONGSUO_HOME" && ln -s lib64 lib
+            cd "$TONGSUO_HOME" && ln -sf lib64 lib
           fi
           
           # Show $PNAME version and features
@@ -846,7 +846,7 @@ jobs:
           # Create symlink if lib64 exists but lib doesn't
           if [ -d "$TONGSUO_HOME/lib64" ] && [ ! -d "$TONGSUO_HOME/lib" ]; then
             echo "Creating symlink: lib -> lib64"
-            cd "$TONGSUO_HOME" && ln -s lib64 lib
+            cd "$TONGSUO_HOME" && ln -sf lib64 lib
           fi
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

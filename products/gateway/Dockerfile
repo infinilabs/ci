@@ -13,7 +13,7 @@ RUN command -v tini || apk add --no-cache tini
 COPY ["gateway-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "gateway.yml", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -s gateway-* gateway && mkdir -p config
+RUN ln -sf gateway-* gateway && mkdir -p config
 
 # 最终阶段
 FROM scratch AS prod

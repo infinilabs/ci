@@ -166,7 +166,7 @@ jobs:
                 echo Home path is $HOME
                 
                 echo Check work folder $GITHUB_WORKSPACE
-                ln -s $GITHUB_WORKSPACE $WORK
+                ln -sf $GITHUB_WORKSPACE $WORK
 
                 cp -rf $GITHUB_WORKSPACE/.github/workflows/coco $WORK/
 

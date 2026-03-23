@@ -11,7 +11,7 @@ COPY ["config", "/config"]
 COPY ["console-linux-${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}}", "console.yml", "LICENSE", "NOTICE", "/"]
 
 # 建立软链接
-RUN ln -s console-* console
+RUN ln -sf console-* console
 
 # 最终阶段
 FROM scratch AS prod

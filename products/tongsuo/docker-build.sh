@@ -88,7 +88,7 @@ make install_sw
 # Create symlink if lib64 exists but lib doesn't
 if [ -d /root/tongsuo/lib64 ] && [ ! -d /root/tongsuo/lib ]; then
   echo "Creating symlink: lib -> lib64"
-  ln -s lib64 /root/tongsuo/lib
+  ln -sf lib64 /root/tongsuo/lib
 fi
 
 echo ""

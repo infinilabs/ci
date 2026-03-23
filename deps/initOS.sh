@@ -61,11 +61,11 @@ echo "$VENDOR OS release $YEAR ($VENDOR $OU)" > "/etc/$TO_RELEASE_FILE"
 
 # Update symlinks
 if [ -L "/etc/$SYSTEM_RELEASE_LINK" ]; then
-  cd /etc && unlink "$SYSTEM_RELEASE_LINK" && ln -s "$TO_RELEASE_FILE" "$SYSTEM_RELEASE_LINK"
+  cd /etc && unlink "$SYSTEM_RELEASE_LINK" && ln -sf "$TO_RELEASE_FILE" "$SYSTEM_RELEASE_LINK"
 fi
 
 if [ -L "/etc/$REDHAT_RELEASE_LINK" ]; then
-  cd /etc && unlink "$REDHAT_RELEASE_LINK" && ln -s "$TO_RELEASE_FILE" "$REDHAT_RELEASE_LINK"
+  cd /etc && unlink "$REDHAT_RELEASE_LINK" && ln -sf "$TO_RELEASE_FILE" "$REDHAT_RELEASE_LINK"
 fi
 
 # Create /etc/os-release

@@ -13,11 +13,11 @@ ADD config/scripts/ /app/tpl/
 
 # 安装 Agent
 ADD --chown=602:602 agent-$TARGETARCH /app/agent
-RUN cd /app/agent && ln -s agent-* agent
+RUN cd /app/agent && ln -sf agent-* agent
 
 # 安装 Easysearch
 ADD --chown=602:602 easysearch-$TARGETARCH /app/easysearch
-RUN cd /app/easysearch && ln -s /usr/local/jdk .
+RUN cd /app/easysearch && ln -sf /usr/local/jdk .
 
 # 最终阶段
 FROM scratch AS prod
