@@ -16,6 +16,7 @@ generate_safe_password() {
 setup_coco() {
   local WORK_DIR=/app/easysearch/data
   local COCO_DIR=$WORK_DIR/coco
+  local COCO_SRV=/opt/coco
 
   if [ ! -d "$WORK_DIR" ] ; then
     mkdir -p "$WORK_DIR"
@@ -38,7 +39,7 @@ setup_coco() {
 
   cd $COCO_DIR
   if [ ! -f "$COCO_DIR/start-coco.sh" ] || [ ! -f "$COCO_DIR/start-tika.sh" ]; then
-    cp -rf /app/tpl/*.sh /app/easysearch/data/coco && chmod +x $COCO_DIR/*.sh
+    cp -rf /app/tpl/*.sh $COCO_DIR && chmod +x $COCO_DIR/*.sh
   fi
   
   if [ -z "$(./coco keystore list | grep -Eo ES_PASSWORD)" ]; then
@@ -55,8 +56,8 @@ setup_coco() {
     log "$COCO_DIR is already owned by easysearch."
   fi
 
-  [ ! -d /opt/coco ] && mkdir -p /opt/coco
-  [ ! -d /opt/coco/server ] && ln -s /app/easysearch/data/coco /opt/coco/server
+  [ ! -d $COCO_SRV ] && mkdir -p $COCO_SRV
+  [ ! -d $COCO_SRV/server ] && ln -s $COCO_DIR/coco $COCO_SRV/server
 
   return 0
 }
