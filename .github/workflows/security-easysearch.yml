@@ -43,7 +43,7 @@ on:
         default: "0"
 
 jobs:
-  dependency-scan:
+  scan:
     name: Dependency Security Scan For Easysearch
     runs-on: ubuntu-latest
     steps:
@@ -131,8 +131,12 @@ jobs:
         working-directory: easysearch/plugins/ui/web
         run: pnpm install --frozen-lockfile
 
-      # ── OWASP DependencyCheck ──────────────────────────────────────────────
+      - name: Create report directories
+        run: |
+          mkdir -p reports/owasp reports/trivy
+          echo "✅ Created: reports/owasp/ reports/trivy/"
 
+      # ── OWASP DependencyCheck ──────────────────────────────────────────────
       - name: Get DependencyCheck version
         id: dc-version
         run: |
@@ -229,3 +233,21 @@ jobs:
           echo "### 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "- OWASP: ${{ steps.owasp.outcome }}" >> $GITHUB_STEP_SUMMARY
           echo "- Trivy: ${{ steps.trivy_html.outcome }}" >> $GITHUB_STEP_SUMMARY
+
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [scan]
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Notify message via feishu
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
