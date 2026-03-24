@@ -122,13 +122,14 @@ WORKDIR /
 # Install base OS tools and dependencies.
 RUN dnf clean all && \
     dnf install -q -y --allowerasing --setopt install_weak_deps=False \
-    which lsof net-tools nmap-ncat bind-utils procps-ng openssl \
+    which lsof net-tools nmap-ncat bind-utils procps-ng openssl file \
     curl wget tar gzip python3-pip make gcc glibc-devel \
-    ca-certificates \
-    liberation-fonts \
-    google-noto-sans-cjk-fonts
+    ca-certificates poppler-utils glibc-langpack-zh \
+    liberation-fonts fonts-noto-color-emoji \
+    google-noto-sans-cjk-fonts google-noto-serif-cjk-fonts
 
 RUN dnf install -q -y epel-release > /dev/null && \
+    dnf config-manager --set-enabled crb 2>/dev/null || dnf config-manager --set-enabled PowerTools 2>/dev/null || true && \
     dnf makecache -q > /dev/null && \
     dnf install -q -y --allowerasing chromium > /dev/null && \
     ln -sf /usr/lib64/chromium-browser/chromium-browser /usr/bin/chromium
@@ -153,6 +154,16 @@ RUN mkdir -p /app/easysearch \
     && groupadd -r -g 602 easysearch \
     && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app easysearch \
     && usermod -c "INFINI Easysearch Operator" easysearch
+
+# --- easysearch ai folder config
+RUN mkdir -p /app/.config/libreoffice \
+    /tmp/lo-profile \
+    /tmp/chrome-user-data \
+    /tmp/chrome-crashes \
+    && chown -R 602:602 /app/.config \
+    && chmod -R 755 /app/.config \
+    && chmod -R 777 /tmp/lo-profile /tmp/chrome-user-data /tmp/chrome-crashes \
+    && echo "Created config dirs for easysearch (UID 602)"
 
 # Install Supervisor for process management.
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
@@ -235,7 +246,12 @@ RUN wget -q -O /opt/tika/tika-server-standard-3.2.3.jar \
 
 # Set environment variables for runtime configuration
 ENV JAVA_HOME=/usr/local/jdk \
-    PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    LibreOffice_UserInstallation=file:///tmp/lo-profile \
+    CHROME_USER_DATA_DIR=/tmp/chrome-user-data \
+    CHROME_CRASHPAD_HANDLER_DATABASE=/tmp/chrome-crashes \
+    FONTCONFIG_PATH=/usr/share/fonts \
+    CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --disable-gpu"
 
 # Testing install software
 RUN which java || echo "java not in PATH" && \
@@ -244,7 +260,8 @@ RUN which java || echo "java not in PATH" && \
 
 RUN (java -version || (echo "java not found" && exit 1)) && \
     (chromium --version || (echo "chromium not found" && exit 1)) && \
-    (libreoffice --version || (echo "libreoffice not found" && exit 1))
+    (libreoffice --version || (echo "libreoffice not found" && exit 1)) && \
+    (pdftoppm -v || (echo "pdftoppm not found" && exit 1))
 
 # =========================================================================
 # Stage 3: prod
