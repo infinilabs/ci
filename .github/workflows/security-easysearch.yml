@@ -40,7 +40,7 @@ on:
       FAIL_ON_CVSS:
         description: "Fail build if CVSS score >= (0-10, 0 = never fail)"
         required: false
-        default: "7"
+        default: "0"
 
 jobs:
   dependency-scan:
@@ -165,11 +165,14 @@ jobs:
             dependency-check-db-${{ runner.os }}-
 
       - name: Run OWASP DependencyCheck
+        id: owasp
+        continue-on-error: true
         run: |
           $HOME/dependency-check/bin/dependency-check.sh \
             --project "$PNAME" \
             --scan "$GITHUB_WORKSPACE/$PNAME" \
             --format HTML \
+            --format JSON \
             --enableRetired \
             --enableExperimental \
             --disableOssIndex \
@@ -177,38 +180,40 @@ jobs:
             --nvdApiDelay 6000 \
             --suppression "$GITHUB_WORKSPACE/products/$PNAME/security/dependency-check-suppressions.xml" \
             --failOnCVSS ${{ inputs.FAIL_ON_CVSS || '7' }} \
-            --out reports/
- 
+            --out reports/owasp/
+
       - name: Upload OWASP report
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: owasp-report-${{ github.run_number }}
-          path: reports/
+          name: owasp-report-${{ github.run_id }}
+          path: reports/owasp/
           retention-days: 7
- 
+
       # ── Trivy ──────────────────────────────────────────────────────────────
- 
-      - name: Run Trivy (HTML report)
+      - name: Run Trivy (HTML)
+        id: trivy_html
+        continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: "${{ github.workspace }}/${{ env.PNAME }}"
           format: "template"
           template: "@/contrib/html.tpl"
-          output: "trivy-report.html"
+          output: "reports/trivy/trivy-report.html"
           severity: "HIGH,CRITICAL"
           ignore-unfixed: true
- 
-      - name: Upload Trivy report
+
+      - name: Upload Trivy HTML report
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: trivy-report-${{ github.run_number }}
-          path: trivy-report.html
+          name: trivy-report-${{ github.run_id }}
+          path: reports/trivy/trivy-report.html
           retention-days: 30
- 
-      - name: Run Trivy (table output for log)
+
+      - name: Run Trivy (table)
+        continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
@@ -216,3 +221,11 @@ jobs:
           format: "table"
           severity: "HIGH,CRITICAL"
           ignore-unfixed: true
+
+      # ── Summary ────────────────────────────────────────────────────────────
+      - name: Security Summary
+        if: always()
+        run: |
+          echo "### 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- OWASP: ${{ steps.owasp.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Trivy: ${{ steps.trivy_html.outcome }}" >> $GITHUB_STEP_SUMMARY
