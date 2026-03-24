@@ -125,8 +125,8 @@ RUN dnf clean all && \
     which lsof net-tools nmap-ncat bind-utils procps-ng openssl file \
     curl wget tar gzip python3-pip make gcc glibc-devel \
     ca-certificates poppler-utils glibc-langpack-zh \
-    liberation-fonts fonts-noto-color-emoji \
-    google-noto-sans-cjk-fonts google-noto-serif-cjk-fonts
+    liberation-fonts \
+    google-noto-sans-cjk-fonts
 
 RUN dnf install -q -y epel-release > /dev/null && \
     dnf config-manager --set-enabled crb 2>/dev/null || dnf config-manager --set-enabled PowerTools 2>/dev/null || true && \
