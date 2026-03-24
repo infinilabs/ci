@@ -541,7 +541,7 @@ jobs:
         run: |
           PNAME=easysearch
           VERSIONS_FILE=/tmp/.versions.json
-          head -n 10 $VERSIONS_FILE
+          jq 'keys_unsorted[:3]' $VERSIONS_FILE
           # upload to oss
           echo "Upload $VERSIONS_FILE to oss"
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME -f $VERSIONS_FILE
