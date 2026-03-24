@@ -155,16 +155,6 @@ RUN mkdir -p /app/easysearch \
     && useradd -r -l -u 602 -g 602 -s /bin/bash -d /app easysearch \
     && usermod -c "INFINI Easysearch Operator" easysearch
 
-# --- easysearch ai folder config
-RUN mkdir -p /app/.config/libreoffice \
-    /tmp/lo-profile \
-    /tmp/chrome-user-data \
-    /tmp/chrome-crashes \
-    && chown -R 602:602 /app/.config \
-    && chmod -R 755 /app/.config \
-    && chmod -R 777 /tmp/lo-profile /tmp/chrome-user-data /tmp/chrome-crashes \
-    && echo "Created config dirs for easysearch (UID 602)"
-
 # Install Supervisor for process management.
 RUN python3 -m pip install supervisor --no-warn-script-location --disable-pip-version-check --no-cache-dir \
     && ln -sf /usr/local/bin/* /usr/bin \
@@ -246,12 +236,7 @@ RUN wget -q -O /opt/tika/tika-server-standard-3.2.3.jar \
 
 # Set environment variables for runtime configuration
 ENV JAVA_HOME=/usr/local/jdk \
-    PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    LibreOffice_UserInstallation=file:///tmp/lo-profile \
-    CHROME_USER_DATA_DIR=/tmp/chrome-user-data \
-    CHROME_CRASHPAD_HANDLER_DATABASE=/tmp/chrome-crashes \
-    FONTCONFIG_PATH=/usr/share/fonts \
-    CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --disable-gpu"
+    PATH=/usr/local/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Testing install software
 RUN which java || echo "java not in PATH" && \
