@@ -36,19 +36,6 @@ WORKDIR /app/easysearch
 # 权限处理
 RUN chown -RLf 602:602 /app/easysearch && chown -RLf 602:602 /app/coco
 
-
-
-RUN echo "=== 验证 gosu + $HOME (as easysearch) ===" && \
-    gosu easysearch bash -c '
-      echo "USER: $(whoami)" && \
-      echo "UID: $(id -u)" && \
-      echo "HOME: ${HOME}" && \
-      echo "PWD: ${PWD}" && \
-      echo "Config dir: ${HOME}/.config/libreoffice" && \
-      ls -ld "${HOME}/.config/libreoffice" 2>/dev/null || echo "⚠️  Config dir not found" && \
-      touch "${HOME}/.config/test_write" && rm "${HOME}/.config/test_write" && echo "✅ Write test passed"
-    ' || echo "⚠️  gosu verification failed, but continuing build"
-
 EXPOSE 9000 2900
 
 ENTRYPOINT ["/sbin/tini", "--", "/sbin/entrypoint.sh"]
