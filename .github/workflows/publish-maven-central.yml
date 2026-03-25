@@ -166,13 +166,13 @@ jobs:
         working-directory: ${{ env.PNAME}}
         run: |
           ./gradlew \
-            :server:bundleMavenCentral \
-            :build-tools:bundleMavenCentral \
-            :libs:easysearch-core:bundleMavenCentral \
-            :libs:easysearch-lucene:bundleMavenCentral \
-            :libs:easysearch-secure-sm:bundleMavenCentral \
-            :libs:easysearch-x-content:bundleMavenCentral \
-            :libs:easysearch-geo:bundleMavenCentral
+            :libs:easysearch-cli:bundleMavenCentral \
+            :libs:easysearch-plugin-classloader:bundleMavenCentral \
+            :libs:easysearch-nio:bundleMavenCentral \
+            :client:rest:bundleMavenCentral \
+            :client:sniffer:bundleMavenCentral \
+            :test:framework:bundleMavenCentral \
+            :distribution:archives:integ-test-zip:bundleMavenCentral
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
