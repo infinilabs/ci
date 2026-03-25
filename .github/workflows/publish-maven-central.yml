@@ -46,7 +46,7 @@ on:
           - '11'
           - '17'
           - '21'
-        default: '8'
+        default: '21'
       BUILD_TOOL:
         description: 'Build Tool'
         type: choice
@@ -66,7 +66,7 @@ on:
         description: 'Publish Version'
         required: true
         type: string
-        default: '1.0.0'
+        default: '2.1.0'
       DRY_RUN:
         description: 'Dry Run (Archive on Github CI)'
         type: boolean
@@ -133,6 +133,10 @@ jobs:
       - name: Prepare publish version ${{ env.PNAME}}@${{env.PUBLISH_VERSION }}
         working-directory: ${{ env.PNAME}}
         run: |
+          if [ "$PNAME" == 'easysearch' ]; then
+            export PUBLISHED_VERSION=${{ inputs.PUBLISH_VERSION }}
+            $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
+          fi
           if [ "$PNAME" == 'easysearch-client' ]; then
             cp -rf $GITHUB_WORKSPACE/products/easysearch/client/build.gradle .
             sed -i "s/^version[[:space:]]*=[[:space:]]*['\"].*['\"]/version = '$PUBLISH_VERSION'/" build.gradle
@@ -182,7 +186,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: maven-central-bundle-${{ env.PNAME }}-${{ env.PUBLISH_VERSION }}
-          path: ${{ env.PNAME }}/**/*.zip
+          path: ${{ env.PNAME }}/build/**/*.zip
           if-no-files-found: error
 
       - name: Upload to central portal
@@ -197,3 +201,61 @@ jobs:
           DEBUG: false
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+  update_repo:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: ${{ inputs.DRY_RUN != true }}
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update release version in workflow files
+        id: update
+        run: |
+          cd $GITHUB_WORKSPACE/.github/workflows
+          VERSION="${{ inputs.PUBLISH_VERSION }}"
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+
+          update_yaml_version "publish-maven-central.yml" "PUBLISH_VERSION" "$VERSION"
+          
+      - name: Create bumpver pull request
+        uses: peter-evans/create-pull-request@v8
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: publish ${{ inputs.PUBLISH_COMPONENT }} ${{ inputs.PUBLISH_VERSION }}"
+          branch: "release/publish-${{ inputs.PUBLISH_COMPONENT }}-${{ github.run_id }}"
+          title: "bumpver: publish ${{ inputs.PUBLISH_COMPONENT }} ${{ inputs.PUBLISH_VERSION }} with ${{ inputs.JDK_VERSION}}"
+          body: "Automated publish ${{ inputs.PUBLISH_COMPONENT }} ${{ inputs.PUBLISH_VERSION }} with ${{ inputs.JDK_VERSION}}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            .github/workflows/*.yml
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --auto --squash
+
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [publish, update_repo]
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Notify message via feishu
+        env:
+          FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.triggering_actor }}
+          SERVER_URL: ${{ github.server_url }}
+        run: $GITHUB_WORKSPACE/scripts/feishu_message.sh
