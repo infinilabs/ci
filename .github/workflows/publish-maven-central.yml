@@ -196,12 +196,14 @@ jobs:
       - name: Upload to central portal
         if: ${{ inputs.DRY_RUN != true && env.BUILD_TOOL == 'gradle' && (env.PNAME == 'easysearch-client' || env.PNAME == 'easysearch') }}
         run: |
-          find $GITHUB_WORKSPACE/$PNAME/build \
-            \( -path "*/node_modules/*" -o -path "*/local-test-repo/*" \) -prune \
-            -o \
-            -name "*.zip" -type f -print \
+          cd $GITHUB_WORKSPACE/$PNAME/build
+          find . \( -path "*/node_modules/*" -o -path "*/local-test-repo/*" \) -prune \
+            -o -name "*.zip" -type f -print \
             | while read ZIP_FILE; do
-              echo "Uploading bundle: $(basename $ZIP_FILE)"
+              ZIP_FILENAME=$(basename "$ZIP_FILE")
+              ZIP_ABS_PATH="$GITHUB_WORKSPACE/$PNAME/build/$ZIP_FILE"
+              
+              echo "Uploading bundle: $ZIP_FILENAME at $ZIP_ABS_PATH"
               export ZIP_FILE_PATH="$ZIP_FILE"
               python3 $GITHUB_WORKSPACE/scripts/publish_central.py
           done
