@@ -67,6 +67,10 @@ jobs:
 
       - name: Check Network
         if: ${{ inputs.TEST_NETWORK == true }}
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
         run: |
           HOST=$(echo "$RELEASE_URL" | sed 's|https\?://||' | cut -d'/' -f1)
           IP=$(getent hosts $HOST | awk '{print $1}')
