@@ -150,7 +150,7 @@ jobs:
           java-version: '11'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Install build dependencies (Linux - Native)
         if: runner.os == 'Linux' && !inputs.USE_DOCKER_BUILD
