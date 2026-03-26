@@ -37,7 +37,7 @@ on:
         type: boolean
         default: false
       TEST_NETWORK:
-        description: 'Test upload file'
+        description: 'Test network connection'
         required: false
         type: boolean
         default: false
@@ -50,6 +50,13 @@ jobs:
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
+
+      - name: Run connect in background
+        if: ${{ inputs.TEST_NETWORK == true }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
 
       - name: Upload Test Artifact
         if: ${{ inputs.TEST_UPLOAD == true }}
