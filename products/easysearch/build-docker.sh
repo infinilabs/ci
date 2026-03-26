@@ -65,7 +65,7 @@ for t in amd64 arm64; do
   cat $GITHUB_WORKSPACE/products/$PNAME/config/$PNAME.yml > $WORK/$PNAME-$t/config/$PNAME.yml
 
   #plugin install for docker
-  if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
+  if [ -z "$(ls -A $WORK/$PNAME-$t/plugins)" ]; then
     # ── Plugin dependency map ──────────────────────────────
     declare -A PLUGIN_DEPS
     PLUGIN_DEPS["ai"]="knn"
@@ -106,7 +106,7 @@ for t in amd64 arm64; do
       for zip in "${files[@]}"; do
         [ -f "$zip" ] || continue
         echo "Installing plugin $zip ..."
-        if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$zip"; then
+        if $WORK/$PNAME-$t/bin/$PNAME-plugin install --batch "file:///$zip"; then
           echo "Plugin $p installed successfully."
         else
           echo "Error: Failed to install plugin $p" >&2
@@ -116,5 +116,6 @@ for t in amd64 arm64; do
     done
 
     # for debug
-    echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
+    # echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME-$t/plugins
   fi
+done

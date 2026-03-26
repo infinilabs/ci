@@ -8,6 +8,27 @@ BUILD_JDKS=$GITHUB_WORKSPACE/jdks
 echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USER_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"
 mkdir -p $DEST
 
+# ── Plugin dependency map (placed outside the loop) ───────
+declare -A PLUGIN_DEPS
+PLUGIN_DEPS["ai"]="knn"
+PLUGIN_DEPS["analysis-ik"]="ingest-common"
+
+# ── Topological sort (placed outside the loop) ────────────
+_topo_visit() {
+  local node="$1"
+  local -n _vis=$2 _srt=$3 _inp=$4
+  [[ "${_vis[$node]:-}" == "done" ]]     && return
+  [[ "${_vis[$node]:-}" == "visiting" ]] && { echo "Error: circular dependency on '$node'" >&2; exit 1; }
+  _vis[$node]="visiting"
+  for dep in ${PLUGIN_DEPS[$node]:-}; do
+    for p in "${_inp[@]}"; do
+      [[ "$p" == "$dep" ]] && { _topo_visit "$dep" _vis _srt _inp; break; }
+    done
+  done
+  _vis[$node]="done"
+  _srt+=("$node")
+}
+
 #初始化 JDK
 mkdir -p $BUILD_JDKS && echo Build directory $BUILD_JDKS
 if [[ "$USER_GRAALVM" == "true" ]]; then
@@ -75,27 +96,6 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
-    # ── Plugin dependency map ──────────────────────────────
-    declare -A PLUGIN_DEPS
-    PLUGIN_DEPS["ai"]="knn"
-    PLUGIN_DEPS["analysis-ik"]="ingest-common"
-
-    # ── Topological sort (ensures deps install first) ──────
-    _topo_visit() {
-      local node="$1"
-      local -n _vis=$2 _srt=$3 _inp=$4
-      [[ "${_vis[$node]:-}" == "done" ]]     && return
-      [[ "${_vis[$node]:-}" == "visiting" ]] && { echo "Error: circular dependency on '$node'" >&2; exit 1; }
-      _vis[$node]="visiting"
-      for dep in ${PLUGIN_DEPS[$node]:-}; do
-        for p in "${_inp[@]}"; do
-          [[ "$p" == "$dep" ]] && { _topo_visit "$dep" _vis _srt _inp; break; }
-        done
-      done
-      _vis[$node]="done"
-      _srt+=("$node")
-    }
-
     # exclude some plugins for bundle: analysis-hanlp jieba fast-terms filter-distinct
     raw_plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
@@ -103,6 +103,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
       ! -name "rules" \
       -exec basename {} \;))
 
+    # 每次迭代重新初始化，避免跨循环污染
     declare -A _vis=(); declare -a _srt=()
     for p in "${raw_plugins[@]}"; do
       _topo_visit "$p" _vis _srt raw_plugins
@@ -125,7 +126,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     done
 
     # for debug
-    echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
+    # echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
   fi
 
   # Copy the JDK to the expected location
