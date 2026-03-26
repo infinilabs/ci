@@ -120,7 +120,7 @@ jobs:
 
       - name: Cache DependencyCheck installation
         id: dc-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ runner.tool_cache }}/dependency-check
           key: dc-install-${{ steps.dc-version.outputs.version }}
