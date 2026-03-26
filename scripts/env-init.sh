@@ -176,7 +176,10 @@ env_init() {
 
     if [[ -n "$PROXY_RELEASE_INFINILABS" ]]; then
         log_info "🌍  Setting up etc hosts for infinilabs release..."
-        echo "$PROXY_RELEASE_INFINILABS" | sudo tee -a /etc/hosts > /dev/null
+        exist_host=$(awk '{print $NF}' <<< "$PROXY_RELEASE_INFINILABS")
+        sudo sed -i "/$exist_host/d" /etc/hosts > /dev/null || true
+        echo "$PROXY_RELEASE_INFINILABS" | sudo tee -a /etc/hosts > /dev/null || true
+        grep "$exist_host" /etc/hosts
         log_success "Added custom host entry."
     fi
 
