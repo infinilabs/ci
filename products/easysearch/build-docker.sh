@@ -17,24 +17,6 @@ cd $WORK
 DOCKER_TAG="${EZS_TAG:-${EZS_VER:-$(cat "$GITHUB_WORKSPACE/.latest" | grep "$PNAME" | awk -F'"' '{print $(NF-1)}')}}"
 echo "Publish setting $PNAME with docker tag $DOCKER_TAG"
 
-# --- start debug ---
-
-HOST=$(echo "$RELEASE_URL" | sed 's|https\?://||' | cut -d'/' -f1)
-IP=$(getent hosts $HOST | awk '{print $1}')
-echo "   DOMAIN：$HOST"
-echo "   GET IP: ${IP:-NULL}"
-
-echo -e "\n🔌 noproxy:"
-curl -s -I -o /dev/null -w "   HTTP: %{http_code}, IP: %{remote_ip}\n" --noproxy '*' "$BASE_URL" || echo "   Failed"
-echo "   proxy:"
-curl -s -I -o /dev/null -w "   HTTP: %{http_code}, IP: %{remote_ip}\n" "$BASE_URL" || echo "   Failed"
-
-echo -e "\n🔗 Connect:"
-curl -v --connect-timeout 5 "$BASE_URL/.latest" 2>&1 | \
-  grep -E "Connected|resolve|Trying|SSL" | head -10
-
-# --- end debug ---
-
 for t in amd64 arm64; do
   mkdir -p $WORK/{$PNAME-$t,agent-$t}
   EZS_FILE=$DEST/$PNAME-$VERSION-$BUILD_NUMBER-linux-$t.tar.gz
