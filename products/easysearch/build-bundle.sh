@@ -75,25 +75,51 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
-    # exclude some plugins for bundle  analysis-hanlp jeieba fast-terms filter-distinct 
-    plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
+    # ── Plugin dependency map ──────────────────────────────
+    declare -A PLUGIN_DEPS
+    PLUGIN_DEPS["ai"]="knn"
+    PLUGIN_DEPS["analysis-ik"]="ingest-common"
+
+    # ── Topological sort (ensures deps install first) ──────
+    _topo_visit() {
+      local node="$1"
+      local -n _vis=$2 _srt=$3 _inp=$4
+      [[ "${_vis[$node]:-}" == "done" ]]     && return
+      [[ "${_vis[$node]:-}" == "visiting" ]] && { echo "Error: circular dependency on '$node'" >&2; exit 1; }
+      _vis[$node]="visiting"
+      for dep in ${PLUGIN_DEPS[$node]:-}; do
+        for p in "${_inp[@]}"; do
+          [[ "$p" == "$dep" ]] && { _topo_visit "$dep" _vis _srt _inp; break; }
+        done
+      done
+      _vis[$node]="done"
+      _srt+=("$node")
+    }
+
+    # exclude some plugins for bundle: analysis-hanlp jieba fast-terms filter-distinct
+    raw_plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
       ! -name "jieba" \
       ! -name "rules" \
       -exec basename {} \;))
-    for p in "${plugins[@]}"; do
+
+    declare -A _vis=(); declare -a _srt=()
+    for p in "${raw_plugins[@]}"; do
+      _topo_visit "$p" _vis _srt raw_plugins
+    done
+    echo "Plugin install order: ${_srt[*]}"
+
+    for p in "${_srt[@]}"; do
       dist_dir="$DEST/plugins/$p"
       files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
       for zip in "${files[@]}"; do
+        [ -f "$zip" ] || continue
         echo "Installing plugin $zip ..."
-
-        if [ -f "$zip" ]; then
-          if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$zip"; then
-              echo "Plugin $p installed successfully."
-          else
-              echo "Error: Failed to install plugin $p"
-              exit 1
-          fi
+        if $WORK/$PNAME/bin/$PNAME-plugin install --batch "file:///$zip"; then
+          echo "Plugin $p installed successfully."
+        else
+          echo "Error: Failed to install plugin $p" >&2
+          exit 1
         fi
       done
     done
