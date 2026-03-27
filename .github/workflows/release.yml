@@ -55,17 +55,17 @@ on:
           description: 'Easysearch'
           required: false
           type: boolean
-          default: true
+          default: false
       PRODUCTS_PUBLISH:
         description: 'Products with agent/console...'
         required: false
         type: boolean
-        default: true
+        default: false
       COCO_PUBLISH:
         description: 'Products with coco app/server...'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   generate-matrix: 
