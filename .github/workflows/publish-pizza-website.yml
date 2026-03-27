@@ -7,6 +7,7 @@ env:
   SNAME: pizza
   PNAME: pizza-website
   DNAME: pizza-website-publish
+  HUGO_VERSION: ${{ vars.HUGO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
 
 on:
@@ -51,6 +52,11 @@ jobs:
         connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
         echo "Connect started with pid $!"
         sleep 5
+    - name: Install Hugo
+      run: |
+        wget https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
+        tar -xzf hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
+        sudo mv hugo /usr/local/bin/
 
     - name: Checkout pizza repository
       uses: actions/checkout@v6
@@ -97,7 +103,8 @@ jobs:
       env:
         NPM_CONFIG_STRICT_SSL: "false" 
       run: |
-        pnpm install --registry=https://registry.npmmirror.com --quiet --no-frozen-lockfile
+        echo "registry=https://registry.npmmirror.com" > .npmrc
+        pnpm install --quiet --no-frozen-lockfile
 
     - name: Build Website
       working-directory: ${{ env.PNAME }}
