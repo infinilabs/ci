@@ -101,10 +101,10 @@ jobs:
     - name: Install dependencies
       working-directory: ${{ env.PNAME }}
       env:
-        NPM_CONFIG_STRICT_SSL: "false" 
+        NPM_CONFIG_STRICT_SSL: "true" 
       run: |
         echo "registry=https://registry.npmmirror.com" > .npmrc
-        pnpm install --quiet --no-frozen-lockfile
+        pnpm install --quiet
 
     - name: Build Website
       working-directory: ${{ env.PNAME }}
