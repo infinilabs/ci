@@ -172,7 +172,8 @@ jobs:
         echo "Connect started with pid $!"
         sleep 5
 
-    - name: Deploy ${{env.PNAME}}
+    - name: Deploy ${{env.PNAME}} (disabled now)
+      if: false
       timeout-minutes: 60
       continue-on-error: true
       working-directory: ${{ env.PNAME }}
