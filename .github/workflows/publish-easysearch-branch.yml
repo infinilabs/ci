@@ -37,7 +37,6 @@ env:
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
-  PNPM_VERSION: "latest"
   NODE_OPTIONS: "--max-old-space-size=8192"
   GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=1g -Dorg.gradle.daemon=false"
 
@@ -134,7 +133,7 @@ jobs:
       - name: Set up with pnpm toolchain
         uses: pnpm/action-setup@v5
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: latest
 
       - name: Set up nodejs toolchain
         uses: actions/setup-node@v6

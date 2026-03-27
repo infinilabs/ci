@@ -36,7 +36,6 @@ env:
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
-  PNPM_VERSION: "latest"
 
 on:
   schedule:
@@ -103,7 +102,7 @@ jobs:
       - name: Set up with pnpm toolchain
         uses: pnpm/action-setup@v5
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: latest
           package_json_file: "${{ env.PNAME }}/package.json"
 
       - name: Set up nodejs toolchain

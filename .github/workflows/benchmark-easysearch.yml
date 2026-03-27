@@ -37,7 +37,6 @@ env:
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
-  PNPM_VERSION: "latest"
 
 on:
   push:

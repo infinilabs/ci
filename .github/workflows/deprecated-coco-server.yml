@@ -7,7 +7,6 @@ env:
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
-  PNPM_VERSION: 'latest'
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   PROXY_RELEASE_INFINILABS: ${{ vars.PROXY_RELEASE_INFINILABS }}
@@ -138,7 +137,7 @@ jobs:
       - name: Set up with coco server pnpm toolchain
         uses: pnpm/action-setup@v5
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: latest
       - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v6
         with:
@@ -384,7 +383,7 @@ jobs:
       - name: Set up with coco server pnpm toolchain
         uses: pnpm/action-setup@v5
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: latest
       - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v6
         with:
@@ -677,7 +676,7 @@ jobs:
       - name: Set up with coco server pnpm toolchain
         uses: pnpm/action-setup@v5
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: latest
       - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v6
         with:
