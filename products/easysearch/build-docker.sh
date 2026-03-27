@@ -45,7 +45,7 @@ for t in amd64 arm64; do
           echo "Failed to download $AGENT_FILENAME from $URL after 3 attempts."
       fi
     else
-      echo "$AGENT_FILENAME not found in $f channel, status code: $HTTP_STATUS"
+      echo "$AGENT_FILENAME not found at $URL with $f channel, status code: $HTTP_STATUS"
     fi
   done
 
