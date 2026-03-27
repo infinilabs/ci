@@ -172,8 +172,8 @@ jobs:
         echo "Connect started with pid $!"
         sleep 5
 
-    - name: Deploy ${{env.PNAME}} (disabled now)
-      if: false
+    - name: Deploy ${{env.PNAME}} 
+      if: ${{ !inputs.PUBLISH_RELEASE }}
       timeout-minutes: 60
       continue-on-error: true
       working-directory: ${{ env.PNAME }}
@@ -182,7 +182,8 @@ jobs:
           echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
           rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $PNAME.zip staging:/opt
           echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-          ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
+          # (just disabled now)
+          # ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
         else
           echo "No $PNAME zip found"
         fi

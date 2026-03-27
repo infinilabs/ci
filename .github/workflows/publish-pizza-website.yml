@@ -133,7 +133,7 @@ jobs:
         (cd $DEST && echo "pizza.rs" > CNAME)
 
     - name: Publish to github website repo
-      if: false
+      if: ${{ inputs.PUBLISH_RELEASE }}
       run: |
         cd $DEST && git init .  && git add . && git commit -m "init commit"
         git remote add origin git@github.com:infinilabs/pizza-website.git
@@ -141,16 +141,14 @@ jobs:
 
 
     - name: Create zip archive
-      working-directory: ${{ env.PNAME }}
       run: |
-        pwd
-        ( cd $DEST && zip -qr ../$PNAME.zip . )
+        pwd && ( cd $DEST && zip -qr ../$PNAME.zip . )
 
     - name: Deploy ${{env.PNAME}} (disabled now)
-      if: true
+      if: ${{ !inputs.PUBLISH_RELEASE }}
       timeout-minutes: 60
       continue-on-error: true
-      working-directory: ${{ env.PNAME }}
+      working-directory: public
       run: |
         if [[ -f $PNAME.zip ]]; then
           echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
