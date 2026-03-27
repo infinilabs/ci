@@ -142,7 +142,7 @@ jobs:
 
     - name: Create zip archive
       run: |
-        cd cd $DEST && pwd && zip -qr ../$PNAME.zip .
+        cd $DEST && pwd && zip -qr ../$PNAME.zip .
 
     - name: Deploy ${{env.PNAME}} to staging for check
       if: ${{ !inputs.PUBLISH_RELEASE }}
