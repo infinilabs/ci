@@ -4,6 +4,7 @@ defaults:
     shell: bash
 env:
   TZ: Asia/Shanghai
+  SNAME: pizza
   PNAME: pizza-website
   DNAME: pizza-website-publish
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -54,11 +55,10 @@ jobs:
     - name: Checkout pizza repository
       uses: actions/checkout@v6
       with:
-          repository: 'infinilabs/pizza'
+          repository: infinilabs/${{ env.SNAME }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          submodules: recursive
           ref: main
-          path: pizza
+          path: ${{ env.SNAME }}
     
     - name: Checkout pizza website repository
       run: |
@@ -101,13 +101,16 @@ jobs:
 
     - name: Build Website
       working-directory: ${{ env.PNAME }}
-      run: pnpm build
+      run: |
+        pnpm build && ls -lrt out
 
     - name: Build docs Website
-      working-directory: ${{ env.DNAME }}
+      working-directory: ${{ env.SNAME }}
       run: |
-        DEST=$GITHUB_WORKSPACE/$PNAME/out
-        ( cd website && hugo --minify --theme book --destination=$DEST/ )
+        DEST=$GITHUB_WORKSPACE/$PNAME/out/docs
+        mkdir -p $DEST
+        ( cd website && hugo --minify --theme book --destination=$DEST )
+        ls -lrt $DEST
        
     - name: Add CNAME file
       working-directory: ${{ env.PNAME }}
