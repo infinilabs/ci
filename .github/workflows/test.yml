@@ -54,11 +54,10 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Seting network proxy env
+        if: ${{ inputs.TEST_NETWORK_PROXY == true }}
         run: |
-          if [[ "${{ inputs.TEST_NETWORK_PROXY }}" = "true" ]]; then
-            echo "PROXY_RELEASE_INFINILABS=${{ vars.PROXY_RELEASE_INFINILABS }}" >> $GITHUB_ENV
-            echo "Setting env with network proxy"
-          fi
+          echo "Setting env with network proxy"
+          echo "PROXY_RELEASE_INFINILABS=${{ vars.PROXY_RELEASE_INFINILABS }}" >> $GITHUB_ENV
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
