@@ -26,7 +26,6 @@ env:
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
-  PROXY_RELEASE_INFINILABS: ${{ vars.PROXY_RELEASE_INFINILABS }}
 
 on:
   workflow_dispatch:
@@ -41,12 +40,25 @@ on:
         required: false
         type: boolean
         default: false
+      TEST_NETWORK_PROXY:
+        description: 'Test network proxy'
+        required: false
+        type: boolean
+        default: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Seting network proxy env
+        run: |
+          if [[ "${{ inputs.TEST_NETWORK_PROXY }}"" = "true" ]]; then
+            echo "PROXY_RELEASE_INFINILABS=${{ vars.PROXY_RELEASE_INFINILABS }}" >> $GITHUB_ENV
+            echo "Setting env with network proxy"
+          fi
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -58,39 +70,27 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Upload Test Artifact
+      - name: Upload test artifact
         if: ${{ inputs.TEST_UPLOAD == true }}
         run: |
           echo "This is a test artifact" > test-artifact.txt
           oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
           oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
 
-      - name: Check Network
+      - name: Check network connection
         if: ${{ inputs.TEST_NETWORK == true }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           no_proxy: "localhost,127.0.1,::1"
         run: |
-          HOST=$(echo "$RELEASE_URL" | sed 's|https\?://||' | cut -d'/' -f1)
-          IP=$(getent hosts $HOST | awk '{print $1}')
-          echo "   DOMAIN：$HOST"
-          echo "   GET IP: ${IP:-NULL}"
-
-          echo -e "\n🔌 noproxy:"
-          curl -s -I -o /dev/null -w "   HTTP: %{http_code}, IP: %{remote_ip}\n" --noproxy '*' "$RELEASE_URL" || echo "   Failed"
-          echo "   proxy:"
-          curl -s -I -o /dev/null -w "   HTTP: %{http_code}, IP: %{remote_ip}\n" "$RELEASE_URL" || echo "   Failed"
-
-          echo -e "\n🔗 Connect:"
-          curl -v --connect-timeout 5 "$RELEASE_URL/.latest" 2>&1 | \
-            grep -E "Connected|resolve|Trying|SSL" | head -10
-
-          echo "$RELEASE_URL"
-          curl -v --connect-timeout 5 --connect-timeout 5 "$RELEASE_URL"
-
           AGENT_VER=$(curl --connect-timeout 5 $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Get latest agent verion $AGENT_VER"
+
+      - name: Test checkout code
+        if: ${{ inputs.TEST_NETWORK == true }}
+        run: |
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME
 
       - name: Get github release versions
         env:
