@@ -142,14 +142,14 @@ jobs:
 
     - name: Create zip archive
       run: |
-        pwd && ( cd $DEST && zip -qr ../$PNAME.zip . )
+        cd cd $DEST && pwd && zip -qr ../$PNAME.zip .
 
-    - name: Deploy ${{env.PNAME}} (disabled now)
+    - name: Deploy ${{env.PNAME}} to staging for check
       if: ${{ !inputs.PUBLISH_RELEASE }}
       timeout-minutes: 60
       continue-on-error: true
-      working-directory: public
       run: |
+        cd $DEST && pwd
         if [[ -f $PNAME.zip ]]; then
           echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
           rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $PNAME.zip staging:/opt
