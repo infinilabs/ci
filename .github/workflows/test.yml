@@ -86,6 +86,9 @@ jobs:
           curl -v --connect-timeout 5 "$BASE_URL/.latest" 2>&1 | \
             grep -E "Connected|resolve|Trying|SSL" | head -10
 
+          echo "$BASE_URL"
+          curl -v --connect-timeout 5 "$BASE_URL"
+          
           AGENT_VER=$(curl $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Get latest agent verion $AGENT_VER"
 
