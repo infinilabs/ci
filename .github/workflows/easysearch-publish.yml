@@ -226,32 +226,32 @@ jobs:
             echo "Publish snapshot version $STEP_VERSION with ${{ github.event_name }}"
           fi
 
-      - name: Build linux with ${{ env.STEP_VERSION}}
+      - name: Build linux with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxTar
 
-      - name: Build linux aarch with ${{ env.STEP_VERSION}}
+      - name: Build linux aarch with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkLinuxAarch64Tar
 
-      - name: Build Darwin aarch with ${{ env.STEP_VERSION}}
+      - name: Build Darwin aarch with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinAarch64Tar
 
-      - name: Build Darwin with ${{ env.STEP_VERSION}}
+      - name: Build Darwin with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkDarwinTar
 
-      - name: Build win with ${{ env.STEP_VERSION}}
+      - name: Build win with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME && gradle buildOssNoJdkWindowsZip
 
-      - name: Build plugins with ${{ env.STEP_VERSION}}
+      - name: Build plugins with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
           cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
@@ -260,7 +260,7 @@ jobs:
           echo "Built plugin zip files ..."
           find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec basename {} \;
 
-      - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
+      - name: Repackage and bundle for publish with ${{ env.PUBLISH_VERSION }}
         run: |
           # build release or snapshot
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
