@@ -46,7 +46,7 @@ on:
       PUBLISH_VERSION:
         description: "Publish Version"
         required: false
-        default: "2.1.1"
+        default: "2.1.2"
 
 jobs:
   publish:
