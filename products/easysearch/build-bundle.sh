@@ -106,7 +106,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     # 每次迭代重新初始化，避免跨循环污染
     declare -A _vis=(); declare -a _srt=()
     for p in "${raw_plugins[@]}"; do
-      _topo_visit "$p" _vis _srt raw_plugins
+      _topo_visit "$p"
     done
     echo "Plugin install order: ${_srt[*]}"
 

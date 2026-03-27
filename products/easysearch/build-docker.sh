@@ -74,13 +74,12 @@ for t in amd64 arm64; do
     # ── Topological sort (ensures deps install first) ──────
     _topo_visit() {
       local node="$1"
-      local -n _vis=$2 _srt=$3 _inp=$4
       [[ "${_vis[$node]:-}" == "done" ]]     && return
       [[ "${_vis[$node]:-}" == "visiting" ]] && { echo "Error: circular dependency on '$node'" >&2; exit 1; }
       _vis[$node]="visiting"
       for dep in ${PLUGIN_DEPS[$node]:-}; do
-        for p in "${_inp[@]}"; do
-          [[ "$p" == "$dep" ]] && { _topo_visit "$dep" _vis _srt _inp; break; }
+        for p in "${raw_plugins[@]}"; do
+          [[ "$p" == "$dep" ]] && { _topo_visit "$dep"; break; }
         done
       done
       _vis[$node]="done"
