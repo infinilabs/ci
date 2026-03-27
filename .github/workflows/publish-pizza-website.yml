@@ -135,10 +135,15 @@ jobs:
     - name: Publish to github website repo
       if: ${{ inputs.PUBLISH_RELEASE }}
       run: |
-        cd $DEST && git init .  && git add . && git commit -m "init commit"
+        cd $DEST
+        git init .
+
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+
+        git add . && git commit -m "init commit"
         git remote add origin git@github.com:infinilabs/pizza-website.git
         git branch -M main && git push -u origin main --force
-
 
     - name: Create zip archive
       run: |
