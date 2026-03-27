@@ -52,6 +52,7 @@ jobs:
         connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
         echo "Connect started with pid $!"
         sleep 5
+  
     - name: Install Hugo
       run: |
         wget https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz
@@ -98,6 +99,18 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}
 
+    - name: Set up env
+      run: |
+        echo SRC=$GITHUB_WORKSPACE/$PNAME/out >> $GITHUB_ENV
+        echo DEST=$GITHUB_WORKSPACE/public >> $GITHUB_ENV
+
+    - name: Build docs Website
+      working-directory: ${{ env.SNAME }}
+      run: |
+        echo "Build $SNAME docs to $DEST"
+        mkdir -p $DEST
+        ( cd website && hugo --minify --theme book --destination=$DEST )
+
     - name: Install dependencies
       working-directory: ${{ env.PNAME }}
       env:
@@ -109,29 +122,29 @@ jobs:
     - name: Build Website
       working-directory: ${{ env.PNAME }}
       run: |
-        pnpm build && ls -lrt out
-
-    - name: Build docs Website
-      working-directory: ${{ env.SNAME }}
-      run: |
-        DEST=$GITHUB_WORKSPACE/$PNAME/out/docs
-        mkdir -p $DEST
-        ( cd website && hugo --minify --theme book --destination=$DEST )
-        ls -lrt $DEST
+        echo "Build $PNAME"
+        pnpm build
        
-    - name: Add CNAME file
-      working-directory: ${{ env.PNAME }}
-      run: echo "pizza.rs" > ./out/CNAME
-      
-    - name: Disable Jekyll
-      working-directory: ${{ env.PNAME }}
-      run: touch docs/.nojekyll
+    - name: Merge website and docs
+      run: |
+        echo "Merge website and docs at $DEST"
+        cp -rf $SRC/* $DEST
+        (cd $DEST && touch .nojekyll)
+        (cd $DEST && echo "pizza.rs" > CNAME)
+
+    - name: Publish to github website repo
+      if: false
+      run: |
+        cd $DEST && git init .  && git add . && git commit -m "init commit"
+        git remote add origin git@github.com:infinilabs/pizza-website.git
+        git branch -M main && git push -u origin main --force
+
 
     - name: Create zip archive
       working-directory: ${{ env.PNAME }}
       run: |
         pwd
-        ( cd out && zip -qr ../$PNAME.zip . )
+        ( cd $DEST && zip -qr ../$PNAME.zip . )
 
     - name: Deploy ${{env.PNAME}} (disabled now)
       if: true
