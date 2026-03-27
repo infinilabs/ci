@@ -1,0 +1,137 @@
+name: Publish Pizza Website
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  PNAME: pizza-website
+  DNAME: pizza-website-publish
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    name: Publish Pizza Webisite
+    runs-on: ubuntu-latest
+    env:
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+        LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+        LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
+        SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+        CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+        CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+        CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+        CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+        CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Setup bootstrap
+      uses: ./containers/bootstrap
+
+    - name: Run connect in background for ${{env.PNAME}}
+      run: |
+        connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+        echo "Connect started with pid $!"
+        sleep 5
+
+    - name: Checkout pizza repository
+      uses: actions/checkout@v6
+      with:
+          repository: 'infinilabs/pizza'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          submodules: recursive
+          ref: main
+          path: pizza
+    
+    - name: Checkout pizza website repository
+      run: |
+        git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+        cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+
+    - name: Checkout publish pizza website repository
+      uses: actions/checkout@v6
+      with:
+        ref: main
+        repository: infinilabs/${{ env.PNAME }}
+        path: ${{ env.DNAME }}
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v5
+      with:
+        package_json_file: "${{ env.PNAME }}/package.json"
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ env.NODEJS_VERSION }}
+        check-latest: false
+
+    - name: Restore cache
+      uses: actions/cache@v5
+      with:
+        path: |
+          .next/cache
+        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+        restore-keys: |
+          ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}
+
+    - name: Install dependencies
+      working-directory: ${{ env.PNAME }}
+      run: pnpm install --registry=https://registry.npmjs.org --quiet
+
+    - name: Build Website
+      working-directory: ${{ env.PNAME }}
+      run: pnpm build
+
+
+    - name: Build docs Website
+      working-directory: ${{ env.DNAME }}
+      run: |
+        DEST=$GITHUB_WORKSPACE/$PNAME/out
+        ( cd website && hugo --minify --theme book --destination=$DEST/ )
+       
+    - name: Add CNAME file
+      working-directory: ${{ env.PNAME }}
+      run: echo "pizza.rs" > ./out/CNAME
+      
+    - name: Disable Jekyll
+      working-directory: ${{ env.PNAME }}
+      run: touch docs/.nojekyll
+
+    - name: Create zip archive
+      working-directory: ${{ env.PNAME }}
+      run: |
+        pwd
+        ( cd out && zip -qr ../$PNAME.zip . )
+
+    - name: Deploy ${{env.PNAME}} (disabled now)
+      if: true
+      timeout-minutes: 60
+      continue-on-error: true
+      working-directory: ${{ env.PNAME }}
+      run: |
+        if [[ -f $PNAME.zip ]]; then
+          echo "Deploying $PNAME.zip to staging at $(date +'%m-%d %H:%M:%S')"
+          rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $PNAME.zip staging:/opt
+          echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
+        else
+          echo "No $PNAME zip found"
+        fi
+        echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"

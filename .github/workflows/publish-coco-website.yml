@@ -5,7 +5,7 @@ defaults:
 env:
   TZ: Asia/Shanghai
   PNAME: coco-website
-  NODEJS_VERSION: "20.19.0"
+  NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
 
 on:
   workflow_dispatch:
@@ -44,7 +44,7 @@ jobs:
     - name: Setup bootstrap
       uses: ./containers/bootstrap
 
-    - name: checkout coco website
+    - name: Checkout coco website
       uses: actions/checkout@v6
       with:
         ref: main
