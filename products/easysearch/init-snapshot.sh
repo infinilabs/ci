@@ -4,7 +4,6 @@ set -e
 cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成快照版本号
-FULL_VERSION=$(echo "$PUBLISH_VERSION")
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}')
 echo "Snapshot build $FULL_VERSION at $BUILD_TYPE with base version is $BASE_VERSION"
 
@@ -57,4 +56,4 @@ grep -w "$JVER" "$FVER"
 echo 
 
 # update README.txt
-sed -i "/s/CUR_VER/$FULL_VERSION/" README.txt
+sed -i "s/CUR_VER/$FULL_VERSION/" README.txt

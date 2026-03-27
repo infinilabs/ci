@@ -4,7 +4,6 @@ set -e
 cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成版本号
-FULL_VERSION=$(echo "$PUBLISH_VERSION")
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
 RELEASE_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
 
@@ -43,4 +42,4 @@ sed -i "s/public static final Version CURRENT.*/public static final Version CURR
 sed -i "s/^[# ]*easysearch *[=].*/easysearch     = $RELEASE_VERSION/" "buildSrc/version.properties"
 
 # update README.txt
-sed -i "/s/CUR_VER/$FULL_VERSION/" README.txt
+sed -i "s/CUR_VER/$FULL_VERSION/" README.txt

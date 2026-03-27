@@ -171,15 +171,10 @@ jobs:
           fi
 
           DYNAMIC_BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
-
-          export VERSION=$DYNAMIC_VERSION
-          export BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER
-          export BUILD_DATE=$DYNAMIC_BUILD_DATE
-          export ONLY_DOCKER="${{ inputs.ONLY_DOCKER || 'FALSE' }}"
-
           echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo BUILD_DATE=$DYNAMIC_BUILD_DATE >> $GITHUB_ENV
+          echo FULL_VERSION=$DYNAMIC_VERSION-$DYNAMIC_BUILD_DATE >> $GITHUB_ENV
           cat $GITHUB_ENV
 
           echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
@@ -212,6 +207,7 @@ jobs:
 
       - name: Prepare for build ${{ env.PNAME }} with ${{ env.PUBLISH_VERSION }}
         run: |
+          # 
           if [[ "$BUILD_TYPE" == "schedule" ]]; then
             STEP_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3}')
           else
