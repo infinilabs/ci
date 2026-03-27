@@ -94,7 +94,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ${{ env.PNAME }}
-      run: pnpm install --registry=https://registry.npmjs.org --quiet --no-frozen-lockfile
+      run: pnpm install --registry=https://registry.npmmirror.com --quiet --no-frozen-lockfile
 
     - name: Build Website
       working-directory: ${{ env.PNAME }}
