@@ -55,7 +55,7 @@ jobs:
 
       - name: Seting network proxy env
         run: |
-          if [[ "${{ inputs.TEST_NETWORK_PROXY }}"" = "true" ]]; then
+          if [[ "${{ inputs.TEST_NETWORK_PROXY }}" = "true" ]]; then
             echo "PROXY_RELEASE_INFINILABS=${{ vars.PROXY_RELEASE_INFINILABS }}" >> $GITHUB_ENV
             echo "Setting env with network proxy"
           fi
