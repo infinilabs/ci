@@ -4,11 +4,11 @@ set -e
 cd "$GITHUB_WORKSPACE/$PNAME"
 
 # 1. 生成版本号
-
+FULL_VERSION=$(echo "$PUBLISH_VERSION")
 BASE_VERSION=$(echo "$PUBLISH_VERSION" | awk -F- '{print $1}') 
 RELEASE_VERSION=$(echo "$BASE_VERSION" | awk -F'[._]' -v OFS=. '{ $3 = $3; print $1, $2, $3 }')
 
-echo "Release version: $RELEASE_VERSION"
+echo "Release build $FULL_VERSION with base version is $BASE_VERSION"
 
 # 2. 转换为 Java 变量名 (V_x_y_z)
 JVER=$(echo "$RELEASE_VERSION" | tr '.' '_' | awk '{print "V_"$0}')
@@ -42,4 +42,5 @@ sed -i "s/public static final Version CURRENT.*/public static final Version CURR
 # 10. 更新 buildSrc/version.properties
 sed -i "s/^[# ]*easysearch *[=].*/easysearch     = $RELEASE_VERSION/" "buildSrc/version.properties"
 
-echo "Release version update complete."
+# update README.txt
+sed -i "/s/CUR_VER/$FULL_VERSION/" README.txt
