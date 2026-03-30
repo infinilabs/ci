@@ -13,9 +13,7 @@ env:
 on:
   push:
     tags:
-      - 'release*'  
-  schedule:
-    - cron: '30 16 * * *'  
+      - 'release*'
   workflow_dispatch:
     inputs:
       AGENT_PUBLISH:
