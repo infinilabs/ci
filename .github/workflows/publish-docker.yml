@@ -206,9 +206,14 @@ jobs:
 
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
+          # prepare for .public
+          if [[ "${{ matrix.product }}" == "agent" ]]; then
+            cd $WORK/$PNAME && mkdir -p .public && make update-vfs
+          fi
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
           fi
+          
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && GOMODULE=false make build-$tag
