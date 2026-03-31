@@ -228,10 +228,11 @@ jobs:
 
       - name: Build ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
-          # prepare for .public
+          # for agent web
           if [[ "${{ matrix.product }}" == "agent" ]]; then
             cd $WORK/$PNAME && mkdir -p .public && make update-vfs
           fi
+          # for console web
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
           fi

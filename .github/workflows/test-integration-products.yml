@@ -194,6 +194,9 @@ jobs:
                 cd $WORK/console/web && echo Compiling code at $PWD ...
                 cnpm install --quiet --no-progress && cnpm run build --quiet
                 
+                # for agent web
+                cd $WORK/agent && mkdir -p .public && make update-vfs
+
                 # for products
                 for p in console gateway agent loadgen; do
                   cd $WORK/$p && echo Compiling $p at $PWD ...
