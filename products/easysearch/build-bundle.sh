@@ -35,11 +35,11 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
     
     EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
     FILE=graalvm-jdk-${JAVA_VERSION_21}_${x}_bin.$EXT
-    echo "Download GraalVM JDK with https://download.oracle.com/graalvm/$JAVA_VERSION_21/archive/$FILE"
+    echo "Download GraalVM JDK with https://download.oracle.com/graalvm/$JAVA_VERSION_21/latest/$FILE"
 
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
       wget \
-        https://download.oracle.com/graalvm/${JAVA_VERSION_21}/archive/$FILE \
+        https://download.oracle.com/graalvm/${JAVA_VERSION_21}/latest/$FILE \
         -P "$BUILD_JDKS"
     fi
   done
