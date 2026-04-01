@@ -38,11 +38,11 @@ RUN set -eux; \
     case "${JDK_TAG}" in \
         "jdk-25") \
             echo "Selecting Oracle GraalVM for JDK 25..."; \
-            DOWNLOAD_URL="https://https://release.infinilabs.com/easysearch/jdk/25/graalvm-jdk-25_linux-${JDK_ARCH}_bin.tar.gz"; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-${JDK_ARCH}_bin.tar.gz"; \
             FINAL_MODULES="${BASE_MODULES},jdk.incubator.vector" ;; \
         "jdk-21") \
             echo "Selecting Oracle GraalVM for JDK 21..."; \
-            DOWNLOAD_URL="https://https://release.infinilabs.com/easysearch/jdk/21/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
+            DOWNLOAD_URL="https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-${JDK_ARCH}_bin.tar.gz"; \
             FINAL_MODULES="${BASE_MODULES},jdk.graal.compiler,jdk.graal.compiler.management,jdk.incubator.vector"; \
             ADD_INCUBATOR="true" ;; \
         "jdk-17") \
