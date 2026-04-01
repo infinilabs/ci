@@ -4,6 +4,7 @@ USER_GRAALVM=true
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
+JDK_BASE_URL="$RELEASE_URL/$PNAME/jdk"
 
 echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USER_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"
 mkdir -p $DEST
@@ -35,11 +36,11 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
     
     EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
     FILE=graalvm-jdk-${JAVA_VERSION_21}_${x}_bin.$EXT
-    echo "Download GraalVM JDK with https://download.oracle.com/graalvm/$JAVA_VERSION_21/latest/$FILE"
+    echo "Download GraalVM JDK with $$JDK_BASE_URL/$JAVA_VERSION_21/$FILE"
 
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
       wget \
-        https://download.oracle.com/graalvm/${JAVA_VERSION_21}/latest/$FILE \
+        $JDK_BASE_URL/${JAVA_VERSION_21}/$FILE \
         -P "$BUILD_JDKS"
     fi
   done
