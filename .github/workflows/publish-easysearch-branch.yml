@@ -223,6 +223,10 @@ jobs:
           find $GITHUB_WORKSPACE/$PNAME/plugins -name "*-$VERSION*.zip" -exec basename {} \;
 
       - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
+        env:
+          http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
+          no_proxy: "localhost,127.0.1,::1"
         run: |
           PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
