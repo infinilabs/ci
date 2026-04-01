@@ -65,7 +65,7 @@ on:
         description: 'Publish Version'
         required: true
         type: string
-        default: "2.1.1"
+        default: "2.1.2"
       DRY_RUN:
         description: 'Dry Run (Archive on Github CI)'
         type: boolean
