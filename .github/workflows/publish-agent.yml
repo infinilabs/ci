@@ -167,13 +167,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: "**/package.json"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: latest
+
       - name: Check  with ${{ matrix.product }} nodejs toolchain
         run: |
-          if ! command -v cnpm >/dev/null 2>&1; then
-            npm install -g rimraf
-            npm install -g cnpm@9.2.0
-          fi
-          node -v && npm -v && cnpm -v
+          node -v && npm -v && pnpm -v
 
       - name: Prepare ${{ matrix.product }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
