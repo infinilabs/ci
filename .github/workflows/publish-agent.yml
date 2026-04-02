@@ -17,19 +17,20 @@ on:
       - 'release*'
   workflow_dispatch:
     inputs:
+
+      PUBLISH_VERSION:
+        description: 'Publish Release Version'
+        required: false
+        default: "1.30.3"
+      PUBLISH_EASYSEARCH_BRANCH:
+        description: 'Publish with easysearch branch'
+        required: false
+        default: "main"
       AGENT_PUBLISH:
         description: 'Agent'
         required: false
         type: boolean
         default: true
-      PUBLISH_EASYSEARCH_BRANCH:
-        description: 'Publish with easysearch branch'
-        required: false
-        default: "main"
-      PUBLISH_VERSION:
-        description: 'Publish Release Version'
-        required: false
-        default: "1.30.3"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
