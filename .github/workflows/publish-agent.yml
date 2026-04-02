@@ -33,7 +33,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false       
+        default: true       
       ONLY_DOCKER:
         description: 'Publish Docker <Only>'
         required: false
@@ -90,6 +90,13 @@ jobs:
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
+
+      - name: Run connect in background for ${{ matrix.product }}
+        if: ${{ matrix.product == 'console' }}
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
 
       - name: Checkout framework code
         uses: actions/checkout@v6
@@ -340,32 +347,6 @@ jobs:
                 fi
             fi
           done
-
-      - name: Run connect in background for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
-
-      - name: Deploy ${{ matrix.product }} files & staging k8s
-        if: ${{ matrix.product == 'console' }}
-        timeout-minutes: 30
-        continue-on-error: true
-        run: |
-          if [[ -f $WORK/$PNAME/bin/$PNAME-linux-amd64 ]]; then
-            echo "Deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            rsync -avzP -e 'ssh -o Ciphers=aes128-gcm@openssh.com' $WORK/$PNAME/bin/$PNAME-linux-amd64 staging:/infini/demo-environment/console/update
-            echo "Uploaded $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
-            ssh staging 'bash -s' < $GITHUB_WORKSPACE/products/$PNAME/deploy.sh
-          else
-            echo "No $PNAME binary found"
-          fi
-          #Deploy docker
-          echo "kubectl -n apollo set image statefulsets.apps/$PNAME $PNAME=$REPO_NAME:$VERSION-$BUILD_NUMBER" >> /tmp/update_image.sh
-          echo "Deploying $PNAME to staging k8s"
-          ssh staging 'bash -s' < /tmp/update_image.sh
-          echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
   update_repo:
     runs-on: ubuntu-latest
