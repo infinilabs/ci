@@ -9,6 +9,7 @@ env:
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
   push:
