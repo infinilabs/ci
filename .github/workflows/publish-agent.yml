@@ -139,7 +139,7 @@ jobs:
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
           # init license and enterprise plugins
           git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugins/enterprise
+          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
 
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v6
