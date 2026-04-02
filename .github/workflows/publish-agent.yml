@@ -210,9 +210,7 @@ jobs:
           DEST=$GITHUB_WORKSPACE/easysearch/plugins/ui/_ui
           (cd $SRC && pnpm i && pnpm run build:agent )
           if [ -d $DEST ]; then
-            ls -lrt $GITHUB_WORKSPACE/$PNAME
-            mv $$DEST .public
-            mv .public $GITHUB_WORKSPACE/$PNAME
+            mv $DEST $GITHUB_WORKSPACE/$PNAME/.public
           fi
 
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
