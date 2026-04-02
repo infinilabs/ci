@@ -219,11 +219,6 @@ jobs:
           # for agent web
           if [[ "${{ matrix.product }}" == "agent" ]]; then
             cd $WORK/$PNAME && mkdir -p .public && make update-vfs
-
-            # check the enterprise plugin
-            ls -lrt $GITHUB_WORKSPACE/$PNAME
-            ls -lrt $GITHUB_WORKSPACE/$PNAME/plugins
-            ls -lrt $GITHUB_WORKSPACE/$PNAME/plugins/enterprise
           fi
           
           # build all targets
