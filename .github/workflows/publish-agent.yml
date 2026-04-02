@@ -92,7 +92,6 @@ jobs:
         uses: ./containers/bootstrap
 
       - name: Run connect in background for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' }}
         run: |
           connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
           echo "Connect started with pid $!"
@@ -162,7 +161,6 @@ jobs:
         run: go version && go env
 
       - name: Set up  with ${{ matrix.product }} nodejs toolchain
-        if: matrix.product == 'console'
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
@@ -170,7 +168,6 @@ jobs:
           cache-dependency-path: "**/package.json"
 
       - name: Check  with ${{ matrix.product }} nodejs toolchain
-        if: matrix.product == 'console'
         run: |
           if ! command -v cnpm >/dev/null 2>&1; then
             npm install -g rimraf
@@ -221,10 +218,6 @@ jobs:
           if [[ "${{ matrix.product }}" == "agent" ]]; then
             cd $WORK/$PNAME && mkdir -p .public && make update-vfs
           fi
-          # for console web
-          if [[ "${{ matrix.product }}" == "console" ]]; then
-            cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
-          fi
           
           # build all targets
           for tag in $TARGETS; do
@@ -245,12 +238,6 @@ jobs:
         run: |
           cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
           find $WORK/$PNAME/bin -name "*.go" -delete
-          if [[ "${{ matrix.product }}" == "console" ]]; then
-            PERMJSON=$WORK/$PNAME/modules/security/realm/authc/native/permission.json
-            if [[ -e $PERMJSON ]]; then
-              cp -rf $PERMJSON $WORK/$PNAME/bin/config
-            fi
-          fi
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
 
@@ -380,22 +367,18 @@ jobs:
 
           update_yaml_version "easysearch-publish.yml"        "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
           update_yaml_version "publish-cloud.yml"             "GATEWAY_VERSION"       "$VERSION"
-          update_yaml_version "publish-docker.yml"            "PUBLISH_VERSION"       "$VERSION"
+          update_yaml_version "publish-agent.yml"             "GATEWAY_VERSION"       "$VERSION"
           update_yaml_version "publish-elasticsearch.yml"     "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
-          update_yaml_version "publish-files.yml"             "PUBLISH_VERSION"       "$VERSION"
-          update_yaml_version "release.yml"                   "PUBLISH_VERSION"       "$FULL_VERSION"
-          update_yaml_version "test-gateway.yml"              "PRODUCT_VERSION"       "$VERSION"
-          update_yaml_version "test-integration-products.yml" "PRODUCT_VERSION"       "$VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
           token: ${{ secrets.REPO_PAT }}
-          commit-message: "bumpver: publish console/agent/gateway/loadgen ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          commit-message: "bumpver: publish agent ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           branch: "release/publish-products-${{ github.run_id }}"
-          title: "bumpver: publish console/agent/gateway/loadgen ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
-          body: "Automated publish console/agent/gateway/loadgen ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          title: "bumpver: publish agent ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          body: "Automated publish agent ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           labels: "auto-merge, automated"
           delete-branch: true
           add-paths: |
