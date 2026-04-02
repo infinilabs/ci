@@ -1,4 +1,4 @@
-name: Publish Products Files & Docker 
+name: Publish Enterprise Agent Files & Docker 
 defaults:
   run:
     shell: bash
