@@ -207,7 +207,7 @@ jobs:
         run: |
           SRC=$GITHUB_WORKSPACE/easysearch/plugins/ui/web
           DEST=$GITHUB_WORKSPACE/easysearch/plugins/ui/_ui
-          (cd $SRC && pnpm run build:agent )
+          (cd $SRC && pnpm i && pnpm run build:agent )
           if [ -d $DEST ]; then
             ls -lrt $DEST
             mv $$DEST $WORK/$PNAME
