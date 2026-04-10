@@ -276,6 +276,7 @@ jobs:
         with:
           name: snapshot-versions
           path: ${{ github.workspace }}/products/easysearch/publish/.snapshot-versions.json
+          retention-days: 1
           if-no-files-found: error
           include-hidden-files: true
 

@@ -198,7 +198,9 @@ jobs:
             !${{ env.PNAME }}/build/local-test-repo/**
             !${{ env.PNAME }}/build/**/*.tmp
             !${{ env.PNAME }}/build/temp-*.zip
+          retention-days: 1
           if-no-files-found: error
+          include-hidden-files: true
 
       - name: Upload to central portal
         if: ${{ inputs.DRY_RUN != true && env.BUILD_TOOL == 'gradle' && (env.PNAME == 'easysearch-client' || env.PNAME == 'easysearch') }}

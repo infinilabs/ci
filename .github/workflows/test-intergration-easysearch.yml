@@ -373,7 +373,9 @@ jobs:
         with:
           name: all-test-reports
           path: all-test-reports/
-          retention-days: 7
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
 
   notify_on_failure:
     runs-on: ubuntu-latest

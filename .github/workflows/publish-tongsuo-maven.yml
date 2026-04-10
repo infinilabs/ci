@@ -573,7 +573,9 @@ jobs:
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ~/.m2/repository/com/infinilabs/tongsuo-openjdk/${{ inputs.PUBLISH_VERSION }}/**/*
-          retention-days: 7
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
 
       - name: Build Summary
         shell: bash
@@ -904,7 +906,9 @@ jobs:
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
-          retention-days: 7
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
       
       - name: Build in Docker (Linux Dynamic)
         if: ${{ inputs.USE_DOCKER_BUILD && matrix.use_docker }}
@@ -954,7 +958,9 @@ jobs:
         with:
           name: maven-repo-${{ matrix.platform_name }}
           path: ${{ github.workspace }}/tongsuo-java-sdk/artifacts/${{ inputs.PUBLISH_VERSION }}/**/*
-          retention-days: 7
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
       
       - name: Build Summary with ${{ inputs.PUBLISH_VERSION }} (Dynamic)
         shell: bash
@@ -1256,4 +1262,6 @@ jobs:
         with:
           name: maven-central-bundle
           path: tongsuo-openjdk-${{ inputs.PUBLISH_VERSION }}.zip
-          retention-days: 30
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true

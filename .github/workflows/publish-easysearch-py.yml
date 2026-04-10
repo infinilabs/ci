@@ -104,7 +104,9 @@ jobs:
         with:
           name: dist-${{ needs.tag.outputs.tag }}
           path: dist/
-          retention-days: 7
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
 
   publish:
     name: Publish to PyPI via OIDC

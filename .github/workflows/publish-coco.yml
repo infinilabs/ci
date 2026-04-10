@@ -23,6 +23,10 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "0.11.0"
+      PUBLISH_BRANCH:
+        description: 'Publish With Branch'
+        required: false
+        default: ""
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
@@ -102,7 +106,7 @@ jobs:
         uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
-          ref: main
+          ref: ${{ inputs.PUBLISH_BRANCH != '' && inputs.PUBLISH_BRANCH || 'main' }}
           path: ${{ env.PNAME }}      
 
       - name: Setup coco server env
@@ -229,6 +233,15 @@ jobs:
             # check build files
             ls -lrht $WORK/$PNAME/.public/widgets/$w
           done
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-artifact-${{ github.run_id }}
+          path: ${{ env.WORK }}/${{ env.PNAME }}/.public
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
 
       - name: Prepare coco server enterprise go mod
         continue-on-error: true
