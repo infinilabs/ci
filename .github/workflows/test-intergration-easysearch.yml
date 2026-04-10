@@ -159,6 +159,59 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
+          exit $exit_code 
+
+      - name: Run License rest tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :server:yamlRestTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            -Dtests.rest.suite=license \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="license-rest"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/yamlRestTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+      - name: Run License tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :server:test \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests com.infinilabs.license.LicenseTests \
+            --tests com.infinilabs.license.LicenseMetadataXContentTests \
+            --tests org.easysearch.license.DefaultLicenseVerifierTests \
+            --tests org.easysearch.license.TestLicenseVerifierTests \
+            --tests org.easysearch.license.LicenseServiceTests \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="license"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
           exit $exit_code
 
       - name: Run Security tests
@@ -199,6 +252,7 @@ jobs:
           exit $exit_code
       
       - name: Run DataStream tests
+        timeout-minutes: 30
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           set +e
@@ -289,6 +343,8 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME
           set +e
           gradle clean :modules:index-management:integTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
@@ -297,7 +353,6 @@ jobs:
             --tests org.easysearch.indexmanagement.secure.ilm.ILMAliasActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMIndexSettingsActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMOpenCloseActionSecurityIT \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --rerun-tasks --info
           exit_code=$?
           set -e
@@ -319,13 +374,14 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME
           set +e
           gradle clean :modules:index-management:integTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMSnapshotActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMWaitForSnapshotActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeRolloverCloseDeleteSecurityIT \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --rerun-tasks --info
           exit_code=$?
           set -e
@@ -347,9 +403,10 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME
           set +e
           gradle clean :modules:index-management:integTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
             --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
             --rerun-tasks --info
           exit_code=$?
           set -e
