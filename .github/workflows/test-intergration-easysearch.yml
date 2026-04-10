@@ -284,6 +284,88 @@ jobs:
           fi
           exit $exit_code
 
+      - name: Run index management ILM secure core tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:integTest \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicySecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMRetryFailedManagedIndexSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMAliasActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMIndexSettingsActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMOpenCloseActionSecurityIT \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-ilm-secure-core"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run index management ILM action tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:integTest \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMSnapshotActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMWaitForSnapshotActionSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeRolloverCloseDeleteSecurityIT \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-ilm-action-secure"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code   
+
+      - name: Run index management rollup secure tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:integTest \
+            --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-rollup-secure"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code        
+
       - name: Run Rules Plugin Compiler tests
         timeout-minutes: 30
         env:
