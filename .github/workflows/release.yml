@@ -547,7 +547,7 @@ jobs:
           oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME -f $VERSIONS_FILE
           # auto merge pr for change
           echo "Auto merge the pr $PR_URL"
-          gh pr merge "$PR_URL" --auto --squash
+          gh pr merge "$PR_URL" --squash
 
   release-files:
     if: ${{ inputs.OPERATION == 'RELEASE' }}
