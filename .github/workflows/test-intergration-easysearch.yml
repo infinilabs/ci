@@ -214,6 +214,39 @@ jobs:
           fi
           exit $exit_code
 
+      - name: Run security auditlog tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:security:test \
+            --tests com.infinilabs.security.auditlog.impl.AuditCategoryTest \
+            --tests com.infinilabs.security.auditlog.impl.DisabledCategoriesTest \
+            --tests com.infinilabs.security.auditlog.impl.AuditlogTest \
+            --tests com.infinilabs.security.auditlog.impl.IgnoreAuditUsersTest \
+            --tests com.infinilabs.security.auditlog.impl.AuditMessageTest \
+            --tests com.infinilabs.security.auditlog.config.ThreadPoolConfigTest \
+            --tests com.infinilabs.security.auditlog.compliance.ComplianceAuditlogTest \
+            --tests com.infinilabs.security.auditlog.compliance.ComplianceConfigTest \
+            --tests com.infinilabs.security.auditlog.compliance.RestApiComplianceAuditlogTest \
+            --tests com.infinilabs.security.auditlog.sink.SinkProviderTLSTest \
+            --tests com.infinilabs.security.auditlog.sink.WebhookAuditLogTest \
+            --tests com.infinilabs.security.auditlog.integration.SSLAuditlogTest \
+            --tests com.infinilabs.security.auditlog.routing.FallbackTest
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="security-auditlog"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
       - name: Run Security tests
         timeout-minutes: 30
         run: |
