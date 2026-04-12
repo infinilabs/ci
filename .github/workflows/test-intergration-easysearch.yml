@@ -214,11 +214,41 @@ jobs:
           fi
           exit $exit_code
 
+      - name: Run access token tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:security:test \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests com.infinilabs.security.dlic.rest.api.AccessTokenApiActionTest \
+            --tests com.infinilabs.security.dlic.rest.api.access.AccessTokenServiceTest \
+            --tests com.infinilabs.security.filter.SecurityFilterAccessTokenAuthTest \
+            --tests com.infinilabs.security.dlic.rest.api.EnrollmentApiActionTest \
+            --rerun-tasks --info
+            
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="access-token"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
       - name: Run security auditlog tests
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
           set +e
           gradle clean :modules:security:test \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
             --tests com.infinilabs.security.auditlog.impl.AuditCategoryTest \
             --tests com.infinilabs.security.auditlog.impl.DisabledCategoriesTest \
             --tests com.infinilabs.security.auditlog.impl.AuditlogTest \
@@ -231,7 +261,8 @@ jobs:
             --tests com.infinilabs.security.auditlog.sink.SinkProviderTLSTest \
             --tests com.infinilabs.security.auditlog.sink.WebhookAuditLogTest \
             --tests com.infinilabs.security.auditlog.integration.SSLAuditlogTest \
-            --tests com.infinilabs.security.auditlog.routing.FallbackTest
+            --tests com.infinilabs.security.auditlog.routing.FallbackTest \
+            --rerun-tasks --info
           exit_code=$?
           set -e
           # Copy test reports
