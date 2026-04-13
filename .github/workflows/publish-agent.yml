@@ -130,17 +130,6 @@ jobs:
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
-
-      - name: Checkout depends repo code
-        env:
-          BRANCH: ${{ inputs.PUBLISH_EASYSEARCH_BRANCH }}
-        run: |
-          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
-          (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
-          # init license and enterprise plugins
-          git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
-
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v6
         with:
@@ -205,7 +194,17 @@ jobs:
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Build ui for ${{ matrix.product }}
+      - name: Checkout depends repo code for ${{ matrix.product }} web
+        env:
+          BRANCH: ${{ inputs.PUBLISH_EASYSEARCH_BRANCH }}
+        run: |
+          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
+          (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
+          # init license and enterprise plugins
+          git clone git@github.com:infinilabs/license $WORK/license
+          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+
+      - name: Build ui for ${{ matrix.product }} web
         run: |
           SRC=$GITHUB_WORKSPACE/easysearch/plugins/ui/web
           DEST=$GITHUB_WORKSPACE/easysearch/plugins/ui/_ui

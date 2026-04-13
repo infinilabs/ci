@@ -195,6 +195,18 @@ jobs:
                 cnpm install --quiet --no-progress && cnpm run build --quiet
                 
                 # for agent web
+                git clone --depth 1 --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $WORK/easysearch
+                (cd $WORK/easysearch && git sparse-checkout set plugins/ui)
+                # init license and enterprise plugins
+                git clone git@github.com:infinilabs/license $WORK/license
+                git clone git@github.com:infinilabs/agent-enterprise-plugin.git $WORK/agent/plugin/enterprise
+
+                SRC=$WORK/easysearch/plugins/ui/web
+                DEST=$WORK/easysearch/plugins/ui/_ui
+                (cd $SRC && pnpm i && pnpm run build:agent )
+                if [ -d $DEST ]; then
+                  mv $DEST $WORK/agent/.public
+                fi
                 cd $WORK/agent && mkdir -p .public && make update-vfs
 
                 # for products

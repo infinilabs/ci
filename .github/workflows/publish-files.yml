@@ -225,6 +225,27 @@ jobs:
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+      
+      - name: Checkout depends repo code for ${{ matrix.product }} web
+        if: ${{ matrix.product == 'agent' }}
+        env:
+          BRANCH: main
+        run: |
+          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $WORK/easysearch
+          (cd $WORK/easysearch && git sparse-checkout set plugins/ui)
+          # init license and enterprise plugins
+          git clone git@github.com:infinilabs/license $WORK/license
+          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $WORK/agent/plugin/enterprise
+
+      - name: Build ui for ${{ matrix.product }} web
+        if: ${{ matrix.product == 'agent' }}
+        run: |
+          SRC=$WORK/easysearch/plugins/ui/web
+          DEST=$WORK/easysearch/plugins/ui/_ui
+          (cd $SRC && pnpm i && pnpm run build:agent )
+          if [ -d $DEST ]; then
+            mv $DEST $WORK/agent/.public
+          fi
 
       - name: Build ${{ matrix.product }} for ${{ matrix.target }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
