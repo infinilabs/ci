@@ -21,27 +21,27 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: true
+        default: false
       AGENT_PUBLISH:
         description: 'Agent'
         required: false
         type: boolean
-        default: true
+        default: false
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
         type: boolean
-        default: true
+        default: false
       GATEWAY_PUBLISH:
         description: 'Gateway'
         required: false
         type: boolean
-        default: true
+        default: false
       LOADGEN_PUBLISH:
         description: 'Loadgen'
         required: false
         type: boolean
-        default: true
+        default: false
       ONLY_DEPLOY_CONSOLE:
         description: 'Only Deploy Console'
         required: false
