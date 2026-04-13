@@ -11,6 +11,7 @@ env:
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
   PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
 
 on:
   schedule:

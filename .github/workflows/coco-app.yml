@@ -28,6 +28,7 @@ env:
   NODEJS_VERSION: 20
   FILE_EXTENSIONS: '\.(dmg|rpm|deb|exe)$'
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
+  NODE_OPTIONS: "--max-old-space-size=8192"
 
 on:
   push:

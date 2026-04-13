@@ -10,6 +10,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
   push:

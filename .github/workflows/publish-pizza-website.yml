@@ -9,6 +9,7 @@ env:
   DNAME: pizza-website-publish
   HUGO_VERSION: ${{ vars.HUGO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
 
 on:
   workflow_dispatch:

@@ -10,6 +10,7 @@ env:
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
   workflow_dispatch:
@@ -173,36 +174,32 @@ jobs:
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
 
-      - name: Set up  with ${{ matrix.product }} nodejs toolchain
-        if: matrix.product == 'agent'
+      - name: Set up Node.js for ${{ matrix.product }}
+        if: matrix.product == 'agent' || matrix.product == 'console'
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ env.NODEJS_EXT_VERSION }}
+          node-version: ${{ matrix.product == 'agent' && env.NODEJS_EXT_VERSION || env.NODEJS_VERSION }}
           cache: 'npm'
           cache-dependency-path: "**/package.json"
 
-      - name: Setup pnpm
-        if: matrix.product == 'agent'
-        uses: pnpm/action-setup@v5
-        with:
-          version: latest
-
-      - name: Set up nodejs toolchain
-        if: matrix.product == 'console'
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: "**/package.json"
-
-      - name: Check nodejs toolchain
-        if: matrix.product == 'console'
+      - name: Install additional tools for ${{ matrix.product }}
+        if: matrix.product == 'agent' || matrix.product == 'console'
         run: |
-          if ! command -v cnpm >/dev/null 2>&1; then
-            npm install -g rimraf
-            npm install -g cnpm@9.2.0
-          fi
-          node -v && npm -v && cnpm -v
+          case "${{ matrix.product }}" in
+            agent)
+              echo "Installing pnpm for agent..."
+              pnpm setup || npm install -g pnpm@latest
+              ;;
+            console)
+              echo "Checking cnpm for console..."
+              npm install -g rimraf
+              npm install -g cnpm@9.2.0
+              ;;
+          esac
+          node -v && npm -v
+          echo
+          [[ "${{ matrix.product }}" == "agent" ]] && pnpm -v
+          [[ "${{ matrix.product }}" == "console" ]] && cnpm -v
 
       - name: Prepare ${{ matrix.product }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}

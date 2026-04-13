@@ -8,6 +8,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   EZS_VERSION: ${{ inputs.EZS_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
 
 on:
   schedule:

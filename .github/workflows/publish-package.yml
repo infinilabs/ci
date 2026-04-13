@@ -32,6 +32,7 @@ env:
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
   SNAPCRAFT_BUILD_ENVIRONMENT: lxd
   SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN_FILE_CONTENT }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
 
 on:
   workflow_dispatch:

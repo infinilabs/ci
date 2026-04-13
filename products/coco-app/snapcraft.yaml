@@ -52,6 +52,7 @@ parts:
       set -eu
       export TAURI_SIGNING_PRIVATE_KEY="__PRIVATE_KEY__"
       export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
+      export NODE_OPTIONS="--max-old-space-size=8192"
 
       echo "Repack Coco AI App with ${SNAPCRAFT_PART_INSTALL} at ${PWD} .."
       npm install -g pnpm --unsafe-perm || true
