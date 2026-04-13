@@ -6,6 +6,7 @@ env:
   TZ: Asia/Shanghai
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  NODEJS_EXT_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
@@ -171,6 +172,20 @@ jobs:
 
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
+
+      - name: Set up  with ${{ matrix.product }} nodejs toolchain
+        if: matrix.product == 'agent'
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_EXT_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: "**/package.json"
+
+      - name: Setup pnpm
+        if: matrix.product == 'agent'
+        uses: pnpm/action-setup@v5
+        with:
+          version: latest
 
       - name: Set up nodejs toolchain
         if: matrix.product == 'console'
