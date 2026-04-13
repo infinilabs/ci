@@ -93,12 +93,6 @@ jobs:
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
-      - name: Run connect in background for ${{ matrix.product }}
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
-
       - name: Checkout framework code
         uses: actions/checkout@v6
         with: 
@@ -193,6 +187,12 @@ jobs:
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+
+      - name: Run connect in background for ${{ matrix.product }} web
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
 
       - name: Checkout depends repo code for ${{ matrix.product }} web
         env:
