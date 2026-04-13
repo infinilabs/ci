@@ -162,24 +162,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: "**/package.json"
 
-      - name: Install additional tools for ${{ matrix.product }}
+      - name: Setup pnpm (agent only)
+        if: matrix.product == 'agent'
+        uses: pnpm/action-setup@v5
+        with:
+          version: latest
+
+      - name: Setup cnpm (console only)
+        if: matrix.product == 'console'
+        run: |
+          npm install -g rimraf
+          npm install -g cnpm@9.2.0
+
+      - name: Verify toolchain for ${{ matrix.product }}
         if: matrix.product == 'agent' || matrix.product == 'console'
         run: |
-          case "${{ matrix.product }}" in
-            agent)
-              echo "Installing pnpm for agent..."
-              pnpm setup || npm install -g pnpm@latest
-              ;;
-            console)
-              echo "Checking cnpm for console..."
-              npm install -g rimraf
-              npm install -g cnpm@9.2.0
-              ;;
-          esac
           node -v && npm -v
-          echo
-          [[ "${{ matrix.product }}" == "agent" ]] && pnpm -v
-          [[ "${{ matrix.product }}" == "console" ]] && cnpm -v
+          if [[ "${{ matrix.product }}" == "agent" ]]; then
+            pnpm -v
+          elif [[ "${{ matrix.product }}" == "console" ]]; then
+            cnpm -v
+          fi
 
       - name: Prepare ${{ matrix.product }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
