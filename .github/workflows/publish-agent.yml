@@ -135,17 +135,16 @@ jobs:
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
 
-      - name: Set up  with ${{ matrix.product }} nodejs toolchain
+      - name: Set up Node.js for ${{ matrix.product }}
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'npm'
           cache-dependency-path: "**/package.json"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: latest
+      - name: Install additional tools for ${{ matrix.product }}
+        run: |
+          pnpm setup || npm install -g pnpm@latest
 
       - name: Check  with ${{ matrix.product }} nodejs toolchain
         run: |
