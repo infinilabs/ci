@@ -36,6 +36,8 @@ env:
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  NODE_OPTIONS: "--max-old-space-size=8192"
+  GRADLE_OPTS: "-Xmx16g -XX:MaxMetaspaceSize=4g -Dorg.gradle.daemon=false"
 
 on:
   schedule:
