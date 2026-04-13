@@ -410,7 +410,7 @@ jobs:
           set +e
           gradle clean :modules:index-management:integTest \
             -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
@@ -441,7 +441,7 @@ jobs:
           set +e
           gradle clean :modules:index-management:integTest \
             -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
@@ -470,7 +470,7 @@ jobs:
           set +e
           gradle clean :modules:index-management:integTest \
             -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \  
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
             --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
             --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
             --rerun-tasks --info
