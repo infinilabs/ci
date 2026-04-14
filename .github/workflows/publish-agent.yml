@@ -25,7 +25,7 @@ on:
       PUBLISH_EASYSEARCH_BRANCH:
         description: 'Publish with easysearch branch'
         required: false
-        default: "feat-agent"
+        default: "main"
       AGENT_PUBLISH:
         description: 'Agent'
         required: false
