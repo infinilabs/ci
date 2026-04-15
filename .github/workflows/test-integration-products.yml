@@ -32,7 +32,7 @@ on:
         description: 'Products Version'
         required: false
         type: string
-        default: "1.30.3"
+        default: "1.31.0"
       RUN_INSTALL_TEST:
         description: 'Run Products Install Test?'
         required: false
