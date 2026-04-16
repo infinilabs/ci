@@ -179,7 +179,7 @@ jobs:
           echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
 
       - name: Set up with pnpm toolchain
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: latest
 
