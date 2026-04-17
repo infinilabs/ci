@@ -87,7 +87,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up Node.js & pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: latest
 
