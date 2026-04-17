@@ -38,7 +38,7 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Products Release Version'
         required: false
-        default: "1.31.0-2442"
+        default: "1.31.0-2445"
       PUBLISH_EZS_VERSION:
         description: 'Publish Easysearch Version'
         required: false
