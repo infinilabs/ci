@@ -56,13 +56,38 @@ on:
           required: false
           type: boolean
           default: false
-      PRODUCTS_PUBLISH:
-        description: 'Products with agent/console...'
+      AGENT_PUBLISH:
+        description: 'Products with agent'
         required: false
         type: boolean
         default: false
-      COCO_PUBLISH:
-        description: 'Products with coco app/server...'
+      CONSOLE_PUBLISH:
+        description: 'Products with console'
+        required: false
+        type: boolean
+        default: false
+      GATEWAY_PUBLISH:
+        description: 'Products with gateway'
+        required: false
+        type: boolean
+        default: false
+      LOADGEN_PUBLISH:
+        description: 'Products with loadgen'
+        required: false
+        type: boolean
+        default: false
+      FRAMEWORK_PUBLISH:
+        description: 'Products with framework'
+        required: false
+        type: boolean
+        default: false
+      COCOAPP_PUBLISH:
+        description: 'Products with coco app'
+        required: false
+        type: boolean
+        default: false
+      COCOSERVER_PUBLISH:
+        description: 'Products with coco server'
         required: false
         type: boolean
         default: false
@@ -79,14 +104,14 @@ jobs:
       - name: Generate matrix
         id: gen-matrix
         env:
-            AGENT_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
-            CONSOLE_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
-            GATEWAY_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
-            LOADGEN_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
-            FRAMEWORK_PUBLISH: ${{ inputs.PRODUCTS_PUBLISH }}
+            AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
+            CONSOLE_PUBLISH: ${{ inputs.CONSOLE_PUBLISH }}
+            GATEWAY_PUBLISH: ${{ inputs.GATEWAY_PUBLISH }}
+            LOADGEN_PUBLISH: ${{ inputs.LOADGEN_PUBLISH }}
+            FRAMEWORK_PUBLISH: ${{ inputs.FRAMEWORK_PUBLISH }}
             EASYSEARCH_PUBLISH: ${{ inputs.EASYSEARCH_PUBLISH }}
-            COCO_APP_PUBLISH: ${{ inputs.COCO_PUBLISH }}
-            COCO_SERVER_PUBLISH: ${{ inputs.COCO_PUBLISH }}
+            COCO_APP_PUBLISH: ${{ inputs.COCOAPP_PUBLISH }}
+            COCO_SERVER_PUBLISH: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -357,9 +382,13 @@ jobs:
       - name: Update GitHub Variables
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }}
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
           VER=${{ inputs.PUBLISH_VERSION }}
           EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
@@ -367,7 +396,7 @@ jobs:
           COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
           
           # 1. Update Global Product Version (Console, Agent, Gateway...)
-          if [[ "$DO_PROD" == "true" ]]; then
+          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
             if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
                VER_CLEAN="${VER%%-*}"
                echo "Updating GitHub release version to $VER_CLEAN"
@@ -391,7 +420,7 @@ jobs:
           fi
 
           # 3. Update Coco Versions
-          if [[ "$DO_COCO" == "true" ]]; then
+          if [[ "$DO_COCO_APP" == "true" || "$DO_COCO_SERVER" == "true" ]]; then
             if [[ ! -z "$COCO_APP_VER" && "$COCO_APP_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
                COCO_APP_VER_CLEAN="${COCO_APP_VER%%-*}"
                echo "Updating GitHub release Coco app version to $COCO_APP_VER_CLEAN"
@@ -409,9 +438,13 @@ jobs:
 
       - name: Update .latest file and upload to OSS
         env:
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
           IN_VER=${{ inputs.PUBLISH_VERSION }}
           IN_EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
@@ -424,7 +457,7 @@ jobs:
             wget -q --show-progress --progress=bar:force:noscroll "$RELEASE_URL/$fname" -P /tmp
           fi
 
-          if [[ "$DO_PROD" == "true" ]]; then
+          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
             FINAL_PROD_VER="$IN_VER"
           else
             FINAL_PROD_VER=$(jq -r .console "/tmp/$fname")
@@ -443,7 +476,7 @@ jobs:
             echo "Easysearch publish skipped, keeping existing version: $FINAL_EZS_VER"
           fi
 
-          if [[ "$DO_COCO" == "true" ]]; then
+          if [[ "$DO_COCO_APP" == "true" || "$DO_COCO_SERVER" == "true" ]]; then
             SUFFIX=${IN_VER#*-}
             
             if [[ "$IN_VER" == *"-"* ]] && [[ "$IN_COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
@@ -565,15 +598,19 @@ jobs:
 
       - name: Move products files from snapshot to stable
         env:
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
           PROD_VER: ${{ inputs.PUBLISH_VERSION}}
           EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
           COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
           COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
         run: |
-          if [[ "$DO_PROD" == "true" ]]; then
+          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
             for p in agent gateway console loadgen; do
               echo "Move Products $p-${PROD_VER} from snapshot to stable"
               oss move -p $p --prefix $p-${PROD_VER}
@@ -582,9 +619,13 @@ jobs:
 
       - name: Move easysearch files from snapshot to stable
         env:
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
           PROD_VER: ${{ inputs.PUBLISH_VERSION}}
           EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
           COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
@@ -601,15 +642,20 @@ jobs:
 
       - name: Move coco files from snapshot to stable
         env:
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
           PROD_VER: ${{ inputs.PUBLISH_VERSION}}
           EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
           COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
           COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
+          COCO_SERVER_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
         run: |
-          if [[ "$DO_COCO" == "true" ]]; then
+          if [[ "$DO_COCO_APP" == "true" || "$DO_COCO_SERVER" == "true" ]]; then
             echo "Move Coco from snapshot to stable"
           fi
   release-official-website:
@@ -647,9 +693,13 @@ jobs:
 
       - name: Create branch and update version data
         env:
-          DO_PROD: ${{ inputs.PRODUCTS_PUBLISH }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO: ${{ inputs.COCO_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
           PROD_VER: ${{ inputs.PUBLISH_VERSION }}
           EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION }}
           COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION }}
@@ -742,7 +792,7 @@ jobs:
 
   publish-coco-website:
     needs: release-metadata
-    if: ${{ inputs.OPERATION == 'RELEASE' && inputs.COCO_PUBLISH == true }}
+    if: ${{ inputs.OPERATION == 'RELEASE' && inputs.COCOSERVER_PUBLISH == true }}
     name: Publish Coco Website
     runs-on: ubuntu-latest
     steps:
