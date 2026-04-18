@@ -52,42 +52,42 @@ on:
         required: false
         default: "0.12.0-2201"
       EASYSEARCH_PUBLISH:
-          description: 'Easysearch'
+          description: 'Products with Easysearch'
           required: false
           type: boolean
           default: false
       AGENT_PUBLISH:
-        description: 'Products with agent'
+        description: 'Products with Agent'
         required: false
         type: boolean
         default: false
       CONSOLE_PUBLISH:
-        description: 'Products with console'
+        description: 'Products with Console'
         required: false
         type: boolean
         default: false
       GATEWAY_PUBLISH:
-        description: 'Products with gateway'
+        description: 'Products with Gateway'
         required: false
         type: boolean
         default: false
       LOADGEN_PUBLISH:
-        description: 'Products with loadgen'
+        description: 'Products with Loadgen'
         required: false
         type: boolean
         default: false
       FRAMEWORK_PUBLISH:
-        description: 'Products with framework'
+        description: 'Products with Framework'
         required: false
         type: boolean
         default: false
       COCOAPP_PUBLISH:
-        description: 'Products with coco app'
+        description: 'Products with Coco App'
         required: false
         type: boolean
         default: false
       COCOSERVER_PUBLISH:
-        description: 'Products with coco server'
+        description: 'Products with Coco Server'
         required: false
         type: boolean
         default: false
