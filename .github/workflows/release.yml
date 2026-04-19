@@ -195,7 +195,24 @@ jobs:
 
       - name: Create Branch and update release notes & data
         continue-on-error: true
+        env:
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
+          AGENT_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION }}
+          CONSOLE_VERSION: ${{ inputs.CONSOLE_PUBLISH_VERSION }}
+          GATEWAY_VERSION: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
+          LOADGEN_VERSION: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          EASYSEARCH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
+          COCO_APP_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
+          COCO_SERVER_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
         run: |
+          VAR_NAME="${PRODUCT^^}_PUBLISH_VERSION"
+          VERSION="${!VAR_NAME}"
           FRAMEWORK_VER=${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
           EZS_VER=${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
           
@@ -215,9 +232,9 @@ jobs:
           for f in en zh; do
             if [[ ! -d docs/content.$f ]]; then continue; fi
 
-            FRAMEWORK_UPDATE_NOTES="- This release includes updates from the underlying [Framework v${FRAMEWORK_VER}](https://docs.infinilabs.com/framework/v${FRAMEWORK_VER}), which resolves several common issues and enhances overall stability and performance. While there are no direct changes to ${PRODUCT_NAME} itself, the improvements inherited from Framework benefit ${PRODUCT_NAME} indirectly."
+            FRAMEWORK_UPDATE_NOTES="- This release includes updates from the underlying [Framework](https://docs.infinilabs.com/framework/main), which resolves several common issues and enhances overall stability and performance. While there are no direct changes to ${PRODUCT_NAME} itself, the improvements inherited from Framework benefit ${PRODUCT_NAME} indirectly."
             if [[ "$f" == "zh" ]]; then
-              FRAMEWORK_UPDATE_NOTES="- 此版本包含了底层 [Framework v${FRAMEWORK_VER}](https://docs.infinilabs.com/framework/v${FRAMEWORK_VER}) 的更新，解决了一些常见问题，并增强了整体稳定性和性能。虽然 ${PRODUCT_NAME} 本身没有直接的变更，但从 Framework 中继承的改进间接地使 ${PRODUCT_NAME} 受益。"
+              FRAMEWORK_UPDATE_NOTES="- 此版本包含了底层 [Framework](https://docs.infinilabs.com/framework/main) 的更新，解决了一些常见问题，并增强了整体稳定性和性能。虽然 ${PRODUCT_NAME} 本身没有直接的变更，但从 Framework 中继承的改进间接地使 ${PRODUCT_NAME} 受益。"
             fi
 
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
