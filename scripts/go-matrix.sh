@@ -51,4 +51,4 @@ for i in "${!matrix_includes[@]}"; do
 done
 matrix_json+="]"
 
-echo "matrix=$matrix_json"
+echo "$matrix_json"
