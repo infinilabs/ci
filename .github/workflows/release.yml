@@ -395,7 +395,7 @@ jobs:
 
   update-repo:
     needs: generate-matrix
-    name: Update framework tag version in CI repo
+    name: Update framework tag version
     runs-on: ubuntu-latest
     if: ${{ inputs.OPERATION == 'TAG' && inputs.FRAMEWORK_PUBLISH == true }}
 
