@@ -350,7 +350,7 @@ jobs:
       - name: Checkout and create tag
         run: |
           REPO="$PRODUCT"
-          GIT_BASE="${PRODUCT == 'easysearch' && secrets.SSH_GIT_REPO || vars.GIT_SSH_REPO}"
+          GIT_BASE=$([[ "$PRODUCT" == "easysearch" ]] && echo "$secrets_SSH_GIT_REPO" || echo "$vars_GIT_SSH_REPO")
           git clone $GIT_BASE/$REPO $GITHUB_WORKSPACE/$REPO
           cd $GITHUB_WORKSPACE/$REPO
           git config user.name github-actions && git config user.email github-actions@github.com
