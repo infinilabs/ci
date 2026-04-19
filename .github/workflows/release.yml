@@ -105,6 +105,7 @@ on:
 
 jobs:
   generate-matrix: 
+    name: Generate Matrix for ${{ inputs.OPERATION }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.gen-matrix.outputs.matrix }}
@@ -347,10 +348,13 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Checkout and create tag
+      - name: Checkout and create tag for ${{ matrix.product }}
+        env:
+          SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+          GIT_SSH_REPO: ${{ vars.GIT_SSH_REPO }}
         run: |
           REPO="$PRODUCT"
-          GIT_BASE=$([[ "$PRODUCT" == "easysearch" ]] && echo "$secrets_SSH_GIT_REPO" || echo "$vars_GIT_SSH_REPO")
+          GIT_BASE=$([[ "$PRODUCT" == "easysearch" ]] && echo "$SSH_GIT_REPO" || echo "$GIT_SSH_REPO")
           git clone $GIT_BASE/$REPO $GITHUB_WORKSPACE/$REPO
           cd $GITHUB_WORKSPACE/$REPO
           git config user.name github-actions && git config user.email github-actions@github.com
