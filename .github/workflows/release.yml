@@ -360,10 +360,12 @@ jobs:
           git config user.name github-actions && git config user.email github-actions@github.com
           # Check if the tag already exists, if yes, skip to avoid duplicate tag error
           PVER=$(echo "v$VERSION" | sed 's/-.*//')
-          git rev-parse --verify "refs/tags/$PVER" 2>/dev/null && echo "Tag $PVER exists" && exit 0
-          
-          # Create and push tag
-          git tag -a $PVER -m "Release $PVER" && git push origin $PVER
+          if git rev-parse --verify "refs/tags/$PVER" >/dev/null 2>&1; then
+            echo "$REPO tag $PVER exists"
+          else
+            # Create and push tag
+            git tag -a $PVER -m "Release $PVER" && git push origin $PVER && echo "$REPO tag $PVER created and pushed successfully."
+          fi
           
           # Sync enterprise-plugins tag (only for framework/coco-server)
           if [[ "$REPO" =~ ^(framework|coco-server)$ ]]; then
@@ -371,13 +373,31 @@ jobs:
             git clone $GIT_BASE/$PLUGIN $GITHUB_WORKSPACE/$PLUGIN
             cd $GITHUB_WORKSPACE/$PLUGIN
             git config user.name github-actions && git config user.email github-actions@github.com
-            git rev-parse --verify "refs/tags/$PVER" 2>/dev/null || { git tag -a $PVER -m "Release $PVER" && git push origin $PVER; }
+            if git rev-parse --verify "refs/tags/$PVER" >/dev/null 2>&1; then
+              echo "$PLUGIN tag $PVER exists"
+            else
+              git tag -a $PVER -m "Release $PVER" && git push origin $PVER && echo "$PLUGIN tag $PVER created and pushed successfully."
+            fi
+          fi
+
+          # Sync agent-enterprise-plugin tag (only for agent)
+          if [[ "$REPO" == "agent" ]]; then
+            PLUGIN="$REPO-enterprise-plugin"
+            git clone $GIT_BASE/$PLUGIN $GITHUB_WORKSPACE/$PLUGIN
+            cd $GITHUB_WORKSPACE/$PLUGIN
+            git config user.name github-actions && git config user.email github-actions@github.com
+            if git rev-parse --verify "refs/tags/$PVER" >/dev/null 2>&1; then
+              echo "$PLUGIN tag $PVER exists"
+            else
+              git tag -a $PVER -m "Release $PVER" && git push origin $PVER && echo "$PLUGIN tag $PVER created and pushed successfully."
+            fi
           fi
 
   update-repo:
+    needs: generate-matrix
     name: Update framework tag version in CI repo
     runs-on: ubuntu-latest
-    if: ${{ inputs.OPERATION == 'TAG' && inputs.FRAMEWORK_PUBLISH == 'true' }}
+    if: ${{ inputs.OPERATION == 'TAG' && inputs.FRAMEWORK_PUBLISH == true }}
 
     steps:
       - name: Checkout code
