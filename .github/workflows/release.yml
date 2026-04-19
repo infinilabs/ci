@@ -38,7 +38,7 @@ on:
       FRAMEWORK_PUBLISH_VERSION:
           description: 'Publish Framework Version'
           required: false
-          default: "1.4.0" 
+          default: "1.4.1"
       AGENT_PUBLISH:
         description: 'Products with Agent'
         required: false
