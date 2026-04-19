@@ -374,6 +374,43 @@ jobs:
             git rev-parse --verify "refs/tags/$PVER" 2>/dev/null || { git tag -a $PVER -m "Release $PVER" && git push origin $PVER; }
           fi
 
+  update-repo:
+    name: Update framework tag version in CI repo
+    runs-on: ubuntu-latest
+    if: ${{ inputs.OPERATION == 'TAG' && inputs.FRAMEWORK_PUBLISH == 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update release version in workflow files
+        run: |
+          TAG="${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
+          cd $GITHUB_WORKSPACE/.github/workflows
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+          update_yaml_version "release.yml" "FRAMEWORK_PUBLISH_VERSION" "${TAG}"
+
+      - name: Create bumpver pull request
+        uses: peter-evans/create-pull-request@v8
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: taged framework ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
+          branch: "release/release-${{ github.run_id }}"
+          title: "bumpver: taged framework ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
+          body: "Automated version update for taged framework ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            .github/workflows/release.yml
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --squash
+
   release-metadata:
     if: ${{ inputs.OPERATION == 'RELEASE' }}
     name: Update Release Metadata & .latest
