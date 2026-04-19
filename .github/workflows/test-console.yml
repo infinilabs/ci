@@ -8,7 +8,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
-  EZS_VERSION: ${{ inputs.EZS_VERSION }}
+  EASYSEARCH_PUBLISH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
   PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
 
@@ -17,7 +17,7 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-        EZS_VERSION:
+        EASYSEARCH_PUBLISH_VERSION:
             description: 'EZS Version'
             required: true
             default: 'latest'

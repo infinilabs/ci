@@ -8,7 +8,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  PUBLISH_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION || vars.AGENT_PUBLISH_VERSION }}
   NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
@@ -18,11 +18,11 @@ on:
   workflow_dispatch:
     inputs:
 
-      PUBLISH_VERSION:
+      AGENT_PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
         default: "1.31.0"
-      PUBLISH_EASYSEARCH_BRANCH:
+      EASYSEARCH_PUBLISH_BRANCH:
         description: 'Publish with easysearch branch'
         required: false
         default: "main"
@@ -55,6 +55,7 @@ jobs:
         id: gen-matrix
         env:
             AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
+            AGENT_PUBLISH_VERSION: ${{ env.PUBLISH_VERSION }}
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -81,6 +82,8 @@ jobs:
         CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
         CONNECT_MODE: ${{ vars.CONNECT_MODE }}
         CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+        PRODUCT: ${{ matrix.product }}
+        PUBLISH_VERSION: ${{ matrix.publish_version }}
         TARGETS: win-amd64 win-386 linux-amd64 linux-amd64-dev linux-386 linux-mips64 linux-mips64le linux-armv6 linux-armv7 linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     strategy:
       fail-fast: false
@@ -195,7 +198,7 @@ jobs:
 
       - name: Checkout depends repo code for ${{ matrix.product }} web
         env:
-          BRANCH: ${{ inputs.PUBLISH_EASYSEARCH_BRANCH }}
+          BRANCH: ${{ inputs.EASYSEARCH_PUBLISH_BRANCH }}
         run: |
           git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
@@ -365,10 +368,10 @@ jobs:
           FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
-          update_yaml_version "easysearch-publish.yml"        "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
+          update_yaml_version "easysearch-publish.yml"        "AGENT_PUBLISH_VERSION" "$FULL_VERSION"
           update_yaml_version "publish-cloud.yml"             "GATEWAY_VERSION"       "$VERSION"
           update_yaml_version "publish-agent.yml"             "PUBLISH_VERSION"       "$VERSION"
-          update_yaml_version "publish-elasticsearch.yml"     "PUBLISH_AGENT_VERSION" "$FULL_VERSION"
+          update_yaml_version "publish-elasticsearch.yml"     "AGENT_PUBLISH_VERSION" "$FULL_VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v8

@@ -8,8 +8,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION_GRAAVM }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION_21 }}
-  EZS_VERSION: ${{ inputs.EZS_VERSION }}
-  PRODUCT_VERSION: ${{ inputs.PRODUCT_VERSION }}
+  EASYSEARCH_PUBLISH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   NODE_OPTIONS: "--max-old-space-size=8192"
 
@@ -18,8 +17,8 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      EZS_VERSION:
-        description: 'Easysearch Version'
+      EASYSEARCH_PUBLISH_VERSION:
+        description: 'Easysearch Published Version'
         required: false
         type: string
         default: "2.1.3"
@@ -28,11 +27,26 @@ on:
         required: false
         type: boolean
         default: false
-      PRODUCT_VERSION:
-        description: 'Products Version'
+      AGENT_PUBLISH_VERSION:
+        description: 'Agent Published Version'
         required: false
         type: string
         default: "1.31.0"
+      CONSOLE_PUBLISH_VERSION:
+        description: 'Console Published Version'
+        required: false
+        type: string
+        default: "1.30.3"
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Gateway Published Version'
+        required: false
+        type: string
+        default: "1.30.3"
+      LOADGEN_PUBLISH_VERSION:
+        description: 'Loadgen Published Version'
+        required: false
+        type: string
+        default: "1.30.3"
       RUN_INSTALL_TEST:
         description: 'Run Products Install Test?'
         required: false
@@ -166,11 +180,11 @@ jobs:
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  if [[ "$EZS_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
-                    VER=$EZS_VERSION
+                if [[ "$EASYSEARCH_PUBLISH_VERSION" != "$VER" ]] && [[ -n "$EASYSEARCH_PUBLISH_VERSION" ]]; then
+                  if [[ "$EASYSEARCH_PUBLISH_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                    VER=$EASYSEARCH_PUBLISH_VERSION
                   else
-                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                    echo "EASYSEARCH_PUBLISH_VERSION does not match x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
                 curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
@@ -255,12 +269,12 @@ jobs:
               run: |
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
                 echo "The latest easysearch version is $VER"
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                if [[ "$EASYSEARCH_PUBLISH_VERSION" != "$VER" ]] && [[ -n "$EASYSEARCH_PUBLISH_VERSION" ]]; then
                   # x.y.z or x.y.z-build_number pattern
-                  if [[ "$EZS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
-                    VER=$EZS_VERSION
+                  if [[ "$EASYSEARCH_PUBLISH_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
+                    VER=$EASYSEARCH_PUBLISH_VERSION
                   else
-                    echo "EZS_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
+                    echo "EASYSEARCH_PUBLISH_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
                 echo "Using easysearch docker image with $VER ..."
@@ -526,15 +540,20 @@ jobs:
 
             - name: Validate version formats
               run: |
-                EZS_VERSION="${{ inputs.EZS_VERSION }}"
-                PRODUCT_VERSION="${{ inputs.PRODUCT_VERSION }}"
-
-                echo "Checking EZS_VERSION: $EZS_VERSION"
-                echo "Checking PRODUCT_VERSION: $PRODUCT_VERSION"
+                EASYSEARCH_PUBLISH_VERSION="${{ inputs.EASYSEARCH_PUBLISH_VERSION }}"
+                AGENT_PUBLISH_VERSION="${{ inputs.AGENT_PUBLISH_VERSION }}"
+                CONSOLE_PUBLISH_VERSION="${{ inputs.CONSOLE_PUBLISH_VERSION }}"
+                GATEWAY_PUBLISH_VERSION="${{ inputs.GATEWAY_PUBLISH_VERSION }}"
+                LOADGEN_PUBLISH_VERSION="${{ inputs.LOADGEN_PUBLISH_VERSION }}"
+                echo "Checking EASYSEARCH_PUBLISH_VERSION: $EASYSEARCH_PUBLISH_VERSION"
+                echo "Checking AGENT_PUBLISH_VERSION: $AGENT_PUBLISH_VERSION"
+                echo "Checking CONSOLE_PUBLISH_VERSION: $CONSOLE_PUBLISH_VERSION"
+                echo "Checking GATEWAY_PUBLISH_VERSION: $GATEWAY_PUBLISH_VERSION"
+                echo "Checking LOADGEN_PUBLISH_VERSION: $LOADGEN_PUBLISH_VERSION"
 
                 version_regex='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$'
 
-                for VAR_NAME in EZS_VERSION PRODUCT_VERSION; do
+                for VAR_NAME in EASYSEARCH_PUBLISH_VERSION AGENT_PUBLISH_VERSION CONSOLE_PUBLISH_VERSION GATEWAY_PUBLISH_VERSION LOADGEN_PUBLISH_VERSION; do
                   VERSION=${!VAR_NAME}
                   if [[ ! "$VERSION" =~ $version_regex ]]; then
                     echo "❌ Invalid format for $VAR_NAME: $VERSION"
@@ -567,11 +586,11 @@ jobs:
               run: |
                 # Install easysearch
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
-                  if [[ "$EZS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]; then
-                    VER=$EZS_VERSION
+                if [[ "$EASYSEARCH_PUBLISH_VERSION" != "$VER" ]] && [[ -n "$EASYSEARCH_PUBLISH_VERSION" ]]; then
+                  if [[ "$EASYSEARCH_PUBLISH_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]; then
+                    VER=$EASYSEARCH_PUBLISH_VERSION
                   else
-                    echo "EZS_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                    echo "EASYSEARCH_PUBLISH_VERSION does not match x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
                 curl http://get.infini.cloud | bash -s -- -p easysearch -d $HOME/easysearch -v $VER
@@ -590,11 +609,12 @@ jobs:
                 for p in console gateway agent loadgen; do
                   [ ! -d $WORK/$p ] && mkdir -p $WORK/$p
                   VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "$p" |awk '{print $NF}')
-                  if [[ "$PRODUCT_VERSION" != "$VER" ]] && [[ -n "$PRODUCT_VERSION" ]]; then
-                    if [[ "$PRODUCT_VERSION" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
-                      VER=$PRODUCT_VERSION
+                  VAR_NAME="${p^^}_PUBLISH_VERSION"
+                  if [[ "${!VAR_NAME}" != "$VER" ]] && [[ -n "${!VAR_NAME}" ]]; then
+                    if [[ "${!VAR_NAME}" =~ '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' ]]; then
+                      VER=${!VAR_NAME}
                     else
-                      echo "PRODUCT_VERSION does not match x.y.z-build_number pattern, skipping assignment."
+                      echo "$VAR_NAME does not match x.y.z-build_number pattern, skipping assignment."
                     fi
                   fi
                   curl http://get.infini.cloud | bash -s -- -p $p -d $WORK/$p/bin -v $VER

@@ -31,7 +31,7 @@ on:
           - "21"
         default: "11"
       
-      PUBLISH_AGENT_VERSION:
+      AGENT_PUBLISH_VERSION:
         description: 'Publish With Agent Version'
         required: true
         default: "1.31.0-2453"
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PUBLISH_OSS: ${{ inputs.PUBLISH_OSS }}
-      AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
+      AGENT_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION || vars.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

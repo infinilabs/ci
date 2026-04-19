@@ -20,7 +20,6 @@ env:
   CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
   CONNECT_MODE: ${{ vars.CONNECT_MODE }}
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
 
 on:
   workflow_dispatch:
@@ -30,24 +29,36 @@ on:
         required: true
         type: choice
         options: ['PR', 'TAG', 'RELEASE']
-        default: "1.30.2-2396"
-      PUBLISH_FRAMEWORK_VERSION:
+        default: "PR"
+      FRAMEWORK_PUBLISH_VERSION:
           description: 'Publish Framework Version'
           required: false
           default: "1.4.0" 
-      PUBLISH_VERSION:
+      AGENT_PUBLISH_VERSION:
         description: 'Publish Products Release Version'
         required: false
         default: "1.31.0-2453"
-      PUBLISH_EZS_VERSION:
+      CONSOLE_PUBLISH_VERSION:
+        description: 'Publish Console Version'
+        required: false
+        default: "1.30.3-2407"
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Publish Gateway Version'
+        required: false
+        default: "1.30.3-2407"
+      LOADGEN_PUBLISH_VERSION:
+        description: 'Publish Loadgen Version'
+        required: false
+        default: "1.30.3-2407"
+      EASYSEARCH_PUBLISH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
         default: "2.1.3-2719"
-      PUBLISH_COCO_APP_VERSION:
+      COCOAPP_PUBLISH_VERSION:
         description: 'Publish Coco App Version'
         required: false
         default: "0.10.0-2619"
-      PUBLISH_COCO_VERSION:
+      COCOSERVER_PUBLISH_VERSION:
         description: 'Publish Coco Server Version'
         required: false
         default: "0.12.0-2201"
@@ -56,6 +67,11 @@ on:
           required: false
           type: boolean
           default: false
+      FRAMEWORK_PUBLISH:
+        description: 'Products with Framework'
+        required: false
+        type: boolean
+        default: false
       AGENT_PUBLISH:
         description: 'Products with Agent'
         required: false
@@ -73,11 +89,6 @@ on:
         default: false
       LOADGEN_PUBLISH:
         description: 'Products with Loadgen'
-        required: false
-        type: boolean
-        default: false
-      FRAMEWORK_PUBLISH:
-        description: 'Products with Framework'
         required: false
         type: boolean
         default: false
@@ -112,6 +123,15 @@ jobs:
             EASYSEARCH_PUBLISH: ${{ inputs.EASYSEARCH_PUBLISH }}
             COCO_APP_PUBLISH: ${{ inputs.COCOAPP_PUBLISH }}
             COCO_SERVER_PUBLISH: ${{ inputs.COCOSERVER_PUBLISH }}
+
+            AGENT_PUBLISH_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION }}
+            CONSOLE_PUBLISH_VERSION: ${{ inputs.CONSOLE_PUBLISH_VERSION }}
+            GATEWAY_PUBLISH_VERSION: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
+            LOADGEN_PUBLISH_VERSION: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
+            FRAMEWORK_PUBLISH_VERSION: ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
+            EASYSEARCH_PUBLISH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
+            COCO_APP_PUBLISH_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
+            COCO_SERVER_PUBLISH_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -120,7 +140,7 @@ jobs:
   create-pr:
     needs: generate-matrix
     if: ${{ inputs.OPERATION == 'PR' }}
-    name: Create PR for ${{ matrix.product }}
+    name: Create PR for ${{ matrix.product }} with version ${{ matrix.publish_version }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -129,6 +149,9 @@ jobs:
       max-parallel: 1
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    env:
+      PRODUCT: ${{ matrix.product }}
+      PUBLISH_VERSION: ${{ matrix.publish_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -138,35 +161,16 @@ jobs:
 
       - name: Set up env for PR
         run: |
-          if [[ "${{ matrix.product }}" == "framework" ]]; then
-            VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
-          elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-            VER=${{ env.PUBLISH_VERSION }}
-            SUFFIX=${VER#*-}
-            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              VERSION="${EZS_VER}-$SUFFIX"
-            else
-              VERSION=$EZS_VER
-            fi
-          elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
-            VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
-            VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
-          else
-            VERSION=${{ env.PUBLISH_VERSION }}
-          fi
-          
-          if [[ -z "$VERSION" ]]; then
-            echo "Error: Version is empty for ${{ matrix.product }}"
+          if [[ -z "$PUBLISH_VERSION" ]]; then
+            echo "Error: Version is empty for $PRODUCT"
             exit 1
           fi
 
-          PR_BRANCH="ci_release_$VERSION"
-          PR_MESSAGE="chore: update release notes for publish $VERSION"
+          PR_BRANCH="ci_release_$PUBLISH_VERSION"
+          PR_MESSAGE="chore: update release notes for publish $PUBLISH_VERSION"
           
-          echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "PNAME=$PRODUCT" >> $GITHUB_ENV
+          echo "VERSION=$PUBLISH_VERSION" >> $GITHUB_ENV
           echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
@@ -180,34 +184,33 @@ jobs:
       - name: Checkout code for ${{ matrix.product }}
         timeout-minutes: 30
         run: |
-          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git clone ${{ secrets.SSH_GIT_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+          if [[ "$PRODUCT" == "easysearch" ]]; then
+            git clone ${{ secrets.SSH_GIT_REPO }}/$PRODUCT $GITHUB_WORKSPACE/$PRODUCT
           else
-            git clone ${{ vars.GIT_SSH_REPO }}/${{ matrix.product }} $GITHUB_WORKSPACE/${{ matrix.product }}
+            git clone ${{ vars.GIT_SSH_REPO }}/$PRODUCT $GITHUB_WORKSPACE/$PRODUCT
           fi
-          cd $GITHUB_WORKSPACE/${{ matrix.product }} && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
+          cd $GITHUB_WORKSPACE/$PRODUCT && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad, %an, %s")
           git config user.name github-actions
           git config user.email github-actions@github.com
 
       - name: Create Branch and update release notes & data
         continue-on-error: true
         run: |
-          VER=${{ inputs.PUBLISH_VERSION }}
-          FRAMEWORK_VER=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
-          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
+          FRAMEWORK_VER=${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
           
-          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          cd $GITHUB_WORKSPACE/$PRODUCT
           # Check if the branch already exists
           if git ls-remote --heads origin "$PR_BRANCH" | grep -q "$PR_BRANCH"; then
             echo "Branch $PR_BRANCH found. Deleting remote branch..."
             git push origin --delete "$PR_BRANCH"
           fi
           
-          echo "Create Branch $PR_BRANCH for ${{ matrix.product }}"
+          echo "Create Branch $PR_BRANCH for $PRODUCT"
           git checkout -b "$PR_BRANCH"
           
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
-          PRODUCT_NAME=$(echo "${{ matrix.product }}" | sed 's/./\u&/')
+          PRODUCT_NAME=$(echo "$PRODUCT" | sed 's/./\u&/')
           
           for f in en zh; do
             if [[ ! -d docs/content.$f ]]; then continue; fi
@@ -218,7 +221,7 @@ jobs:
             fi
 
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
-              if [[ "${{ matrix.product }}" == "console" || "${{ matrix.product }}" == "agent" || "${{ matrix.product }}" == "gateway" || "${{ matrix.product }}" == "loadgen" ]]; then
+              if [[ "$PRODUCT" == "console" || "$PRODUCT" == "agent" || "$PRODUCT" == "gateway" || "$PRODUCT" == "loadgen" ]]; then
                 sed -i "0,/^[[:space:]]*###\{1,2\}[[:space:]]*✈️[[:space:]]*Improvements[[:space:]]*$/s||&\n$FRAMEWORK_UPDATE_NOTES|" docs/content.$f/docs/release-notes/_index.md
               fi
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
@@ -229,11 +232,11 @@ jobs:
           
           if [[ -d docs/data ]]; then
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
-            if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-              sed -i "19s/version:.*/version: '$PUBLISH_VERSION'/" docs/data/quick_start.yaml
+            if [[ "$PRODUCT" == "easysearch" ]]; then
+              sed -i "19s/version:.*/version: '$EZS_VER'/" docs/data/quick_start.yaml
             fi
-            if [[ "${{ matrix.product }}" == "console" ]]; then
-              sed -i "44s/version:.*/version: '$EZS_VER',/" docs/data/quick_start.yaml
+            if [[ "$PRODUCT" == "console" ]]; then
+              sed -i "44s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
@@ -241,7 +244,7 @@ jobs:
       - name: Create Commit Message
         id: commit_and_push
         run: |
-          cd $GITHUB_WORKSPACE/${{ matrix.product }}
+          cd $GITHUB_WORKSPACE/$PRODUCT
           if [[ -n $(git status --porcelain) ]]; then
             echo "✅ Changes detected. Proceeding with commit and push..."
             git commit -m "$PR_MESSAGE"     
@@ -251,8 +254,8 @@ jobs:
             echo "🤷 No changes detected. Skipping commit and push."
             echo "changes_pushed=false" >> $GITHUB_OUTPUT
           fi
-          if [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/${{ matrix.product }}
+          if [[ "$PRODUCT" == "easysearch" ]]; then
+            git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/$PRODUCT
           fi
 
       - name: Create Github Pull Request
@@ -260,12 +263,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_PAT }} 
         run: |
-          cd $GITHUB_WORKSPACE/${{ matrix.product }}
-          if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "auto-merge"; then
-            gh label create "auto-merge" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automatically merge this PR" --color 34d058 --force
+          cd $GITHUB_WORKSPACE/$PRODUCT
+          if ! gh label list --repo "${{vars.GIT_REPO}}/$PRODUCT" | grep -q "auto-merge"; then
+            gh label create "auto-merge" --repo "${{vars.GIT_REPO}}/$PRODUCT" --description "Automatically merge this PR" --color 34d058 --force
           fi
-          if ! gh label list --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" | grep -q "automated"; then
-            gh label create "automated" --repo "${{vars.GIT_REPO}}/${{ matrix.product }}" --description "Automated create this PR" --color 34d058 --force
+          if ! gh label list --repo "${{vars.GIT_REPO}}/$PRODUCT" | grep -q "automated"; then
+            gh label create "automated" --repo "${{vars.GIT_REPO}}/$PRODUCT" --description "Automated create this PR" --color 34d058 --force
           fi
           gh pr create --title "$PR_MESSAGE" \
                   --body "This PR create by github actions to updates the release notes." \
@@ -280,7 +283,7 @@ jobs:
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: https://${{ secrets.HTTP_GIT_REPO}}
+          url: https://${{ secrets.HTTP_GIT_REPO}}/$PRODUCT
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
@@ -301,6 +304,9 @@ jobs:
       max-parallel: 1
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    env:
+      PRODUCT: ${{ matrix.product }}
+      PUBLISH_VERSION: ${{ matrix.publish_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -310,31 +316,12 @@ jobs:
 
       - name: Set up env for TAG
         run: |
-          if [[ "${{ matrix.product }}" == "framework" ]]; then
-            VERSION=${{ inputs.PUBLISH_FRAMEWORK_VERSION }}
-          elif [[ "${{ matrix.product }}" == "easysearch" ]]; then
-            EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-            VER=${{ env.PUBLISH_VERSION }}
-            SUFFIX=${VER#*-}
-            if [[ "$VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              VERSION="${EZS_VER}-$SUFFIX"
-            else
-              VERSION=$EZS_VER
-            fi
-          elif [[ "${{ matrix.product }}" == "coco-app" ]]; then
-            VERSION=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          elif [[ "${{ matrix.product }}" == "coco-server" ]]; then
-            VERSION=${{ inputs.PUBLISH_COCO_VERSION }}
-          else
-            VERSION=${{ env.PUBLISH_VERSION }}
-          fi
-          
-          if [[ -z "$VERSION" ]]; then
-            echo "Error: Version is empty for ${{ matrix.product }}"
+          if [[ -z "$PUBLISH_VERSION" ]]; then
+            echo "Error: Version is empty for $PRODUCT"
             exit 1
           fi
-          echo "PNAME=${{ matrix.product }}" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "PNAME=$PRODUCT" >> $GITHUB_ENV
+          echo "VERSION=$PUBLISH_VERSION" >> $GITHUB_ENV
 
       - name: Run connect in background (Easysearch only)
         if: ${{ matrix.product == 'easysearch' }}
@@ -345,8 +332,8 @@ jobs:
 
       - name: Checkout and create tag
         run: |
-          REPO="${{ matrix.product }}"
-          GIT_BASE="${{ matrix.product == 'easysearch' && secrets.SSH_GIT_REPO || vars.GIT_SSH_REPO }}"
+          REPO="$PRODUCT"
+          GIT_BASE="${PRODUCT == 'easysearch' && secrets.SSH_GIT_REPO || vars.GIT_SSH_REPO}"
           git clone $GIT_BASE/$REPO $GITHUB_WORKSPACE/$REPO
           cd $GITHUB_WORKSPACE/$REPO
           git config user.name github-actions && git config user.email github-actions@github.com
@@ -390,22 +377,47 @@ jobs:
           DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
           DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
-          VER=${{ inputs.PUBLISH_VERSION }}
-          EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          AGENT_VER=${{ inputs.AGENT_PUBLISH_VERSION }}
+          CONSOLE_VER=${{ inputs.CONSOLE_PUBLISH_VERSION }}
+          GATEWAY_VER=${{ inputs.GATEWAY_PUBLISH_VERSION }}
+          LOADGEN_VER=${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          EZS_VER=${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
+          COCO_APP_VER=${{ inputs.COCOAPP_PUBLISH_VERSION }}
+          COCO_VER=${{ inputs.COCOSERVER_PUBLISH_VERSION }}
           
           # 1. Update Global Product Version (Console, Agent, Gateway...)
-          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
-            if [[ ! -z "$VER" && "$VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-               VER_CLEAN="${VER%%-*}"
-               echo "Updating GitHub release version to $VER_CLEAN"
-               gh variable set PUBLISH_VERSION --body "$VER_CLEAN"
+          if [[ "$DO_AGENT" == "true" ]]; then
+            if [[ ! -z "$AGENT_VER" && "$AGENT_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               VER_CLEAN="${AGENT_VER%%-*}"
+               echo "Updating GitHub agent release version to $VER_CLEAN"
+               gh variable set AGENT_PUBLISH_VERSION --body "$VER_CLEAN"
             else
-               echo "::warning:: Products publish selected but version invalid: $VER"
+               echo "::warning:: Products publish selected but version invalid: $AGENT_VER"
             fi
-          else
-            echo "Skipping Products (Agent/Console) variable update."
+          elif [[ "$DO_CONSOLE" == "true" ]]; then
+            if [[ ! -z "$CONSOLE_VER" && "$CONSOLE_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               VER_CLEAN="${CONSOLE_VER%%-*}"
+               echo "Updating GitHub console release version to $VER_CLEAN"
+               gh variable set CONSOLE_PUBLISH_VERSION --body "$VER_CLEAN"
+            else
+               echo "::warning:: Products publish selected but version invalid: $CONSOLE_VER"
+            fi
+          elif [[ "$DO_GATEWAY" == "true" ]]; then
+            if [[ ! -z "$GATEWAY_VER" && "$GATEWAY_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               VER_CLEAN="${GATEWAY_VER%%-*}"
+               echo "Updating GitHub gateway release version to $VER_CLEAN"
+               gh variable set GATEWAY_PUBLISH_VERSION --body "$VER_CLEAN"
+            else
+               echo "::warning:: Products publish selected but version invalid: $GATEWAY_VER"
+            fi
+          elif [[ "$DO_LOADGEN" == "true" ]]; then
+            if [[ ! -z "$LOADGEN_VER" && "$LOADGEN_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+               VER_CLEAN="${LOADGEN_VER%%-*}"
+               echo "Updating GitHub loadgen release version to $VER_CLEAN"
+               gh variable set LOADGEN_PUBLISH_VERSION --body "$VER_CLEAN"
+            else
+               echo "::warning:: Products publish selected but version invalid: $LOADGEN_VER"
+            fi
           fi
 
           # 2. Update Easysearch Version
@@ -446,10 +458,13 @@ jobs:
           DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
           DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
-          IN_VER=${{ inputs.PUBLISH_VERSION }}
-          IN_EZS_VER=${{ inputs.PUBLISH_EZS_VERSION }}
-          IN_COCO_APP_VER=${{ inputs.PUBLISH_COCO_APP_VERSION }}
-          IN_COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          IN_AGENT_VER=${{ inputs.AGENT_PUBLISH_VERSION }}
+          IN_CONSOLE_VER=${{ inputs.CONSOLE_PUBLISH_VERSION }}
+          IN_GATEWAY_VER=${{ inputs.GATEWAY_PUBLISH_VERSION }}
+          IN_LOADGEN_VER=${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          IN_EZS_VER=${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
+          IN_COCO_APP_VER=${{ inputs.COCOAPP_PUBLISH_VERSION }}
+          IN_COCO_VER=${{ inputs.COCOSERVER_PUBLISH_VERSION }}
           
           fname=".latest"
           if [[ ! -f "/tmp/$fname" ]]; then
@@ -457,11 +472,32 @@ jobs:
             wget -q --show-progress --progress=bar:force:noscroll "$RELEASE_URL/$fname" -P /tmp
           fi
 
-          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
-            FINAL_PROD_VER="$IN_VER"
+          if [[ "$DO_AGENT" == "true" ]]; then
+            FINAL_AGENT_VER="$IN_AGENT_VER"
           else
-            FINAL_PROD_VER=$(jq -r .console "/tmp/$fname")
-            echo "Products publish skipped, keeping existing version: $FINAL_PROD_VER"
+            FINAL_AGENT_VER=$(jq -r .agent "/tmp/$fname")
+            echo "Agent publish skipped, keeping existing version: $FINAL_AGENT_VER"
+          fi
+
+          if [[ "$DO_CONSOLE" == "true" ]]; then
+            FINAL_CONSOLE_VER="$IN_CONSOLE_VER"
+          else
+            FINAL_CONSOLE_VER=$(jq -r .console "/tmp/$fname")
+            echo "Console publish skipped, keeping existing version: $FINAL_CONSOLE_VER"
+          fi
+
+          if [[ "$DO_GATEWAY" == "true" ]]; then
+            FINAL_GATEWAY_VER="$IN_GATEWAY_VER"
+          else
+            FINAL_GATEWAY_VER=$(jq -r .gateway "/tmp/$fname")
+            echo "Gateway publish skipped, keeping existing version: $FINAL_GATEWAY_VER"
+          fi
+
+          if [[ "$DO_LOADGEN" == "true" ]]; then
+            FINAL_LOADGEN_VER="$IN_LOADGEN_VER"
+          else
+            FINAL_LOADGEN_VER=$(jq -r .loadgen "/tmp/$fname")
+            echo "Loadgen publish skipped, keeping existing version: $FINAL_LOADGEN_VER"
           fi
 
           if [[ "$DO_EZS" == "true" ]]; then
@@ -497,11 +533,14 @@ jobs:
           fi
 
           echo "Updating local .latest file..."
-          jq --arg publish_version "$FINAL_PROD_VER" \
+          jq --arg agent_version "$FINAL_AGENT_VER" \
+            --arg console_version "$FINAL_CONSOLE_VER" \
+            --arg gateway_version "$FINAL_GATEWAY_VER" \
+            --arg loadgen_version "$FINAL_LOADGEN_VER" \
             --arg easysearch_version "$FINAL_EZS_VER" \
             --arg coco_app_version "$FINAL_COCO_APP_VER" \
             --arg coco_version "$FINAL_COCO_VER" \
-            '.console=$publish_version | .gateway=$publish_version | .agent=$publish_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$publish_version' \
+            '.console=$console_version | .gateway=$gateway_version | .agent=$agent_version | ."coco-app"=$coco_app_version | ."coco-server"=$coco_version | .easysearch=$easysearch_version | .loadgen=$loadgen_version' \
             "/tmp/$fname" > $GITHUB_WORKSPACE/$fname
 
           if $GITHUB_WORKSPACE/scripts/version_compare "/tmp/$fname" "$GITHUB_WORKSPACE/$fname"; then
@@ -514,7 +553,7 @@ jobs:
       - name: Update Easysearch .versions.json
         if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
         env:
-          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION }}
+          EZS_VER: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
         run: |
           PNAME=easysearch
           VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/.versions.json"
@@ -528,7 +567,7 @@ jobs:
             VER_CLEAN="$EZS_VER"
             BUILD_NUM=""
           else
-            echo "::warning:: Invalid PUBLISH_EZS_VERSION format: $EZS_VER, skipping .versions.json update."
+            echo "::warning:: Invalid EASYSEARCH_PUBLISH_VERSION format: $EZS_VER, skipping .versions.json update."
             exit 0
           fi
 
@@ -605,59 +644,45 @@ jobs:
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
           DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
           DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
-          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
-          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
-          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
-          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
+          AGENT_VER: ${{ inputs.AGENT_PUBLISH_VERSION }}
+          CONSOLE_VER: ${{ inputs.CONSOLE_PUBLISH_VERSION }}
+          GATEWAY_VER: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
+          LOADGEN_VER: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          EZS_VER: ${{ inputs.EASYSEARCH_PUBLISH_VERSION}}
+          COCO_VER: ${{ inputs.COCOSERVER_PUBLISH_VERSION}}
+          COCO_APP_VER: ${{ inputs.COCOAPP_PUBLISH_VERSION}}
         run: |
-          if [[ "$DO_AGENT" == "true" || "$DO_CONSOLE" == "true" || "$DO_GATEWAY" == "true" || "$DO_LOADGEN" == "true" ]]; then
-            for p in agent gateway console loadgen; do
-              echo "Move Products $p-${PROD_VER} from snapshot to stable"
-              oss move -p $p --prefix $p-${PROD_VER}
-            done
+          if [[ "$DO_AGENT" == "true" ]]; then
+            echo "Move Products agent-${AGENT_VER} from snapshot to stable"
+            oss move -p agent --prefix agent-${AGENT_VER}
           fi
-
-      - name: Move easysearch files from snapshot to stable
-        env:
-          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
-          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
-          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
-          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
-          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
-          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
-          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
-          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
-          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
-          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
-        run: |
-          # Easysearch
-          p=easysearch
+          if [[ "$DO_CONSOLE" == "true" ]]; then
+            echo "Move Products console-${CONSOLE_VER} from snapshot to stable"
+            oss move -p console --prefix console-${CONSOLE_VER}
+          fi
+          if [[ "$DO_GATEWAY" == "true" ]]; then
+            echo "Move Products gateway-${GATEWAY_VER} from snapshot to stable"
+            oss move -p gateway --prefix gateway-${GATEWAY_VER}
+          fi
+          if [[ "$DO_LOADGEN" == "true" ]]; then
+            echo "Move Products loadgen-${LOADGEN_VER} from snapshot to stable"
+            oss move -p loadgen --prefix loadgen-${LOADGEN_VER}
+          fi
           if [[ "$DO_EZS" == "true" ]]; then
-            echo "Move $p-${EZS_VER} from snapshot to stable"
-            oss move -p $p --prefix $p-${EZS_VER}
-            echo "Move $p-${EZS_VER} bundle from snapshot/bundle to stable/bundle"
-            oss move -p $p -s bundle --prefix $p-${EZS_VER}
+            echo "Move easysearch-${EZS_VER} from snapshot to stable"
+            oss move -p easysearch --prefix easysearch-${EZS_VER}
+            echo "Move easysearch-${EZS_VER} bundle from snapshot/bundle to stable/bundle"
+            oss move -p easysearch -s bundle --prefix easysearch-${EZS_VER}
+          fi
+          if [[ "$DO_COCO_APP" == "true" ]]; then
+            echo "Move coco-app-${COCO_APP_VER} from snapshot to stable"
+            oss move -p coco-app --prefix coco-app-${COCO_APP_VER}
+          fi
+          if [[ "$DO_COCO_SERVER" == "true" ]]; then
+            echo "Move coco-server-${COCO_VER} from snapshot to stable"
+            oss move -p coco-server --prefix coco-server-${COCO_VER}
           fi
 
-      - name: Move coco files from snapshot to stable
-        env:
-          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
-          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
-          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
-          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
-          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
-          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
-          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
-          PROD_VER: ${{ inputs.PUBLISH_VERSION}}
-          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION}}
-          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
-          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION}}
-          COCO_SERVER_VER: ${{ inputs.PUBLISH_COCO_VERSION}}
-        run: |
-          if [[ "$DO_COCO_APP" == "true" || "$DO_COCO_SERVER" == "true" ]]; then
-            echo "Move Coco from snapshot to stable"
-          fi
   release-official-website:
     needs: [release-metadata, release-files]
     if: ${{ inputs.OPERATION == 'RELEASE' }}
@@ -700,10 +725,13 @@ jobs:
           DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
           DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
           DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
-          PROD_VER: ${{ inputs.PUBLISH_VERSION }}
-          EZS_VER: ${{ inputs.PUBLISH_EZS_VERSION }}
-          COCO_VER: ${{ inputs.PUBLISH_COCO_VERSION }}
-          COCO_APP_VER: ${{ inputs.PUBLISH_COCO_APP_VERSION }}
+          AGENT_VER: ${{ inputs.AGENT_PUBLISH_VERSION }}
+          CONSOLE_VER: ${{ inputs.CONSOLE_PUBLISH_VERSION }}
+          GATEWAY_VER: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
+          LOADGEN_VER: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          EZS_VER: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
+          COCO_VER: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
+          COCO_APP_VER: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
         run: |
           BUILD_DATE=$(date +'%Y-%m-%d')
           PR_BRANCH="ci_release_website_$(date +'%Y%m%d_%H%M%S')"
@@ -729,34 +757,26 @@ jobs:
             python3 $GITHUB_WORKSPACE/scripts/update_version.py
           }
 
-          SUFFIX="${PROD_VER#*-}"
-
-          if [[ "$DO_PROD" == "true" ]]; then
-            for p in agent gateway console loadgen; do
-              run_update "$p" "$PROD_VER"
-            done
+          if [[ "$DO_AGENT" == "true" ]]; then
+            run_update "agent" "$AGENT_VER"
           fi
-
+          if [[ "$DO_CONSOLE" == "true" ]]; then
+            run_update "console" "$CONSOLE_VER"
+          fi
+          if [[ "$DO_GATEWAY" == "true" ]]; then
+            run_update "gateway" "$GATEWAY_VER"
+          fi
+          if [[ "$DO_LOADGEN" == "true" ]]; then
+            run_update "loadgen" "$LOADGEN_VER"
+          fi
           if [[ "$DO_EZS" == "true" ]]; then
-            EZS_FULL_VER="$EZS_VER"
-            if [[ "$PROD_VER" == *"-"* ]] && [[ "$EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              EZS_FULL_VER="${EZS_VER}-$SUFFIX"
-            fi
-            run_update "easysearch" "$EZS_FULL_VER"
+            run_update "easysearch" "$EZS_VER"
           fi
-
-          if [[ "$DO_COCO" == "true" ]]; then
-            COCO_APP_FULL_VER="$COCO_APP_VER"
-            if [[ "$PROD_VER" == *"-"* ]] && [[ "$COCO_APP_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              COCO_APP_FULL_VER="${COCO_APP_VER}-$SUFFIX"
-            fi
-            run_update "coco-app" "$COCO_APP_FULL_VER"
-
-            COCO_FULL_VER="$COCO_VER"
-            if [[ "$PROD_VER" == *"-"* ]] && [[ "$COCO_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              COCO_FULL_VER="${COCO_VER}-$SUFFIX"
-            fi
-            run_update "coco-server" "$COCO_FULL_VER"
+          if [[ "$DO_COCO_SERVER" == "true" ]]; then
+            run_update "coco-server" "$COCO_VER"
+          fi
+          if [[ "$DO_COCO_APP" == "true" ]]; then
+            run_update "coco-app" "$COCO_APP_VER"
           fi
 
       - name: Commit and push
@@ -801,7 +821,7 @@ jobs:
         
       - name: Publish Website Tag
         run: |
-          COCO_VER=${{ inputs.PUBLISH_COCO_VERSION }}
+          COCO_VER=${{ inputs.COCOSERVER_PUBLISH_VERSION }}
           git clone ${{ vars.GIT_SSH_REPO }}/coco-website $GITHUB_WORKSPACE/coco-website
           cd $GITHUB_WORKSPACE/coco-website
           git config user.name github-actions

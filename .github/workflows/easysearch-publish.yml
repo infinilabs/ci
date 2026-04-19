@@ -33,7 +33,7 @@ env:
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
   PROXY_RELEASE_INFINILABS: ${{ vars.PROXY_RELEASE_INFINILABS }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
-  AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
+  AGENT_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION || vars.PUBLISH_VERSION }}
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -52,8 +52,8 @@ on:
         description: "Publish Version"
         required: false
         default: "2.1.3"
-      PUBLISH_AGENT_VERSION:
-        description: "Publish With Agent Version"
+      AGENT_PUBLISH_VERSION:
+        description: "Agent Published Version"
         required: false
         default: "1.31.0-2453"
       PUBLISH_RELEASE:
@@ -390,14 +390,14 @@ jobs:
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
           update_yaml_version "easysearch-publish.yml" "PUBLISH_VERSION" "$VERSION"
-          update_yaml_version "publish-cloud.yml" "EZS_VERSION" "$VERSION"
+          update_yaml_version "publish-cloud.yml" "EASYSEARCH_PUBLISH_VERSION" "$VERSION"
           update_yaml_version "publish-coco.yml" "PUBLISH_EASYSEARCH_VERSION" "$FULL_VERSION"
           update_yaml_version "publish-coco-aisearch.yml" "PUBLISH_EASYSEARCH_VERSION" "$FULL_VERSION"
-          update_yaml_version "release.yml" "PUBLISH_EZS_VERSION" "$FULL_VERSION"
-          update_yaml_version "test-gateway.yml" "EZS_VERSION" "$VERSION"
-          update_yaml_version "test-integration-products.yml" "EZS_VERSION" "$VERSION"
+          update_yaml_version "release.yml" "EASYSEARCH_PUBLISH_VERSION" "$FULL_VERSION"
+          update_yaml_version "test-gateway.yml" "EASYSEARCH_PUBLISH_VERSION" "$VERSION"
+          update_yaml_version "test-integration-products.yml" "EASYSEARCH_PUBLISH_VERSION" "$VERSION"
           update_yaml_version "test-intergration-easysearch.yml" "PUBLISH_VERSION" "$VERSION"
-          update_yaml_version "test-integration-cocoserver.yml" "EZS_VERSION" "$FULL_VERSION"
+          update_yaml_version "test-integration-cocoserver.yml" "EASYSEARCH_PUBLISH_VERSION" "$FULL_VERSION"
           update_json_version "$GITHUB_WORKSPACE/ci/resources/easysearch-$VERSION-plugins.json" "version" "$FULL_VERSION"
 
       - name: Create bumpver pull request

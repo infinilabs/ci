@@ -463,7 +463,7 @@ jobs:
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
           update_yaml_version "publish-coco.yml" "PUBLISH_VERSION" "$VERSION"
-          update_yaml_version "release.yml" "PUBLISH_COCO_VERSION" "$FULL_VERSION"
+          update_yaml_version "release.yml" "COCOSERVER_PUBLISH_VERSION" "$FULL_VERSION"
           
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v8

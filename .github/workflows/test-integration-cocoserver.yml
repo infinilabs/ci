@@ -6,7 +6,7 @@ env:
   TZ: Asia/Shanghai
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
-  EZS_VERSION: ${{ inputs.EZS_VERSION }}
+  EASYSEARCH_PUBLISH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   NODE_OPTIONS: "--max-old-space-size=8192"
 
@@ -15,7 +15,7 @@ on:
     - cron: '30 16 * * *'
   workflow_dispatch:
     inputs:
-      EZS_VERSION:
+      EASYSEARCH_PUBLISH_VERSION:
         description: 'Easysearch Version'
         required: false
         type: string
@@ -117,13 +117,13 @@ jobs:
             - name: Run easysearch docker
               run: |
                 VER=$(curl "$RELEASE_URL/.latest" |sed 's/",/"/;s/"//g;s/://1' |grep -Ev '^[{}]' |grep "easysearch" |awk '{print $NF}')
-                echo "The latest easysearch version is $VER and input version is $EZS_VERSION"
-                if [[ "$EZS_VERSION" != "$VER" ]] && [[ -n "$EZS_VERSION" ]]; then
+                echo "The latest easysearch version is $VER and input version is $EASYSEARCH_PUBLISH_VERSION"
+                if [[ "$EASYSEARCH_PUBLISH_VERSION" != "$VER" ]] && [[ -n "$EASYSEARCH_PUBLISH_VERSION" ]]; then
                   # x.y.z or x.y.z-build_number pattern
-                  if [[ "$EZS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
-                    VER=$EZS_VERSION
+                  if [[ "$EASYSEARCH_PUBLISH_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
+                    VER=$EASYSEARCH_PUBLISH_VERSION
                   else
-                    echo "EZS_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
+                    echo "EASYSEARCH_PUBLISH_VERSION does not match x.y.z or x.y.z-build_number pattern, skipping assignment."
                   fi
                 fi
                 echo "Using easysearch docker image with $VER ..."

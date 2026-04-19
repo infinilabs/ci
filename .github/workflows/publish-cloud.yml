@@ -9,7 +9,7 @@ env:
   NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_CLOUD_VERSION }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.CLOUD_PUBLISH_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
@@ -36,18 +36,18 @@ on:
         description: 'Publish cloud docker version'
         required: false
         default: "1.9.1"
-      EZS_VERSION:
-        description: 'Easysearch version'
+      EASYSEARCH_PUBLISH_VERSION:
+        description: 'Easysearch Published version'
         required: false
         default: "2.1.3"
-      GATEWAY_VERSION:
-        description: 'Gateway version'
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Gateway Published version'
         required: false
         default: "1.31.0"
-      COCOSERVER_VERSION:
-        description: 'CocoServer version'
+      COCOSERVER_PUBLISH_VERSION:
+        description: 'CocoServer Published version'
         required: false
-        default: "0.11.0"
+        default: "0.10.0"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
@@ -186,17 +186,17 @@ jobs:
             fi
 
             # process the input versions
-            if [[ -n "${{ inputs.EZS_VERSION }}" ]]; then
-              echo "Overriding Easysearch version: $easysearch_ver -> ${{ inputs.EZS_VERSION }}"
-              easysearch_ver="${{ inputs.EZS_VERSION }}"
+            if [[ -n "${{ inputs.EASYSEARCH_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding Easysearch version: $easysearch_ver -> ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}"
+              easysearch_ver="${{ inputs.EASYSEARCH_PUBLISH_VERSION }}"
             fi
-            if [[ -n "${{ inputs.GATEWAY_VERSION }}" ]]; then
-              echo "Overriding Gateway version: $gateway_ver -> ${{ inputs.GATEWAY_VERSION }}"
-              gateway_ver="${{ inputs.GATEWAY_VERSION }}"
+            if [[ -n "${{ inputs.GATEWAY_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding Gateway version: $gateway_ver -> ${{ inputs.GATEWAY_PUBLISH_VERSION }}"
+              gateway_ver="${{ inputs.GATEWAY_PUBLISH_VERSION }}"
             fi
-            if [[ -n "${{ inputs.COCOSERVER_VERSION }}" ]]; then
-              echo "Overriding CocoServer version: $cocoserver_ver -> ${{ inputs.COCOSERVER_VERSION }}"
-              cocoserver_ver="${{ inputs.COCOSERVER_VERSION }}"
+            if [[ -n "${{ inputs.COCOSERVER_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding CocoServer version: $cocoserver_ver -> ${{ inputs.COCOSERVER_PUBLISH_VERSION }}"
+              cocoserver_ver="${{ inputs.COCOSERVER_PUBLISH_VERSION }}"
             fi
             
             echo "-------------- Using Versions --------------"
@@ -278,16 +278,16 @@ jobs:
             fi
 
       - name: Prepare ${{ env.PNAME }} build code
-        if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.CLOUD_PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-              PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
+              PUBLISH_VERSION=${{ vars.CLOUD_PUBLISH_VERSION }}
             fi
           fi
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.CLOUD_PUBLISH_RELEASE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
@@ -432,7 +432,7 @@ jobs:
         run: |
           if [[ ! -z "$VERSION" && "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             echo "Updating GitHub release version to $VERSION"
-            gh variable set PUBLISH_CLOUD_VERSION --body "$VERSION"
+            gh variable set CLOUD_PUBLISH_VERSION --body "$VERSION"
           fi
       - name: Deploy cloud to staging k8s
         if: ${{ inputs.PUBLISH_RELEASE }}

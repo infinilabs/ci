@@ -33,7 +33,7 @@ env:
   CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
   PROXY_RELEASE_INFINILABS: ${{ vars.PROXY_RELEASE_INFINILABS }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.EASYSEARCH_PUBLISH_VERSION }}
-  AGENT_VERSION: ${{ inputs.PUBLISH_AGENT_VERSION || vars.PUBLISH_VERSION }}
+  AGENT_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION || vars.PUBLISH_VERSION }}
   ZULU_JAVA_VERSION: ${{ vars.ZULU_JAVA_VERSION }}
   JAVA_VERSION_21: ${{ vars.JAVA_VERSION_21 }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -55,7 +55,7 @@ on:
         description: "Publish Build Number"
         required: true
         default: "2181"
-      PUBLISH_AGENT_VERSION:
+      AGENT_PUBLISH_VERSION:
         description: "Publish With Agent Version"
         required: false
         default: "1.30.2-2333"

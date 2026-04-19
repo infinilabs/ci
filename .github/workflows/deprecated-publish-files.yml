@@ -1,4 +1,4 @@
-name: Publish Products (Only Files)
+name: Publish Products Only Files (Deprecated)
 defaults:
   run:
     shell: bash
@@ -9,16 +9,27 @@ env:
   NODEJS_EXT_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
   NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
   workflow_dispatch:
     inputs:
-      PUBLISH_VERSION:
-        description: 'Publish Release Version'
+      AGENT_PUBLISH_VERSION:
+        description: 'Agent Publish Version'
         required: false
         default: "1.31.0"
+      CONSOLE_PUBLISH_VERSION:
+        description: 'Console Publish Version'
+        required: false
+        default: "1.30.3"
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Gateway Publish Version'
+        required: false
+        default: "1.30.3"
+      LOADGEN_PUBLISH_VERSION:
+        description: 'Loadgen Publish Version'
+        required: false
+        default: "1.30.3"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
