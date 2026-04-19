@@ -30,78 +30,78 @@ on:
         type: choice
         options: ['PR', 'TAG', 'RELEASE']
         default: "PR"
-      FRAMEWORK_PUBLISH_VERSION:
-          description: 'Publish Framework Version'
-          required: false
-          default: "1.4.0" 
-      AGENT_PUBLISH_VERSION:
-        description: 'Publish Products Release Version'
-        required: false
-        default: "1.31.0-2453"
-      CONSOLE_PUBLISH_VERSION:
-        description: 'Publish Console Version'
-        required: false
-        default: "1.30.3-2407"
-      GATEWAY_PUBLISH_VERSION:
-        description: 'Publish Gateway Version'
-        required: false
-        default: "1.30.3-2407"
-      LOADGEN_PUBLISH_VERSION:
-        description: 'Publish Loadgen Version'
-        required: false
-        default: "1.30.3-2407"
-      EASYSEARCH_PUBLISH_VERSION:
-        description: 'Publish Easysearch Version'
-        required: false
-        default: "2.1.3-2719"
-      COCOAPP_PUBLISH_VERSION:
-        description: 'Publish Coco App Version'
-        required: false
-        default: "0.10.0-2619"
-      COCOSERVER_PUBLISH_VERSION:
-        description: 'Publish Coco Server Version'
-        required: false
-        default: "0.12.0-2201"
-      EASYSEARCH_PUBLISH:
-          description: 'Products with Easysearch'
-          required: false
-          type: boolean
-          default: false
       FRAMEWORK_PUBLISH:
         description: 'Products with Framework'
         required: false
         type: boolean
         default: false
+      FRAMEWORK_PUBLISH_VERSION:
+          description: 'Publish Framework Version'
+          required: false
+          default: "1.4.0" 
       AGENT_PUBLISH:
         description: 'Products with Agent'
         required: false
         type: boolean
         default: false
+      AGENT_PUBLISH_VERSION:
+        description: 'Publish Products Release Version'
+        required: false
+        default: "1.31.0-2453"
       CONSOLE_PUBLISH:
         description: 'Products with Console'
         required: false
         type: boolean
         default: false
+      CONSOLE_PUBLISH_VERSION:
+        description: 'Publish Console Version'
+        required: false
+        default: "1.30.3-2407"
       GATEWAY_PUBLISH:
         description: 'Products with Gateway'
         required: false
         type: boolean
         default: false
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Publish Gateway Version'
+        required: false
+        default: "1.30.3-2407"
       LOADGEN_PUBLISH:
         description: 'Products with Loadgen'
         required: false
         type: boolean
         default: false
+      LOADGEN_PUBLISH_VERSION:
+        description: 'Publish Loadgen Version'
+        required: false
+        default: "1.30.3-2407"
+      EASYSEARCH_PUBLISH:
+          description: 'Products with Easysearch'
+          required: false
+          type: boolean
+          default: false
+      EASYSEARCH_PUBLISH_VERSION:
+        description: 'Publish Easysearch Version'
+        required: false
+        default: "2.1.3-2719"
       COCOAPP_PUBLISH:
         description: 'Products with Coco App'
         required: false
         type: boolean
         default: false
+      COCOAPP_PUBLISH_VERSION:
+        description: 'Publish Coco App Version'
+        required: false
+        default: "0.10.0-2619"
       COCOSERVER_PUBLISH:
         description: 'Products with Coco Server'
         required: false
         type: boolean
         default: false
+      COCOSERVER_PUBLISH_VERSION:
+        description: 'Publish Coco Server Version'
+        required: false
+        default: "0.12.0-2201"
 
 jobs:
   generate-matrix: 

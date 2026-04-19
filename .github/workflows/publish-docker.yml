@@ -28,33 +28,33 @@ on:
         required: false
         type: boolean
         default: false
+      AGENT_PUBLISH_VERSION:
+        description: 'Publish Agent Version'
+        required: false
+        default: "1.31.0"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
         type: boolean
         default: false
+      CONSOLE_PUBLISH_VERSION:
+        description: 'Publish Console Version'
+        required: false
+        default: "1.30.3"
       GATEWAY_PUBLISH:
         description: 'Gateway'
         required: false
         type: boolean
         default: false
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Publish Gateway Version'
+        required: false
+        default: "1.30.3"
       LOADGEN_PUBLISH:
         description: 'Loadgen'
         required: false
         type: boolean
         default: false
-      AGENT_PUBLISH_VERSION:
-        description: 'Publish Agent Version'
-        required: false
-        default: "1.31.0"
-      CONSOLE_PUBLISH_VERSION:
-        description: 'Publish Console Version'
-        required: false
-        default: "1.30.3"
-      GATEWAY_PUBLISH_VERSION:
-        description: 'Publish Gateway Version'
-        required: false
-        default: "1.30.3"
       LOADGEN_PUBLISH_VERSION:
         description: 'Publish Loadgen Version'
         required: false
