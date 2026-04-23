@@ -45,9 +45,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt -i ${PIP_INDEX_URL} \
     && pip install --no-cache-dir "/usr/src/mem0[extras]" -i ${PIP_INDEX_URL}
 
 # ══════════════════════════════════════════════════════
-# Stage 2 — runtime: minimal image, no compiler toolchain
+# Stage 2 — prod: minimal image, no compiler toolchain
 # ══════════════════════════════════════════════════════
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim AS prod
 
 LABEL org.opencontainers.image.name="public/openmemory-mcp-easysearch" \
       org.opencontainers.image.description="OpenMemory MCP server with Easysearch vector store support." \
