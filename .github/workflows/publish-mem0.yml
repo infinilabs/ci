@@ -1,4 +1,4 @@
-name: Build and Push Mem0 Docker Image
+name: Publish OpenMemory MCP Docker Image
 
 env:
     PNAME: mem0
