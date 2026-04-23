@@ -150,7 +150,7 @@ jobs:
       # ── Trivy ──────────────────────────────────────────────────────────────
       - name: Run Trivy (HTML Report)
         id: trivy_html
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
         with:
           scan-type: 'fs'
@@ -165,7 +165,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Run Trivy (Console Table)
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
         with:
           scan-type: 'fs'
