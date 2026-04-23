@@ -66,15 +66,16 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin                           /usr/local/bin
 
 # ── Create a non-root user for least-privilege execution ──
-RUN groupadd --gid 1001 appgroup \
-    && useradd  --uid 1001 --gid appgroup --no-create-home appuser
+RUN groupadd --system --gid 602 easysearch \
+    && useradd --system --uid 602 --gid easysearch \
+               --no-create-home --shell /sbin/nologin easysearch
 
 # ── Step 3: copy application code ──
 WORKDIR /app
 COPY openmemory/api/ .
-RUN chown -R appuser:appgroup /app
+RUN chown -R easysearch:easysearch /app
 
-USER appuser
+USER easysearch
 
 EXPOSE ${APP_PORT}
 
