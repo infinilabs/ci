@@ -32,7 +32,7 @@ jobs:
 
       - name: Prepare build context
         run: |
-          DOCKER_REPO="public/openmemory-mcp-easysearch"
+          DOCKER_REPO="${{ secrets.INFINI_DOCKER_REGISTRY }}/public/openmemory-mcp-easysearch"
           BUILD_TAG="${{ github.event.inputs.PUBLISH_TAG }}"
           BUILD_NUMBER=${{ github.run_number }}
           echo "DOCKER_REPO=$DOCKER_REPO" >> $GITHUB_ENV
