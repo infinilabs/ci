@@ -1,0 +1,76 @@
+name: Build and Push Mem0 Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_TAG:
+        description: 'Please enter the tag (e.g., 0.1.0)'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Harbor
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ secrets.INFINI_DOCKER_REGISTRY }}
+          username: ${{ secrets.INFINI_DOCKER_USERNAME }}
+          password: ${{ secrets.INFINI_DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ secrets.INFINI_DOCKER_REGISTRY }}/openmemory-mcp-easysearch:${{ github.event.inputs.PUBLISH_TAG }}
+
+  update-repo:
+    name: Update version in CI repo
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update release version in workflow files
+        run: |
+          TAG="${{ github.event.inputs.PUBLISH_TAG }}"
+          cd $GITHUB_WORKSPACE/.github/workflows
+          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
+          update_yaml_version "publish-mem0.yml" "tag" "${TAG}"
+
+      - name: Create bumpver pull request
+        uses: peter-evans/create-pull-request@v8
+        id: create-pr
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          commit-message: "bumpver: publish mem0 ${{ github.event.inputs.PUBLISH_TAG }}"
+          branch: "release/publish-mem0-${{ github.run_id }}"
+          title: "bumpver: publish mem0 ${{ github.event.inputs.PUBLISH_TAG }}"
+          body: "Automated version update for mem0 ${{ github.event.inputs.PUBLISH_TAG }}"
+          labels: "auto-merge, automated"
+          delete-branch: true
+          add-paths: |
+            .github/workflows/publish-mem0.yml
+
+      - name: Auto-merge the pr
+        if: ${{ steps.create-pr.outputs.pull-request-url }}
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          GH_TOKEN: ${{ secrets.REPO_PAT }}
+        run: gh pr merge "$PR_URL" --squash
