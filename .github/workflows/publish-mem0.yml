@@ -1,5 +1,8 @@
 name: Build and Push Mem0 Docker Image
 
+env:
+    PNAME: mem0
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,6 +10,10 @@ on:
         description: 'Please enter the tag (e.g., 0.1.0)'
         required: true
         default: '0.1.0'
+      BRANCH:
+        description: 'Please enter the branch'
+        required: true
+        default: 'feat/easysearch'
 
 jobs:
   build-and-push:
@@ -15,6 +22,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Checkout ${{ env.PNAME }} code
+        uses: actions/checkout@v6
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
+          ref: ${{ github.event.inputs.BRANCH }}
+          path: ${{ env.PNAME }}
+
+      - name: Prepare build context
+        run: |
+          DOCKER_REPO="${{ secrets.INFINI_DOCKER_REGISTRY }}/openmemory-mcp-easysearch"
+          BUILD_TAG="${{ github.event.inputs.PUBLISH_TAG }}"
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "DOCKER_REPO=$DOCKER_REPO" >> $GITHUB_ENV
+          echo "BUILD_TAG=$BUILD_TAG" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -32,10 +55,18 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: Dockerfile
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
           push: true
-          tags: ${{ secrets.INFINI_DOCKER_REGISTRY }}/openmemory-mcp-easysearch:${{ github.event.inputs.PUBLISH_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: 
+            ${{ env.DOCKER_REPO }}:${{ env.BUILD_TAG }}
+            ${{ env.DOCKER_REPO }}:${{ env.BUILD_TAG }}-${{ env.BUILD_NUMBER }}
 
   update-repo:
     name: Update version in CI repo
