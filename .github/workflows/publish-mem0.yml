@@ -10,7 +10,7 @@ on:
       PUBLISH_TAG:
         description: 'Please enter the tag (e.g., 0.1.0)'
         required: true
-        default: '0.1.0'
+        default: "0.1.0"
       BRANCH:
         description: 'Please enter the branch'
         required: true
