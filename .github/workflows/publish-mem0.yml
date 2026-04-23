@@ -83,7 +83,7 @@ jobs:
           TAG="${{ github.event.inputs.PUBLISH_TAG }}"
           cd $GITHUB_WORKSPACE/.github/workflows
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
-          update_yaml_version "publish-mem0.yml" "tag" "${TAG}"
+          update_yaml_version "publish-mem0.yml" "PUBLISH_TAG" "${TAG}"
 
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v8
