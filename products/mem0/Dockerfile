@@ -34,8 +34,8 @@ RUN pip install --no-cache-dir --upgrade \
     -i ${PIP_INDEX_URL}
 
 # ── Step 1: copy the local mem0 package ──
-COPY pyproject.toml mem0/README.md /usr/src/mem0/
-COPY mem0/                          /usr/src/mem0/mem0/
+COPY pyproject.toml README.md    /usr/src/mem0/
+COPY mem0/                       /usr/src/mem0/mem0/
 
 # ── Step 2: install openmemory/api dependencies ──
 #    Copy requirements first so this layer is cached when only app code changes.
