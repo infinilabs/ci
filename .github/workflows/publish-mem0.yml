@@ -55,7 +55,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          context: ${{ github.workspace }}/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
           target: prod
           platforms: |
