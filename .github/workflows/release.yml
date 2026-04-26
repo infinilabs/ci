@@ -760,6 +760,42 @@ jobs:
             echo "Move coco-server-${COCO_VER} from snapshot to stable"
             oss move -p coco-server --prefix coco-server-${COCO_VER}
           fi
+      - name: Refresh stable files cache
+        env:
+          RELEASE_IPS: ${{ vars.RELEASE_IPS }}
+          DO_AGENT: ${{ inputs.AGENT_PUBLISH }}
+          DO_CONSOLE: ${{ inputs.CONSOLE_PUBLISH }}
+          DO_GATEWAY: ${{ inputs.GATEWAY_PUBLISH }}
+          DO_LOADGEN: ${{ inputs.LOADGEN_PUBLISH }}
+          DO_EZS: ${{ inputs.EASYSEARCH_PUBLISH }}
+          DO_COCO_APP: ${{ inputs.COCOAPP_PUBLISH }}
+          DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Refresh download page on ci success"
+            if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/agent/stable/"
+            fi
+            if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/console/stable/"
+            fi
+            if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/gateway/stable/"
+            fi
+            if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/loadgen/stable/"
+            fi
+            if [[ "${{ inputs.EASYSEARCH_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/easysearch/stable/"
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/easysearch/stable/bundle/"
+            fi
+            if [[ "${{ inputs.COCOAPP_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/coco/app/stable/"
+            fi
+            if [[ "${{ inputs.COCOSERVER_PUBLISH }}" == "true" ]]; then
+              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/coco/server/stable/"
+            fi
+          fi
 
   release-official-website:
     needs: [release-metadata, release-files]

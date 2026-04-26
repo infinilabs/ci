@@ -1,0 +1,345 @@
+name: Deploy INFINI Cloud Stack
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - '.github/workflows/deploy-cloud.yml'
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Target Kubernetes namespace'
+        required: false
+        default: 'dev'
+      skip_smoke_test:
+        description: 'Skip smoke tests (true/false)'
+        required: false
+        default: 'false'
+      easysearch_version:
+        description: 'Easysearch image version'
+        required: false
+        default: '2.1.2'
+      cert_manager_version:
+        description: 'cert-manager helm chart version'
+        required: false
+        default: 'v1.20.1'
+      cloud_image_version:
+        description: 'Cloud app image version'
+        required: false
+        default: '1.9.1'
+      minio_image_tag:
+        description: 'MinIO image tag'
+        required: false
+        default: 'RELEASE.2025-04-22T22-12-26Z'
+
+env:
+  NS: ${{ github.event.inputs.namespace || 'dev' }}
+  EASYSEARCH_VERSION: ${{ github.event.inputs.easysearch_version || '2.1.2' }}
+  CERT_MANAGER_VERSION: ${{ github.event.inputs.cert_manager_version || 'v1.20.1' }}
+  CLOUD_IMAGE_VERSION: ${{ github.event.inputs.cloud_image_version || '1.9.1' }}
+  MINIO_IMAGE: "${{secrets.DOCKER_REGISTRY}}/minio/minio"
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: Namespace + Mailpit (no dependencies)
+  # ──────────────────────────────────────────────
+  deploy-mailpit:
+    name: "1 · Namespace & Mailpit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f -
+          echo "✅ Namespace '$NS' ready"
+
+      - name: Deploy Mailpit
+        run: |
+          kubectl -n $NS apply -f apps/mailpit.yaml
+          kubectl -n $NS rollout status deployment/mailpit --timeout=120s
+          echo "✅ Mailpit deployed"
+          echo "🌐 UI:   http://mailpit.$NS.svc.infini.cloud:8025/"
+          echo "📨 SMTP: mailpit.$NS.svc.infini.cloud:1025"
+
+  # ──────────────────────────────────────────────
+  # Job 2: MinIO S3 (no dependencies)
+  # ──────────────────────────────────────────────
+  deploy-minio:
+    name: "2 · MinIO S3"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace
+        run: kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create MinIO secret
+        run: |
+          kubectl create secret generic minio-secret \
+            -n $NS \
+            --from-literal=MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          echo "✅ MinIO secret ready"
+
+      - name: Deploy MinIO
+        run: |
+          kubectl -n $NS apply -f apps/minio.yaml
+          kubectl -n $NS rollout status deployment/minio --timeout=180s
+          echo "✅ MinIO deployed"
+          echo "🌐 Console: http://minio.$NS.svc.infini.cloud:9091"
+
+      - name: Verify MinIO health
+        run: |
+          # Wait for the MinIO API endpoint to respond
+          for i in $(seq 1 12); do
+            STATUS=$(kubectl -n $NS exec deploy/minio -- curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/minio/health/live 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ MinIO health check passed"
+              exit 0
+            fi
+            echo "  Waiting... attempt $i/12 (status=$STATUS)"
+            sleep 10
+          done
+          echo "❌ MinIO health check failed after 2 minutes"
+          exit 1
+
+  # ──────────────────────────────────────────────
+  # Job 3: cert-manager (no dependencies)
+  # ──────────────────────────────────────────────
+  deploy-cert-manager:
+    name: "3 · cert-manager"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Add Helm repos
+        run: |
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm repo update
+          echo "✅ Helm repos updated"
+
+      - name: Install / upgrade cert-manager
+        run: |
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --create-namespace \
+            --version $CERT_MANAGER_VERSION \
+            --set crds.enabled=true \
+            --set prometheus.enabled=false \
+            --set webhook.timeoutSeconds=10 \
+            --wait \
+            --timeout 5m
+          echo "✅ cert-manager $CERT_MANAGER_VERSION ready"
+
+      - name: Verify cert-manager pods
+        run: |
+          kubectl -n cert-manager wait --for=condition=Ready pods \
+            -l app.kubernetes.io/instance=cert-manager \
+            --timeout=120s
+          echo "✅ cert-manager pods healthy"
+
+  # ──────────────────────────────────────────────
+  # Job 4: Easysearch — depends on cert-manager
+  # ──────────────────────────────────────────────
+  deploy-easysearch:
+    name: "4 · Easysearch"
+    runs-on: ubuntu-latest
+    needs: [deploy-cert-manager]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Add Helm repos
+        run: |
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm repo add infinilabs https://helm.infinilabs.com --force-update
+          helm repo update
+          helm search repo infinilabs/easysearch --versions | head -5
+
+      - name: Create namespace
+        run: kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply CA secret
+        run: kubectl -n $NS apply -f apps/ca-secret.yaml
+
+      - name: Create Easysearch secrets
+        run: |
+          kubectl create secret generic easysearch-access-secret \
+            --namespace $NS \
+            --from-literal=easysearch-pasword='${{ secrets.EASYSEARCH_ACCESS_PASSWORD }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+          echo "✅ Easysearch secrets ready"
+
+      - name: Install / upgrade Easysearch
+        run: |
+          helm upgrade --install easysearch infinilabs/easysearch \
+            --namespace $NS \
+            --create-namespace \
+            -f apps/easysearch.yaml \
+            --wait \
+            --timeout 10m
+          echo "✅ Easysearch deployed"
+          echo "🌐 API: http://easysearch.$NS.svc.infini.cloud:9200/"
+
+      - name: Verify Easysearch
+        run: |
+          kubectl -n $NS rollout status statefulset/easysearch --timeout=300s
+          echo "✅ Easysearch StatefulSet healthy"
+
+  # ──────────────────────────────────────────────
+  # Job 5: Cloud App — depends on mailpit + minio + easysearch
+  # ──────────────────────────────────────────────
+  deploy-cloud:
+    name: "5 · Cloud App"
+    runs-on: ubuntu-latest
+    needs: [deploy-mailpit, deploy-minio, deploy-easysearch]
+    outputs:
+      cloud_ip: ${{ steps.get-ip.outputs.ip }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create namespace
+        run: kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy Cloud App
+        run: |
+          kubectl -n $NS apply -f apps/cloud.yaml
+          kubectl -n $NS rollout status deployment/cloud --timeout=180s
+          echo "✅ Cloud app deployed"
+
+      - name: Configure LoadBalancer (remove NodePort conflicts)
+        run: |
+          kubectl -n $NS patch svc cloud -p '{"spec":{"type":"LoadBalancer"}}'
+
+          # Remove nodePort to avoid conflicts, disable auto-allocation
+          kubectl -n $NS patch svc cloud --type='json' -p='[
+            {"op":"add","path":"/spec/type","value":"LoadBalancer"},
+            {"op":"add","path":"/spec/allocateLoadBalancerNodePorts","value":false},
+            {"op":"remove","path":"/spec/ports/0/nodePort"}
+          ]' 2>/dev/null || true
+
+          echo "✅ Service patched to LoadBalancer (no NodePort)"
+
+      - name: Wait for external IP
+        id: get-ip
+        run: |
+          echo "⏳ Waiting for LoadBalancer IP (up to 5 min)..."
+          for i in $(seq 1 30); do
+            IP=$(kubectl -n $NS get svc cloud \
+              -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$IP" ]; then
+              echo "✅ External IP: $IP"
+              echo "ip=$IP" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "  Attempt $i/30 — no IP yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "⚠️  LoadBalancer IP not assigned — check cloud provider quota"
+          echo "ip=pending" >> $GITHUB_OUTPUT
+
+      - name: Print access info
+        run: |
+          IP="${{ steps.get-ip.outputs.ip }}"
+          echo ""
+          echo "╔═══════════════════════════════════════════════════════════════════╗"
+          echo "║        Deployment Summary                                         ║"
+          echo "╠═══════════════════════════════════════════════════════════════════╣"
+          echo "║ Cloud IP:    $IP"                                         ╣
+          echo "║ Mailpit UI:  http://mailpit.$NS.svc.infini.cloud:8025/"           ╣
+          echo "║ MinIO:       http://minio.$NS.svc.infini.cloud:9091"              ╣
+          echo "║ Easysearch:  http://easysearch.$NS.svc.infini.cloud:9200/"        ╣
+          echo "╚═══════════════════════════════════════════════════════════════════╝"
+
+  # ──────────────────────────────────────────────
+  # Job 6: Smoke Tests — depends on cloud deploy
+  # ──────────────────────────────────────────────
+  smoke-tests:
+    name: "6 · Smoke Tests"
+    runs-on: ubuntu-latest
+    needs: [deploy-cloud]
+    if: github.event.inputs.skip_smoke_test != 'true'
+    steps:
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Install swaks
+        run: sudo apt-get install -y swaks
+
+      - name: Test SMTP (Mailpit)
+        run: |
+          swaks --to cloud@infinilabs.com \
+                --from no-reply@infinilabs.com \
+                --server mailpit.$NS.svc.infini.cloud:1025 \
+                --protocol SMTP \
+                --data "Subject: [CI] Smoke test from GitHub Actions\n\nDeployed at $(date -u)"
+          echo "✅ SMTP smoke test passed"
+
+      - name: Test Easysearch API
+        run: |
+          STATUS=$(kubectl -n $NS exec deploy/easysearch -- \
+            curl -sk -o /dev/null -w "%{http_code}" \
+            -u "admin:${{ secrets.EASYSEARCH_ACCESS_PASSWORD }}" \
+            http://localhost:9200/_cluster/health 2>/dev/null || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Easysearch health endpoint OK"
+          else
+            echo "❌ Easysearch health check returned HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Test MinIO health
+        run: |
+          STATUS=$(kubectl -n $NS exec deploy/minio -- \
+            curl -s -o /dev/null -w "%{http_code}" \
+            http://localhost:9000/minio/health/live 2>/dev/null || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ MinIO health check OK"
+          else
+            echo "❌ MinIO health check returned HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Smoke test summary
+        run: |
+          echo "✅ All smoke tests passed — stack is healthy"
