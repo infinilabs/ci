@@ -19,9 +19,10 @@ echo
 PIDS=()
 for IP in "${NODE_IPS[@]}"; do
   IP=$(echo "$IP" | tr -d ' ')
+  MASKED=$(echo "$IP" | sed 's/\.[^.]*\.[^.]*$/.xxx.xxx/')
   curl --resolve "$DOMAIN:$PORT:$IP" \
     -o /dev/null \
-    -w "  [%{http_code}] Node $IP\n" \
+    -w "  [%{http_code}] Node $MASKED\n" \
     -H "$HEADER" \
     "$URL" &
   PIDS+=($!)
