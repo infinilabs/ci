@@ -7,6 +7,7 @@ defaults:
 env:
   PNAME: ccr
   TZ: Asia/Shanghai
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
