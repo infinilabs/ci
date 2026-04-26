@@ -122,3 +122,11 @@ jobs:
             oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file.sha512"
           done
 
+      - name: Refresh download page on success
+        env:
+          RELEASE_IPS: ${{ vars.RELEASE_IPS }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Refresh download page on ci success"
+            $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/.plugins/${{ env.PNAME }}/"
+          fi
