@@ -446,6 +446,9 @@ jobs:
     needs: [publish]
     if: success()
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
       - name: Refresh download page on success
         env:
           RELEASE_IPS: ${{ vars.RELEASE_IPS }}
