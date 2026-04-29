@@ -514,7 +514,12 @@ jobs:
           RELEASE_IPS: ${{ vars.RELEASE_IPS }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SCRIPT="${GITHUB_WORKSPACE}/scripts/purge-cache.sh"
+            if [[ ! -f "$SCRIPT" ]]; then
+              echo "::error::❌ Script not found: $SCRIPT"
+              exit 0
+            fi
             echo "Refresh download page on ci success"
-            $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/$PNAME/server/snapshot/"
+            "$SCRIPT" "$RELEASE_URL/$PNAME/server/snapshot/"
           fi
 

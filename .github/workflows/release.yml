@@ -772,28 +772,33 @@ jobs:
           DO_COCO_SERVER: ${{ inputs.COCOSERVER_PUBLISH }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SCRIPT="${GITHUB_WORKSPACE}/scripts/purge-cache.sh"
+            if [[ ! -f "$SCRIPT" ]]; then
+              echo "::error::❌ Script not found: $SCRIPT"
+              exit 0
+            fi
             echo "Refresh download page on ci success"
             if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/agent/stable/"
+              "$SCRIPT" "$RELEASE_URL/agent/stable/"
             fi
             if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/console/stable/"
+              "$SCRIPT" "$RELEASE_URL/console/stable/"
             fi
             if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/gateway/stable/"
+              "$SCRIPT" "$RELEASE_URL/gateway/stable/"
             fi
             if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/loadgen/stable/"
+              "$SCRIPT" "$RELEASE_URL/loadgen/stable/"
             fi
             if [[ "${{ inputs.EASYSEARCH_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/easysearch/stable/"
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/easysearch/stable/bundle/"
+              "$SCRIPT" "$RELEASE_URL/easysearch/stable/"
+              "$SCRIPT" "$RELEASE_URL/easysearch/stable/bundle/"
             fi
             if [[ "${{ inputs.COCOAPP_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/coco/app/stable/"
+              "$SCRIPT" "$RELEASE_URL/coco/app/stable/"
             fi
             if [[ "${{ inputs.COCOSERVER_PUBLISH }}" == "true" ]]; then
-              $GITHUB_WORKSPACE/scripts/purge-cache.sh "$RELEASE_URL/coco/server/stable/"
+              "$SCRIPT" "$RELEASE_URL/coco/server/stable/"
             fi
           fi
 
