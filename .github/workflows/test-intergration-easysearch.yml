@@ -568,6 +568,41 @@ jobs:
           fi
           exit $exit_code
 
+      - name: Run analysis-ik tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :plugins:analysis-ik:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.wltea.analyzer.lucene.IKTokenizerBehaviorTests \
+                  --tests org.wltea.analyzer.lucene.IKTokenizerGoldenCorrectnessTests \
+                  --tests org.wltea.analyzer.dic.IKAnalyzerTests \
+                  --tests org.wltea.analyzer.core.CharacterUtilTests \
+                  --tests org.wltea.analyzer.core.QuickSortSetTests \
+                  --tests org.easysearch.analysis.ik.AnalysisIkPluginLifecycleTests \
+                  --tests org.easysearch.analysis.ik.action.TransportReloadIKDictionaryActionTests \
+                  --tests org.wltea.analyzer.core.AnalyzeContextOutputStatsTests.shouldRestoreOutputStatsTrackerAcrossNestedScopes \
+                  --tests 'org.wltea.analyzer.dic.DictSegmentLookupStatsTests.should*' \
+                  -Dtests.jvms=1 \
+                  -Dtests.security.manager=false \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="analysis-ik"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/analysis-ik/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v7
