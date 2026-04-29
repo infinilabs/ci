@@ -1,35 +1,30 @@
 #!/usr/bin/env bash
+# Release cache purge utility
+# Usage: ./purge-cache.sh <url> [header]
+# Env: RELEASE_IPS (comma-separated node IPs)
+set -euo pipefail
 
-URL="${1:?Usage: $0 <url> [extra-header]}"
-HEADER="${2:-x-reset-cache: true}"
+[[ $# -lt 1 || -z "${RELEASE_IPS:-}" ]] && { echo "::error::Usage: $0 <url> [header]"; exit 2; }
 
-IFS=',' read -ra NODE_IPS <<< "${RELEASE_IPS:?RELEASE_IPS env var is required}"
-
+URL="$1"; HEADER="${2:-x-reset-cache: true}"
+IFS=',' read -ra IPS <<< "$RELEASE_IPS"
 DOMAIN=$(echo "$URL" | awk -F[/:] '{print $4}')
-[[ "$URL" == https* ]] && PORT="443" || PORT="80"
+PORT=$([[ "$URL" == https* ]] && echo 443 || echo 80)
 
 echo "=== Purging: $URL ==="
-# Wait a bit to ensure the deployment is fully rolled out and the cache is warmed up
-for i in $(seq 30); do
-  printf '.'
-  sleep 1
-done
-echo
+# Wait for rollout (30s max)
+for i in {1..30}; do echo -n "."; sleep 1; done; echo " [✓]"
 
-PIDS=()
-for IP in "${NODE_IPS[@]}"; do
-  IP=$(echo "$IP" | tr -d ' ')
-  MASKED=$(echo "$IP" | sed 's/\.[^.]*\.[^.]*$/.xxx.xxx/')
-  curl --resolve "$DOMAIN:$PORT:$IP" \
-    -o /dev/null \
-    -w "  [%{http_code}] Node $MASKED\n" \
-    -H "$HEADER" \
-    "$URL" &
-  PIDS+=($!)
+# Parallel purge requests
+PIDS=(); FAILS=0
+for IP in "${IPS[@]}"; do
+  IP=$(echo "$IP" | tr -d ' '); MASK=$(echo "$IP" | sed 's/\.[^.]*\.[^.]*$/.xxx.xxx/')
+  curl -sS --resolve "$DOMAIN:$PORT:$IP" -o /dev/null -w "  [%{http_code}] $MASK\n" \
+    -H "$HEADER" --connect-timeout 10 "$URL" & PIDS+=($!)
 done
 
-for PID in "${PIDS[@]}"; do
-  wait "$PID" || echo "  WARN: PID $PID failed, continuing..."
-done
+# Collect results
+for PID in "${PIDS[@]}"; do wait "$PID" || { echo "::warning::Node failed"; ((FAILS++))||true; }; done
 
+[[ $FAILS -gt 0 ]] && { echo "=== Done ($FAILS failed) ==="; exit 1; }
 echo "=== Done ==="
