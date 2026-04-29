@@ -204,7 +204,8 @@ jobs:
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
           # init license and enterprise plugins
           git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+          git clone --depth 1 git@github.com:infinilabs/agent-enterprise-plugin.git $WORK/$PNAME/plugin/enterprise
+          git clone --depth 1 git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
 
       - name: Build ui for ${{ matrix.product }} web
         run: |
