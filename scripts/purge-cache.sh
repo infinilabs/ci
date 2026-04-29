@@ -11,7 +11,7 @@ IFS=',' read -ra IPS <<< "$RELEASE_IPS"
 DOMAIN=$(echo "$URL" | awk -F[/:] '{print $4}')
 PORT=$([[ "$URL" == https* ]] && echo 443 || echo 80)
 
-echo "=== Purging: $URL ==="
+echo "======================== Purging: $URL =========================="
 # Wait for rollout (30s max)
 for i in {1..30}; do echo -n "."; sleep 1; done; echo " [✓]"
 
@@ -26,5 +26,5 @@ done
 # Collect results
 for PID in "${PIDS[@]}"; do wait "$PID" || { echo "::warning::Node failed"; ((FAILS++))||true; }; done
 
-[[ $FAILS -gt 0 ]] && { echo "=== Done ($FAILS failed) ==="; exit 1; }
-echo "=== Done ==="
+[[ $FAILS -gt 0 ]] && { echo "======================== Done ($FAILS failed) ========================"; exit 1; }
+echo "======================== Done ========================"
