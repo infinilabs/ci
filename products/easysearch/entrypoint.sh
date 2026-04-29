@@ -132,6 +132,40 @@ setup_agent() {
   cd "$AGENT_DIR"
   if [ $? -ne 0 ]; then log "ERROR: Failed to change directory to $AGENT_DIR."; return 1; fi
 
+  # --- server setting for cloud configuration ---
+  VERSION=$(./agent -v 2>/dev/null | awk '/^agent/{print $2}')
+  if [[ $(printf '%s\n%s' "$VERSION" '1.31.0' | sort -V | head -n1) != '1.31.0' ]]; then
+    # Process METRICS_CONFIG_SERVER variable and update agent.yml
+    log "Configuring agent based on METRICS_CONFIG_SERVER variable..."
+    IFS=',' read -r -a servers <<< "$METRICS_CONFIG_SERVER"
+    servers_yaml=""
+    valid_servers=true
+    for server in "${servers[@]}"; do
+      if ! [[ "$server" =~ ^(http|https):// ]]; then
+        log "ERROR: Invalid METRICS_CONFIG_SERVER '$server'. Must start with http:// or https://."
+        valid_servers=false
+        break
+      fi
+      servers_yaml+="- \"$server\""
+      servers_yaml+=$'\n    '
+    done
+
+    if ! $valid_servers; then
+      log "Agent configuration aborted due to invalid servers."
+      return 1
+    fi
+
+    # Update servers list in agent.yml (relative to current directory $AGENT_DIR)
+    log "Updating agent.yml servers list..."
+    # Use sed carefully, consider quoting variables if they might contain special characters
+    sed -i "/^configs:/, /soft_delete:/ {
+      /^\s*-/d
+      /servers:/a\\
+      $servers_yaml
+    }" agent.yml # agent.yml is relative to $AGENT_DIR
+    if [ $? -ne 0 ]; then log "ERROR: Failed to update agent.yml servers list."; return 1; fi
+  fi
+
   # --- Multi-tenant mode configuration ---
   if [ -n "${TENANT_ID}" ] && [ -n "${CLUSTER_ID}" ]; then
 
@@ -185,6 +219,7 @@ EOF
       sed -i -e '$a\' agent.yml # Ensure there's a newline at the end of agent.yml
       # Use <<-EOF for multi-line append to avoid issues with quotes/variables
       cat <<-EOF >> agent.yml
+  # add setting for container env
   always_register_after_restart: true
   allow_generated_metrics_tasks: true
 node:
@@ -192,6 +227,7 @@ node:
 EOF
     if [ -n "$CLUSTER_ID" ]; then
       cat <<-EOF >> agent.yml
+  # add cluster_id label for single-tenant mode if CLUSTER_ID is set
   labels:
     cluster_id: "$CLUSTER_ID"
 EOF
