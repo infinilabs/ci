@@ -302,7 +302,7 @@ jobs:
       - name: Upload coco as github artifact
         uses: actions/upload-artifact@v7
         with:
-          name: coco-artifact-${{ github.run_id }}
+          name: coco-server-${{ github.run_id }}
           path: ${{ env.WORK }}/**/*.tar.gz
           retention-days: 1
           if-no-files-found: error

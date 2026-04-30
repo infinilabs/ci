@@ -330,7 +330,7 @@ jobs:
       - name: Upload build artifacts for ${{ matrix.target }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.REPO-NAME }}-rpm
+          name: ${{ env.REPO-NAME }}-${{ matrix.target }}-rpm-${{ github.run_id }}
           path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
           retention-days: 1
           if-no-files-found: warn
@@ -339,7 +339,7 @@ jobs:
       - name: Upload build artifacts for ${{ matrix.target }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.REPO-NAME }}-deb
+          name: ${{ env.REPO-NAME }}-${{ matrix.target }}-deb-${{ github.run_id }}
           path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
           retention-days: 1
           if-no-files-found: warn
