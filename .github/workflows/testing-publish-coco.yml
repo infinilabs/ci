@@ -299,11 +299,11 @@ jobs:
           done
           ls -lrt $WORK/$PNAME-$VERSION-*.*
 
-      - name: Upload .public as github artifact
+      - name: Upload coco as github artifact
         uses: actions/upload-artifact@v7
         with:
           name: coco-artifact-${{ github.run_id }}
-          path: ${{ env.WORK }}/${{ env.PNAME }}/**/*.tar.gz
+          path: ${{ env.WORK }}/**/*.tar.gz
           retention-days: 1
           if-no-files-found: error
           include-hidden-files: true
