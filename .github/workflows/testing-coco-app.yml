@@ -330,8 +330,17 @@ jobs:
       - name: Upload build artifacts for ${{ matrix.target }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.REPO-NAME }}-assets-${{ matrix.target }}
-          path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.{exe,dmg,deb,rpm}
+          name: ${{ env.REPO-NAME }}-rpm
+          path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+          retention-days: 1
+          if-no-files-found: warn
+          include-hidden-files: false
+
+      - name: Upload build artifacts for ${{ matrix.target }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.REPO-NAME }}-deb
+          path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
           retention-days: 1
           if-no-files-found: warn
           include-hidden-files: false
