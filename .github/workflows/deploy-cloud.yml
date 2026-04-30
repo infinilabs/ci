@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
@@ -131,7 +131,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
@@ -174,7 +174,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
@@ -230,7 +230,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
@@ -298,7 +298,7 @@ jobs:
     if: github.event.inputs.skip_smoke_test != 'true'
     steps:
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
