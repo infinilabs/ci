@@ -1,0 +1,338 @@
+name: Publish Coco App Files (Testing)
+defaults:
+  run:
+    shell: bash
+env:
+  CI: false
+  REPO-NAME: "coco-app"
+  PNAME: "coco/app"
+  OSS_PATH: /Release/coco/app/snapshot
+  TOKEN: ${{ secrets.X_TOKEN }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_CERTIFICATE_PASSWORD: ""
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  NODEJS_VERSION: 20
+  FILE_EXTENSIONS: '\.(dmg|rpm|deb|exe)$'
+  UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
+  NODE_OPTIONS: "--max-old-space-size=8192"
+
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish Release Version'
+        required: true
+        default: "1.0.0"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: true
+        type: boolean
+        default: true
+jobs:
+  build-app:
+    env:
+      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
+      VITE_LOG_LEVEL: 'warn'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "ubuntu-22.04"
+            target: "x86_64-unknown-linux-gnu"
+            arch: "amd64"
+          - platform: "ubuntu-22.04-arm"
+            target: "aarch64-unknown-linux-gnu"
+            arch: "arm64"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Checkout coco app repository
+        uses: actions/checkout@v6
+        with: 
+          repository: ${{ vars.GIT_REPO }}/${{ env.REPO-NAME }}
+          ref: main
+          path: ${{ env.REPO-NAME }}
+
+      - name: Checkout dependency repository
+        uses: actions/checkout@v6
+        with:
+          repository: 'infinilabs/pizza'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          submodules: recursive
+          ref: main
+          path: pizza
+
+      - name: Set up and check env
+        run: |
+          echo "Running on ${{ matrix.platform }} with target ${{ matrix.target }} and arch ${{ matrix.arch }}"
+
+      - name: Set version & tag with ${{ matrix.platform }}
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          current_version=$PUBLISH_VERSION
+          if [[ -z "$current_version" ]]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                run_number=${{ github.run_number }}
+                offset=${{ vars.OFFSET }}
+                build_number=$((run_number + offset))
+              fi
+            fi
+          fi
+
+          version="$current_version-$build_number"
+          echo "Build $PNAME with $version"
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i '' "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            echo "Build version: $version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          else
+            echo "Build version: $version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$version\"/" src-tauri/Cargo.toml
+          fi
+          
+          tag=".v${current_version}"
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "UPGRADE=$tag" >> $GITHUB_ENV
+
+      - name: Set Version with ${{ matrix.platform }}
+        if: ${{ !inputs.PUBLISH_RELEASE }}
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            PUBLISH_VERSION="${BASH_REMATCH[1]}"
+          fi
+          current_version=$PUBLISH_VERSION
+          if [[ -z "$current_version" ]]; then
+            echo "PUBLISH_VERSION is not set or is empty." >&2
+            exit 1
+          fi
+
+          # Extract x.y.z using a regular expression
+          if [[ -n "$PUBLISH_VERSION" ]]; then
+            if [[ "$PUBLISH_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-([1-9][0-9]*))?$ ]]; then
+              current_version="${BASH_REMATCH[1]}"
+              build_number="${BASH_REMATCH[3]}"
+              
+              if [[ -z "$build_number" ]]; then
+                run_number=${{ github.run_number }}
+                offset=${{ vars.OFFSET }}
+                build_number=$((run_number + offset))
+              fi
+              echo "Build $PNAME with $current_version-$build_number"
+            fi
+          fi
+
+          #build_number=$(TZ=Asia/Shanghai date +%Y%m%d)
+          IFS=. read -r major minor patch <<< "$current_version"
+          if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            tauri_version="$current_version"
+          else
+            tauri_version="$major.$((minor + 1)).0"
+          fi
+          version="$tauri_version-SNAPSHOT-$build_number"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            run_number=${{ github.run_number }}
+            offset=${{ vars.OFFSET }}
+            build_number=$((run_number + offset))
+            version="$tauri_version-SNAPSHOT-$build_number"
+          fi
+          if ${{ matrix.platform == 'macos-latest' }}; then
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i '' "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+          elif ${{ matrix.platform == 'windows-latest' }}; then
+            #build_number=$(TZ=Asia/Shanghai date -d '+8 hour' '+%Y%m%d')
+            version="$tauri_version-SNAPSHOT-$build_number"
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              run_number=${{ github.run_number }}
+              offset=${{ vars.OFFSET }}
+              build_number=$((run_number + offset))
+              version="$tauri_version-SNAPSHOT-$build_number"
+            fi
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date -d '+8 hour' '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+          else
+            echo "Build version: $version and tauri version: $tauri_version at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            sed -i -e "s/\"version\": *\"[^\"]*\"/\"version\": \"$version\"/" package.json
+            sed -i -e "s/^version = *\"[^\"]*\"/version = \"$tauri_version\"/" src-tauri/Cargo.toml
+          fi
+          
+          echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "UPGRADE=.v${tauri_version}-SNAPSHOT" >> $GITHUB_ENV
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: latest
+
+      - name: Install rust target
+        working-directory: ${{ env.REPO-NAME }}/src-tauri
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install dependencies (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu') 
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils libtracker-sparql-3.0-dev
+      - name: Install dependencies (Windows only)
+        if: startsWith(matrix.platform, 'windows')
+        shell: bash
+        run: winget install LLVM.LLVM --silent --accept-package-agreements --accept-source-agreements
+
+      - name: Check Rust toolchain
+        working-directory: ${{ env.REPO-NAME }}/src-tauri
+        run: rustup toolchain list
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './coco-app/src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install app dependencies and build web
+        working-directory: ${{ env.REPO-NAME }}
+        run: pnpm install
+
+      - name: Build app at ${{matrix.platform}} with ${{ env.VERSION }}
+        timeout-minutes: 30
+        working-directory: ${{ env.REPO-NAME }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+          CARGO_NET_GIT_FETCH_WITH_CLI: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: |
+            if [[ "${{ matrix.target }}" == "i686-pc-windows-msvc" ]]; then
+            echo "Build without pizza engine at i686-pc-windows-msvc target"
+            pnpm tauri build --target ${{ matrix.target }}
+            else
+              echo "Build with pizza engine at ${{ matrix.target }}"
+              #make add-dep-pizza-engine
+              ( cd src-tauri && cargo add --path ../../pizza/lib/engine --features query_string_parser,persistence )
+              pnpm tauri build --target ${{ matrix.target }} --features use_pizza_engine
+            fi
+
+      - name: Rename upgrade asserts
+        working-directory: ${{ env.REPO-NAME }}
+        run: |
+          bundle_dir="src-tauri/target/${{ matrix.target }}/release/bundle"
+          base_dir="${bundle_dir}"
+
+          if [[ "${{ matrix.target }}" == *"apple-darwin"* ]]; then
+            base_dir+="/macos"
+          elif [[ "${{ matrix.target }}" == *"linux-gnu"* ]]; then
+            base_dir+="/appimage"
+          elif [[ "${{ matrix.target }}" == *"windows-msvc"* ]]; then
+            base_dir+="/nsis"
+          fi
+
+          puer_version="$(echo "$VERSION" | sed 's/-.*//')"
+          version="$VERSION"
+
+          find "$base_dir" -type f -name "*${puer_version}*" -print0 | while IFS= read -r -d $'\0' file; do
+            if [[ "$file" == *"$version"* ]]; then
+              echo "Skipping '$file', already contains the full version"
+              continue
+            fi
+            new_file="${file/$puer_version/${version}}"
+            echo "Renaming '$file' to '$new_file'"
+            mv "$file" "$new_file"
+          done
+          # Delete the ubuntu files
+          if [[ "${{ matrix.target }}" =~ "unknown-linux-gnu" ]]; then
+            find "$bundle_dir" \
+              \( \
+                -name "*arm64.deb.sig" -o \
+                -name "*amd64.deb.sig" -o \
+                -name "*aarch64.deb.sig" -o \
+                -name "*x86_64.rpm.sig" -o \
+                -name "*aarch64.rpm.sig" -o \
+                -name "control.tar.gz" -o \
+                -name "data.tar.gz" \
+              \) -print0 | xargs -0 rm -vf
+          fi
+          # Rename the darwin
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_arm64.app.tar.gz"
+          elif [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            mv "${base_dir}/Coco-AI.app.tar.gz.sig" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz.sig"
+            mv "${base_dir}/Coco-AI.app.tar.gz" "${base_dir}/Coco-AI_${version}_amd64.app.tar.gz"
+          fi
+          
+      - name: Check files
+        working-directory: ${{ env.REPO-NAME }}
+        shell: bash
+        run: |
+          target="src-tauri/target/${{ matrix.target }}/release/bundle"
+          find "$target" -type f \( \
+                  -name "*.dmg" -o \
+                  -name "*.deb" -o \
+                  -name "*.rpm" -o \
+                  -name "*.msi" -o \
+                  -name "*.exe" -o \
+                  -name "*.gz" -o \
+                  -name "*.sig" -o \
+                  -name "*.AppImage" \
+              \)
+
+      - name: Upload build artifacts for ${{ matrix.target }}
+        if: ${{ !(inputs.PUBLISH_RELEASE == true) }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.REPO-NAME }}-assets-${{ matrix.target }}
+          path: ${{ github.workspace }}/${{ env.REPO-NAME }}/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.{exe,dmg,deb,rpm}
+          retention-days: 1
+          if-no-files-found: warn
+          include-hidden-files: false
