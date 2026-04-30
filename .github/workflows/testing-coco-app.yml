@@ -1,4 +1,4 @@
-name: Publish Coco App Files (Testing)
+name: Testing Coco App Files (Linux)
 defaults:
   run:
     shell: bash
@@ -328,7 +328,6 @@ jobs:
               \)
 
       - name: Upload build artifacts for ${{ matrix.target }}
-        if: ${{ !(inputs.PUBLISH_RELEASE == true) }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ env.REPO-NAME }}-assets-${{ matrix.target }}

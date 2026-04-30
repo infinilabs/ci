@@ -1,4 +1,4 @@
-name: Publish Coco Server Files (Testing)
+name: Testing Coco Server Files (Linux)
 defaults:
   run:
     shell: bash
