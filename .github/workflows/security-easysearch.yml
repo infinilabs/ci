@@ -34,7 +34,11 @@ on:
     inputs:
       BRANCH:
         description: "Branch to scan"
-        required: false
+        required: true
+        type: choice
+        options:
+          - main
+          - 1.x
         default: "main"
       FAIL_ON_CVSS:
         description: "Fail build if CVSS score >= (7 = High, 0 = disable fail)"
@@ -111,7 +115,7 @@ jobs:
 
       - name: Create report directories for prepare
         run: |
-          mkdir -p reports/owasp reports/trivy
+          mkdir -p reports/owasp/{backend,frontend} reports/trivy
 
       # ── OWASP DependencyCheck ──────────────────────────────────────────────
       - name: Get DependencyCheck version
@@ -132,8 +136,9 @@ jobs:
           curl -sL "https://github.com/dependency-check/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" -o /tmp/dc.zip
           unzip -q /tmp/dc.zip -d ${{ runner.tool_cache }}
 
-      - name: Run OWASP DependencyCheck
-        id: owasp
+      # ── OWASP DependencyCheck (Backend) ───────────────────────────────────
+      - name: Run OWASP DependencyCheck (Backend - Gradle)
+        id: owasp_backend
         continue-on-error: true
         env:
           DC_PATH: ${{ runner.tool_cache }}/dependency-check/bin/dependency-check.sh
@@ -144,26 +149,49 @@ jobs:
           fi
 
           $DC_PATH \
-            --project "${{ env.PNAME }}" \
+            --project "${{ env.PNAME }}-backend" \
             --scan "$GITHUB_WORKSPACE/${{ env.PNAME }}" \
+            --scan "$HOME/.gradle/caches/modules-2/files-2.1" \
             --format HTML --format JSON \
             --nvdApiKey ${{ secrets.NVD_API_KEY }} \
             --failOnCVSS ${{ github.event.inputs.FAIL_ON_CVSS || '7' }} \
             $SUPPRESSION \
             --exclude "**/plugins/analysis-hanlp/**/dictionary/**" \
-            --exclude "**/plugins/ui/web/packages/**" \
-            --exclude "**/plugins/ui/web/src/common/**" \
-            --out reports/owasp/
+            --exclude "**/plugins/ui/**" \
+            --out reports/owasp/backend/
+
+      # ── OWASP DependencyCheck (Frontend) ──────────────────────────────────
+      - name: Run OWASP DependencyCheck (Frontend - pnpm)
+        id: owasp_frontend
+        continue-on-error: true
+        env:
+          DC_PATH: ${{ runner.tool_cache }}/dependency-check/bin/dependency-check.sh
+        run: |
+          SUPPRESSION=""
+          if [ -f "$GITHUB_WORKSPACE/${{ env.PNAME }}/security/suppressions.xml" ]; then
+            SUPPRESSION="--suppression $GITHUB_WORKSPACE/${{ env.PNAME }}/security/suppressions.xml"
+          fi
+
+          $DC_PATH \
+            --project "${{ env.PNAME }}-frontend" \
+            --scan "$GITHUB_WORKSPACE/${{ env.PNAME }}/plugins/ui/web" \
+            --format HTML --format JSON \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
+            --failOnCVSS ${{ github.event.inputs.FAIL_ON_CVSS || '7' }} \
+            $SUPPRESSION \
+            --exclude "**/packages/**" \
+            --exclude "**/src/common/**" \
+            --out reports/owasp/frontend/
 
       # ── Trivy ──────────────────────────────────────────────────────────────
-      - name: Download Trivy HTML template        # ← ADD THIS STEP
+      - name: Download Trivy HTML template
         run: |
           echo "Download the tpl for trivy"
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
             -o ${{ github.workspace }}/reports/trivy/html.tpl
 
-      - name: Run Trivy (HTML Report)
-        id: trivy_html
+      - name: Run Trivy (Backend - HTML Report)
+        id: trivy_backend_html
         uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
         with:
@@ -171,13 +199,13 @@ jobs:
           scan-ref: '${{ github.workspace }}/${{ env.PNAME }}'
           format: 'template'
           template: '@${{ github.workspace }}/reports/trivy/html.tpl'
-          output: 'reports/trivy/trivy-report.html'
+          output: 'reports/trivy/trivy-backend-report.html'
           severity: 'HIGH,CRITICAL'
-          skip-dirs: "**/plugins/analysis-hanlp/**/dictionary"
+          skip-dirs: "**/plugins/analysis-hanlp/**/dictionary,**/plugins/ui"
           skip-files: "*.ngram.txt,*.info"
           ignore-unfixed: true
 
-      - name: Run Trivy (Console Table)
+      - name: Run Trivy (Backend - Console Table)
         uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
         with:
@@ -185,6 +213,32 @@ jobs:
           scan-ref: '${{ github.workspace }}/${{ env.PNAME }}'
           format: 'table'
           severity: 'HIGH,CRITICAL'
+          skip-dirs: "**/plugins/analysis-hanlp/**/dictionary,**/plugins/ui"
+          skip-files: "*.ngram.txt,*.info"
+          ignore-unfixed: true
+
+      - name: Run Trivy (Frontend - HTML Report)
+        id: trivy_frontend_html
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ github.workspace }}/${{ env.PNAME }}/plugins/ui/web'
+          format: 'template'
+          template: '@${{ github.workspace }}/reports/trivy/html.tpl'
+          output: 'reports/trivy/trivy-frontend-report.html'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+
+      - name: Run Trivy (Frontend - Console Table)
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ github.workspace }}/${{ env.PNAME }}/plugins/ui/web'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
 
       # ── Summary & Artifacts ──────────────────────────────────────────────
       - name: Upload Security Reports
@@ -202,19 +256,22 @@ jobs:
       - name: Security Summary
         if: always()
         run: |
-          # 定义图标映射逻辑
           get_icon() {
             if [ "$1" == "success" ]; then echo "✅ Pass"; else echo "⚠️ Issues Found (or Failed)"; fi
           }
 
-          OWASP_RES=$(get_icon "${{ steps.owasp.outcome }}")
-          TRIVY_RES=$(get_icon "${{ steps.trivy_html.outcome }}")
+          OWASP_BE_RES=$(get_icon "${{ steps.owasp_backend.outcome }}")
+          OWASP_FE_RES=$(get_icon "${{ steps.owasp_frontend.outcome }}")
+          TRIVY_BE_RES=$(get_icon "${{ steps.trivy_backend_html.outcome }}")
+          TRIVY_FE_RES=$(get_icon "${{ steps.trivy_frontend_html.outcome }}")
 
           echo "### 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Tool | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **OWASP DependencyCheck** | $OWASP_RES |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Trivy (Vulnerability Scan)** | $TRIVY_RES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Scope | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **OWASP DependencyCheck** | Backend  | $OWASP_BE_RES |" >> $GITHUB_STEP_SUMMARY
+          echo "| **OWASP DependencyCheck** | Frontend | $OWASP_FE_RES |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trivy**                 | Backend  | $TRIVY_BE_RES |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trivy**                 | Frontend | $TRIVY_FE_RES |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Detailed reports are available in the **Artifacts** section." >> $GITHUB_STEP_SUMMARY
 
