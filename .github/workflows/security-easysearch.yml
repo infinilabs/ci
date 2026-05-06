@@ -129,6 +129,7 @@ jobs:
       - name: Create report directories for prepare
         run: |
           mkdir -p reports/owasp/{backend,frontend} reports/trivy
+          touch reports/{owasp,trivy}/.keep
 
       # ── OWASP DependencyCheck ──────────────────────────────────────────────
       - name: Get DependencyCheck version
