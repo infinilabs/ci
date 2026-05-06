@@ -84,11 +84,20 @@ jobs:
           cd $GITHUB_WORKSPACE/${{ env.PNAME }}
           echo "Checked out $(git log -1 --pretty=format:'%h %s')"
 
-      - name: Set up Java
+      - name: Set up Java with ${{ vars.JAVA_DISTRIBUTION }}@${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v5
         with:
           distribution: ${{ vars.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up gradle with  ${{ env.GRADLE_VERSION }}
+        run: |
+          if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
+            wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
+          fi
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
+          echo Gradle path is $HOME/gradle-$GRADLE_VERSION
 
       - name: Set up Node.js & pnpm
         uses: pnpm/action-setup@v6
