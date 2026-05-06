@@ -64,16 +64,17 @@ jobs:
 
       - name: Set up and check env
         run: |
-          PUBLISH_VERSION="2.0.0" 
-          BRANCH="1.x"
+          PUBLISH_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION}}" 
+          BRANCH="${{inputs.BRANCH}}"
           GRADLE_V=${{ vars.GRADLE_VERSION }}
           JAVA_V=${{ vars.JAVA_VERSION }}
           
-          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+          if [[ "$BRANCH" != "1.x" ]]; then
             BRANCH="main"
             GRADLE_V=${{ vars.GRADLE_VERSION_8 }}
             JAVA_V=${{ vars.JAVA_VERSION_21 }}
           fi
+
           echo "JAVA_VERSION=$JAVA_V" >> $GITHUB_ENV
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
           echo "GRADLE_VERSION=$GRADLE_V" >> $GITHUB_ENV
