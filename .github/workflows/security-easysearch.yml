@@ -111,7 +111,11 @@ jobs:
         # 构建可以生成最终分发的 JAR，扫描生成的 JAR 更有意义
         run: |
           cd $GITHUB_WORKSPACE/${{ env.PNAME }}
-          ./gradlew buildOssNoJdkLinux -x test
+          if [[ "$BRANCH" != "1.x" ]]; then
+            ./gradlew buildOssNoJdkLinux -x test -x javadoc
+          else
+            gradle buildOssNoJdkLinux -x test -x javadoc
+          fi
 
       - name: Create report directories for prepare
         run: |
