@@ -64,7 +64,6 @@ jobs:
 
       - name: Set up and check env
         run: |
-          PUBLISH_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION}}" 
           BRANCH="${{inputs.BRANCH}}"
           GRADLE_V=${{ vars.GRADLE_VERSION }}
           JAVA_V=${{ vars.JAVA_VERSION }}
