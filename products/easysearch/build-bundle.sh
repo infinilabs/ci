@@ -97,10 +97,11 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   #plugin install need before bundle jdk
   if [ -z "$(ls -A $WORK/$PNAME/plugins)" ]; then
     # exclude some plugins for bundle: analysis-hanlp jieba fast-terms filter-distinct
+    # rules is linux-only (arch-specific zip), excluded for mac/windows
     raw_plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
       ! -name "jieba" \
-      ! -name "rules" \
+      $([ "${x%%\-*}" != "linux" ] && echo "! -name rules") \
       -exec basename {} \;))
 
     # 每次迭代重新初始化，避免跨循环污染

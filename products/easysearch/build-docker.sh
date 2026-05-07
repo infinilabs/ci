@@ -90,7 +90,6 @@ for t in amd64 arm64; do
     raw_plugins=($(find $DEST/plugins -mindepth 1 -maxdepth 1 -type d \
       ! -name "analysis-hanlp" \
       ! -name "jieba" \
-      ! -name "rules" \
       -exec basename {} \;))
 
     declare -A _vis=(); declare -a _srt=()
