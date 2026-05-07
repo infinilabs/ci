@@ -12,6 +12,8 @@ http.compression: true
 
 security.enabled: true
 security.audit.type: noop
+security.settings.expose:
+  - security.audit.type
 security.ssl.transport.cert_file: instance.crt
 security.ssl.transport.key_file: instance.key
 security.ssl.transport.ca_file: ca.crt
@@ -32,12 +34,25 @@ security.ssl.http.enabled_ciphers:
 security.ssl.http.enabled_protocols:
   - "TLSv1.2"
   - "TLSv1.3"
+security.ssl.transport.enabled_ciphers:
+  - "TLS_AES_128_GCM_SHA256"
+  - "TLS_AES_256_GCM_SHA384"
+  - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+  - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+  - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+  - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+  - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+  - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+security.ssl.transport.enabled_protocols:
+  - "TLSv1.2"
+  - "TLSv1.3"
+
 security.allow_default_init_securityindex: true
 
 security.nodes_dn:
   - 'CN=infini.cloud,OU=UNIT,O=ORG,L=NI,ST=FI,C=IN'
 
-security.restapi.roles_enabled: [ "superuser", "security_rest_api_access" ]
+security.restapi.roles_enabled: [ "superuser", "security_rest_api_access", "security" ]
 
 security.system_indices.enabled: true
 security.ssl.http.clientauth_mode: OPTIONAL
