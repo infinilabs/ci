@@ -167,11 +167,11 @@
       "builtin": true
     },
     {
-      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/rule/rules-linux-x64-2.2.0.zip",
-      "name": "rule",
+      "download_url": "https://release.infinilabs.com/easysearch/stable/plugins/rules/rules-linux-x64-2.2.0.zip",
+      "name": "rules",
       "description_zh": "规则引擎插件",
       "description_en": "Rule engine plugin",
-      "id": "rule",
+      "id": "rules",
       "enabled": true,
       "builtin": true
     }
