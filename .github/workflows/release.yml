@@ -301,7 +301,7 @@ jobs:
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: ${{ secrets.HTTP_PR_GIT_REPO}}/$PRODUCT
+          url: https://${{ secrets.HTTP_GIT_REPO}}/$PRODUCT
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
@@ -920,7 +920,7 @@ jobs:
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: ${{ secrets.HTTP_PR_GIT_REPO }}
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: official-website-cn
           base: master
