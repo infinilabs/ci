@@ -100,7 +100,17 @@ for t in amd64 arm64; do
 
     for p in "${_srt[@]}"; do
       dist_dir="$DEST/plugins/$p"
-      files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
+      
+      if [ "$p" = "rules" ]; then
+        RULES_PLAT=$(echo "$x" | sed 's/-amd64/-x64/;s/-arm64/-aarch64/')
+        files=(
+          "$dist_dir/$p-$RULES_PLAT-$VERSION"*.zip
+          "$dist_dir/$p-$VERSION-$RULES_PLAT"*.zip
+        )
+      else
+        files=( "$dist_dir/$p-$VERSION"*.zip "$dist_dir/$p-"*"-$VERSION"*.zip )
+      fi
+      
       for zip in "${files[@]}"; do
         [ -f "$zip" ] || continue
         echo "Installing plugin $zip ..."
