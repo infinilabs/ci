@@ -303,7 +303,7 @@ jobs:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
           no_proxy: 127.0.0.1
         with:
-          url: http://${{ secrets.HTTP_PR_GIT_REPO}}/$PRODUCT
+          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
