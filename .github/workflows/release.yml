@@ -83,7 +83,7 @@ on:
       EASYSEARCH_PUBLISH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "2.2.0-2774"
+        default: "2.2.0-2770"
       COCOAPP_PUBLISH:
         description: 'Products with Coco App'
         required: false
@@ -297,13 +297,11 @@ jobs:
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
-        uses: infinilabs/gitea-pr@v1
+        uses: infinilabs/gitea-pr@v0
         env:
-          http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
-          no_proxy: 127.0.0.1
         with:
-          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
@@ -918,13 +916,11 @@ jobs:
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' }}
-        uses: infinilabs/gitea-pr@v1
+        uses: infinilabs/gitea-pr@v0
         env:
-          http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
-          no_proxy: 127.0.0.1
         with:
-          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: official-website-cn
           base: master
