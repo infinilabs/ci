@@ -13,7 +13,7 @@
 
 #// 1
 #//
-#// Log in to account admin
+#// Login to account admin
 POST /account/login
 {
   "email": "admin@mail.com",
@@ -28,7 +28,7 @@ POST /account/login
 
 #// 2
 #//
-#// Log in to account a
+#// Login to account a
 POST /account/login
 {
   "email": "a@mail.com",
@@ -43,7 +43,7 @@ POST /account/login
 
 #// 3
 #//
-#// Log in to account b
+#// Login to account b
 POST /account/login
 {
   "email": "b@mail.com",
@@ -58,7 +58,7 @@ POST /account/login
 
 #// 4
 #//
-#// Log in to account c
+#// Login to account c
 POST /account/login
 {
   "email": "c@mail.com",
@@ -73,7 +73,7 @@ POST /account/login
 
 #// 5
 #//
-#// Log in to account d
+#// Login to account d
 POST /account/login
 {
   "email": "d@mail.com",

@@ -6,7 +6,7 @@
 
 #// 1
 #//
-#// Log in to account admin
+#// Login to account admin
 POST /account/login
 {
   "email": "admin@mail.com",
@@ -336,7 +336,7 @@ POST /resources/document/$[[env.DATASOURCE_2_DOCUMENT_FILE_D_ID]]/share
 
 #// 10
 #//
-#// Log in to account a
+#// Login to account a
 POST /account/login
 {
   "email": "a@mail.com",
@@ -428,7 +428,7 @@ POST /query/_search?query=file_a&size=100
 
 #// 14
 #//
-#// Log in to account b
+#// Login to account b
 POST /account/login
 {
   "email": "b@mail.com",
@@ -521,7 +521,7 @@ POST /query/_search?query=file_a&size=100
 
 #// 18
 #//
-#// Log in to account c
+#// Login to account c
 POST /account/login
 {
   "email": "c@mail.com",
@@ -614,7 +614,7 @@ POST /query/_search?query=file_a&size=100
 
 #// 22
 #//
-#// Log in to account d
+#// Login to account d
 POST /account/login
 {
   "email": "d@mail.com",

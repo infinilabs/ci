@@ -17,7 +17,7 @@
 
 #// 1
 #//
-#// Log in to account admin
+#// Login to account admin
 POST /account/login
 {
   "email": "admin@mail.com",
@@ -32,7 +32,7 @@ POST /account/login
 
 #// 2
 #//
-#// Log in to account a
+#// Login to account a
 POST /account/login
 {
   "email": "a@mail.com",
