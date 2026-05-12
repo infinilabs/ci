@@ -55,7 +55,7 @@ on:
       PUBLISH_BRANCH:
         description: 'Publish With Branch'
         required: false
-        default: "main"
+        default: "optimize_pages"
 
 jobs:
   generate-matrix: 
@@ -131,6 +131,15 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
           ref: ${{ inputs.PUBLISH_BRANCH}}
           path: ${{ matrix.product }}
+
+      - name: Checkout dependency repository
+        uses: actions/checkout@v6
+        with:
+          repository: 'infinilabs/migration-enterprise-plugins'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          submodules: recursive
+          ref: main
+          path: ${{ matrix.product }}/plugin/enterprise
 
       - name: Setup ${{ matrix.product }} env
         run: |
