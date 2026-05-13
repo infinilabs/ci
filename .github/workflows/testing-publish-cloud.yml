@@ -1,0 +1,375 @@
+name: Testing Cloud Files (Linux)
+defaults:
+  run:
+    shell: bash
+env:
+  TZ: Asia/Shanghai
+  PNAME: cloud
+  GO_VERSION: ${{ vars.GO_VERSION }}
+  NODEJS_VERSION: ${{ vars.NODEJS_VERSION }}
+  PRE_RELEASE: ${{ vars.PRE_RELEASE }}
+  RELEASE_URL: ${{ vars.RELEASE_URL }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.CLOUD_PUBLISH_VERSION }}
+  SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  OSS_EP: ${{ secrets.OSS_EP }}
+  OSS_AK: ${{ secrets.OSS_AK }}
+  OSS_SK: ${{ secrets.OSS_SK }}
+  OSS_BK: ${{ secrets.OSS_BK }}
+  OSS_MODE: ${{ secrets.OSS_MODE }}
+  LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+  LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
+  CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+  CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+  CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+  CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+  CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+  CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+  
+on:
+  workflow_dispatch:
+    inputs:
+      PUBLISH_VERSION:
+        description: 'Publish cloud version'
+        required: false
+        default: "1.0.0"
+      EASYSEARCH_PUBLISH_VERSION:
+        description: 'Easysearch Published version'
+        required: false
+        default: "1.0.0"
+      GATEWAY_PUBLISH_VERSION:
+        description: 'Gateway Published version'
+        required: false
+        default: "1.0.0"
+      COCOSERVER_PUBLISH_VERSION:
+        description: 'CocoServer Published version'
+        required: false
+        default: "1.0.0"
+      PUBLISH_RELEASE:
+        description: 'Publish Release'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    name: Publish cloud files
+    runs-on: ubuntu-latest
+    env:
+        OSS_EP: ${{ secrets.OSS_EP }}
+        OSS_AK: ${{ secrets.OSS_AK }}
+        OSS_SK: ${{ secrets.OSS_SK }}
+        OSS_BK: ${{ secrets.OSS_BK }}
+        OSS_MODE: ${{ secrets.OSS_MODE }}
+        LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
+        LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
+        SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+        CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
+        CONNECT_KEY: ${{ secrets.CONNECT_KEY }}
+        CONNECT_TIMEOUT: ${{ vars.CONNECT_TIMEOUT }}
+        CONNECT_MODE: ${{ vars.CONNECT_MODE }}
+        CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
+        TARGETS: linux-amd64 linux-arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Checkout agent code
+        uses: actions/checkout@v6
+        with: 
+          repository: ${{ vars.GIT_REPO }}/agent
+          ref: main
+          path: agent
+
+      - name: Checkout framework code
+        uses: actions/checkout@v6
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework
+          ref: main
+          path: framework
+
+      - name: Checkout framework vendor code
+        uses: actions/checkout@v6
+        with: 
+          repository: ${{ vars.GIT_REPO }}/framework-vendor
+          ref: main
+          path: vendor
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
+
+      - name: Setup ${{ env.PNAME }} env
+        run: |
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
+          if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
+          fi
+          echo WORK=$WORK >> $GITHUB_ENV
+          echo WORKBASE=$WORKBASE >> $GITHUB_ENV
+          echo PNAME=${{ env.PNAME }} >> $GITHUB_ENV
+          echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
+
+      - name: Checkout dependency repository
+        uses: actions/checkout@v6
+        with:
+          repository: 'infinilabs/license'
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ref: main
+          path: license
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GIT_REPO/$PNAME-ui $GITHUB_WORKSPACE/$PNAME/web
+          git clone --depth 1 $SSH_GIT_REPO/common-ui $GITHUB_WORKSPACE/$PNAME/web/src/common
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          
+      - name: Setup ${{ env.PNAME }} go toolchain
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: false
+          cache: true
+          cache-dependency-path: "**/*.sum"
+
+      - name: Check ${{ env.PNAME }} go toolchain
+        run: go version && go env
+
+      - name: Set up with ${{ env.PNAME }} nodejs toolchain
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: "**/package.json"
+
+      - name: Check with ${{ env.PNAME }} nodejs toolchain
+        run: |
+          if ! command -v cnpm >/dev/null 2>&1; then
+            npm install -g rimraf
+            npm install -g cnpm@9.2.0
+          fi
+          node -v && npm -v && cnpm -v
+
+      - name: Update versions with ${{ env.PNAME }} default settings
+        run: |
+            set -eo pipefail
+
+            echo "Fetching latest versions..."
+            operator_ver="${{ vars.PUBLISH_OPERATOR_VERSION || '0.7.7' }}"
+            latest_json=$(curl -sSL "$RELEASE_URL_NOREACH/.latest")
+
+            if [ -z "$latest_json" ] || ! echo "$latest_json" | jq . > /dev/null 2>&1; then
+              echo "Warning: Failed to fetch or parse .latest from $RELEASE_URL. Using fallback versions."
+              easysearch_ver="1.0.0"
+              gateway_ver="1.0.0"
+              cocoserver_ver="1.0.0"
+            else
+              jq_easysearch_ver=$(echo "$latest_json" | jq -r ".easysearch // \"1.0.0\"")
+              jq_gateway_ver=$(echo "$latest_json" | jq -r ".gateway // \"1.0.0\"")
+              jq_cocoserver_ver=$(echo "$latest_json" | jq -r '."coco-server" // "1.0.0"')
+
+              easysearch_ver="${jq_easysearch_ver%%-*}"
+              gateway_ver="${jq_gateway_ver%%-*}"
+              cocoserver_ver="${jq_cocoserver_ver%%-*}"
+            fi
+
+            # process the input versions
+            if [[ -n "${{ inputs.EASYSEARCH_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding Easysearch version: $easysearch_ver -> ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}"
+              easysearch_ver="${{ inputs.EASYSEARCH_PUBLISH_VERSION }}"
+            fi
+            if [[ -n "${{ inputs.GATEWAY_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding Gateway version: $gateway_ver -> ${{ inputs.GATEWAY_PUBLISH_VERSION }}"
+              gateway_ver="${{ inputs.GATEWAY_PUBLISH_VERSION }}"
+            fi
+            if [[ -n "${{ inputs.COCOSERVER_PUBLISH_VERSION }}" ]]; then
+              echo "Overriding CocoServer version: $cocoserver_ver -> ${{ inputs.COCOSERVER_PUBLISH_VERSION }}"
+              cocoserver_ver="${{ inputs.COCOSERVER_PUBLISH_VERSION }}"
+            fi
+            
+            echo "-------------- Using Versions --------------"
+            echo "Operator Version:   $operator_ver"
+            echo "Easysearch Version: $easysearch_ver"
+            echo "Gateway Version:    $gateway_ver"
+            echo "CocoServer Version: $cocoserver_ver"
+            echo "--------------------------------------------"
+
+            FILE_PATH="$WORK/$PNAME/web/src/pages/Infra/Inventory/Kubernetes/App/Config/BaseSetting.jsx"
+            FILE_NAME=$(basename "$FILE_PATH")
+
+            if [ -f "$FILE_PATH" ]; then
+              echo "Updating versions in $FILE_NAME..."
+
+              # This awk script uses a state machine logic to be more robust.
+              # It now handles the elasticsearch-operator in addition to the others.
+              awk -v op_ver="$operator_ver" -v es_ver="$easysearch_ver" -v gw_ver="$gateway_ver" -v cocoserver_ver="$cocoserver_ver" '
+                # Set a flag when entering a main configuration block.
+                /export const APP_EASYSEARCH_DEFAULT/    { in_es_block = 1 }
+                /export const APP_RUNTIME_DEFAULT/       { in_rt_block = 1 }
+                /export const APP_CLOUD_GATEWAY_DEFAULT/ { in_gw_block = 1 }
+                /export const APP_ELASTICSEARCH_DEFAULT/ { in_els_block = 1 }
+                /export const APP_COCOSERVER_DEFAULT/ { in_cc_block = 1 }
+
+                # Reset all flags when a block ends with `};`.
+                /^\};/ {
+                  in_es_block = 0
+                  in_rt_block = 0
+                  in_gw_block = 0
+                  in_els_block = 0
+                  in_cc_block = 0
+                }
+
+                # Rule 1: Update ALL operator tags (easysearch, runtime, elasticsearch).
+                # This rule has been expanded to include the elasticsearch-operator.
+                (in_es_block || in_rt_block || in_els_block) && /name: "infinilabs\/(easysearch|runtime|elasticsearch)-operator"/ {
+                  change_next_tag = 1
+                  # All operators are assumed to use the same version variable `op_ver`.
+                  next_tag_value = op_ver
+                }
+                
+                # Rule 2: Update the tag for APP_CLOUD_GATEWAY_DEFAULT.
+                in_gw_block && /name: "infinilabs\/gateway"/ {
+                  change_next_tag = 1
+                  next_tag_value = gw_ver
+                }
+
+                # If the temporary flag is set and the current line contains "tag:", perform the substitution.
+                change_next_tag && /tag:/ {
+                  # Use [^"]* for non-greedy matching to the first closing quote.
+                  sub(/tag: "[^"]*"/, "tag: \"" next_tag_value "\"")
+                  change_next_tag = 0 # Reset the flag once the tag is updated.
+                }
+
+                # Rule 3: Update easysearch version.
+                in_es_block && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" es_ver "\"")
+                }
+                
+                # Rule 4: Update runtime gateway version.
+                in_rt_block && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" gw_ver "\"")
+                }
+                
+                # Rule 5: Update cocoserver version.
+                in_cc_block && /versions:/ {
+                  sub(/version: "[^"]*"/, "version: \"" cocoserver_ver "\"")
+                }
+
+                # Default action: print the current line (whether it was modified or not).
+                { print }
+              ' "$FILE_PATH" > "$FILE_PATH.tmp" && mv "$FILE_PATH.tmp" "$FILE_PATH"
+
+              grep -E "version:|tag:" "$FILE_PATH" | sed 's/^[ \t]*//'
+              echo "Successfully updated $FILE_NAME."
+            else
+                echo "File $FILE_PATH does not exist, skipping version update."
+            fi
+
+      - name: Prepare ${{ env.PNAME }} build code
+        if: ${{ inputs.PUBLISH_VERSION !='' || vars.CLOUD_PUBLISH_VERSION !='' }}
+        run: |
+          cd $WORK/$PNAME
+          echo "Build $PNAME at $PWD"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              PUBLISH_VERSION=${{ vars.CLOUD_PUBLISH_VERSION }}
+            fi
+          fi
+          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.CLOUD_PUBLISH_RELEASE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$PUBLISH_VERSION" == *-* ]]; then
+              IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
+            else
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              DYNAMIC_VERSION="$PUBLISH_VERSION"
+            fi
+          else
+            DYNAMIC_BUILD_NUMBER=$(date +%Y%m%d)
+            DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 "_NIGHTLY" }')
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              DYNAMIC_VERSION=$(echo "$PUBLISH_VERSION" | awk -F. -v OFS=. '{ $2 = $2 + 1; $3 = 0; print $1, $2, $3 "_SNAPSHOT" }')
+              RUN_NUMBER=${{ github.run_number }}
+              OFFSET=${{ vars.OFFSET }}
+              DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+            fi
+          fi
+          echo "Build $PNAME with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+
+          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
+          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+          echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
+          echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+
+      - name: Build ${{ env.PNAME }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        run: |
+          # build web
+          cd $WORK/$PNAME/web && cnpm install --quiet --no-progress
+          find node_modules -name "*monaco-editor*"
+          echo "=== Build web with $PWD ==="
+          cnpm run build --quiet
+          if [[ ! -d $WORK/$PNAME/.public ]]; then
+            echo "Build $PNAME web failed"
+            exit 1
+          fi
+          # build all targets
+          cd $WORK/$PNAME && OFFLINE_BUILD=true make init-enterprise-plugin config update-vfs update-plugins
+          for tag in $TARGETS; do
+            cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
+          done
+
+      - name: Build ${{ env.PNAME }} check
+        run: |
+          ls -lrt $WORK/$PNAME/bin
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            [[ "$p1" == "win" ]] && TAG="$TAG.exe"
+            [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
+          done
+
+      - name: Build ${{ env.PNAME }} License and notice process
+        run: |
+          cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
+          find $WORK/$PNAME/bin -name "*.go" -delete
+          cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
+          ls -lrt $WORK/$PNAME/bin
+      
+      - name: Archive ${{ env.PNAME }} files
+        if: ${{ inputs.PUBLISH_RELEASE }}
+        run: |
+          cd $WORK/$PNAME/bin
+          for tag in $TARGETS; do
+            IFS='-' read -r p1 p2 <<< "$tag"
+            TAG="$(echo $p1|sed 's/darwin/mac/;s/win/windows/')-$p2"
+            EXT=$TAG
+            [[ "$p1" == "win" ]] && EXT="$TAG.exe"
+
+            echo "Archive $PNAME-$p1-$p2 with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+            if [[ "$p1" == "win" ]] || [[ "$p1" == "darwin" ]]; then
+              zip -qr $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.zip $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            else
+              tar zcf $WORK/$PNAME-$VERSION-$BUILD_NUMBER-$TAG.tar.gz $PNAME-$EXT $PNAME.yml LICENSE NOTICE config
+            fi
+          done
+          ls -lrt $WORK/$PNAME-$VERSION-*.*
+                      
+      - name: Upload cloud as github artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloud-${{ github.run_id }}
+          path: ${{ env.WORK }}/**/*.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
