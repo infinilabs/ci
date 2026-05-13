@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: false
+        default: true
       AGENT_PUBLISH_VERSION:
         description: 'Publish Agent Version'
         required: false
@@ -31,7 +31,7 @@ on:
         description: 'Console'
         required: false
         type: boolean
-        default: false
+        default: true
       CONSOLE_PUBLISH_VERSION:
         description: 'Publish Console Version'
         required: false
@@ -40,7 +40,7 @@ on:
         description: 'Gateway'
         required: false
         type: boolean
-        default: false
+        default: true
       GATEWAY_PUBLISH_VERSION:
         description: 'Publish Gateway Version'
         required: false
@@ -49,7 +49,7 @@ on:
         description: 'Loadgen'
         required: false
         type: boolean
-        default: false
+        default: true
       LOADGEN_PUBLISH_VERSION:
         description: 'Publish Loadgen Version'
         required: false
@@ -58,7 +58,7 @@ on:
         description: 'Publish Release'
         required: false
         type: boolean
-        default: false      
+        default: true      
 
 jobs:
   generate-matrix: 
