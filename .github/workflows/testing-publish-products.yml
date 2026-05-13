@@ -321,10 +321,10 @@ jobs:
           done
           ls -lrt $WORK/$PNAME-$VERSION-*.*
 
-      - name: Upload products as github artifact
+      - name: Upload ${{ matrix.product }} as github artifact
         uses: actions/upload-artifact@v7
         with:
-          name: products-${{ github.run_id }}
+          name: ${{ matrix.product }}-${{ github.run_id }}
           path: ${{ env.WORK }}/**/*.tar.gz
           retention-days: 1
           if-no-files-found: error
