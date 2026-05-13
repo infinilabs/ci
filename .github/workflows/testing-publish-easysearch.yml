@@ -54,7 +54,7 @@ on:
 
 jobs:
   publish:
-    name: Publish easysearch files and docker
+    name: Publish easysearch files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
