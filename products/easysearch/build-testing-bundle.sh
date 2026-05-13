@@ -45,7 +45,7 @@ if [[ "$USER_GRAALVM" == "true" ]]; then
     fi
   done
 else
-  for x in linux_x64 linux_aarch64 macosx_x64 macosx_aarch64 win_x64; do
+  for x in linux_x64 linux_aarch64; do
     if [ ! -e $BUILD_JDKS/$ZULU_JAVA_VERSION-$x.tar.gz ]; then
       wget \
         https://cdn.azul.com/zulu/bin/$ZULU_JAVA_VERSION-$x.tar.gz \
@@ -167,12 +167,13 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
       echo "$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S') INFO Upload $DNAME to OSS"
       (cd $WORK/$PNAME && sha512sum $DNAME > $DNAME.sha512)
       if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
-        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
-        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/snapshot/bundle
+        #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/snapshot/bundle
+        #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/snapshot/bundle
       else
-        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/stable/bundle
-        oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/stable/bundle
+        #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k $PNAME/stable/bundle
+        #oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME.sha512 -k $PNAME/stable/bundle
       fi
+      oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -f $WORK/$PNAME/$DNAME -k .testing/$PNAME
     fi
   fi
   cd $WORK && rm -rf $WORK/$FNAME && rm -rf $WORK/$PNAME
