@@ -1,4 +1,4 @@
-name: Testing Publish Easysearch Files (Linux)
+name: Testing Easysearch Files (Linux)
 
 defaults:
   run:

@@ -32,7 +32,7 @@ _topo_visit() {
 #初始化 JDK
 mkdir -p $BUILD_JDKS && echo Build directory $BUILD_JDKS
 if [[ "$USER_GRAALVM" == "true" ]]; then
-  for x in linux-x64 linux-aarch64 macos-x64 macos-aarch64 windows-x64; do
+  for x in linux-x64 linux-aarch64; do
     
     EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
     FILE=graalvm-jdk-${JAVA_VERSION_21}_${x}_bin.$EXT
@@ -62,7 +62,7 @@ mkdir -p $WORK && cd $_
 cp -rf $DEST/$PNAME-$VERSION-$BUILD_NUMBER-* $WORK
 
 #重新压缩与重命名
-for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
+for x in linux-amd64 linux-arm64; do
   FNAME=`ls -lrt $WORK |grep $PNAME |head -n 1 |awk '{print $NF}'`
   DNAME=`echo $FNAME |sed 's/.zip/-bundle.zip/;s/.tar.gz/-bundle.tar.gz/'`
   if [[ "$USER_GRAALVM" == "true" ]]; then
