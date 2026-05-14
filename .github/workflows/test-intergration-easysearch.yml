@@ -291,7 +291,6 @@ jobs:
                   --tests com.infinilabs.security.dlic.rest.api.AccountApiTest \
                   --tests com.infinilabs.security.HttpIntegrationTests \
                   --tests com.infinilabs.security.dlic.rest.api.RolesApiTest \
-                  --tests com.infinilabs.security.dlic.rest.api.RulesIndexAccessTest \
                   --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest \
                   --tests com.infinilabs.security.privileges.PrivilegesEvaluatorClusterActionTest \
                   --tests com.infinilabs.security.auditlog.sink.InternalESSinkTest \
@@ -308,6 +307,59 @@ jobs:
           set -e
           # Copy test reports
           test_name="security"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run security rules tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:security:rulesSecurityTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests com.infinilabs.security.dlic.rest.api.RulesIndexAccessTest \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="security-rules"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/rulesSecurityTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run security LDAP tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:security:test \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests com.infinilabs.dlic.auth.ldap.UtilsTest \
+            --tests com.infinilabs.dlic.auth.ldap.LdapBackendTest \
+            --tests com.infinilabs.dlic.auth.ldap.LdapBackendNewStyleConfigTest \
+            --tests com.infinilabs.dlic.auth.ldap.LdapBackendIntegTest \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="security-ldap"
           report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
           target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
           if [ -d "$report_dir" ]; then
@@ -491,6 +543,32 @@ jobs:
           fi
           exit $exit_code        
 
+      - name: Run index management rollup runner tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:test \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            -Dtests.jvms=1 \
+            --tests org.easysearch.indexmanagement.rollup.RollupRunnerTests \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-rollup-runner"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
       - name: Run Rules Plugin Compiler tests
         timeout-minutes: 30
         env:
@@ -595,6 +673,116 @@ jobs:
           # Copy test reports
           test_name="analysis-ik"
           report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/analysis-ik/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run async search internal cluster tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:async_search:internalClusterTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  -Dtests.jvms=1 \
+                  --tests org.easysearch.search.async.AsyncSearchActionIT \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="async-search-internal-cluster"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/internalClusterTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run async search YAML REST tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:async_search:yamlRestTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  -Dtests.jvms=1 \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="async-search-yaml-rest"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/yamlRestTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run searchable snapshot internal cluster tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :server:clean :server:internalClusterTest \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  -Dtests.jvms=1 \
+                  -Dtests.cluster.reroute.timeout=300s \
+                  -Dtests.cluster.recovery.timeout=300s \
+                  -Dtests.cluster.stabilization.timeout=300s \
+                  --tests org.easysearch.snapshots.SearchableSnapshotIT \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="searchable-snapshot"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
+
+      - name: Run searchable snapshot unit tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :server:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  -Dtests.jvms=1 \
+                  --tests org.easysearch.index.store.remote.filecache.FileCacheTests \
+                  --tests org.easysearch.index.store.remote.filecache.FileCacheCleanerTests \
+                  --tests org.easysearch.index.store.remote.filecache.FileCacheStatsTests \
+                  --tests org.easysearch.index.store.remote.file.OnDemandBlockSnapshotIndexInputTests \
+                  --tests org.easysearch.index.store.remote.file.OnDemandBlockIndexInputLifecycleTests \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="searchable-snapshot-unit"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
           target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
           if [ -d "$report_dir" ]; then
             mkdir -p $target_dir
