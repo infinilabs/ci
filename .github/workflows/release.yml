@@ -297,7 +297,7 @@ jobs:
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
-        uses: infinilabs/gitea-pr@v0
+        uses: infinilabs/gitea-pr@v1
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
@@ -916,7 +916,7 @@ jobs:
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' }}
-        uses: infinilabs/gitea-pr@v0
+        uses: infinilabs/gitea-pr@v1
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
