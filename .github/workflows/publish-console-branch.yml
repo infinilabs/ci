@@ -53,7 +53,7 @@ on:
         required: false
         default: "1.31.0"
       PUBLISH_CONSOLE_BRANCH:
-        description: 'Publish With Branch'
+        description: 'Publish With Console Branch'
         required: false
         default: "optimize_pages"
       PUBLISH_FRAMEWORK_BRANCH:
