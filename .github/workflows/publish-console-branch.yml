@@ -129,11 +129,11 @@ jobs:
           echo "PUBLISH_BRANCH=$PUBLISH_BRANCH" >> $GITHUB_ENV
           echo "PUBLISH_FRAMEWORK_BRANCH=$PUBLISH_FRAMEWORK_BRANCH" >> $GITHUB_ENV
 
-      - name: Checkout framework code
+      - name: Checkout framework@${{ env.PUBLISH_FRAMEWORK_BRANCH }} code
         uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
-          ref: main
+          ref: ${{ env.PUBLISH_FRAMEWORK_BRANCH }}
           path: framework
 
       - name: Checkout framework vendor code
@@ -143,7 +143,7 @@ jobs:
           ref: main
           path: vendor
 
-      - name: Checkout ${{ matrix.product }} code
+      - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_BRANCH}} code
         uses: actions/checkout@v6
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
