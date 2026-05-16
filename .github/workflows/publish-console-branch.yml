@@ -32,7 +32,7 @@ on:
         description: 'Gateway'
         required: false
         type: boolean
-        default: false
+        default: true
       LOADGEN_PUBLISH:
         description: 'Loadgen'
         required: false
