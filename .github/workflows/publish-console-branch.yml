@@ -1,4 +1,4 @@
-name: Publish Products Docker With Branch
+name: Publish Products Files & Docker With Branch
 defaults:
   run:
     shell: bash
