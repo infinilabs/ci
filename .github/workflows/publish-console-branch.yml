@@ -120,6 +120,7 @@ jobs:
         run: |
           if [ "${{ matrix.product }}" == "console" ]; then
             PUBLISH_BRANCH="${{ inputs.PUBLISH_CONSOLE_BRANCH }}"
+            git clone git@github.com:infinilabs/license $WORK/license
           else
             PUBLISH_BRANCH="main"
           fi
@@ -152,6 +153,7 @@ jobs:
 
       - name: Checkout dependency repository
         uses: actions/checkout@v6
+        if: ${{ matrix.product == 'console' }}
         with:
           repository: 'infinilabs/migration-enterprise-plugins'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
