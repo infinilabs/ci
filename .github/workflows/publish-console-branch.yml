@@ -22,7 +22,7 @@ on:
         description: 'Agent'
         required: false
         type: boolean
-        default: false
+        default: true
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -51,7 +51,11 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.31.0"
+        default: "1.30.3"
+      PUBLISH_AGENT_BRANCH:
+          description: 'Publish With Agent Branch'
+          required: false
+          default: "console_agent"
       PUBLISH_CONSOLE_BRANCH:
         description: 'Publish With Console Branch'
         required: false
@@ -118,7 +122,9 @@ jobs:
 
       - name: Setup branch
         run: |
-          if [ "${{ matrix.product }}" == "console" ]; then
+          if [ "${{ matrix.product }}" == "agent" ]; then
+            PUBLISH_BRANCH="${{ inputs.PUBLISH_AGENT_BRANCH }}"
+          elif [ "${{ matrix.product }}" == "console" ]; then
             PUBLISH_BRANCH="${{ inputs.PUBLISH_CONSOLE_BRANCH }}"
           else
             PUBLISH_BRANCH="main"
