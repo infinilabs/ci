@@ -9,7 +9,7 @@ env:
   NODEJS_EXT_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.PUBLISH_VERSION }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
   NODE_OPTIONS: "--max-old-space-size=8192"
   
 on:
@@ -56,6 +56,10 @@ on:
           description: 'Publish With Agent Branch'
           required: false
           default: "console_agent"
+      PUBLISH_GATEWAY_BRANCH:
+          description: 'Publish With Gateway Branch'
+          required: false
+          default: "console_gateway"
       PUBLISH_CONSOLE_BRANCH:
         description: 'Publish With Console Branch'
         required: false
@@ -88,7 +92,7 @@ jobs:
 
   publish:
     needs: generate-matrix
-    name: Publish ${{ matrix.product }}@${{ matrix.product == 'console' && inputs.PUBLISH_CONSOLE_BRANCH || matrix.product == 'agent' && inputs.PUBLISH_AGENT_BRANCH || 'main' }}
+    name: Publish ${{ matrix.product }}@${{ matrix.product == 'console' && inputs.PUBLISH_CONSOLE_BRANCH || matrix.product == 'agent' && inputs.PUBLISH_AGENT_BRANCH || matrix.product == 'gateway' && inputs.PUBLISH_GATEWAY_BRANCH || 'main' }}
     runs-on: ubuntu-latest
     env:
         OSS_EP: ${{ secrets.OSS_EP }}
@@ -129,6 +133,8 @@ jobs:
             PUBLISH_WITH_UI=false
             [ "$(printf '%s\n' "$VERSION" "1.31.0" | sort -V | head -n1)" != "1.31.0" ] && PUBLISH_WITH_UI=true
             echo "PUBLISH_WITH_UI=$PUBLISH_WITH_UI" >> $GITHUB_ENV
+          elif [ "${{ matrix.product }}" == "gateway" ]; then
+            PUBLISH_BRANCH="${{ inputs.PUBLISH_GATEWAY_BRANCH }}"
           elif [ "${{ matrix.product }}" == "console" ]; then
             PUBLISH_BRANCH="${{ inputs.PUBLISH_CONSOLE_BRANCH }}"
           else
