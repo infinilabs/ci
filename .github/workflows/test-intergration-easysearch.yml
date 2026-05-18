@@ -51,8 +51,385 @@ on:
 
 jobs:
   publish:
-    name: Test Easysearch Integration
+    name: Test Easysearch Integration / ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - suite: rest
+            name: Rest tests
+            report_name: rest
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :rest-api-spec:yamlRestTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
+                      --info --stacktrace
+          - suite: license-rest
+            name: License rest tests
+            report_name: license-rest
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/yamlRestTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:yamlRestTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.rest.suite=license \
+                --rerun-tasks --info
+          - suite: license
+            name: License tests
+            report_name: license
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests com.infinilabs.license.LicenseTests \
+                --tests com.infinilabs.license.LicenseMetadataXContentTests \
+                --tests org.easysearch.license.DefaultLicenseVerifierTests \
+                --tests org.easysearch.license.TestLicenseVerifierTests \
+                --tests org.easysearch.license.LicenseServiceTests \
+                --rerun-tasks --info
+          - suite: access-token
+            name: Access token tests
+            report_name: access-token
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:security:test \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests com.infinilabs.security.dlic.rest.api.AccessTokenApiActionTest \
+                --tests com.infinilabs.security.dlic.rest.api.access.AccessTokenServiceTest \
+                --tests com.infinilabs.security.filter.SecurityFilterAccessTokenAuthTest \
+                --tests com.infinilabs.security.dlic.rest.api.EnrollmentApiActionTest \
+                --rerun-tasks --info
+          - suite: security-auditlog
+            name: Security auditlog tests
+            report_name: security-auditlog
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:security:test \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests com.infinilabs.security.auditlog.impl.AuditCategoryTest \
+                --tests com.infinilabs.security.auditlog.impl.DisabledCategoriesTest \
+                --tests com.infinilabs.security.auditlog.impl.AuditlogTest \
+                --tests com.infinilabs.security.auditlog.impl.IgnoreAuditUsersTest \
+                --tests com.infinilabs.security.auditlog.impl.AuditMessageTest \
+                --tests com.infinilabs.security.auditlog.config.ThreadPoolConfigTest \
+                --tests com.infinilabs.security.auditlog.compliance.ComplianceAuditlogTest \
+                --tests com.infinilabs.security.auditlog.compliance.ComplianceConfigTest \
+                --tests com.infinilabs.security.auditlog.compliance.RestApiComplianceAuditlogTest \
+                --tests com.infinilabs.security.auditlog.sink.SinkProviderTLSTest \
+                --tests com.infinilabs.security.auditlog.sink.WebhookAuditLogTest \
+                --tests com.infinilabs.security.auditlog.integration.SSLAuditlogTest \
+                --tests com.infinilabs.security.auditlog.routing.FallbackTest \
+                --rerun-tasks --info
+          - suite: security
+            name: Security tests
+            report_name: security
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:security:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests com.infinilabs.security.dlic.rest.api.AccountApiTest \
+                      --tests com.infinilabs.security.HttpIntegrationTests \
+                      --tests com.infinilabs.security.dlic.rest.api.RolesApiTest \
+                      --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest \
+                      --tests com.infinilabs.security.privileges.PrivilegesEvaluatorClusterActionTest \
+                      --tests com.infinilabs.security.auditlog.sink.InternalESSinkTest \
+                      --tests com.infinilabs.security.auditlog.config.AuditConfigFilterTest \
+                      --tests com.infinilabs.security.auditlog.config.AuditConfigSerializeTest \
+                      --tests com.infinilabs.security.dlic.rest.api.AuditApiActionTest \
+                      --tests com.infinilabs.security.configuration.AuditIndexSearcherWrapperTest \
+                      --tests com.infinilabs.security.dlic.rest.api.AuditLogIndexAccessTest \
+                      --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest.doesNotExcludeDataStreamNameForLocalAll \
+                      --tests com.infinilabs.security.auditlog.integration.BasicAuditlogTest.testAuditLogTemplateAndDataStream \
+                      --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
+                      --rerun-tasks --info
+          - suite: security-rules
+            name: Security rules tests
+            report_name: security-rules
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/rulesSecurityTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:security:rulesSecurityTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests com.infinilabs.security.dlic.rest.api.RulesIndexAccessTest \
+                --rerun-tasks --info
+          - suite: security-ldap
+            name: Security LDAP tests
+            report_name: security-ldap
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:security:test \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests com.infinilabs.dlic.auth.ldap.UtilsTest \
+                --tests com.infinilabs.dlic.auth.ldap.LdapBackendTest \
+                --tests com.infinilabs.dlic.auth.ldap.LdapBackendNewStyleConfigTest \
+                --tests com.infinilabs.dlic.auth.ldap.LdapBackendIntegTest \
+                --rerun-tasks --info
+          - suite: model-provider
+            name: Model provider tests
+            report_name: model-provider
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/model-provider/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:model-provider:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.modelprovider.ModelProviderServiceTests \
+                      --rerun-tasks --info
+          - suite: datastream
+            name: DataStream tests
+            report_name: datastream
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.cluster.metadata.DataStreamTests \
+                      --tests org.easysearch.cluster.metadata.DataStreamMetadataTests \
+                      --tests org.easysearch.cluster.metadata.DataStreamTemplateTests \
+                      --tests org.easysearch.action.admin.indices.datastream.CreateDataStreamRequestTests \
+                      --tests org.easysearch.action.admin.indices.datastream.DeleteDataStreamRequestTests \
+                      --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsRequestTests \
+                      --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsResponseTests \
+                      --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
+                      --rerun-tasks --info
+          - suite: indexing-pressure
+            name: IndexingPressureIT tests
+            report_name: indexing-pressure
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:clean :server:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.cluster.reroute.timeout=300s \
+                      -Dtests.cluster.recovery.timeout=300s \
+                      -Dtests.cluster.stabilization.timeout=300s \
+                      --tests org.easysearch.indexingpressure.IndexingPressureIT \
+                      --tests org.easysearch.index.IndexingPressureIT \
+                      --rerun-tasks --info
+          - suite: read-old-lucene-index
+            name: Read old lucene index tests
+            report_name: read-old-lucene-index
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.index.engine.InternalEngineTests \
+                      --tests org.easysearch.index.store.StoreTests \
+                      --rerun-tasks --info
+          - suite: index-management-ilm-secure-core
+            name: Index management ILM secure core tests
+            report_name: index-management-ilm-secure-core
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:index-management:integTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicySecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMRetryFailedManagedIndexSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMTemplateAutoApplySecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMAliasActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMIndexSettingsActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMOpenCloseActionSecurityIT \
+                --rerun-tasks --info
+          - suite: index-management-ilm-action-secure
+            name: Index management ILM action tests
+            report_name: index-management-ilm-action-secure
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:index-management:integTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMSnapshotActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMWaitForSnapshotActionSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeRolloverCloseDeleteSecurityIT \
+                --rerun-tasks --info
+          - suite: index-management-slm-secure
+            name: Index management SLM secure tests
+            report_name: index-management-slm-secure
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:index-management:integTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests org.easysearch.indexmanagement.secure.slm.SLMExecutionIT \
+                --tests org.easysearch.indexmanagement.secure.slm.SLMPolicySecurityIT \
+                --rerun-tasks --info
+          - suite: index-management-rollup-secure
+            name: Index management rollup secure tests
+            report_name: index-management-rollup-secure
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:index-management:integTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
+                --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
+                --rerun-tasks --info
+          - suite: index-management-rollup-integration
+            name: Index management rollup integration tests
+            report_name: index-management-rollup-integration
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:index-management:integTest \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                --tests org.easysearch.indexmanagement.rollup.RollupExecutionIT \
+                --tests org.easysearch.indexmanagement.rollup.RollupLifecycleIT \
+                --tests org.easysearch.indexmanagement.rollup.RollupSearchIT \
+                --tests org.easysearch.indexmanagement.rollup.RollupSearchBugReproIT \
+                --rerun-tasks --info
+          - suite: index-management-rollup-runner
+            name: Index management rollup runner tests
+            report_name: index-management-rollup-runner
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:index-management:test \
+                -Deasysearch.version=$STEP_VERSION \
+                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.jvms=1 \
+                --tests org.easysearch.indexmanagement.rollup.RollupRunnerTests \
+                --rerun-tasks --info
+          - suite: rules-plugin
+            name: Rules plugin compiler tests
+            report_name: rules-plugin
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :plugins:rules:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.rules.compiler.RuleCompilerTests \
+                      --rerun-tasks --info
+          - suite: rules-plugin-multi-node
+            name: Rules plugin multi-node IT tests
+            report_name: rules-plugin-multi-node
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :plugins:rules:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.rules.sync.RulesMultiNodeIT \
+                      --rerun-tasks --info
+          - suite: zstd-lucene-index
+            name: Zstd lucene index tests
+            report_name: zstd-lucene-index
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/custom-codecs/build/reports/tests/test|$GITHUB_WORKSPACE/$PNAME/modules/custom-codecs/build/reports/tests/internalClusterTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:custom-codecs:test :modules:custom-codecs:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests '*Zstd*' \
+                      --rerun-tasks --info
+          - suite: analysis-ik
+            name: Analysis-ik tests
+            report_name: analysis-ik
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/plugins/analysis-ik/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :plugins:analysis-ik:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.wltea.analyzer.lucene.IKTokenizerBehaviorTests \
+                      --tests org.wltea.analyzer.lucene.IKTokenizerGoldenCorrectnessTests \
+                      --tests org.wltea.analyzer.dic.IKAnalyzerTests \
+                      --tests org.wltea.analyzer.core.CharacterUtilTests \
+                      --tests org.wltea.analyzer.core.QuickSortSetTests \
+                      --tests org.easysearch.analysis.ik.AnalysisIkPluginLifecycleTests \
+                      --tests org.easysearch.analysis.ik.action.TransportReloadIKDictionaryActionTests \
+                      --tests org.wltea.analyzer.core.AnalyzeContextOutputStatsTests.shouldRestoreOutputStatsTrackerAcrossNestedScopes \
+                      --tests 'org.wltea.analyzer.dic.DictSegmentLookupStatsTests.should*' \
+                      -Dtests.jvms=1 \
+                      -Dtests.security.manager=false \
+                      --rerun-tasks --info
+          - suite: async-search-internal-cluster
+            name: Async search internal cluster tests
+            report_name: async-search-internal-cluster
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/internalClusterTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:async_search:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      --tests org.easysearch.search.async.AsyncSearchActionIT \
+                      --rerun-tasks --info
+          - suite: async-search-yaml-rest
+            name: Async search YAML REST tests
+            report_name: async-search-yaml-rest
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/yamlRestTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :modules:async_search:yamlRestTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      --rerun-tasks --info
+          - suite: searchable-snapshot
+            name: Searchable snapshot internal cluster tests
+            report_name: searchable-snapshot
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:clean :server:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      -Dtests.cluster.reroute.timeout=300s \
+                      -Dtests.cluster.recovery.timeout=300s \
+                      -Dtests.cluster.stabilization.timeout=300s \
+                      --tests org.easysearch.snapshots.SearchableSnapshotIT \
+                      --rerun-tasks --info
+          - suite: searchable-snapshot-unit
+            name: Searchable snapshot unit tests
+            report_name: searchable-snapshot-unit
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      --tests org.easysearch.index.store.remote.filecache.FileCacheTests \
+                      --tests org.easysearch.index.store.remote.filecache.FileCacheCleanerTests \
+                      --tests org.easysearch.index.store.remote.filecache.FileCacheStatsTests \
+                      --tests org.easysearch.index.store.remote.file.OnDemandBlockSnapshotIndexInputTests \
+                      --tests org.easysearch.index.store.remote.file.OnDemandBlockIndexInputLifecycleTests \
+                      --rerun-tasks --info
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -66,26 +443,34 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
-      - name: Set up and check env
+      - name: Resolve branch and toolchain
+        id: resolve_config
         run: |
           mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
-          # Set GRADLE version and BRANCH based on PUBLISH_VERSION
           BRANCH="1.x"
+          JAVA_VERSION="${{ vars.JAVA_VERSION }}"
+          GRADLE_VERSION="${{ vars.GRADLE_VERSION }}"
+
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
-            GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
-            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+            GRADLE_VERSION="${{ vars.GRADLE_VERSION_8 }}"
+            JAVA_VERSION="${{ vars.JAVA_VERSION_21 }}"
           fi
-          echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
-          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-          echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
+
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "gradle_version=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
+          echo "GRADLE_VERSION=$GRADLE_VERSION" >> "$GITHUB_ENV"
+          echo "JAVA_VERSION=$JAVA_VERSION -> using gradle version: $GRADLE_VERSION for branch: $BRANCH"
 
       - name: Set up java toolchain
         uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: ${{ steps.resolve_config.outputs.java_version }}
 
       - name: Set up gradle
         run: |
@@ -93,13 +478,13 @@ jobs:
             wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
           fi
-          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
-          echo Gradle path is $HOME/gradle-$GRADLE_VERSION
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> "$GITHUB_ENV"
+          echo "Gradle path is $HOME/gradle-$GRADLE_VERSION"
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
           git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)"
 
       - name: Set up with pnpm toolchain
         uses: pnpm/action-setup@v6
@@ -127,752 +512,85 @@ jobs:
             ~/.gradle/caches
             /root/.gradle/caches
             ${{ github.workspace }}/jdks
-          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
+          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
 
       - name: Prepare for build dependency
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)"
           $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
           echo "Testing with easysearch version: $PUBLISH_VERSION"
-          echo "STEP_VERSION=$PUBLISH_VERSION" >> $GITHUB_ENV
+          echo "STEP_VERSION=$PUBLISH_VERSION" >> "$GITHUB_ENV"
           PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins
-          echo "PLUGIN_HOME=$PLUGIN_HOME" >> $GITHUB_ENV
+          echo "PLUGIN_HOME=$PLUGIN_HOME" >> "$GITHUB_ENV"
 
-      - name: Run Rest tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :rest-api-spec:yamlRestTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
-                  --info --stacktrace
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="rest"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/rest-api-spec/build/reports/tests/yamlRestTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code 
-
-      - name: Run License rest tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:yamlRestTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            -Dtests.rest.suite=license \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="license-rest"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/yamlRestTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-      - name: Run License tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:test \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests com.infinilabs.license.LicenseTests \
-            --tests com.infinilabs.license.LicenseMetadataXContentTests \
-            --tests org.easysearch.license.DefaultLicenseVerifierTests \
-            --tests org.easysearch.license.TestLicenseVerifierTests \
-            --tests org.easysearch.license.LicenseServiceTests \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="license"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run access token tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:security:test \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests com.infinilabs.security.dlic.rest.api.AccessTokenApiActionTest \
-            --tests com.infinilabs.security.dlic.rest.api.access.AccessTokenServiceTest \
-            --tests com.infinilabs.security.filter.SecurityFilterAccessTokenAuthTest \
-            --tests com.infinilabs.security.dlic.rest.api.EnrollmentApiActionTest \
-            --rerun-tasks --info
-            
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="access-token"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run security auditlog tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:security:test \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests com.infinilabs.security.auditlog.impl.AuditCategoryTest \
-            --tests com.infinilabs.security.auditlog.impl.DisabledCategoriesTest \
-            --tests com.infinilabs.security.auditlog.impl.AuditlogTest \
-            --tests com.infinilabs.security.auditlog.impl.IgnoreAuditUsersTest \
-            --tests com.infinilabs.security.auditlog.impl.AuditMessageTest \
-            --tests com.infinilabs.security.auditlog.config.ThreadPoolConfigTest \
-            --tests com.infinilabs.security.auditlog.compliance.ComplianceAuditlogTest \
-            --tests com.infinilabs.security.auditlog.compliance.ComplianceConfigTest \
-            --tests com.infinilabs.security.auditlog.compliance.RestApiComplianceAuditlogTest \
-            --tests com.infinilabs.security.auditlog.sink.SinkProviderTLSTest \
-            --tests com.infinilabs.security.auditlog.sink.WebhookAuditLogTest \
-            --tests com.infinilabs.security.auditlog.integration.SSLAuditlogTest \
-            --tests com.infinilabs.security.auditlog.routing.FallbackTest \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="security-auditlog"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run Security tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:security:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests com.infinilabs.security.dlic.rest.api.AccountApiTest \
-                  --tests com.infinilabs.security.HttpIntegrationTests \
-                  --tests com.infinilabs.security.dlic.rest.api.RolesApiTest \
-                  --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest \
-                  --tests com.infinilabs.security.privileges.PrivilegesEvaluatorClusterActionTest \
-                  --tests com.infinilabs.security.auditlog.sink.InternalESSinkTest \
-                  --tests com.infinilabs.security.auditlog.config.AuditConfigFilterTest \
-                  --tests com.infinilabs.security.auditlog.config.AuditConfigSerializeTest \
-                  --tests com.infinilabs.security.dlic.rest.api.AuditApiActionTest \
-                  --tests com.infinilabs.security.configuration.AuditIndexSearcherWrapperTest \
-                  --tests com.infinilabs.security.dlic.rest.api.AuditLogIndexAccessTest \
-                  --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest.doesNotExcludeDataStreamNameForLocalAll \
-                  --tests com.infinilabs.security.auditlog.integration.BasicAuditlogTest.testAuditLogTemplateAndDataStream \
-                  --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="security"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run security rules tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:security:rulesSecurityTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests com.infinilabs.security.dlic.rest.api.RulesIndexAccessTest \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="security-rules"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/rulesSecurityTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run security LDAP tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:security:test \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests com.infinilabs.dlic.auth.ldap.UtilsTest \
-            --tests com.infinilabs.dlic.auth.ldap.LdapBackendTest \
-            --tests com.infinilabs.dlic.auth.ldap.LdapBackendNewStyleConfigTest \
-            --tests com.infinilabs.dlic.auth.ldap.LdapBackendIntegTest \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="security-ldap"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/security/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run model provider tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:model-provider:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.modelprovider.ModelProviderServiceTests \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="model-provider"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/model-provider/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-      
-      - name: Run DataStream tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.cluster.metadata.DataStreamTests \
-                  --tests org.easysearch.cluster.metadata.DataStreamMetadataTests \
-                  --tests org.easysearch.cluster.metadata.DataStreamTemplateTests \
-                  --tests org.easysearch.action.admin.indices.datastream.CreateDataStreamRequestTests \
-                  --tests org.easysearch.action.admin.indices.datastream.DeleteDataStreamRequestTests \
-                  --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsRequestTests \
-                  --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsResponseTests \
-                  --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="datastream"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run IndexingPressureIT tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:clean :server:internalClusterTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  -Dtests.cluster.reroute.timeout=300s \
-                  -Dtests.cluster.recovery.timeout=300s \
-                  -Dtests.cluster.stabilization.timeout=300s \
-                  --tests org.easysearch.indexingpressure.IndexingPressureIT \
-                  --tests org.easysearch.index.IndexingPressureIT \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="indexing-pressure"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run Read old lucene index tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.index.engine.InternalEngineTests \
-                  --tests org.easysearch.index.store.StoreTests \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="read-old-lucene-index"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run index management ILM secure core tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:integTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicySecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMRetryFailedManagedIndexSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMTemplateAutoApplySecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMAliasActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMIndexSettingsActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMOpenCloseActionSecurityIT \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-ilm-secure-core"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run index management ILM action tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:integTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMSnapshotActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMWaitForSnapshotActionSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeRolloverCloseDeleteSecurityIT \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-ilm-action-secure"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run index management SLM secure tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:integTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests org.easysearch.indexmanagement.secure.slm.SLMExecutionIT \
-            --tests org.easysearch.indexmanagement.secure.slm.SLMPolicySecurityIT \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-slm-secure"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run index management rollup secure tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:integTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
-            --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-rollup-secure"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code        
-
-      - name: Run index management rollup integration tests
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:integTest \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            --tests org.easysearch.indexmanagement.rollup.RollupExecutionIT \
-            --tests org.easysearch.indexmanagement.rollup.RollupLifecycleIT \
-            --tests org.easysearch.indexmanagement.rollup.RollupSearchIT \
-            --tests org.easysearch.indexmanagement.rollup.RollupSearchBugReproIT \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-rollup-integration"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run index management rollup runner tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:index-management:test \
-            -Deasysearch.version=$STEP_VERSION \
-            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-            -Dtests.jvms=1 \
-            --tests org.easysearch.indexmanagement.rollup.RollupRunnerTests \
-            --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="index-management-rollup-runner"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run Rules Plugin Compiler tests
-        timeout-minutes: 30
+      - name: Run ${{ matrix.name }}
+        timeout-minutes: ${{ matrix.timeout_minutes }}
         env:
           RULEDB_LICENSE: ${{ secrets.RULEDB_LICENSE }}
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME
+          cd "$GITHUB_WORKSPACE/$PNAME"
           set +e
-          gradle clean :plugins:rules:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.rules.compiler.RuleCompilerTests \
-                  --rerun-tasks --info
+          ${{ matrix.command }}
           exit_code=$?
           set -e
-          # Copy test reports
-          test_name="rules-plugin"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
 
-      - name: Run Rules Plugin Multi-Node IT tests
-        timeout-minutes: 30
-        env:
-          RULEDB_LICENSE: ${{ secrets.RULEDB_LICENSE }}
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :plugins:rules:internalClusterTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.easysearch.rules.sync.RulesMultiNodeIT \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="rules-plugin-multi-node"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest"
+          test_name="${{ matrix.report_name }}"
           target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-      
-      - name: Run zstd lucence index tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:custom-codecs:test :modules:custom-codecs:internalClusterTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests '*Zstd*' \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="zstd-lucene-index"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
+          copied=0
 
-      - name: Run analysis-ik tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :plugins:analysis-ik:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  --tests org.wltea.analyzer.lucene.IKTokenizerBehaviorTests \
-                  --tests org.wltea.analyzer.lucene.IKTokenizerGoldenCorrectnessTests \
-                  --tests org.wltea.analyzer.dic.IKAnalyzerTests \
-                  --tests org.wltea.analyzer.core.CharacterUtilTests \
-                  --tests org.wltea.analyzer.core.QuickSortSetTests \
-                  --tests org.easysearch.analysis.ik.AnalysisIkPluginLifecycleTests \
-                  --tests org.easysearch.analysis.ik.action.TransportReloadIKDictionaryActionTests \
-                  --tests org.wltea.analyzer.core.AnalyzeContextOutputStatsTests.shouldRestoreOutputStatsTrackerAcrossNestedScopes \
-                  --tests 'org.wltea.analyzer.dic.DictSegmentLookupStatsTests.should*' \
-                  -Dtests.jvms=1 \
-                  -Dtests.security.manager=false \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="analysis-ik"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/plugins/analysis-ik/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
+          IFS='|' read -r -a report_dirs <<< "${{ matrix.report_dirs }}"
+          for report_dir in "${report_dirs[@]}"; do
+            if [ -d "$report_dir" ]; then
+              mkdir -p "$target_dir"
+              cp -r "$report_dir"/* "$target_dir"/ || true
+              echo "Copied $test_name test reports from $report_dir to $target_dir"
+              copied=1
+            else
+              echo "No $test_name test reports found in $report_dir"
+            fi
+          done
 
-      - name: Run async search internal cluster tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:async_search:internalClusterTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  -Dtests.jvms=1 \
-                  --tests org.easysearch.search.async.AsyncSearchActionIT \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="async-search-internal-cluster"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/internalClusterTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
+          if [ "$copied" -eq 0 ]; then
+            echo "No reports copied for $test_name"
           fi
-          exit $exit_code
 
-      - name: Run async search YAML REST tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :modules:async_search:yamlRestTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  -Dtests.jvms=1 \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="async-search-yaml-rest"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/async_search/build/reports/tests/yamlRestTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
+          exit "$exit_code"
 
-      - name: Run searchable snapshot internal cluster tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:clean :server:internalClusterTest \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  -Dtests.jvms=1 \
-                  -Dtests.cluster.reroute.timeout=300s \
-                  -Dtests.cluster.recovery.timeout=300s \
-                  -Dtests.cluster.stabilization.timeout=300s \
-                  --tests org.easysearch.snapshots.SearchableSnapshotIT \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="searchable-snapshot"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Run searchable snapshot unit tests
-        timeout-minutes: 30
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME
-          set +e
-          gradle clean :server:test \
-                  -Deasysearch.version=$STEP_VERSION \
-                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
-                  -Dtests.jvms=1 \
-                  --tests org.easysearch.index.store.remote.filecache.FileCacheTests \
-                  --tests org.easysearch.index.store.remote.filecache.FileCacheCleanerTests \
-                  --tests org.easysearch.index.store.remote.filecache.FileCacheStatsTests \
-                  --tests org.easysearch.index.store.remote.file.OnDemandBlockSnapshotIndexInputTests \
-                  --tests org.easysearch.index.store.remote.file.OnDemandBlockIndexInputLifecycleTests \
-                  --rerun-tasks --info
-          exit_code=$?
-          set -e
-          # Copy test reports
-          test_name="searchable-snapshot-unit"
-          report_dir="$GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test"
-          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
-          if [ -d "$report_dir" ]; then
-            mkdir -p $target_dir
-            cp -r $report_dir/*  $target_dir || true
-            echo "Copied $test_name test reports to $target_dir"
-          else
-            echo "No $test_name test reports found in $report_dir"
-          fi
-          exit $exit_code
-
-      - name: Upload Test Reports
+      - name: Upload ${{ matrix.name }} test reports
         if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ matrix.report_name }}
+          path: all-test-reports/
+          retention-days: 1
+          if-no-files-found: warn
+          include-hidden-files: true
+
+  collect_test_reports:
+    name: Collect Test Reports
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: always()
+    steps:
+      - name: Download split test reports
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-reports-*
+          path: all-test-reports
+          merge-multiple: true
+
+      - name: Check merged reports
+        id: check_reports
+        run: |
+          if [ -d all-test-reports ] && find all-test-reports -mindepth 1 -print -quit | grep -q .; then
+            echo "has_reports=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_reports=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload merged test reports
+        if: steps.check_reports.outputs.has_reports == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: all-test-reports
@@ -883,8 +601,8 @@ jobs:
 
   notify_on_failure:
     runs-on: ubuntu-latest
-    needs: [publish]
-    if: failure()
+    needs: [publish, collect_test_reports]
+    if: ${{ always() && needs.publish.result == 'failure' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
