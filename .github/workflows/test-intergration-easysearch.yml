@@ -370,6 +370,31 @@ jobs:
             echo "No $test_name test reports found in $report_dir"
           fi
           exit $exit_code
+
+      - name: Run model provider tests
+        timeout-minutes: 30
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:model-provider:test \
+                  -Deasysearch.version=$STEP_VERSION \
+                  -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                  --tests org.easysearch.modelprovider.ModelProviderServiceTests \
+                  --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="model-provider"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/model-provider/build/reports/tests/test"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
       
       - name: Run DataStream tests
         timeout-minutes: 30
@@ -470,6 +495,7 @@ jobs:
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicySecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMRetryFailedManagedIndexSecurityIT \
+            --tests org.easysearch.indexmanagement.secure.ilm.ILMTemplateAutoApplySecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMAliasActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMIndexSettingsActionSecurityIT \
             --tests org.easysearch.indexmanagement.secure.ilm.ILMOpenCloseActionSecurityIT \
@@ -516,7 +542,32 @@ jobs:
           else
             echo "No $test_name test reports found in $report_dir"
           fi
-          exit $exit_code   
+          exit $exit_code
+
+      - name: Run index management SLM secure tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:integTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests org.easysearch.indexmanagement.secure.slm.SLMExecutionIT \
+            --tests org.easysearch.indexmanagement.secure.slm.SLMPolicySecurityIT \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-slm-secure"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
 
       - name: Run index management rollup secure tests
         run: |
@@ -542,6 +593,33 @@ jobs:
             echo "No $test_name test reports found in $report_dir"
           fi
           exit $exit_code        
+
+      - name: Run index management rollup integration tests
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          set +e
+          gradle clean :modules:index-management:integTest \
+            -Deasysearch.version=$STEP_VERSION \
+            -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+            --tests org.easysearch.indexmanagement.rollup.RollupExecutionIT \
+            --tests org.easysearch.indexmanagement.rollup.RollupLifecycleIT \
+            --tests org.easysearch.indexmanagement.rollup.RollupSearchIT \
+            --tests org.easysearch.indexmanagement.rollup.RollupSearchBugReproIT \
+            --rerun-tasks --info
+          exit_code=$?
+          set -e
+          # Copy test reports
+          test_name="index-management-rollup-integration"
+          report_dir="$GITHUB_WORKSPACE/$PNAME/modules/index-management/build/reports/tests/integTest"
+          target_dir="$GITHUB_WORKSPACE/all-test-reports/$test_name-tests"
+          if [ -d "$report_dir" ]; then
+            mkdir -p $target_dir
+            cp -r $report_dir/*  $target_dir || true
+            echo "Copied $test_name test reports to $target_dir"
+          else
+            echo "No $test_name test reports found in $report_dir"
+          fi
+          exit $exit_code
 
       - name: Run index management rollup runner tests
         timeout-minutes: 30
