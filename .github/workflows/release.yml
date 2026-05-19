@@ -500,7 +500,9 @@ jobs:
 
           # 2. Update Easysearch Version
           if [[ "$DO_EZS" == "true" ]]; then
-            if [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+            if [[ "$EZS_VER" =~ ^1\. ]]; then
+              echo "⏭️ Easysearch 1.x legacy patch, skipping variable update."
+            elif [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
                EZS_VER_CLEAN="${EZS_VER%%-*}"
                echo "Updating GitHub release Easysearch version to $EZS_VER_CLEAN"
                gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
@@ -578,16 +580,20 @@ jobs:
             echo "Loadgen publish skipped, keeping existing version: $FINAL_LOADGEN_VER"
           fi
 
-          if [[ "$DO_EZS" == "true" ]]; then
-            SUFFIX=${IN_VER#*-}
-            if [[ "$IN_VER" == *"-"* ]] && [[ "$IN_EZS_VER" != *"-"* ]] && [[ -n "$SUFFIX" ]]; then
-              FINAL_EZS_VER="${IN_EZS_VER}-$SUFFIX"
+          if [[ "$DO_EZS" == "true" ]] && [[ ! "$IN_EZS_VER" =~ ^1\. ]]; then
+            SUFFIX=${IN_EZS_VER#*-}
+            if [[ "$IN_EZS_VER" == *"-"* ]] && [[ -n "$SUFFIX" ]]; then
+              FINAL_EZS_VER="$IN_EZS_VER"
             else
               FINAL_EZS_VER="$IN_EZS_VER"
             fi
           else
             FINAL_EZS_VER=$(jq -r .easysearch "/tmp/$fname")
-            echo "Easysearch publish skipped, keeping existing version: $FINAL_EZS_VER"
+            if [[ "$IN_EZS_VER" =~ ^1\. ]]; then
+              echo "⏭️ Easysearch 1.x legacy patch, keeping existing .latest version: $FINAL_EZS_VER"
+            else
+              echo "Easysearch publish skipped, keeping existing version: $FINAL_EZS_VER"
+            fi
           fi
 
           if [[ "$DO_COCO_APP" == "true" || "$DO_COCO_SERVER" == "true" ]]; then
@@ -629,7 +635,7 @@ jobs:
           fi
 
       - name: Update Easysearch .versions.json
-        if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
+        if: ${{ inputs.EASYSEARCH_PUBLISH == true && !startsWith(inputs.EASYSEARCH_PUBLISH_VERSION, '1.') }}
         env:
           EZS_VER: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
         run: |
@@ -670,7 +676,7 @@ jobs:
           echo "EZS_BUILD_NUM=$BUILD_NUM" >> $GITHUB_ENV
 
       - name: Create pull request for .versions.json
-        if: ${{ inputs.EASYSEARCH_PUBLISH == true }}
+        if: ${{ inputs.EASYSEARCH_PUBLISH == true && !startsWith(inputs.EASYSEARCH_PUBLISH_VERSION, '1.') }}
         uses: peter-evans/create-pull-request@v8
         id: create-versions-pr
         with:
@@ -685,7 +691,7 @@ jobs:
             products/easysearch/publish/.versions.json
 
       - name: Auto-merge versions.json PR
-        if: ${{ steps.create-versions-pr.outputs.pull-request-url }}
+        if: ${{ steps.create-versions-pr.outputs.pull-request-url && !startsWith(inputs.EASYSEARCH_PUBLISH_VERSION, '1.') }}
         env:
           PR_URL: ${{ steps.create-versions-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.REPO_PAT }}
@@ -889,7 +895,11 @@ jobs:
             run_update "loadgen" "$LOADGEN_VER"
           fi
           if [[ "$DO_EZS" == "true" ]]; then
-            run_update "easysearch" "$EZS_VER"
+            if [[ "$EZS_VER" =~ ^1\. ]]; then
+              echo "⏭️ Easysearch 1.x legacy patch, skipping official website update."
+            else
+              run_update "easysearch" "$EZS_VER"
+            fi
           fi
           if [[ "$DO_COCO_SERVER" == "true" ]]; then
             run_update "coco-server" "$COCO_VER"
