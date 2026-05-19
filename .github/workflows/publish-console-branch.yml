@@ -67,7 +67,7 @@ on:
       PUBLISH_FRAMEWORK_BRANCH:
         description: 'Publish With Framework Branch'
         required: false
-        default: "pr/bulk-indexing-consumer-race"
+        default: "console_framework"
 
 jobs:
   generate-matrix: 
