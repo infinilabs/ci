@@ -51,11 +51,11 @@ on:
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.30.3"
+        default: "1.31.1"
       PUBLISH_AGENT_BRANCH:
           description: 'Publish With Agent Branch'
           required: false
-          default: "console_agent"
+          default: "for_console_agent"
       PUBLISH_GATEWAY_BRANCH:
           description: 'Publish With Gateway Branch'
           required: false
