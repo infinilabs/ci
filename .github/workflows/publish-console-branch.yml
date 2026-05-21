@@ -131,7 +131,7 @@ jobs:
           if [ "${{ matrix.product }}" == "agent" ]; then
             PUBLISH_BRANCH="${{ inputs.PUBLISH_AGENT_BRANCH }}"
             PUBLISH_WITH_UI=false
-            [ "$(printf '%s\n' "$VERSION" "1.31.0" | sort -V | head -n1)" != "1.31.0" ] && PUBLISH_WITH_UI=true
+            [ "$(printf '%s\n' "$VERSION" "1.31.0" | sort -V | head -n1)" == "1.31.0" ] && PUBLISH_WITH_UI=true
             echo "PUBLISH_WITH_UI=$PUBLISH_WITH_UI" >> $GITHUB_ENV
           elif [ "${{ matrix.product }}" == "gateway" ]; then
             PUBLISH_BRANCH="${{ inputs.PUBLISH_GATEWAY_BRANCH }}"
