@@ -8,15 +8,5 @@
       "windows-amd64"
     ],
     "build_number": 2776
-  },
-  "2.1.2": {
-    "platforms": [
-      "linux-amd64",
-      "linux-arm64",
-      "mac-amd64",
-      "mac-arm64",
-      "windows-amd64"
-    ],
-    "build_number": 2696
   }
 }
