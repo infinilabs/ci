@@ -303,7 +303,7 @@ jobs:
           # for agent web
           if [[ "${{ matrix.product }}" == "agent" && $PUBLISH_WITH_UI == true ]]; then
             echo "Update vfs for $PNAME"
-            cd $WORK/$PNAME && mkdir -p .public && make update-vfs
+            ls -lrt $GITHUB_WORKSPACE/$PNAME/.public
           fi
           # for console web
           if [[ "${{ matrix.product }}" == "console" ]]; then
