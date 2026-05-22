@@ -277,7 +277,7 @@ jobs:
           sleep 5
 
       - name: Checkout depends repo code for ${{ matrix.product }} web
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == true }}
+        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
         env:
           BRANCH: main
         run: |
@@ -289,7 +289,7 @@ jobs:
           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
 
       - name: Build ui for ${{ matrix.product }} web
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == true }}
+        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
         run: |
           SRC=$GITHUB_WORKSPACE/easysearch/plugins/ui/web
           DEST=$GITHUB_WORKSPACE/easysearch/plugins/ui/_ui
@@ -301,8 +301,8 @@ jobs:
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # for agent web
-          if [[ "${{ matrix.product }}" == "agent" && $PUBLISH_WITH_UI == true ]]; then
-            echo "Update vfs for $PNAME"
+          if [[ "${{ matrix.product }}" == "agent" && $PUBLISH_WITH_UI == "true" ]]; then
+            echo "Check the .public for $PNAME"
             ls -lrt $GITHUB_WORKSPACE/$PNAME/.public
           fi
           # for console web
