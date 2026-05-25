@@ -59,6 +59,7 @@ jobs:
     env:
         VERSION: ${{inputs.PUBLISH_VERSION}}
         BRANCH: ${{inputs.PUBLISH_BRANCH}}
+        BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -117,10 +118,17 @@ jobs:
         run: |
           target_dir=$GITHUB_WORKSPACE/$PNAME
           find "$target_dir" -maxdepth 3 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
-            echo "Uploading ${zip_file##*/} with path $zip_file..."
-            (cd "$(dirname "$zip_file")" && sha512sum "$(basename "$zip_file")" > "$(basename "$zip_file").sha512")
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file"
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$zip_file.sha512"
+            zip_dir="$(dirname "$zip_file")"
+            zip_base="$(basename "$zip_file")"
+            zip_name="${zip_base%.zip}"
+            publish_zip="$zip_dir/${zip_name}-${BUILD_NUMBER}.zip"
+
+            cp "$zip_file" "$publish_zip"
+            (cd "$zip_dir" && sha512sum "$(basename "$publish_zip")" > "$(basename "$publish_zip").sha512")
+
+            echo "Uploading $(basename "$publish_zip") with path $publish_zip..."
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$publish_zip"
+            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$publish_zip.sha512"
           done
 
   refresh_on_success:
