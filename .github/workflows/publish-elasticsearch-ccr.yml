@@ -107,8 +107,10 @@ jobs:
           key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
 
       - name: Build Plugin ${{env.PNAME}}
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.caching=false"
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && gradle clean assemble -x test -x javadoc
+          cd $GITHUB_WORKSPACE/$PNAME && gradle clean assemble -x test -x javadoc --no-build-cache --rerun-tasks
           
           # Check the build zip file
           echo "Built plugin zip files ..."
