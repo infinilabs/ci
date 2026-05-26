@@ -107,10 +107,11 @@ jobs:
           key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
 
       - name: Build Plugin ${{env.PNAME}}
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.caching=false"
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && gradle clean assemble -x test -x javadoc --no-build-cache --rerun-tasks
+          cd $GITHUB_WORKSPACE/$PNAME
+          # overwirte the build gradle file
+          cp -rf $GITHUB_WORKSPACE/.github/workflows/ccr/build.gradle .
+          gradle clean assemble -x test -x javadoc
           
           # Check the build zip file
           echo "Built plugin zip files ..."
