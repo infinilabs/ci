@@ -108,28 +108,35 @@ jobs:
 
       - name: Build Plugin ${{env.PNAME}}
         run: |
-          cd $GITHUB_WORKSPACE/$PNAME && gradle assemble -x test -x javadoc
+          cd $GITHUB_WORKSPACE/$PNAME && gradle clean assemble -x test -x javadoc
           
           # Check the build zip file
           echo "Built plugin zip files ..."
           find $GITHUB_WORKSPACE/$PNAME -name "*-$VERSION*.zip" -exec basename {} \;
 
-      - name: Upload Plubin to OSS
+      - name: Upload Plugin to OSS
         run: |
-          target_dir=$GITHUB_WORKSPACE/$PNAME
-          find "$target_dir" -maxdepth 3 -name "*.zip" -print0 | while IFS= read -r -d $'\0' zip_file; do
+          set -euo pipefail
+
+          readonly OSS_CONF="$GITHUB_WORKSPACE/.oss.yml"
+          readonly OSS_KEY=".plugins/$PNAME"
+          readonly TARGET_DIR="$GITHUB_WORKSPACE/$PNAME"
+
+          oss_upload() {
+            oss upload -c "$OSS_CONF" -o -k "$OSS_KEY" -f "$1"
+          }
+
+          while IFS= read -r -d '' zip_file; do
             zip_dir="$(dirname "$zip_file")"
-            zip_base="$(basename "$zip_file")"
-            zip_name="${zip_base%.zip}"
-            publish_zip="$zip_dir/${zip_name}-${BUILD_NUMBER}.zip"
+            publish_name="$(basename "$zip_file" .zip)-${BUILD_NUMBER}.zip"
+            publish_zip="$zip_dir/$publish_name"
 
             cp "$zip_file" "$publish_zip"
-            (cd "$zip_dir" && sha512sum "$(basename "$publish_zip")" > "$(basename "$publish_zip").sha512")
+            (cd "$zip_dir" && sha512sum "$publish_name" > "$publish_name.sha512")
 
-            echo "Uploading $(basename "$publish_zip") with path $publish_zip..."
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$publish_zip"
-            oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k .plugins/$PNAME -f "$publish_zip.sha512"
-          done
+            echo "Uploading $publish_name ..."
+            oss_upload "$publish_zip" && oss_upload "$publish_zip.sha512" && rm -rf "$publish_zip" "$publish_zip.sha512"
+          done < <(find "$TARGET_DIR" -maxdepth 3 -name "*.zip" -print0)
 
   refresh_on_success:
     runs-on: ubuntu-latest
