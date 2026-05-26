@@ -109,8 +109,6 @@ jobs:
       - name: Build Plugin ${{env.PNAME}}
         run: |
           cd $GITHUB_WORKSPACE/$PNAME
-          # overwirte the build gradle file
-          cp -rf $GITHUB_WORKSPACE/.github/workflows/ccr/build.gradle .
           gradle clean assemble -x test -x javadoc
           
           # Check the build zip file
