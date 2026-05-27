@@ -273,8 +273,12 @@ jobs:
         if: ${{ matrix.product == 'console' }}
         run: |
           # init license and enterprise plugins
-          git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          if [ ! -d $WORK/license ]; then
+            git clone git@github.com:infinilabs/license $WORK/license
+          fi
+          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
+           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          fi
 
       - name: Checkout depends repo code for ${{ matrix.product }} web
         if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
@@ -284,9 +288,15 @@ jobs:
           git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
           # init license and enterprise plugins
-          git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
-          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          if [ ! -d $WORK/license ]; then
+            git clone git@github.com:infinilabs/license $WORK/license
+          fi
+          if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
+            git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+          fi
+          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
+            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          fi
 
       - name: Build ui for ${{ matrix.product }} web
         if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
