@@ -185,6 +185,24 @@ jobs:
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
+      - name: Checkout depends repo code for ${{ matrix.product }} web
+        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
+        env:
+          BRANCH: main
+        run: |
+          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
+          (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
+          # init license and enterprise plugins
+          if [ ! -d $WORK/license ]; then
+            git clone git@github.com:infinilabs/license $WORK/license
+          fi
+          if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
+            git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+          fi
+          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
+            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          fi
+
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v6
         with:
@@ -196,16 +214,24 @@ jobs:
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
 
-      - name: Set up Node.js for ${{ matrix.product }}
-        if: matrix.product == 'agent' || matrix.product == 'console'
+      - name: Set up Node.js for console
+        if: matrix.product == 'console'
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.product == 'agent' && env.NODEJS_EXT_VERSION || env.NODEJS_VERSION }}
+          node-version: ${{ env.NODEJS_VERSION }}
           cache: 'npm'
-          cache-dependency-path: "**/package.json"
+          cache-dependency-path: "console/web/package.json"
+
+      - name: Set up Node.js for agent
+        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_EXT_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: "easysearch/plugins/ui/web/package.json"
 
       - name: Setup pnpm (agent only)
-        if: matrix.product == 'agent'
+        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
         uses: pnpm/action-setup@v6
         with:
           version: latest
@@ -217,7 +243,7 @@ jobs:
           npm install -g cnpm@9.2.0
 
       - name: Verify toolchain for ${{ matrix.product }}
-        if: matrix.product == 'agent' || matrix.product == 'console'
+        if: ${{ matrix.product == 'console' || (matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true') }}
         run: |
           node -v && npm -v
           if [[ "${{ matrix.product }}" == "agent" ]]; then
@@ -280,23 +306,12 @@ jobs:
            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
           fi
 
-      - name: Checkout depends repo code for ${{ matrix.product }} web
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        env:
-          BRANCH: main
+      - name: Prepare console go module replacements
+        if: ${{ matrix.product == 'console' }}
         run: |
-          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
-          (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
-          # init license and enterprise plugins
-          if [ ! -d $WORK/license ]; then
-            git clone git@github.com:infinilabs/license $WORK/license
-          fi
-          if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
-            git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
-          fi
-          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
-          fi
+          cd $WORK/$PNAME
+          go mod edit -replace infini.sh/license=../license
+          go mod edit -require infini.sh/license@v0.0.0
 
       - name: Build ui for ${{ matrix.product }} web
         if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
