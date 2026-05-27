@@ -182,9 +182,6 @@ jobs:
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi
-          if [ "${{ matrix.product }}" == "console" ]; then
-            git clone git@github.com:infinilabs/license $WORK/license
-          fi
           # settting env for build
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
@@ -219,6 +216,15 @@ jobs:
 
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
+
+      - name: Prepare agent go module replacements
+        if: ${{ matrix.product == 'agent' }}
+        run: |
+          cd $WORK/$PNAME
+          go mod edit -replace infini.sh/framework=../framework
+          go mod edit -replace github.com/cihub/seelog=../framework/lib/seelog
+          go mod edit -require infini.sh/framework@v0.0.0-00010101000000-000000000000
+          go mod tidy
 
       - name: Set up Node.js for console
         if: matrix.product == 'console'
@@ -302,9 +308,9 @@ jobs:
           if [ ! -d $WORK/license ]; then
             git clone git@github.com:infinilabs/license $WORK/license
           fi
-          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
-          fi
+          # if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
+          #  git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          # fi
 
       - name: Prepare console go module replacements
         if: ${{ matrix.product == 'console' }}
