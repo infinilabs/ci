@@ -101,13 +101,6 @@ jobs:
         repository: infinilabs/framework
         path: framework
 
-    - name: Checkout framework-vendor
-      uses: actions/checkout@v6
-      with:
-        ref: main
-        repository: infinilabs/framework-vendor
-        path: vendor
-
     - name: Checkout testing
       uses: actions/checkout@v6
       with:
