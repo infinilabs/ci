@@ -41,7 +41,7 @@ env:
 
 on:
   schedule:
-    - cron: "30 16 * * *"
+    - cron: "30 18 * * *"
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
@@ -472,6 +472,34 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ steps.resolve_config.outputs.java_version }}
 
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ steps.resolve_config.outputs.gradle_version }}
+          restore-keys: |
+            gradle-wrapper-${{ runner.os }}-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            /root/.gradle/caches
+          key: gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}-${{ hashFiles('**/*.gradle', '**/*.gradle.kts', '**/gradle.properties', '**/gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}-
+            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
+            gradle-deps-${{ runner.os }}-
+
+      - name: Cache JDK toolchains
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/jdks
+          key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
+          restore-keys: |
+            jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
+
       - name: Set up gradle
         run: |
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
@@ -505,15 +533,6 @@ jobs:
           fi
           node -v && npm -v && pnpm -v
 
-      - name: Cache Gradle packages and jdks
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            /root/.gradle/caches
-            ${{ github.workspace }}/jdks
-          key: java-toolchian-${{ runner.os }}-gradle-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
-
       - name: Prepare for build dependency
         run: |
           cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)"
@@ -523,6 +542,31 @@ jobs:
           PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins
           echo "PLUGIN_HOME=$PLUGIN_HOME" >> "$GITHUB_ENV"
 
+      - name: Resolve and cache dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE/$PNAME"
+
+          MAX_RETRY=3
+          RETRY=0
+          exit_code=1
+
+          while [ $RETRY -lt $MAX_RETRY ]; do
+            echo "==> Resolving dependencies, attempt $((RETRY+1))/$MAX_RETRY ..."
+            gradle dependencies --no-daemon --quiet
+            exit_code=$?
+            if [ $exit_code -eq 0 ]; then
+              echo "==> Dependencies resolved successfully."
+              break
+            fi
+            RETRY=$((RETRY+1))
+            if [ $RETRY -lt $MAX_RETRY ]; then
+              echo "==> Dependency resolution failed (exit $exit_code), retrying in 30s ..."
+              sleep 30
+            fi
+          done
+
+          exit "$exit_code"
+
       - name: Run ${{ matrix.name }}
         timeout-minutes: ${{ matrix.timeout_minutes }}
         env:
@@ -530,8 +574,25 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE/$PNAME"
           set +e
-          ${{ matrix.command }}
-          exit_code=$?
+
+          MAX_RETRY=3
+          RETRY=0
+          exit_code=1
+
+          while [ $RETRY -lt $MAX_RETRY ]; do
+            echo "==> Running ${{ matrix.name }}, attempt $((RETRY+1))/$MAX_RETRY ..."
+            ${{ matrix.command }}
+            exit_code=$?
+            if [ $exit_code -eq 0 ]; then
+              break
+            fi
+            RETRY=$((RETRY+1))
+            if [ $RETRY -lt $MAX_RETRY ]; then
+              echo "==> Failed (exit $exit_code), retrying in 30s ..."
+              sleep 30
+            fi
+          done
+
           set -e
 
           test_name="${{ matrix.report_name }}"
