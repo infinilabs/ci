@@ -269,6 +269,13 @@ jobs:
           echo "Connect started with pid $!"
           sleep 5
 
+      - name: Checkout depends repo code for ${{ matrix.product }}
+        if: ${{ matrix.product == 'console' }}
+        run: |
+          # init license and enterprise plugins
+          git clone git@github.com:infinilabs/license $WORK/license
+          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+
       - name: Checkout depends repo code for ${{ matrix.product }} web
         if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
         env:
