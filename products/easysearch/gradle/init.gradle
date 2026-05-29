@@ -1,4 +1,4 @@
-allprojects{
+allprojects {
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
     }
@@ -12,19 +12,22 @@ allprojects{
     }
 
     repositories {
-        def ALIYUN_REPOSITORY_URL = 'https://maven.aliyun.com/repository/central'
-        def ALIYUN_JCENTER_URL = 'https://maven.aliyun.com/repository/jcenter'
-        def ALIYUN_GOOGLE_URL = 'https://maven.aliyun.com/repository/google'
+        def ALIYUN_REPOSITORY_URL    = 'https://maven.aliyun.com/repository/central'
+        def ALIYUN_JCENTER_URL       = 'https://maven.aliyun.com/repository/jcenter'
+        def ALIYUN_GOOGLE_URL        = 'https://maven.aliyun.com/repository/google'
         def ALIYUN_GRADLE_PLUGIN_URL = 'https://maven.aliyun.com/repository/gradle-plugin'
+        def JCENTER_ARCHIVE_URL      = 'https://jcenter.bintray.com'
+        def MAVEN_CENTRAL_URL        = 'https://repo1.maven.org/maven2'
+        def GRADLE_PLUGIN_URL        = 'https://plugins.gradle.org/m2'
 
         all { ArtifactRepository repo ->
-            if(repo instanceof MavenArtifactRepository){
+            if (repo instanceof MavenArtifactRepository) {
                 def url = repo.url.toString()
-                if (url.startsWith('https://repo1.maven.org/maven2/')) {
+                if (url.startsWith(MAVEN_CENTRAL_URL)) {
                     project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_REPOSITORY_URL."
                     remove repo
                 }
-                if (url.startsWith('https://jcenter.bintray.com/')) {
+                if (url.startsWith(JCENTER_ARCHIVE_URL)) {
                     project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_JCENTER_URL."
                     remove repo
                 }
@@ -32,16 +35,22 @@ allprojects{
                     project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GOOGLE_URL."
                     remove repo
                 }
-                if (url.startsWith('https://plugins.gradle.org/m2/')) {
+                if (url.startsWith(GRADLE_PLUGIN_URL)) {
                     project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GRADLE_PLUGIN_URL."
                     remove repo
                 }
             }
         }
 
+        // Aliyun mirrors first (faster in CN)
         maven { url ALIYUN_REPOSITORY_URL }
         maven { url ALIYUN_JCENTER_URL }
         maven { url ALIYUN_GOOGLE_URL }
         maven { url ALIYUN_GRADLE_PLUGIN_URL }
+
+        // Fallback to origin when mirrors are unavailable
+        maven { url MAVEN_CENTRAL_URL }
+        maven { url JCENTER_ARCHIVE_URL }
+        maven { url GRADLE_PLUGIN_URL }
     }
 }
