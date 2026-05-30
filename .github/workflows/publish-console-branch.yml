@@ -331,8 +331,8 @@ jobs:
           if [[ "${{ matrix.product }}" == "console" ]]; then
             cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
             #update publish version with agent
-            FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
-            (cd $WORK/$PNAME && yq -i ".agent.setup.version = \"${FULL_VERSION}\" | .gateway.setup.version = \"${FULL_VERSION}\"" $PNAME.yml)
+            # FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
+            # (cd $WORK/$PNAME && yq -i ".agent.setup.version = \"${FULL_VERSION}\" | .gateway.setup.version = \"${FULL_VERSION}\"" $PNAME.yml)
           fi
 
           # build all targets with offline
