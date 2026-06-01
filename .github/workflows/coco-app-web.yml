@@ -32,7 +32,7 @@ on:
       ATTACHMENTS_VERSION: { description: 'attachments Version', required: true, default: "0.0.3" }
       CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.13" }
       AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.13" }
-      MARKDOWN_VERSION: { description: 'markdown Version', required: true, default: "0.0.7" }
+      MARKDOWN_VERSION: { description: 'markdown Version', required: true, default: "0.0.8" }
       DISCOVER_VERSION: { description: 'discover Version', required: true, default: "0.0.19" }
 
 jobs:
