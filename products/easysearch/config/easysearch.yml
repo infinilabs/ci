@@ -52,7 +52,7 @@ security.allow_default_init_securityindex: true
 security.nodes_dn:
   - 'CN=infini.cloud,OU=UNIT,O=ORG,L=NI,ST=FI,C=IN'
 
-security.restapi.roles_enabled: [ "superuser", "security_rest_api_access", "security" ]
+security.restapi.roles_enabled: ["superuser", "security_rest_api_access", "security"]
 
 security.system_indices.enabled: true
 security.ssl.http.clientauth_mode: OPTIONAL
