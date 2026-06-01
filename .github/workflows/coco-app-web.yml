@@ -30,7 +30,7 @@ on:
       AI_ANSWER_VERSION: { description: 'ai-answer Version', required: true, default: "0.0.8" }
       DOC_DETAIL_VERSION: { description: 'doc-detail Version', required: true, default: "0.0.18" }
       ATTACHMENTS_VERSION: { description: 'attachments Version', required: true, default: "0.0.3" }
-      CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.13" }
+      CHAT_MESSAGE_VERSION: { description: 'chat-message Version', required: true, default: "0.0.14" }
       AI_CHAT_VERSION: { description: 'ai-chat Version', required: true, default: "0.0.14" }
       MARKDOWN_VERSION: { description: 'markdown Version', required: true, default: "0.0.8" }
       DISCOVER_VERSION: { description: 'discover Version', required: true, default: "0.0.19" }
