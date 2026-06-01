@@ -390,13 +390,6 @@ jobs:
             fi
           done
 
-      - name: Run connect in background for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
-
       - name: Deploy ${{ matrix.product }} files & staging k8s
         if: ${{ matrix.product == 'console' }}
         timeout-minutes: 30
