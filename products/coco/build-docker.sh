@@ -71,7 +71,12 @@ for t in amd64 arm64; do
       # Check if the plugin file exists
       if [[ -e $PLUGINS/plugins-$t/$p/$PLUGIN_FILE ]]; then
         echo "Installing plugin $p from $PLUGINS/plugins-$t/$p/$PLUGIN_FILE"
-        echo y | $WORK/$DNAME-$t/bin/$DNAME-plugin install file://$PLUGINS/plugins-$t/$p/$PLUGIN_FILE > /dev/null 2>&1
+        if $WORK/$DNAME-$t/bin/$DNAME-plugin install --batch "file://$PLUGINS/plugins-$t/$p/$PLUGIN_FILE"; then
+          echo "Plugin $p installed successfully."
+        else
+          echo "Error: Failed to install plugin $p" >&2
+          exit 1
+        fi
       else
         echo "Error: $PLUGINS/plugins-$t/$p/$PLUGIN_FILE not found, skip install plugin $p."
       fi
