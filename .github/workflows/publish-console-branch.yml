@@ -202,8 +202,8 @@ jobs:
           if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
             git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
           fi
-          if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          if [ ! -d "$GITHUB_WORKSPACE/framework/plugins/enterprise" ]; then
+            git clone -b console git@github.com:infinilabs/framework-enterprise-plugins.git "$GITHUB_WORKSPACE/framework/plugins/enterprise"
           fi
 
       - name: Setup ${{ matrix.product }} go toolchain
