@@ -138,7 +138,7 @@ jobs:
         # for products
         for p in gateway loadgen; do
           cd $WORK/$p && echo Compiling $p at $PWD ...
-          OFFLINE_BUILD=true GOMODULE=false make build
+          OFFLINE_BUILD=true make build
         done
 
     - name: Check compiled products

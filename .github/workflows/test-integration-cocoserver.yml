@@ -168,7 +168,7 @@ jobs:
               run: |
                 # for loadgen
                 cd $WORK/loadgen && echo Compiling loadgen at $PWD ...
-                OFFLINE_BUILD=true GOMODULE=false make build  > /dev/null 2>&1
+                OFFLINE_BUILD=true make build  > /dev/null 2>&1
                 
                 # for coco server
                 cd $WORK/coco && echo Compiling coco server at $PWD ...

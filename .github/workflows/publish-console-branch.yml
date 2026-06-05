@@ -337,7 +337,7 @@ jobs:
 
           # build all targets with offline
           for tag in $TARGETS; do
-            cd $WORK/$PNAME && GOMODULE=false OFFLINE_BUILD=true make build-$tag
+            cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
           done
 
       - name: Build ${{ matrix.product }} check
