@@ -168,10 +168,13 @@ jobs:
           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugin/enterprise
 
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        env:
+          PNPM_ONLY_BUILT_DEPENDENCIES: esbuild
         run: |
           # for transfer web
           if [[ "${{ matrix.product }}" == "transfer" ]]; then
             cd $WORK/$PNAME/web && pnpm install && pnpm run build
+            ls -alrt $WORK/$PNAME
           fi
           
           # build all targets
