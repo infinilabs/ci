@@ -167,16 +167,21 @@ jobs:
           git clone git@github.com:infinilabs/license $WORK/license
           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugin/enterprise
 
-      - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+      - name: Build ${{ matrix.product }} web
         env:
           PNPM_ONLY_BUILT_DEPENDENCIES: esbuild
+          CI: true
+          npm_config_ignore_scripts: true
         run: |
           # for transfer web
           if [[ "${{ matrix.product }}" == "transfer" ]]; then
-            cd $WORK/$PNAME/web && pnpm install && pnpm run build
-            ls -alrt $WORK/$PNAME
+            cd $WORK/$PNAME/web
+            pnpm install --ignore-scripts && pnpm approve-builds --all
+            pnpm run build
+            ls -alrt $WORK/$PNAME/.public
           fi
-          
+      - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+        run: |
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
