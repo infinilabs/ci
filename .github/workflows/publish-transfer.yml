@@ -1,4 +1,4 @@
-name: Publish Enterprise transfer Files
+name: Publish Enterprise Transfer Files
 defaults:
   run:
     shell: bash
