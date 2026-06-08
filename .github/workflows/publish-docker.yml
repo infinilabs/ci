@@ -31,7 +31,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Agent Version'
         required: false
-        default: ""
+        default: "1.31.1"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -419,52 +419,74 @@ jobs:
 
       - name: Prepare update version env
         run: |
-          if [[ "$PUBLISH_VERSION" == *-* ]]; then
-            IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
-          else
-            RUN_NUMBER=${{ github.run_number }}
-            OFFSET=${{ vars.OFFSET }}
-            DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
-            DYNAMIC_VERSION="$PUBLISH_VERSION"
-          fi
-          echo "Update repo with $DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER"
+          parse_version() {
+            local INPUT="$1"
+            local PREFIX="$2"
+            local VERSION BUILD_NUMBER
 
-          echo VERSION=$DYNAMIC_VERSION >> $GITHUB_ENV
-          echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
+            if [[ "$INPUT" == *-* ]]; then
+              IFS=- read -r VERSION BUILD_NUMBER <<< "$INPUT"
+            else
+              local RUN_NUMBER=${{ github.run_number }}
+              local OFFSET=${{ vars.OFFSET }}
+              BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
+              VERSION="$INPUT"
+            fi
+
+            echo "Update ${PREFIX} with ${VERSION}-${BUILD_NUMBER}"
+            echo "${PREFIX}_VERSION=${VERSION}"           >> $GITHUB_ENV
+            echo "${PREFIX}_BUILD_NUMBER=${BUILD_NUMBER}" >> $GITHUB_ENV
+          }
+
+          if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
+            parse_version "${{ env.AGENT_PUBLISH_VERSION }}" "AGENT"
+          fi
+
+          if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
+            parse_version "${{ env.CONSOLE_PUBLISH_VERSION }}" "CONSOLE"
+          fi
+
+          if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
+            parse_version "${{ env.GATEWAY_PUBLISH_VERSION }}" "GATEWAY"
+          fi
+
+          if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
+            parse_version "${{ env.LOADGEN_PUBLISH_VERSION }}" "LOADGEN"
+          fi
 
       - name: Update release version in workflow files
         id: update
         run: |
           cd $GITHUB_WORKSPACE/.github/workflows
-          FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
           if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
-            update_yaml_version "publish-agent.yml"           "AGENT_PUBLISH_VERSION"       "$FULL_VERSION"
-            update_yaml_version "publish-docker.yml"          "AGENT_PUBLISH_VERSION"       "$VERSION"
-            update_yaml_version "publish-files.yml"           "AGENT_PUBLISH_VERSION"       "$VERSION"
-            update_yaml_version "release.yml"                 "AGENT_PUBLISH_VERSION"       "$FULL_VERSION"
+            AGENT_FULL="${AGENT_VERSION}-${AGENT_BUILD_NUMBER}"
+            update_yaml_version "publish-agent.yml"           "AGENT_PUBLISH_VERSION"   "$AGENT_FULL"
+            update_yaml_version "publish-docker.yml"          "AGENT_PUBLISH_VERSION"   "$AGENT_VERSION"
+            update_yaml_version "publish-files.yml"           "AGENT_PUBLISH_VERSION"   "$AGENT_VERSION"
+            update_yaml_version "release.yml"                 "AGENT_PUBLISH_VERSION"   "$AGENT_FULL"
           fi
 
           if [[ "${{ inputs.CONSOLE_PUBLISH }}" == "true" ]]; then
-            update_yaml_version "publish-docker.yml"          "CONSOLE_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "publish-files.yml"           "CONSOLE_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "release.yml"                 "CONSOLE_PUBLISH_VERSION"     "$VERSION"
+            update_yaml_version "publish-docker.yml"          "CONSOLE_PUBLISH_VERSION" "$CONSOLE_VERSION"
+            update_yaml_version "publish-files.yml"           "CONSOLE_PUBLISH_VERSION" "$CONSOLE_VERSION"
+            update_yaml_version "release.yml"                 "CONSOLE_PUBLISH_VERSION" "$CONSOLE_VERSION"
           fi
 
           if [[ "${{ inputs.GATEWAY_PUBLISH }}" == "true" ]]; then
-            update_yaml_version "publish-cloud.yml"             "GATEWAY_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "publish-docker.yml"            "GATEWAY_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "publish-files.yml"             "GATEWAY_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "release.yml"                   "GATEWAY_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "test-gateway.yml"              "GATEWAY_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "test-integration-products.yml" "GATEWAY_PUBLISH_VERSION"     "$VERSION"
+            update_yaml_version "publish-cloud.yml"             "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
+            update_yaml_version "publish-docker.yml"            "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
+            update_yaml_version "publish-files.yml"             "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
+            update_yaml_version "release.yml"                   "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
+            update_yaml_version "test-gateway.yml"              "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
+            update_yaml_version "test-integration-products.yml" "GATEWAY_PUBLISH_VERSION" "$GATEWAY_VERSION"
           fi
-          
+
           if [[ "${{ inputs.LOADGEN_PUBLISH }}" == "true" ]]; then
-            update_yaml_version "publish-docker.yml"            "LOADGEN_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "publish-files.yml"             "LOADGEN_PUBLISH_VERSION"     "$VERSION"
-            update_yaml_version "release.yml"                   "LOADGEN_PUBLISH_VERSION"     "$VERSION"
+            update_yaml_version "publish-docker.yml"            "LOADGEN_PUBLISH_VERSION" "$LOADGEN_VERSION"
+            update_yaml_version "publish-files.yml"             "LOADGEN_PUBLISH_VERSION" "$LOADGEN_VERSION"
+            update_yaml_version "release.yml"                   "LOADGEN_PUBLISH_VERSION" "$LOADGEN_VERSION"
           fi
           
       - name: Create bumpver pull request
