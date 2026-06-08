@@ -21,7 +21,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "1.31.0"
+        default: "-2508"
       EASYSEARCH_PUBLISH_BRANCH:
         description: 'Publish with easysearch branch'
         required: false

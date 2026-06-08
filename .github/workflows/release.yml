@@ -47,7 +47,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Products Release Version'
         required: false
-        default: "-2504"
+        default: "-2508"
       CONSOLE_PUBLISH:
         description: 'Products with Console'
         required: false
