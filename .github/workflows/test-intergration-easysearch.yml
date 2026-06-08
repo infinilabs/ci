@@ -152,7 +152,13 @@ jobs:
                       --tests com.infinilabs.security.dlic.rest.api.AuditApiActionTest \
                       --tests com.infinilabs.security.configuration.AuditIndexSearcherWrapperTest \
                       --tests com.infinilabs.security.dlic.rest.api.AuditLogIndexAccessTest \
+                      --tests com.infinilabs.security.dlic.rest.api.RestApiPrivilegesEvaluatorTest \
+                      --tests com.infinilabs.security.dlic.rest.api.RoleBasedAccessTest \
+                      --tests com.infinilabs.security.dlic.rest.api.SecurityApiAccessTest \
                       --tests com.infinilabs.security.privileges.AuditLogIndexAccessEvaluatorTest.doesNotExcludeDataStreamNameForLocalAll \
+                      --tests com.infinilabs.security.privileges.ModelProviderIndexAccessEvaluatorTest.preservesRemoteIndicesWhenFilteringConcreteLocalIndices \
+                      --tests com.infinilabs.security.privileges.RulesIndexAccessEvaluatorTest.preservesRemoteIndicesWhenFilteringConcreteLocalIndices \
+                      --tests com.infinilabs.security.resolver.IndexResolverReplacerRemoteReplacementTest \
                       --tests com.infinilabs.security.auditlog.integration.BasicAuditlogTest.testAuditLogTemplateAndDataStream \
                       --tests com.infinilabs.security.ssl.rest.RestGetSSLCertificatesActionTests \
                       --rerun-tasks --info
@@ -209,6 +215,20 @@ jobs:
                       --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsRequestTests \
                       --tests org.easysearch.action.admin.indices.datastream.GetDataStreamsResponseTests \
                       --tests org.easysearch.action.admin.indices.datastream.DataStreamsStatsResponseTests \
+                      --tests org.easysearch.rest.action.admin.indices.RestBootstrapDataStreamActionTests \
+                      --rerun-tasks --info
+          - suite: cluster-settings
+            name: Cluster settings tests
+            report_name: cluster-settings
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.action.admin.cluster.settings.ClusterGetSettingsActionTests \
+                      --tests org.easysearch.action.admin.cluster.settings.ClusterUpdateSettingsActionTests \
+                      --tests org.easysearch.rest.action.admin.cluster.RestClusterGetSettingsActionTests \
                       --rerun-tasks --info
           - suite: indexing-pressure
             name: IndexingPressureIT tests
@@ -337,12 +357,38 @@ jobs:
             name: Rules plugin multi-node IT tests
             report_name: rules-plugin-multi-node
             report_dirs: $GITHUB_WORKSPACE/$PNAME/plugins/rules/build/reports/tests/internalClusterTest
-            timeout_minutes: 30
+            timeout_minutes: 60
             command: |
               gradle clean :plugins:rules:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
                       -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                       --tests org.easysearch.rules.sync.RulesMultiNodeIT \
+                      --tests org.easysearch.rules.sync.RulesSyncBlockIT \
+                      --rerun-tasks --info
+          - suite: cross-cluster-replication
+            name: Cross cluster replication integration tests
+            report_name: cross-cluster-replication
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/cross-cluster-replication/build/reports/tests/integTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:cross-cluster-replication:integTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      --tests 'org.easysearch.replication.integ.*IT' \
+                      --rerun-tasks --info
+          - suite: cross-cluster-replication-internal
+            name: Cross cluster replication internal cluster tests
+            report_name: cross-cluster-replication-internal
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/cross-cluster-replication/build/reports/tests/internalClusterTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:cross-cluster-replication:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
+                      -Dtests.security.manager=true \
+                      --tests org.easysearch.replication.internal.FollowerDeleteProtectionRestartIT \
                       --rerun-tasks --info
           - suite: zstd-lucene-index
             name: Zstd lucene index tests
@@ -354,6 +400,16 @@ jobs:
                       -Deasysearch.version=$STEP_VERSION \
                       -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
                       --tests '*Zstd*' \
+                      --rerun-tasks --info
+          - suite: zstd-oom-smoke
+            name: Zstd OOM smoke tests
+            report_name: zstd-oom-smoke
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/modules/custom-codecs/build/reports
+            timeout_minutes: 60
+            command: |
+              gradle clean :modules:custom-codecs:zstdNativeOomSmoke \
+                      :modules:custom-codecs:zstdStoredFieldsMergeOomSmoke \
+                      -Deasysearch.version=$STEP_VERSION \
                       --rerun-tasks --info
           - suite: analysis-ik
             name: Analysis-ik tests
