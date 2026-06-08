@@ -31,7 +31,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Agent Version'
         required: false
-        default: ""
+        default: "1.31.0"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
@@ -440,7 +440,7 @@ jobs:
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
           if [[ "${{ inputs.AGENT_PUBLISH }}" == "true" ]]; then
-            update_yaml_version "publish-agent.yml"           "AGENT_PUBLISH_VERSION" "$FULL_VERSION"
+            update_yaml_version "publish-agent.yml"           "AGENT_PUBLISH_VERSION"       "$FULL_VERSION"
             update_yaml_version "publish-docker.yml"          "AGENT_PUBLISH_VERSION"       "$VERSION"
             update_yaml_version "publish-files.yml"           "AGENT_PUBLISH_VERSION"       "$VERSION"
             update_yaml_version "release.yml"                 "AGENT_PUBLISH_VERSION"       "$FULL_VERSION"
