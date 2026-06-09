@@ -7,9 +7,6 @@ System.setProperty('http.socketTimeout',      '15000')
 System.setProperty('https.connectionTimeout', '15000')
 System.setProperty('https.socketTimeout',     '15000')
 
-// ─────────────────────────────────────────────
-// 官方仓库列表（优先注入到最前面）
-// ─────────────────────────────────────────────
 def addOfficialRepos = { repos ->
     repos.mavenCentral {
         name = 'maven-central'
@@ -33,11 +30,13 @@ def addOfficialRepos = { repos ->
         name = 'sonatype-releases'
         url  = 'https://oss.sonatype.org/content/repositories/releases'
     }
+
+    repos.maven {
+        name = 'sonatype-public'
+        url  = 'https://oss.sonatype.org/content/groups/public'
+    }
 }
 
-// ─────────────────────────────────────────────
-// 阿里云仓库列表（备用，追加到最后）
-// ─────────────────────────────────────────────
 def addAliyunRepos = { repos ->
     repos.maven {
         name = 'aliyun-central'
@@ -78,37 +77,40 @@ def addAliyunRepos = { repos ->
     }
 }
 
-// ─────────────────────────────────────────────
-// 用于 buildscript / pluginManagement 的全量配置
-// （这两个阶段没有项目自定义仓库，直接 clear 没问题）
-// ─────────────────────────────────────────────
 def configureRepos = { repos ->
     repos.clear()
     addOfficialRepos(repos)
     addAliyunRepos(repos)
 }
 
-// ─────────────────────────────────────────────
-// 用于 afterEvaluate 的仓库注入
-// 只移除阿里云，保留项目自己声明的特殊仓库（如 knn 本地仓库）
-// 再把官方源插到最前面确保优先命中
-// ─────────────────────────────────────────────
+// 官方源置顶，保留项目特殊仓库，阿里云兜底
 def fixRepos = { proj ->
-    // 1. 移除已有的阿里云仓库（防止它们排在官方源前面）
-    proj.repositories.removeIf { repo ->
+    // 1. 收集非阿里云的仓库（保留项目特殊仓库，如 knn 本地仓库）
+    def keepRepos = proj.repositories.findAll { repo ->
         try {
-            repo.hasProperty('url') &&
-                repo.url?.toString()?.contains('maven.aliyun.com')
+            !(repo.hasProperty('url') && repo.url?.toString()?.contains('maven.aliyun.com'))
         } catch (Throwable ignored) {
-            false
+            true
         }
-    }
+    }.toList()
 
-    // 2. 把官方源 + 阿里云备用重新加进去
-    //    官方源会排在项目自己声明的特殊仓库后面，
-    //    但 Gradle 会按顺序解析，特殊仓库找不到的会继续往下走官方源
+    // 2. 全清
+    proj.repositories.clear()
+
+    // 3. 官方源置顶
     proj.repositories {
         addOfficialRepos(delegate)
+    }
+
+    // 4. 项目原有特殊仓库加回（排官方源之后）
+    keepRepos.each { repo ->
+        try {
+            proj.repositories.add(repo)
+        } catch (Throwable ignored) {}
+    }
+
+    // 5. 阿里云兜底
+    proj.repositories {
         addAliyunRepos(delegate)
     }
 }
@@ -126,8 +128,10 @@ gradle.settingsEvaluated { settings ->
     try {
         settings.dependencyResolutionManagement {
             def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
-            def preferSettings = modeClass.getField('PREFER_SETTINGS').get(null)
-            repositoriesMode.set(preferSettings)
+            // PREFER_PROJECT：项目自己声明的仓库优先，settings 仓库作为补充
+            // 避免 PREFER_SETTINGS 屏蔽 knn 等插件的特殊仓库声明
+            def preferProject = modeClass.getField('PREFER_PROJECT').get(null)
+            repositoriesMode.set(preferProject)
             repositories {
                 configureRepos(delegate)
             }
