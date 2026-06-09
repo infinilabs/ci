@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 10
       matrix:
         include:
           - suite: rest
@@ -612,7 +612,7 @@ jobs:
             gradle dependencies \
               --no-daemon \
               --quiet \
-              --init-script "$GITHUB_WORKSPACE/$PNAME/gradle/init.gradle" \
+              --init-script "$GITHUB_WORKSPACE/products/$PNAME/gradle/init.gradle" \
               2>&1 | tee /tmp/gradle-deps.log
 
             exit_code=${PIPESTATUS[0]}
