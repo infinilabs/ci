@@ -1,56 +1,158 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// init.gradle
+// 放置路径（二选一）：
+//   1. ~/.gradle/init.gradle          （对本机所有项目生效）
+//   2. 项目根目录 gradle/init.gradle   （CI 通过 --init-script 指定）
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// 全局网络超时
+// ─────────────────────────────────────────────
+System.setProperty('http.connectionTimeout',  '30000')
+System.setProperty('http.socketTimeout',      '30000')
+System.setProperty('https.connectionTimeout', '30000')
+System.setProperty('https.socketTimeout',     '30000')
+
+// ─────────────────────────────────────────────
+// 仓库配置闭包（复用于所有项目 & buildSrc）
+// ─────────────────────────────────────────────
+def configureRepos = { repos ->
+
+    // 移除所有已有仓库，由本文件统一接管
+    repos.clear()
+
+    // ── 阿里云镜像（CN 加速，限定 content 防止 502 熔断全链） ──────────
+
+    repos.maven {
+        name = 'aliyun-central'
+        url  = 'https://maven.aliyun.com/repository/central'
+        content {
+            excludeGroupByRegex 'com\\.avast\\..*'
+            excludeGroupByRegex 'com\\.github\\.ben-manes\\..*'
+            excludeGroupByRegex 'gradle\\.plugin\\..*'
+        }
+    }
+
+    repos.maven {
+        name = 'aliyun-jcenter'
+        url  = 'https://maven.aliyun.com/repository/jcenter'
+        content {
+            excludeGroupByRegex 'com\\.avast\\..*'
+            excludeGroupByRegex 'gradle\\.plugin\\..*'
+        }
+    }
+
+    repos.maven {
+        name = 'aliyun-google'
+        url  = 'https://maven.aliyun.com/repository/google'
+        content {
+            includeGroupByRegex 'com\\.google\\..*'
+            includeGroupByRegex 'androidx\\..*'
+            includeGroupByRegex 'com\\.android\\..*'
+            includeGroup 'com.android.tools.build'
+            includeGroup 'com.android.tools'
+        }
+    }
+
+    repos.maven {
+        name = 'aliyun-gradle-plugin'
+        url  = 'https://maven.aliyun.com/repository/gradle-plugin'
+        content {
+            includeGroupByRegex 'org\\.gradle\\..*'
+            includeGroupByRegex 'com\\.gradle\\..*'
+        }
+    }
+
+    // ── 权威源（阿里云 502 / 未命中时自动降级） ───────────────────
+
+    repos.mavenCentral {
+        name = 'maven-central'
+    }
+
+    repos.google {
+        name = 'google'
+    }
+
+    repos.maven {
+        name = 'gradle-plugin-portal'
+        url  = 'https://plugins.gradle.org/m2'
+    }
+
+    repos.maven {
+        name = 'jcenter-archive'
+        url  = 'https://jcenter.bintray.com'
+        content {
+            excludeGroupByRegex 'com\\.google\\..*'
+            excludeGroupByRegex 'androidx\\..*'
+        }
+    }
+
+    repos.maven {
+        name = 'maven-central-official'
+        url  = 'https://repo1.maven.org/maven2'
+    }
+}
+
+// ─────────────────────────────────────────────
+// 应用到所有普通项目
+// ─────────────────────────────────────────────
 allprojects {
-    tasks.withType(JavaCompile) {
+
+    tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }
-
-    tasks.withType(GroovyCompile) {
+    tasks.withType(GroovyCompile).configureEach {
         options.encoding = 'UTF-8'
     }
-
-    tasks.withType(Javadoc) {
+    tasks.withType(Javadoc).configureEach {
         options.encoding = 'UTF-8'
+        options.charSet  = 'UTF-8'
     }
 
     repositories {
-        def ALIYUN_REPOSITORY_URL    = 'https://maven.aliyun.com/repository/central'
-        def ALIYUN_JCENTER_URL       = 'https://maven.aliyun.com/repository/jcenter'
-        def ALIYUN_GOOGLE_URL        = 'https://maven.aliyun.com/repository/google'
-        def ALIYUN_GRADLE_PLUGIN_URL = 'https://maven.aliyun.com/repository/gradle-plugin'
-        def JCENTER_ARCHIVE_URL      = 'https://jcenter.bintray.com'
-        def MAVEN_CENTRAL_URL        = 'https://repo1.maven.org/maven2'
-        def GRADLE_PLUGIN_URL        = 'https://plugins.gradle.org/m2'
+        configureRepos(delegate)
+    }
 
-        all { ArtifactRepository repo ->
-            if (repo instanceof MavenArtifactRepository) {
-                def url = repo.url.toString()
-                if (url.startsWith(MAVEN_CENTRAL_URL)) {
-                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_REPOSITORY_URL."
-                    remove repo
+    buildscript {
+        repositories {
+            configureRepos(delegate)
+        }
+    }
+
+    // 缓存策略：减少对镜像的重复请求
+    configurations.configureEach {
+        resolutionStrategy {
+            cacheDynamicVersionsFor  10, 'minutes'
+            cacheChangingModulesFor   5, 'minutes'
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+// 应用到 buildSrc & settings 插件解析
+// ─────────────────────────────────────────────
+gradle.settingsEvaluated { settings ->
+    settings.pluginManagement {
+        repositories {
+            configureRepos(delegate)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+// 构建诊断日志（--info 模式下可见）
+// ─────────────────────────────────────────────
+gradle.projectsEvaluated {
+    rootProject.allprojects { proj ->
+        proj.logger.info "==> [${proj.name}] 仓库列表:"
+        proj.repositories.each { repo ->
+            try {
+                if (repo.hasProperty('url') && repo.url != null) {
+                    proj.logger.info "    - ${repo.name}: ${repo.url}"
                 }
-                if (url.startsWith(JCENTER_ARCHIVE_URL)) {
-                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_JCENTER_URL."
-                    remove repo
-                }
-                if (url.startsWith('https://dl.google.com/dl/android/maven2/')) {
-                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GOOGLE_URL."
-                    remove repo
-                }
-                if (url.startsWith(GRADLE_PLUGIN_URL)) {
-                    project.logger.lifecycle "Repository ${repo.url} replaced by $ALIYUN_GRADLE_PLUGIN_URL."
-                    remove repo
-                }
+            } catch (ignored) {
+                proj.logger.info "    - ${repo.name}: (url 不可访问)"
             }
         }
-
-        // Aliyun mirrors first (faster in CN)
-        maven { url ALIYUN_REPOSITORY_URL }
-        maven { url ALIYUN_JCENTER_URL }
-        maven { url ALIYUN_GOOGLE_URL }
-        maven { url ALIYUN_GRADLE_PLUGIN_URL }
-
-        // Fallback to origin when mirrors are unavailable
-        maven { url MAVEN_CENTRAL_URL }
-        maven { url JCENTER_ARCHIVE_URL }
-        maven { url GRADLE_PLUGIN_URL }
     }
 }

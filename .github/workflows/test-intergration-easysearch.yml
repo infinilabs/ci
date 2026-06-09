@@ -608,18 +608,32 @@ jobs:
 
           while [ $RETRY -lt $MAX_RETRY ]; do
             echo "==> Resolving dependencies, attempt $((RETRY+1))/$MAX_RETRY ..."
-            gradle dependencies --no-daemon --quiet
-            exit_code=$?
+
+            gradle dependencies \
+              --no-daemon \
+              --quiet \
+              --init-script "$GITHUB_WORKSPACE/gradle/init.gradle" \
+              2>&1 | tee /tmp/gradle-deps.log
+
+            exit_code=${PIPESTATUS[0]}
+
             if [ $exit_code -eq 0 ]; then
               echo "==> Dependencies resolved successfully."
               break
             fi
+
             RETRY=$((RETRY+1))
             if [ $RETRY -lt $MAX_RETRY ]; then
-              echo "==> Dependency resolution failed (exit $exit_code), retrying in 30s ..."
-              sleep 30
+              find ~/.gradle/caches -name "*.lock" -delete 2>/dev/null || true
+              echo "==> Failed (exit $exit_code), retrying in 60s ..."
+              sleep 60
             fi
           done
+
+          if [ $exit_code -ne 0 ]; then
+            echo "==> All attempts failed. Last error output:"
+            grep -E "(Could not|502|status code)" /tmp/gradle-deps.log || cat /tmp/gradle-deps.log
+          fi
 
           exit "$exit_code"
 
