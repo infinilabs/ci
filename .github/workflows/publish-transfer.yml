@@ -165,8 +165,8 @@ jobs:
         run: |
           # init license and enterprise plugins
           git clone git@github.com:infinilabs/license $WORK/license
-          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugin/enterprise
-          ls -lrd $WORK
+          git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
+          find $WORK/ -maxdepth 1 -type d
 
       - name: Build ${{ matrix.product }} web
         env:
@@ -181,7 +181,7 @@ jobs:
             pnpm run build
           fi
 
-      - name: Prepare $PNAME enterprise go mod
+      - name: Prepare ${{ matrix.product }} enterprise go mod
         continue-on-error: true
         run: |
           # change dep for enterprise
