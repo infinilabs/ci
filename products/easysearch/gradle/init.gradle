@@ -2,14 +2,24 @@
 // init.gradle
 // ─────────────────────────────────────────────────────────────────────────────
 
-def configureRepos = { repos ->
-    repos.clear()
+System.setProperty('http.connectionTimeout',  '15000')
+System.setProperty('http.socketTimeout',      '15000')
+System.setProperty('https.connectionTimeout', '15000')
+System.setProperty('https.socketTimeout',     '15000')
 
-    // ── 官方源优先 ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 官方仓库列表（优先注入到最前面）
+// ─────────────────────────────────────────────
+def addOfficialRepos = { repos ->
     repos.mavenCentral {
         name = 'maven-central'
     }
-    
+
+    repos.maven {
+        name = 'maven-central-official'
+        url  = 'https://repo1.maven.org/maven2'
+    }
+
     repos.google {
         name = 'google'
     }
@@ -19,10 +29,16 @@ def configureRepos = { repos ->
         url  = 'https://plugins.gradle.org/m2'
     }
 
-    // 说明：jcenter.bintray.com 已永久关闭，访问会返回 502 或连接超时，
-    // 保留它只会拖慢 Gradle 解析依赖的速度。
+    repos.maven {
+        name = 'sonatype-releases'
+        url  = 'https://oss.sonatype.org/content/repositories/releases'
+    }
+}
 
-    // ── 阿里云镜像（备用及特定旧版本源） ──────────────────────────────
+// ─────────────────────────────────────────────
+// 阿里云仓库列表（备用，追加到最后）
+// ─────────────────────────────────────────────
+def addAliyunRepos = { repos ->
     repos.maven {
         name = 'aliyun-central'
         url  = 'https://maven.aliyun.com/repository/central'
@@ -63,8 +79,42 @@ def configureRepos = { repos ->
 }
 
 // ─────────────────────────────────────────────
-// settings 阶段：强制以 init.gradle 仓库为准
-// 覆盖 settings.gradle / build.gradle 里的仓库定义
+// 用于 buildscript / pluginManagement 的全量配置
+// （这两个阶段没有项目自定义仓库，直接 clear 没问题）
+// ─────────────────────────────────────────────
+def configureRepos = { repos ->
+    repos.clear()
+    addOfficialRepos(repos)
+    addAliyunRepos(repos)
+}
+
+// ─────────────────────────────────────────────
+// 用于 afterEvaluate 的仓库注入
+// 只移除阿里云，保留项目自己声明的特殊仓库（如 knn 本地仓库）
+// 再把官方源插到最前面确保优先命中
+// ─────────────────────────────────────────────
+def fixRepos = { proj ->
+    // 1. 移除已有的阿里云仓库（防止它们排在官方源前面）
+    proj.repositories.removeIf { repo ->
+        try {
+            repo.hasProperty('url') &&
+                repo.url?.toString()?.contains('maven.aliyun.com')
+        } catch (Throwable ignored) {
+            false
+        }
+    }
+
+    // 2. 把官方源 + 阿里云备用重新加进去
+    //    官方源会排在项目自己声明的特殊仓库后面，
+    //    但 Gradle 会按顺序解析，特殊仓库找不到的会继续往下走官方源
+    proj.repositories {
+        addOfficialRepos(delegate)
+        addAliyunRepos(delegate)
+    }
+}
+
+// ─────────────────────────────────────────────
+// settings 阶段
 // ─────────────────────────────────────────────
 gradle.settingsEvaluated { settings ->
     settings.pluginManagement {
@@ -73,25 +123,22 @@ gradle.settingsEvaluated { settings ->
         }
     }
 
-    // Gradle 6.8+：PREFER_SETTINGS 让 build.gradle 里的仓库声明被忽略
     try {
         settings.dependencyResolutionManagement {
             def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
             def preferSettings = modeClass.getField('PREFER_SETTINGS').get(null)
             repositoriesMode.set(preferSettings)
-            
             repositories {
                 configureRepos(delegate)
             }
         }
     } catch (Throwable ignored) {
-        // Gradle < 6.8 不支持 dependencyResolutionManagement，忽略
+        // Gradle < 6.8 不支持，忽略
     }
 }
 
 // ─────────────────────────────────────────────
-// 所有项目：buildscript + afterEvaluate 双重覆盖
-// 兜底处理不走 dependencyResolutionManagement 的情况
+// 所有项目
 // ─────────────────────────────────────────────
 allprojects {
     tasks.withType(JavaCompile).configureEach {
@@ -101,8 +148,8 @@ allprojects {
         options.encoding = 'UTF-8'
     }
     tasks.withType(Javadoc).configureEach {
-        options.encoding  = 'UTF-8'
-        options.charSet   = 'UTF-8'
+        options.encoding = 'UTF-8'
+        options.charSet  = 'UTF-8'
     }
 
     buildscript {
@@ -111,18 +158,14 @@ allprojects {
         }
     }
 
-    // afterEvaluate 兜底：清掉 build.gradle 里显式写的阿里云地址
     afterEvaluate { proj ->
-        proj.repositories.clear()
-        proj.repositories {
-            configureRepos(delegate)
-        }
+        fixRepos(proj)
     }
 
     configurations.configureEach {
         resolutionStrategy {
-            cacheDynamicVersionsFor  10, 'minutes'
-            cacheChangingModulesFor   5, 'minutes'
+            cacheDynamicVersionsFor 10, 'minutes'
+            cacheChangingModulesFor  5, 'minutes'
         }
     }
 }
