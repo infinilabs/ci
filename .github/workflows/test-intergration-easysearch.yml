@@ -612,7 +612,7 @@ jobs:
             gradle dependencies \
               --no-daemon \
               --quiet \
-              --init-script "$GITHUB_WORKSPACE/gradle/init.gradle" \
+              --init-script "$GITHUB_WORKSPACE/$PNAME/gradle/init.gradle" \
               2>&1 | tee /tmp/gradle-deps.log
 
             exit_code=${PIPESTATUS[0]}
