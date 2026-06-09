@@ -2,25 +2,14 @@
 // init.gradle
 // ─────────────────────────────────────────────────────────────────────────────
 
-System.setProperty('http.connectionTimeout',  '15000')
-System.setProperty('http.socketTimeout',      '15000')
-System.setProperty('https.connectionTimeout', '15000')
-System.setProperty('https.socketTimeout',     '15000')
-
 def configureRepos = { repos ->
     repos.clear()
 
     // ── 官方源优先 ────────────────────────────────────────────────────
-
     repos.mavenCentral {
         name = 'maven-central'
     }
-
-    repos.maven {
-        name = 'maven-central-official'
-        url  = 'https://repo1.maven.org/maven2'
-    }
-
+    
     repos.google {
         name = 'google'
     }
@@ -30,22 +19,14 @@ def configureRepos = { repos ->
         url  = 'https://plugins.gradle.org/m2'
     }
 
-    repos.maven {
-        name = 'jcenter-archive'
-        url  = 'https://jcenter.bintray.com'
-        content {
-            excludeGroupByRegex 'com\\.google\\..*'
-            excludeGroupByRegex 'androidx\\..*'
-        }
-    }
+    // 说明：jcenter.bintray.com 已永久关闭，访问会返回 502 或连接超时，
+    // 保留它只会拖慢 Gradle 解析依赖的速度。
 
-    // ── 阿里云镜像（仅备用） ──────────────────────────────────────────
-
+    // ── 阿里云镜像（备用及特定旧版本源） ──────────────────────────────
     repos.maven {
         name = 'aliyun-central'
         url  = 'https://maven.aliyun.com/repository/central'
         content {
-            excludeGroupByRegex 'com\\.avast\\..*'
             excludeGroupByRegex 'com\\.github\\.ben-manes\\..*'
             excludeGroupByRegex 'gradle\\.plugin\\..*'
         }
@@ -55,7 +36,6 @@ def configureRepos = { repos ->
         name = 'aliyun-jcenter'
         url  = 'https://maven.aliyun.com/repository/jcenter'
         content {
-            excludeGroupByRegex 'com\\.avast\\..*'
             excludeGroupByRegex 'gradle\\.plugin\\..*'
         }
     }
@@ -96,17 +76,15 @@ gradle.settingsEvaluated { settings ->
     // Gradle 6.8+：PREFER_SETTINGS 让 build.gradle 里的仓库声明被忽略
     try {
         settings.dependencyResolutionManagement {
-            repositoriesMode.set(
-                groovy.lang.Closure == repositoriesMode.class
-                    ? repositoriesMode
-                    : Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
-                          .getField('PREFER_SETTINGS').get(null)
-            )
+            def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
+            def preferSettings = modeClass.getField('PREFER_SETTINGS').get(null)
+            repositoriesMode.set(preferSettings)
+            
             repositories {
                 configureRepos(delegate)
             }
         }
-    } catch (ignored) {
+    } catch (Throwable ignored) {
         // Gradle < 6.8 不支持 dependencyResolutionManagement，忽略
     }
 }
@@ -116,7 +94,6 @@ gradle.settingsEvaluated { settings ->
 // 兜底处理不走 dependencyResolutionManagement 的情况
 // ─────────────────────────────────────────────
 allprojects {
-
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }
