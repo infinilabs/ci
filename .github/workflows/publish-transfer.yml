@@ -166,6 +166,7 @@ jobs:
           # init license and enterprise plugins
           git clone git@github.com:infinilabs/license $WORK/license
           git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugin/enterprise
+          ls -lrf $WORK
 
       - name: Build ${{ matrix.product }} web
         env:
@@ -180,8 +181,10 @@ jobs:
             pnpm run build
             ls -alrt $WORK/$PNAME/.public
           fi
+
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
+          (cd $WORK/$PNAME && go mod edit -replace=infini.sh/license=../license && go mod tidy)
           # build all targets
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
