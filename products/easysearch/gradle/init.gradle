@@ -10,7 +10,7 @@ System.setProperty('https.socketTimeout',     '15000')
 def configureRepos = { repos ->
     repos.clear()
 
-    // ── 官方源优先（稳定，CI 环境网络一般直连没问题） ────────────────
+    // ── 官方源优先 ────────────────────────────────────────────────────
 
     repos.mavenCentral {
         name = 'maven-central'
@@ -39,7 +39,7 @@ def configureRepos = { repos ->
         }
     }
 
-    // ── 阿里云镜像（仅作备用，官方源超时/未命中时才走） ──────────────
+    // ── 阿里云镜像（仅备用） ──────────────────────────────────────────
 
     repos.maven {
         name = 'aliyun-central'
@@ -82,6 +82,39 @@ def configureRepos = { repos ->
     }
 }
 
+// ─────────────────────────────────────────────
+// settings 阶段：强制以 init.gradle 仓库为准
+// 覆盖 settings.gradle / build.gradle 里的仓库定义
+// ─────────────────────────────────────────────
+gradle.settingsEvaluated { settings ->
+    settings.pluginManagement {
+        repositories {
+            configureRepos(delegate)
+        }
+    }
+
+    // Gradle 6.8+：PREFER_SETTINGS 让 build.gradle 里的仓库声明被忽略
+    try {
+        settings.dependencyResolutionManagement {
+            repositoriesMode.set(
+                groovy.lang.Closure == repositoriesMode.class
+                    ? repositoriesMode
+                    : Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
+                          .getField('PREFER_SETTINGS').get(null)
+            )
+            repositories {
+                configureRepos(delegate)
+            }
+        }
+    } catch (ignored) {
+        // Gradle < 6.8 不支持 dependencyResolutionManagement，忽略
+    }
+}
+
+// ─────────────────────────────────────────────
+// 所有项目：buildscript + afterEvaluate 双重覆盖
+// 兜底处理不走 dependencyResolutionManagement 的情况
+// ─────────────────────────────────────────────
 allprojects {
 
     tasks.withType(JavaCompile).configureEach {
@@ -91,16 +124,20 @@ allprojects {
         options.encoding = 'UTF-8'
     }
     tasks.withType(Javadoc).configureEach {
-        options.encoding = 'UTF-8'
-        options.charSet  = 'UTF-8'
-    }
-
-    repositories {
-        configureRepos(delegate)
+        options.encoding  = 'UTF-8'
+        options.charSet   = 'UTF-8'
     }
 
     buildscript {
         repositories {
+            configureRepos(delegate)
+        }
+    }
+
+    // afterEvaluate 兜底：清掉 build.gradle 里显式写的阿里云地址
+    afterEvaluate { proj ->
+        proj.repositories.clear()
+        proj.repositories {
             configureRepos(delegate)
         }
     }
@@ -113,14 +150,9 @@ allprojects {
     }
 }
 
-gradle.settingsEvaluated { settings ->
-    settings.pluginManagement {
-        repositories {
-            configureRepos(delegate)
-        }
-    }
-}
-
+// ─────────────────────────────────────────────
+// 构建诊断日志（--info 模式下可见）
+// ─────────────────────────────────────────────
 gradle.projectsEvaluated {
     rootProject.allprojects { proj ->
         proj.logger.info "==> [${proj.name}] 仓库列表:"
