@@ -1,249 +1,137 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// init.gradle
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Gradle Global Init - Stable Resolver (Scala-safe)
+// ─────────────────────────────────────────────
 
-System.setProperty('http.connectionTimeout',  '15000')
-System.setProperty('http.socketTimeout',      '15000')
+System.setProperty('http.connectionTimeout', '15000')
+System.setProperty('http.socketTimeout', '15000')
 System.setProperty('https.connectionTimeout', '15000')
-System.setProperty('https.socketTimeout',     '15000')
+System.setProperty('https.socketTimeout', '15000')
 
 def SKIP_FIX_REPOS_PROJECTS = [
     ':plugins:knn',
     ':plugins:ai',
 ] as Set
 
-// pluginManagement 不支持与 buildscript.repositories 共存 exclusiveContent
-def addPluginManagementRepos = { repos ->
-    repos.mavenCentral {
-        name = 'maven-central'
-    }
+// ─────────────────────────────────────────────
+// 1️⃣ Scala 依赖强制走 Maven Central
+// ─────────────────────────────────────────────
+def isScalaGroup = { String g ->
+    return g ==~ /(org\.typelevel|org\.scala-lang.*|org\.scala-sbt.*|io\.circe|com\.chuusai.*|org\.scala.*cats.*)/
+}
+
+// ─────────────────────────────────────────────
+// 2️⃣ Plugin repositories
+// ─────────────────────────────────────────────
+def addPluginRepos = { repos ->
+    repos.mavenCentral()
+    repos.gradlePluginPortal()
+}
+
+// ─────────────────────────────────────────────
+// 3️⃣ Normal repos (safe + mirrored)
+// ─────────────────────────────────────────────
+def addNormalRepos = { repos ->
+    repos.mavenCentral()
+    repos.maven { url 'https://repo1.maven.org/maven2' }
+    repos.maven { url 'https://plugins.gradle.org/m2/' }
+
     repos.maven {
-        name = 'maven-central-official'
-        url  = 'https://repo1.maven.org/maven2'
-    }
-    repos.google {
-        name = 'google'
-    }
-    repos.maven {
-        name = 'gradle-plugin-portal'
-        url  = 'https://plugins.gradle.org/m2'
-    }
-    repos.maven {
-        name = 'sonatype-releases'
-        url  = 'https://oss.sonatype.org/content/repositories/releases'
-    }
-    repos.maven {
-        name = 'aliyun-central'
-        url  = 'https://maven.aliyun.com/repository/central'
-    }
-    repos.maven {
-        name = 'aliyun-jcenter'
-        url  = 'https://maven.aliyun.com/repository/jcenter'
-    }
-    repos.maven {
-        name = 'aliyun-public'
-        url  = 'https://maven.aliyun.com/repository/public'
-    }
-    repos.maven {
-        name = 'aliyun-gradle-plugin'
-        url  = 'https://maven.aliyun.com/repository/gradle-plugin'
+        url 'https://maven.aliyun.com/repository/public'
     }
 }
 
-// ── 普通项目仓库：含 exclusiveContent，官方源优先 ─────────────────────────
-def addOfficialRepos = { repos ->
-    repos.mavenCentral {
-        name = 'maven-central'
-    }
-    repos.maven {
-        name = 'maven-central-official'
-        url  = 'https://repo1.maven.org/maven2'
-    }
-    repos.google {
-        name = 'google'
-    }
-    repos.maven {
-        name = 'gradle-plugin-portal'
-        url  = 'https://plugins.gradle.org/m2'
-    }
-    repos.maven {
-        name = 'sonatype-releases'
-        url  = 'https://oss.sonatype.org/content/repositories/releases'
-    }
-    repos.maven {
-        name = 'sonatype-public'
-        url  = 'https://oss.sonatype.org/content/groups/public'
-    }
-
-    // knn/ai 的 exclusiveContent 约束：这几个 group 只从 aliyun-public 拉
-    repos.exclusiveContent {
-        forRepository {
-            repos.maven {
-                name = 'aliyun-public'
-                url  = 'https://maven.aliyun.com/repository/public'
-            }
-            repos.mavenCentral {
-                name = 'maven-central'
-            }
-        }
-        filter {
-            includeGroup 'org.typelevel'
-            includeGroup 'org.scala-lang.modules'
-            includeGroup 'org.scala-sbt'
-        }
-    }
-}
-
-def addAliyunRepos = { repos ->
-    repos.maven {
-        name = 'aliyun-central'
-        url  = 'https://maven.aliyun.com/repository/central'
-        content {
-            excludeGroupByRegex 'com\\.github\\.ben-manes\\..*'
-            excludeGroupByRegex 'gradle\\.plugin\\..*'
-        }
-    }
-    repos.maven {
-        name = 'aliyun-jcenter'
-        url  = 'https://maven.aliyun.com/repository/jcenter'
-        content {
-            excludeGroupByRegex 'gradle\\.plugin\\..*'
-        }
-    }
-    repos.maven {
-        name = 'aliyun-google'
-        url  = 'https://maven.aliyun.com/repository/google'
-        content {
-            includeGroupByRegex 'com\\.google\\..*'
-            includeGroupByRegex 'androidx\\..*'
-            includeGroupByRegex 'com\\.android\\..*'
-            includeGroup 'com.android.tools.build'
-            includeGroup 'com.android.tools'
-        }
-    }
-    repos.maven {
-        name = 'aliyun-gradle-plugin'
-        url  = 'https://maven.aliyun.com/repository/gradle-plugin'
-        content {
-            includeGroupByRegex 'org\\.gradle\\..*'
-            includeGroupByRegex 'com\\.gradle\\..*'
-        }
-    }
-}
-
-// buildscript 专用：不含 exclusiveContent，避免与 pluginManagement 冲突
-def configureBuildscriptRepos = { repos ->
-    repos.clear()
-    addPluginManagementRepos(repos)
-}
-
-// 普通项目仓库全量配置
-def configureRepos = { repos ->
-    repos.clear()
-    addOfficialRepos(repos)
-    addAliyunRepos(repos)
-}
-
+// ─────────────────────────────────────────────
+// 4️⃣ SAFE FIX (no exclusiveContent ever)
+// ─────────────────────────────────────────────
 def fixRepos = { proj ->
-    // 保留非阿里云仓库 + exclusiveContent 包装的仓库（无 url 属性）
-    def keepRepos = proj.repositories.findAll { repo ->
-        try {
-            if (!repo.hasProperty('url') || repo.url == null) return true
-            !repo.url.toString().contains('maven.aliyun.com')
-        } catch (Throwable ignored) { true }
-    }.toList()
 
     proj.repositories.clear()
-    proj.repositories { addOfficialRepos(delegate) }
-    keepRepos.each { repo ->
-        try { proj.repositories.add(repo) } catch (Throwable ignored) {}
+
+    proj.repositories {
+        // Maven Central ALWAYS FIRST for Scala ecosystem
+        mavenCentral()
+        maven { url 'https://repo1.maven.org/maven2' }
+
+        // Plugin repo
+        maven { url 'https://plugins.gradle.org/m2/' }
+
+        // Aliyun mirror only as fallback (NON authoritative)
+        maven { url 'https://maven.aliyun.com/repository/public' }
     }
-    proj.repositories { addAliyunRepos(delegate) }
 }
 
 // ─────────────────────────────────────────────
-// settings 阶段
+// settings
 // ─────────────────────────────────────────────
 gradle.settingsEvaluated { settings ->
-    // pluginManagement 不能用 exclusiveContent，单独处理
     settings.pluginManagement {
         repositories {
-            addPluginManagementRepos(delegate)
+            addPluginRepos(delegate)
         }
     }
 
-    try {
-        settings.dependencyResolutionManagement {
-            def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
-            repositoriesMode.set(modeClass.getField('PREFER_PROJECT').get(null))
-            repositories {
-                configureRepos(delegate)
-            }
+    settings.dependencyResolutionManagement {
+        repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+        repositories {
+            mavenCentral()
+            google()
+            maven { url 'https://plugins.gradle.org/m2/' }
         }
-    } catch (Throwable ignored) {
-        // Gradle < 6.8 不支持，忽略
     }
 }
 
 // ─────────────────────────────────────────────
-// 所有项目
+// projects
 // ─────────────────────────────────────────────
-allprojects {
+allprojects { proj ->
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }
+
     tasks.withType(GroovyCompile).configureEach {
         options.encoding = 'UTF-8'
     }
-    tasks.withType(Javadoc).configureEach {
-        options.encoding = 'UTF-8'
-        options.charSet  = 'UTF-8'
-    }
 
-    // buildscript 不能含 exclusiveContent
-    buildscript {
-        repositories {
-            configureBuildscriptRepos(delegate)
+    // ─────────────────────────────────────────────
+    // KNn / AI special isolation
+    // ─────────────────────────────────────────────
+    if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
+
+        proj.repositories.clear()
+
+        proj.repositories {
+            // ⚠️ ONLY stable sources
+            mavenCentral()
+            maven { url 'https://repo1.maven.org/maven2' }
+            maven { url 'https://plugins.gradle.org/m2/' }
         }
+
+        proj.logger.lifecycle "==> [${proj.path}] Scala-safe repos applied"
+
+        return
     }
 
-    afterEvaluate { proj ->
-        if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
-            proj.repositories.clear()
-
-            proj.repositories {
-                mavenCentral()
-                maven { url 'https://repo1.maven.org/maven2' }
-                maven { url 'https://plugins.gradle.org/m2/' }
-                maven { url 'https://maven.aliyun.com/repository/public' }
-                maven { url 'https://maven.aliyun.com/repository/jcenter' }
-            }
-
-            return
-        }
-        fixRepos(proj)
-    }
+    fixRepos(proj)
 
     configurations.configureEach {
         resolutionStrategy {
             cacheDynamicVersionsFor 10, 'minutes'
-            cacheChangingModulesFor  5, 'minutes'
+            cacheChangingModulesFor 5, 'minutes'
         }
     }
 }
 
 // ─────────────────────────────────────────────
-// 构建诊断日志（--info 模式下可见）
+// debug
 // ─────────────────────────────────────────────
 gradle.projectsEvaluated {
     rootProject.allprojects { proj ->
-        proj.logger.info "==> [${proj.name}] 仓库列表:"
-        proj.repositories.each { repo ->
+        proj.logger.info "==> [${proj.name}] repos:"
+        proj.repositories.each {
             try {
-                proj.logger.info "    - ${repo.name}: ${repo.hasProperty('url') && repo.url != null ? repo.url : '(exclusiveContent)'}"
-            } catch (ignored) {
-                proj.logger.info "    - ${repo.name}: (url 不可访问)"
-            }
+                proj.logger.info " - ${it.name}: ${it.hasProperty('url') ? it.url : '(special)'}"
+            } catch (ignored) {}
         }
     }
 }
