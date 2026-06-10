@@ -50,9 +50,170 @@ on:
         default: "2.2.1"
 
 jobs:
+  # ─────────────────────────────────────────────
+  # Setup: clone 源码 + 下载所有依赖
+  # 所有测试 job 复用这里生成的缓存，不再重复下载
+  # ─────────────────────────────────────────────
+  setup:
+    name: Setup / Clone & Resolve Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.resolve_config.outputs.branch }}
+      java_version: ${{ steps.resolve_config.outputs.java_version }}
+      gradle_version: ${{ steps.resolve_config.outputs.gradle_version }}
+      step_version: ${{ steps.prepare.outputs.step_version }}
+      cache_key: ${{ steps.resolve_config.outputs.cache_key }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
+
+      - name: Run connect in background
+        run: |
+          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
+          echo "Connect started with pid $!"
+          sleep 5
+
+      - name: Resolve branch and toolchain
+        id: resolve_config
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
+          BRANCH="1.x"
+          JAVA_VERSION="${{ vars.JAVA_VERSION }}"
+          GRADLE_VERSION="${{ vars.GRADLE_VERSION }}"
+
+          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+            BRANCH="main"
+            GRADLE_VERSION="${{ vars.GRADLE_VERSION_8 }}"
+            JAVA_VERSION="${{ vars.JAVA_VERSION_21 }}"
+          fi
+
+          CACHE_KEY="gradle-deps-${{ runner.os }}-${JAVA_DISTRIBUTION}-${JAVA_VERSION}-${{ hashFiles('**/*.gradle', '**/*.gradle.kts', '**/gradle.properties', '**/gradle/libs.versions.toml') }}"
+
+          echo "branch=$BRANCH"             >> "$GITHUB_OUTPUT"
+          echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "gradle_version=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "cache_key=$CACHE_KEY"       >> "$GITHUB_OUTPUT"
+
+          echo "BRANCH=$BRANCH"             >> "$GITHUB_ENV"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
+          echo "GRADLE_VERSION=$GRADLE_VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ steps.resolve_config.outputs.java_version }}
+
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ runner.os }}-${{ steps.resolve_config.outputs.gradle_version }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            /root/.gradle/caches
+          key: ${{ steps.resolve_config.outputs.cache_key }}
+          restore-keys: |
+            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}-
+            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
+            gradle-deps-${{ runner.os }}-
+
+      - name: Cache JDK toolchains
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/jdks
+          key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
+          restore-keys: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
+
+      - name: Set up gradle
+        run: |
+          GRADLE_VERSION=${{ steps.resolve_config.outputs.gradle_version }}
+          if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
+            wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
+            cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
+          fi
+          echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> "$GITHUB_ENV"
+
+      - name: Checkout ${{ env.PNAME }} repo
+        run: |
+          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:'%h, %ad' --date=iso)"
+
+      - name: Set up pnpm & nodejs toolchain
+        uses: pnpm/action-setup@v6
+        with:
+          version: latest
+          package_json_file: "${{ env.PNAME }}/package.json"
+
+      - name: Set up nodejs toolchain
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+          check-latest: false
+
+      - name: Prepare for build dependency
+        id: prepare
+        run: |
+          cd $GITHUB_WORKSPACE/$PNAME
+          $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
+          echo "STEP_VERSION=$PUBLISH_VERSION"   >> "$GITHUB_ENV"
+          echo "step_version=$PUBLISH_VERSION"   >> "$GITHUB_OUTPUT"
+          echo "PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins" >> "$GITHUB_ENV"
+
+      - name: Resolve and cache dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE/$PNAME"
+
+          MAX_RETRY=3
+          RETRY=0
+          exit_code=1
+
+          while [ $RETRY -lt $MAX_RETRY ]; do
+            echo "==> Resolving dependencies, attempt $((RETRY+1))/$MAX_RETRY ..."
+
+            gradle dependencies \
+              --no-daemon \
+              --quiet \
+              --init-script "$GITHUB_WORKSPACE/products/$PNAME/gradle/init.gradle" \
+              2>&1 | tee /tmp/gradle-deps.log
+
+            exit_code=${PIPESTATUS[0]}
+            [ $exit_code -eq 0 ] && { echo "==> Dependencies resolved successfully."; break; }
+
+            RETRY=$((RETRY+1))
+            if [ $RETRY -lt $MAX_RETRY ]; then
+              find ~/.gradle/caches -name "*.lock" -delete 2>/dev/null || true
+              if grep -q "502\|Bad Gateway" /tmp/gradle-deps.log; then
+                echo "==> Mirror 502, retrying in 30s ..."
+                sleep 30
+              else
+                echo "==> Failed (exit $exit_code), retrying in 60s ..."
+                sleep 60
+              fi
+            fi
+          done
+
+          if [ $exit_code -ne 0 ]; then
+            echo "==> All attempts failed. Last error output:"
+            grep -E "(Could not|502|status code)" /tmp/gradle-deps.log || cat /tmp/gradle-deps.log
+          fi
+          exit "$exit_code"
+
+  # ─────────────────────────────────────────────
+  # 并行测试：复用 setup job 的缓存
+  # ─────────────────────────────────────────────
   publish:
     name: Test Easysearch Integration / ${{ matrix.name }}
     runs-on: ubuntu-latest
+    needs: setup                        # setup 成功后才并行跑
     strategy:
       fail-fast: false
       max-parallel: 10
@@ -496,81 +657,57 @@ jobs:
       - name: Run connect in background
         run: |
           connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
           sleep 5
-
-      - name: Resolve branch and toolchain
-        id: resolve_config
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/{dest,jdks}
-          BRANCH="1.x"
-          JAVA_VERSION="${{ vars.JAVA_VERSION }}"
-          GRADLE_VERSION="${{ vars.GRADLE_VERSION }}"
-
-          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
-            BRANCH="main"
-            GRADLE_VERSION="${{ vars.GRADLE_VERSION_8 }}"
-            JAVA_VERSION="${{ vars.JAVA_VERSION_21 }}"
-          fi
-
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
-          echo "gradle_version=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
-
-          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
-          echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
-          echo "GRADLE_VERSION=$GRADLE_VERSION" >> "$GITHUB_ENV"
-          echo "JAVA_VERSION=$JAVA_VERSION -> using gradle version: $GRADLE_VERSION for branch: $BRANCH"
 
       - name: Set up java toolchain
         uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ steps.resolve_config.outputs.java_version }}
+          java-version: ${{ needs.setup.outputs.java_version }}
 
-      - name: Cache Gradle wrapper
-        uses: actions/cache@v5
+      - name: Restore Gradle wrapper
+        uses: actions/cache/restore@v5
         with:
           path: ~/.gradle/wrapper
-          key: gradle-wrapper-${{ runner.os }}-${{ steps.resolve_config.outputs.gradle_version }}
-          restore-keys: |
-            gradle-wrapper-${{ runner.os }}-
+          key: gradle-wrapper-${{ runner.os }}-${{ needs.setup.outputs.gradle_version }}
+          restore-keys: gradle-wrapper-${{ runner.os }}-
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v5
+      - name: Restore Gradle dependencies
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.gradle/caches
             /root/.gradle/caches
-          key: gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}-${{ hashFiles('**/*.gradle', '**/*.gradle.kts', '**/gradle.properties', '**/gradle/libs.versions.toml') }}
+          key: ${{ needs.setup.outputs.cache_key }}
           restore-keys: |
-            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}-
+            gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ needs.setup.outputs.java_version }}-
             gradle-deps-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
             gradle-deps-${{ runner.os }}-
 
-      - name: Cache JDK toolchains
-        uses: actions/cache@v5
+      - name: Restore JDK toolchains
+        uses: actions/cache/restore@v5
         with:
           path: ${{ github.workspace }}/jdks
-          key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
-          restore-keys: |
-            jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
+          key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ needs.setup.outputs.java_version }}
+          restore-keys: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-
 
       - name: Set up gradle
         run: |
+          GRADLE_VERSION=${{ needs.setup.outputs.gradle_version }}
           if [[ ! -d "$HOME/gradle-$GRADLE_VERSION" ]]; then
             wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -P $HOME
             cd $HOME && unzip -q gradle-$GRADLE_VERSION-bin.zip && rm -rf gradle-$GRADLE_VERSION-bin.zip
           fi
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> "$GITHUB_ENV"
-          echo "Gradle path is $HOME/gradle-$GRADLE_VERSION"
+          echo "BRANCH=${{ needs.setup.outputs.branch }}"           >> "$GITHUB_ENV"
+          echo "STEP_VERSION=${{ needs.setup.outputs.step_version }}" >> "$GITHUB_ENV"
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
-          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)"
+          git clone --depth 1 --branch "${{ needs.setup.outputs.branch }}" \
+            $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
 
-      - name: Set up with pnpm toolchain
+      - name: Set up pnpm & nodejs
         uses: pnpm/action-setup@v6
         with:
           version: latest
@@ -582,60 +719,11 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
           check-latest: false
 
-      - name: Check nodejs toolchain
+      - name: Prepare env
         run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            npm install -g pnpm
-          fi
-          node -v && npm -v && pnpm -v
-
-      - name: Prepare for build dependency
-        run: |
-          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)"
+          cd $GITHUB_WORKSPACE/$PNAME
           $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-          echo "Testing with easysearch version: $PUBLISH_VERSION"
-          echo "STEP_VERSION=$PUBLISH_VERSION" >> "$GITHUB_ENV"
-          PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins
-          echo "PLUGIN_HOME=$PLUGIN_HOME" >> "$GITHUB_ENV"
-
-      - name: Resolve and cache dependencies
-        run: |
-          cd "$GITHUB_WORKSPACE/$PNAME"
-
-          MAX_RETRY=3
-          RETRY=0
-          exit_code=1
-
-          while [ $RETRY -lt $MAX_RETRY ]; do
-            echo "==> Resolving dependencies, attempt $((RETRY+1))/$MAX_RETRY ..."
-
-            gradle dependencies \
-              --no-daemon \
-              --quiet \
-              --init-script "$GITHUB_WORKSPACE/products/$PNAME/gradle/init.gradle" \
-              2>&1 | tee /tmp/gradle-deps.log
-
-            exit_code=${PIPESTATUS[0]}
-
-            if [ $exit_code -eq 0 ]; then
-              echo "==> Dependencies resolved successfully."
-              break
-            fi
-
-            RETRY=$((RETRY+1))
-            if [ $RETRY -lt $MAX_RETRY ]; then
-              find ~/.gradle/caches -name "*.lock" -delete 2>/dev/null || true
-              echo "==> Failed (exit $exit_code), retrying in 60s ..."
-              sleep 60
-            fi
-          done
-
-          if [ $exit_code -ne 0 ]; then
-            echo "==> All attempts failed. Last error output:"
-            grep -E "(Could not|502|status code)" /tmp/gradle-deps.log || cat /tmp/gradle-deps.log
-          fi
-
-          exit "$exit_code"
+          echo "PLUGIN_HOME=$GITHUB_WORKSPACE/$PNAME/plugins" >> "$GITHUB_ENV"
 
       - name: Run ${{ matrix.name }}
         timeout-minutes: ${{ matrix.timeout_minutes }}
@@ -653,14 +741,9 @@ jobs:
             echo "==> Running ${{ matrix.name }}, attempt $((RETRY+1))/$MAX_RETRY ..."
             ${{ matrix.command }}
             exit_code=$?
-            if [ $exit_code -eq 0 ]; then
-              break
-            fi
+            [ $exit_code -eq 0 ] && break
             RETRY=$((RETRY+1))
-            if [ $RETRY -lt $MAX_RETRY ]; then
-              echo "==> Failed (exit $exit_code), retrying in 30s ..."
-              sleep 30
-            fi
+            [ $RETRY -lt $MAX_RETRY ] && { echo "==> Retrying in 30s ..."; sleep 30; }
           done
 
           set -e
@@ -674,16 +757,11 @@ jobs:
             if [ -d "$report_dir" ]; then
               mkdir -p "$target_dir"
               cp -r "$report_dir"/* "$target_dir"/ || true
-              echo "Copied $test_name test reports from $report_dir to $target_dir"
+              echo "Copied $test_name reports from $report_dir"
               copied=1
-            else
-              echo "No $test_name test reports found in $report_dir"
             fi
           done
-
-          if [ "$copied" -eq 0 ]; then
-            echo "No reports copied for $test_name"
-          fi
+          [ "$copied" -eq 0 ] && echo "No reports copied for $test_name"
 
           exit "$exit_code"
 

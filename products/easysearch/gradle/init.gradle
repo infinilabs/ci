@@ -41,6 +41,15 @@ def addOfficialRepos = { repos ->
         name = 'sonatype-public'
         url  = 'https://oss.sonatype.org/content/groups/public'
     }
+
+    // 官方镜像补充
+    repos.maven {
+        name = 'jcenter-archive'
+        url  = 'https://jcenter.bintray.com'
+        content {
+            includeGroup 'com.avast.gradle'
+        }
+    }
 }
 
 def addAliyunRepos = { repos ->
@@ -58,6 +67,7 @@ def addAliyunRepos = { repos ->
         url  = 'https://maven.aliyun.com/repository/jcenter'
         content {
             excludeGroupByRegex 'gradle\\.plugin\\..*'
+            excludeGroup 'com.avast.gradle'
         }
     }
 
