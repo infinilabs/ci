@@ -141,18 +141,21 @@ def configureRepos = { repos ->
     addAliyunRepos(repos)
 }
 
-afterEvaluate { proj ->
-    if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
-        // 真正跳过：不修改仓库配置，仅输出日志
-        proj.logger.lifecycle "==> [${proj.path}] 跳过仓库修复，保持原有配置"
-        proj.repositories.each { repo ->
-            try {
-                proj.logger.lifecycle "    - ${repo.name}: ${repo.hasProperty('url') ? repo.url : '(exclusiveContent)'}"
-            } catch (Throwable ignored) {}
-        }
-        return
+def fixRepos = { proj ->
+    // 保留非阿里云仓库 + exclusiveContent 包装的仓库（无 url 属性）
+    def keepRepos = proj.repositories.findAll { repo ->
+        try {
+            if (!repo.hasProperty('url') || repo.url == null) return true
+            !repo.url.toString().contains('maven.aliyun.com')
+        } catch (Throwable ignored) { true }
+    }.toList()
+
+    proj.repositories.clear()
+    proj.repositories { addOfficialRepos(delegate) }
+    keepRepos.each { repo ->
+        try { proj.repositories.add(repo) } catch (Throwable ignored) {}
     }
-    fixRepos(proj)
+    proj.repositories { addAliyunRepos(delegate) }
 }
 
 // ─────────────────────────────────────────────
