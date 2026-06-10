@@ -221,12 +221,7 @@ allprojects {
                 try { proj.repositories.add(repo) } catch (Throwable ignored) {}
             }
             proj.repositories { addAliyunRepos(delegate) }
-            proj.logger.lifecycle "==> [${proj.path}] 仓库列表 (特殊处理):"
-            proj.repositories.each { repo ->
-                try {
-                    proj.logger.lifecycle "    - ${repo.name}: ${repo.hasProperty('url') ? repo.url : '(exclusiveContent)'}"
-                } catch (Throwable ignored) {}
-            }
+            proj.logger.lifecycle "==> [${proj.path}] 仓库列表 (跳过处理)"
             return
         }
         fixRepos(proj)
