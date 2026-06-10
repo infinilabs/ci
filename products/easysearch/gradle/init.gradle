@@ -7,6 +7,12 @@ System.setProperty('http.socketTimeout',      '15000')
 System.setProperty('https.connectionTimeout', '15000')
 System.setProperty('https.socketTimeout',     '15000')
 
+// knn 及其依赖方需要特殊仓库的插件列表
+def SKIP_FIX_REPOS_PROJECTS = [
+    ':plugins:knn',
+    ':plugins:ai',
+] as Set
+
 def addOfficialRepos = { repos ->
     repos.mavenCentral {
         name = 'maven-central'
@@ -83,9 +89,7 @@ def configureRepos = { repos ->
     addAliyunRepos(repos)
 }
 
-// 官方源置顶，保留项目特殊仓库，阿里云兜底
 def fixRepos = { proj ->
-    // 1. 收集非阿里云的仓库（保留项目特殊仓库，如 knn 本地仓库）
     def keepRepos = proj.repositories.findAll { repo ->
         try {
             !(repo.hasProperty('url') && repo.url?.toString()?.contains('maven.aliyun.com'))
@@ -94,25 +98,12 @@ def fixRepos = { proj ->
         }
     }.toList()
 
-    // 2. 全清
     proj.repositories.clear()
-
-    // 3. 官方源置顶
-    proj.repositories {
-        addOfficialRepos(delegate)
-    }
-
-    // 4. 项目原有特殊仓库加回（排官方源之后）
+    proj.repositories { addOfficialRepos(delegate) }
     keepRepos.each { repo ->
-        try {
-            proj.repositories.add(repo)
-        } catch (Throwable ignored) {}
+        try { proj.repositories.add(repo) } catch (Throwable ignored) {}
     }
-
-    // 5. 阿里云兜底
-    proj.repositories {
-        addAliyunRepos(delegate)
-    }
+    proj.repositories { addAliyunRepos(delegate) }
 }
 
 // ─────────────────────────────────────────────
@@ -128,17 +119,13 @@ gradle.settingsEvaluated { settings ->
     try {
         settings.dependencyResolutionManagement {
             def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
-            // PREFER_PROJECT：项目自己声明的仓库优先，settings 仓库作为补充
-            // 避免 PREFER_SETTINGS 屏蔽 knn 等插件的特殊仓库声明
             def preferProject = modeClass.getField('PREFER_PROJECT').get(null)
             repositoriesMode.set(preferProject)
             repositories {
                 configureRepos(delegate)
             }
         }
-    } catch (Throwable ignored) {
-        // Gradle < 6.8 不支持，忽略
-    }
+    } catch (Throwable ignored) {}
 }
 
 // ─────────────────────────────────────────────
@@ -163,9 +150,28 @@ allprojects {
     }
 
     afterEvaluate { proj ->
-        // knn 插件有特殊依赖来源，跳过仓库改写，保持原样
-        if (proj.path == ':plugins:knn') {
-            proj.logger.lifecycle "==> [knn] 跳过 fixRepos，保留原始仓库声明"
+        if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
+            // 保留原始仓库，但把阿里云移到最后、官方源插到最前
+            // 只做最小干预：移除阿里云 → 官方源置顶 → 阿里云兜底
+            def keepRepos = proj.repositories.findAll { repo ->
+                try {
+                    !(repo.hasProperty('url') && repo.url?.toString()?.contains('maven.aliyun.com'))
+                } catch (Throwable ignored) { true }
+            }.toList()
+            proj.repositories.clear()
+            proj.repositories { addOfficialRepos(delegate) }
+            keepRepos.each { repo ->
+                try { proj.repositories.add(repo) } catch (Throwable ignored) {}
+            }
+            proj.repositories { addAliyunRepos(delegate) }
+
+            // 诊断日志：打印该项目仓库，方便排查
+            proj.logger.lifecycle "==> [${proj.path}] 仓库列表 (特殊处理):"
+            proj.repositories.each { repo ->
+                try {
+                    proj.logger.lifecycle "    - ${repo.name}: ${repo.hasProperty('url') ? repo.url : 'n/a'}"
+                } catch (Throwable ignored) {}
+            }
             return
         }
         fixRepos(proj)
