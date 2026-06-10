@@ -163,6 +163,11 @@ allprojects {
     }
 
     afterEvaluate { proj ->
+        // knn 插件有特殊依赖来源，跳过仓库改写，保持原样
+        if (proj.path == ':plugins:knn') {
+            proj.logger.lifecycle "==> [knn] 跳过 fixRepos，保留原始仓库声明"
+            return
+        }
         fixRepos(proj)
     }
 
