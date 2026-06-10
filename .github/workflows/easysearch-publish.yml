@@ -121,7 +121,7 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 --branch "$BRANCH" --no-tags --single-branch --recurse-submodules=no $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           # show commit id and log
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 

@@ -146,7 +146,6 @@ jobs:
         run: |
           git clone \
             --depth 1 \
-            --filter=blob:none \
             --no-tags \
             --branch "$BRANCH" \
             --single-branch \
@@ -715,7 +714,6 @@ jobs:
         run: |
           git clone \
             --depth 1 \
-            --filter=blob:none \
             --no-tags \
             --branch "$BRANCH" \
             --single-branch \
