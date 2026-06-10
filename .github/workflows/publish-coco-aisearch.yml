@@ -27,7 +27,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: "2.2.1-2822"
+        default: "2.2.1-2840"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
