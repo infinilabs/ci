@@ -7,7 +7,6 @@ System.setProperty('http.socketTimeout',      '15000')
 System.setProperty('https.connectionTimeout', '15000')
 System.setProperty('https.socketTimeout',     '15000')
 
-// knn 及其依赖方需要特殊仓库的插件列表
 def SKIP_FIX_REPOS_PROJECTS = [
     ':plugins:knn',
     ':plugins:ai',
@@ -42,12 +41,19 @@ def addOfficialRepos = { repos ->
         url  = 'https://oss.sonatype.org/content/groups/public'
     }
 
-    // 官方镜像补充
-    repos.maven {
-        name = 'jcenter-archive'
-        url  = 'https://jcenter.bintray.com'
-        content {
-            includeGroup 'com.avast.gradle'
+    // knn/ai 插件通过 exclusiveContent 指定这几个 group 只能从 aliyun-public 拉
+    // 必须在 init.gradle 里同步声明，否则 fixRepos 清仓后这个约束丢失
+    repos.exclusiveContent {
+        forRepository {
+            repos.maven {
+                name = 'aliyun-public'
+                url  = 'https://maven.aliyun.com/repository/public'
+            }
+        }
+        filter {
+            includeGroup 'org.typelevel'
+            includeGroup 'org.scala-lang.modules'
+            includeGroup 'org.scala-sbt'
         }
     }
 }
@@ -67,7 +73,6 @@ def addAliyunRepos = { repos ->
         url  = 'https://maven.aliyun.com/repository/jcenter'
         content {
             excludeGroupByRegex 'gradle\\.plugin\\..*'
-            excludeGroup 'com.avast.gradle'
         }
     }
 
@@ -100,20 +105,33 @@ def configureRepos = { repos ->
 }
 
 def fixRepos = { proj ->
+    // 保留非阿里云普通仓库（项目特殊仓库）
+    // exclusiveContent 包装的仓库 hasProperty('url') 为 false，自动保留
     def keepRepos = proj.repositories.findAll { repo ->
         try {
-            !(repo.hasProperty('url') && repo.url?.toString()?.contains('maven.aliyun.com'))
+            if (!repo.hasProperty('url') || repo.url == null) return true
+            !repo.url.toString().contains('maven.aliyun.com')
         } catch (Throwable ignored) {
             true
         }
     }.toList()
 
     proj.repositories.clear()
-    proj.repositories { addOfficialRepos(delegate) }
+
+    // 官方源置顶（含 exclusiveContent aliyun-public）
+    proj.repositories {
+        addOfficialRepos(delegate)
+    }
+
+    // 项目原有特殊仓库加回
     keepRepos.each { repo ->
         try { proj.repositories.add(repo) } catch (Throwable ignored) {}
     }
-    proj.repositories { addAliyunRepos(delegate) }
+
+    // 阿里云兜底
+    proj.repositories {
+        addAliyunRepos(delegate)
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -129,13 +147,14 @@ gradle.settingsEvaluated { settings ->
     try {
         settings.dependencyResolutionManagement {
             def modeClass = Class.forName('org.gradle.api.artifacts.dsl.RepositoriesMode')
-            def preferProject = modeClass.getField('PREFER_PROJECT').get(null)
-            repositoriesMode.set(preferProject)
+            repositoriesMode.set(modeClass.getField('PREFER_PROJECT').get(null))
             repositories {
                 configureRepos(delegate)
             }
         }
-    } catch (Throwable ignored) {}
+    } catch (Throwable ignored) {
+        // Gradle < 6.8 不支持，忽略
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -161,13 +180,14 @@ allprojects {
 
     afterEvaluate { proj ->
         if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
-            // 保留原始仓库，但把阿里云移到最后、官方源插到最前
-            // 只做最小干预：移除阿里云 → 官方源置顶 → 阿里云兜底
+            // knn/ai：保留原始仓库，仅把阿里云移到最后、官方源置顶
             def keepRepos = proj.repositories.findAll { repo ->
                 try {
-                    !(repo.hasProperty('url') && repo.url?.toString()?.contains('maven.aliyun.com'))
+                    if (!repo.hasProperty('url') || repo.url == null) return true
+                    !repo.url.toString().contains('maven.aliyun.com')
                 } catch (Throwable ignored) { true }
             }.toList()
+
             proj.repositories.clear()
             proj.repositories { addOfficialRepos(delegate) }
             keepRepos.each { repo ->
@@ -175,15 +195,15 @@ allprojects {
             }
             proj.repositories { addAliyunRepos(delegate) }
 
-            // 诊断日志：打印该项目仓库，方便排查
             proj.logger.lifecycle "==> [${proj.path}] 仓库列表 (特殊处理):"
             proj.repositories.each { repo ->
                 try {
-                    proj.logger.lifecycle "    - ${repo.name}: ${repo.hasProperty('url') ? repo.url : 'n/a'}"
+                    proj.logger.lifecycle "    - ${repo.name}: ${repo.hasProperty('url') ? repo.url : '(exclusiveContent)'}"
                 } catch (Throwable ignored) {}
             }
             return
         }
+
         fixRepos(proj)
     }
 
@@ -203,9 +223,7 @@ gradle.projectsEvaluated {
         proj.logger.info "==> [${proj.name}] 仓库列表:"
         proj.repositories.each { repo ->
             try {
-                if (repo.hasProperty('url') && repo.url != null) {
-                    proj.logger.info "    - ${repo.name}: ${repo.url}"
-                }
+                proj.logger.info "    - ${repo.name}: ${repo.hasProperty('url') && repo.url != null ? repo.url : '(exclusiveContent)'}"
             } catch (ignored) {
                 proj.logger.info "    - ${repo.name}: (url 不可访问)"
             }
