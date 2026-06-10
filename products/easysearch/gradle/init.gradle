@@ -78,9 +78,12 @@ def addOfficialRepos = { repos ->
     // knn/ai 的 exclusiveContent 约束：这几个 group 只从 aliyun-public 拉
     repos.exclusiveContent {
         forRepository {
-            maven {
+            repos.maven {
                 name = 'aliyun-public'
                 url  = 'https://maven.aliyun.com/repository/public'
+            }
+            repos.mavenCentral {
+                name = 'maven-central'
             }
         }
         filter {
