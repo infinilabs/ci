@@ -12,37 +12,70 @@ def SKIP_FIX_REPOS_PROJECTS = [
     ':plugins:ai',
 ] as Set
 
-def addOfficialRepos = { repos ->
+// pluginManagement 不支持与 buildscript.repositories 共存 exclusiveContent
+def addPluginManagementRepos = { repos ->
     repos.mavenCentral {
         name = 'maven-central'
     }
-
     repos.maven {
         name = 'maven-central-official'
         url  = 'https://repo1.maven.org/maven2'
     }
-
     repos.google {
         name = 'google'
     }
-
     repos.maven {
         name = 'gradle-plugin-portal'
         url  = 'https://plugins.gradle.org/m2'
     }
-
     repos.maven {
         name = 'sonatype-releases'
         url  = 'https://oss.sonatype.org/content/repositories/releases'
     }
+    repos.maven {
+        name = 'aliyun-central'
+        url  = 'https://maven.aliyun.com/repository/central'
+    }
+    repos.maven {
+        name = 'aliyun-jcenter'
+        url  = 'https://maven.aliyun.com/repository/jcenter'
+    }
+    repos.maven {
+        name = 'aliyun-public'
+        url  = 'https://maven.aliyun.com/repository/public'
+    }
+    repos.maven {
+        name = 'aliyun-gradle-plugin'
+        url  = 'https://maven.aliyun.com/repository/gradle-plugin'
+    }
+}
 
+// ── 普通项目仓库：含 exclusiveContent，官方源优先 ─────────────────────────
+def addOfficialRepos = { repos ->
+    repos.mavenCentral {
+        name = 'maven-central'
+    }
+    repos.maven {
+        name = 'maven-central-official'
+        url  = 'https://repo1.maven.org/maven2'
+    }
+    repos.google {
+        name = 'google'
+    }
+    repos.maven {
+        name = 'gradle-plugin-portal'
+        url  = 'https://plugins.gradle.org/m2'
+    }
+    repos.maven {
+        name = 'sonatype-releases'
+        url  = 'https://oss.sonatype.org/content/repositories/releases'
+    }
     repos.maven {
         name = 'sonatype-public'
         url  = 'https://oss.sonatype.org/content/groups/public'
     }
 
-    // knn/ai 插件通过 exclusiveContent 指定这几个 group 只能从 aliyun-public 拉
-    // 必须在 init.gradle 里同步声明，否则 fixRepos 清仓后这个约束丢失
+    // knn/ai 的 exclusiveContent 约束：这几个 group 只从 aliyun-public 拉
     repos.exclusiveContent {
         forRepository {
             repos.maven {
@@ -67,7 +100,6 @@ def addAliyunRepos = { repos ->
             excludeGroupByRegex 'gradle\\.plugin\\..*'
         }
     }
-
     repos.maven {
         name = 'aliyun-jcenter'
         url  = 'https://maven.aliyun.com/repository/jcenter'
@@ -75,7 +107,6 @@ def addAliyunRepos = { repos ->
             excludeGroupByRegex 'gradle\\.plugin\\..*'
         }
     }
-
     repos.maven {
         name = 'aliyun-google'
         url  = 'https://maven.aliyun.com/repository/google'
@@ -87,7 +118,6 @@ def addAliyunRepos = { repos ->
             includeGroup 'com.android.tools'
         }
     }
-
     repos.maven {
         name = 'aliyun-gradle-plugin'
         url  = 'https://maven.aliyun.com/repository/gradle-plugin'
@@ -98,6 +128,13 @@ def addAliyunRepos = { repos ->
     }
 }
 
+// buildscript 专用：不含 exclusiveContent，避免与 pluginManagement 冲突
+def configureBuildscriptRepos = { repos ->
+    repos.clear()
+    addPluginManagementRepos(repos)
+}
+
+// 普通项目仓库全量配置
 def configureRepos = { repos ->
     repos.clear()
     addOfficialRepos(repos)
@@ -105,42 +142,30 @@ def configureRepos = { repos ->
 }
 
 def fixRepos = { proj ->
-    // 保留非阿里云普通仓库（项目特殊仓库）
-    // exclusiveContent 包装的仓库 hasProperty('url') 为 false，自动保留
+    // 保留非阿里云仓库 + exclusiveContent 包装的仓库（无 url 属性）
     def keepRepos = proj.repositories.findAll { repo ->
         try {
             if (!repo.hasProperty('url') || repo.url == null) return true
             !repo.url.toString().contains('maven.aliyun.com')
-        } catch (Throwable ignored) {
-            true
-        }
+        } catch (Throwable ignored) { true }
     }.toList()
 
     proj.repositories.clear()
-
-    // 官方源置顶（含 exclusiveContent aliyun-public）
-    proj.repositories {
-        addOfficialRepos(delegate)
-    }
-
-    // 项目原有特殊仓库加回
+    proj.repositories { addOfficialRepos(delegate) }
     keepRepos.each { repo ->
         try { proj.repositories.add(repo) } catch (Throwable ignored) {}
     }
-
-    // 阿里云兜底
-    proj.repositories {
-        addAliyunRepos(delegate)
-    }
+    proj.repositories { addAliyunRepos(delegate) }
 }
 
 // ─────────────────────────────────────────────
 // settings 阶段
 // ─────────────────────────────────────────────
 gradle.settingsEvaluated { settings ->
+    // pluginManagement 不能用 exclusiveContent，单独处理
     settings.pluginManagement {
         repositories {
-            configureRepos(delegate)
+            addPluginManagementRepos(delegate)
         }
     }
 
@@ -172,29 +197,27 @@ allprojects {
         options.charSet  = 'UTF-8'
     }
 
+    // buildscript 不能含 exclusiveContent
     buildscript {
         repositories {
-            configureRepos(delegate)
+            configureBuildscriptRepos(delegate)
         }
     }
 
     afterEvaluate { proj ->
         if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
-            // knn/ai：保留原始仓库，仅把阿里云移到最后、官方源置顶
             def keepRepos = proj.repositories.findAll { repo ->
                 try {
                     if (!repo.hasProperty('url') || repo.url == null) return true
                     !repo.url.toString().contains('maven.aliyun.com')
                 } catch (Throwable ignored) { true }
             }.toList()
-
             proj.repositories.clear()
             proj.repositories { addOfficialRepos(delegate) }
             keepRepos.each { repo ->
                 try { proj.repositories.add(repo) } catch (Throwable ignored) {}
             }
             proj.repositories { addAliyunRepos(delegate) }
-
             proj.logger.lifecycle "==> [${proj.path}] 仓库列表 (特殊处理):"
             proj.repositories.each { repo ->
                 try {
@@ -203,7 +226,6 @@ allprojects {
             }
             return
         }
-
         fixRepos(proj)
     }
 

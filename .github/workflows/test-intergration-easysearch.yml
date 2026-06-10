@@ -144,7 +144,14 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
-          git clone --depth 1 --branch "$BRANCH" $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone \
+            --depth 1 \
+            --filter=blob:none \
+            --no-tags \
+            --branch "$BRANCH" \
+            --single-branch \
+            --recurse-submodules=no \
+            $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:'%h, %ad' --date=iso)"
 
       - name: Set up pnpm & nodejs toolchain
@@ -703,9 +710,18 @@ jobs:
           echo "STEP_VERSION=${{ needs.setup.outputs.step_version }}" >> "$GITHUB_ENV"
 
       - name: Checkout ${{ env.PNAME }} repo
+        env:
+          BRANCH: ${{ needs.setup.outputs.branch }}
         run: |
-          git clone --depth 1 --branch "${{ needs.setup.outputs.branch }}" \
+          git clone \
+            --depth 1 \
+            --filter=blob:none \
+            --no-tags \
+            --branch "$BRANCH" \
+            --single-branch \
+            --recurse-submodules=no \
             $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo "Checkout $PNAME repo $(git log -1 --pretty=format:'%h, %ad' --date=iso)"
 
       - name: Set up pnpm & nodejs
         uses: pnpm/action-setup@v6
