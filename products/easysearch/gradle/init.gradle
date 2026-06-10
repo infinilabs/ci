@@ -209,18 +209,16 @@ allprojects {
 
     afterEvaluate { proj ->
         if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
-            def keepRepos = proj.repositories.findAll { repo ->
-                try {
-                    if (!repo.hasProperty('url') || repo.url == null) return true
-                    !repo.url.toString().contains('maven.aliyun.com')
-                } catch (Throwable ignored) { true }
-            }.toList()
             proj.repositories.clear()
-            proj.repositories { addOfficialRepos(delegate) }
-            keepRepos.each { repo ->
-                try { proj.repositories.add(repo) } catch (Throwable ignored) {}
+
+            proj.repositories {
+                mavenCentral()
+                maven { url 'https://repo1.maven.org/maven2' }
+                maven { url 'https://plugins.gradle.org/m2/' }
+                maven { url 'https://maven.aliyun.com/repository/public' }
+                maven { url 'https://maven.aliyun.com/repository/jcenter' }
             }
-            proj.repositories { addAliyunRepos(delegate) }
+
             return
         }
         fixRepos(proj)
