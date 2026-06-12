@@ -94,7 +94,7 @@ allprojects { proj ->
     }
 
     // ─────────────────────────────────────────────
-    // KNn / AI special isolation
+    // Knn / AI special isolation
     // ─────────────────────────────────────────────
     if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
 

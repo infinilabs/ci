@@ -300,8 +300,9 @@ jobs:
         uses: infinilabs/gitea-pr@v1
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
+          http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: https://${{ secrets.HTTP_GIT_REPO}}
+          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
