@@ -1,12 +1,13 @@
 #!/bin/bash
 
-USER_GRAALVM=true
+USE_GRAALVM=true
+USE_MACOS_TARGZ=true
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
 JDK_BASE_URL="$RELEASE_URL/$PNAME/jdk"
 
-echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USER_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"
+echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USE_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"
 mkdir -p $DEST
 
 # ── Plugin dependency map (placed outside the loop) ───────
@@ -31,7 +32,7 @@ _topo_visit() {
 
 #初始化 JDK
 mkdir -p $BUILD_JDKS && echo Build directory $BUILD_JDKS
-if [[ "$USER_GRAALVM" == "true" ]]; then
+if [[ "$USE_GRAALVM" == "true" ]]; then
   for x in linux-x64 linux-aarch64 macos-x64 macos-aarch64 windows-x64; do
     
     EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
@@ -65,7 +66,7 @@ cp -rf $DEST/$PNAME-$VERSION-$BUILD_NUMBER-* $WORK
 for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   FNAME=`ls -lrt $WORK |grep $PNAME |head -n 1 |awk '{print $NF}'`
   DNAME=`echo $FNAME |sed 's/.zip/-bundle.zip/;s/.tar.gz/-bundle.tar.gz/'`
-  if [[ "$USER_GRAALVM" == "true" ]]; then
+  if [[ "$USE_GRAALVM" == "true" ]]; then
     JARK=$(echo "$x" | sed -e 's/-amd64/-x64/;s/-arm64/-aarch64/;s/mac/macos/')
     JNAME=`find $BUILD_JDKS -name "graalvm*_$JARK*" |head -n 1`
   else
@@ -88,10 +89,14 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   fi
  
   # 配置jdk
-  if [ "${JNAME##*.}" == "gz" ]; then
-    tar -zxf $JNAME
+  if [[ "$USE_MACOS_TARGZ" == "true" && "$x" == mac-* ]]; then
+    echo "Mac JDK detected, keep as tar.gz (no extract, no transform)"
   else
-    unzip -q $JNAME
+    if [ "${JNAME##*.}" == "gz" ]; then
+      tar -zxf "$JNAME"
+    else
+      unzip -q "$JNAME"
+    fi
   fi
 
   #plugin install need before bundle jdk
@@ -141,10 +146,14 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   fi
 
   # Copy the JDK to the expected location
-  if [[ "$USER_GRAALVM" == "true" ]]; then
-    mv graalvm* $WORK/$PNAME/jdk
+  if [[ "$USE_MACOS_TARGZ" == "true" && "$x" == mac-* ]]; then
+    mv "$JNAME" $WORK/$PNAME/jdk.tar.gz
   else
-    mv zulu* $WORK/$PNAME/jdk
+    if [[ "$USE_GRAALVM" == "true" ]]; then
+      mv graalvm* $WORK/$PNAME/jdk
+    else
+      mv zulu* $WORK/$PNAME/jdk
+    fi
   fi
 
   # for debug
