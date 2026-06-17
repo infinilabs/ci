@@ -1,7 +1,7 @@
 #!/bin/bash
 
 USE_GRAALVM=true
-USE_MACOS_TARGZ=true
+USE_MACOS_TARGZ=false
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
