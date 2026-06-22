@@ -329,6 +329,8 @@ jobs:
         id: tags
         if: ${{ inputs.PUBLISH_WITH_EASYSEARCH == true }}
         run: |
+          DEV_DOCKER_REPO=$(echo "${{ secrets.INFINI_DOCKER_REGISTRY }}" | sed 's|/$||;s|https://||')
+          echo "DEV_REPO_NAME=$DEV_DOCKER_REPO/infinilabs/$PNAME-ai" >> $GITHUB_ENV
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME-ai >> $GITHUB_ENV
           if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME-ai:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
@@ -398,8 +400,8 @@ jobs:
             linux/amd64
             linux/arm64
           tags: |
-            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-            ${{ steps.tags.outputs.RELEASE_TAG }}
+            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
