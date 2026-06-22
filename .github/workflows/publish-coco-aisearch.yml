@@ -19,7 +19,7 @@ on:
         description: 'Publish Branch'
         required: false
         type: string
-        default: "rebased-chore-ai-search"
+        default: "main"
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
