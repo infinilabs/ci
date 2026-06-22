@@ -25,7 +25,7 @@ on:
       COCO_PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
-        default: "0.10.0"
+        default: "0.11.0"
       PUBLISH_BRANCH:
         description: 'Publish With Branch'
         required: false
