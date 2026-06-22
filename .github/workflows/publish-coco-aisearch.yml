@@ -8,6 +8,8 @@ env:
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_PUBLISH_VERSION }}
   NODE_OPTIONS: "--max-old-space-size=8192"
@@ -282,6 +284,20 @@ jobs:
             echo "No $PNAME binary found"
           fi
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"    
+
+      - name: Set up and check env
+        run: |
+          if [[ "${{ env.EZS_VER }}" == 2.* ]]; then
+            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+          fi
+          echo "JAVA_VERSION=$JAVA_VERSION for easysearch repackage"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+
+      - name: Set up java toolchain
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Prepare for Easysearch Docker with ${{ env.EZS_VER }}
         if: ${{  github.event_name == 'schedule' || inputs.PUBLISH_WITH_EASYSEARCH == true }}
