@@ -377,6 +377,34 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Login to Dev Docker registry
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ secrets.INFINI_DOCKER_REGISTRY }}
+          username: ${{ secrets.INFINI_DOCKER_USERNAME }}
+          password: ${{ secrets.INFINI_DOCKER_PASSWORD }}
+
+      - name: Build and push Dev Docker image
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+        timeout-minutes: 30
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ github.workspace }}/products/${{ env.PNAME }}
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          target: prod
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}
+
       - name: Archive coco server files
         if: ${{ !inputs.ONLY_DOCKER}}
         run: |
