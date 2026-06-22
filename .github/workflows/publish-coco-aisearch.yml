@@ -163,7 +163,8 @@ jobs:
       - name: Set up with coco server pnpm toolchain
         uses: pnpm/action-setup@v6
         with:
-          version: latest
+          version: "9.12.3"
+
       - name: Set up with coco server nodejs toolchain
         uses: actions/setup-node@v6
         with:
