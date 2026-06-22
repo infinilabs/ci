@@ -220,6 +220,7 @@ jobs:
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Build coco server web
+        if: false
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -267,6 +268,7 @@ jobs:
       - name: Build coco server go mod
         run: |
           cd $WORK/$PNAME 
+          (rm -rif .public/) && make build-web && make build-widget
           # build all targets
           for tag in $TARGETS; do
             OFFLINE_BUILD=true make build-$tag

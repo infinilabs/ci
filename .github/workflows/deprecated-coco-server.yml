@@ -191,6 +191,7 @@ jobs:
             git clone git@github.com:infinilabs/framework-enterprise-plugins.git $WORK/framework/plugins/enterprise
       
       - name: Build coco server enterprise web
+        if: false
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -229,6 +230,7 @@ jobs:
       - name: Build coco server with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           cd $WORK/$PNAME
+          (rm -rif .public/) && make build-web && make build-widget
           OFFLINE_BUILD=true make build-linux-amd64
 
       - name: Build coco server check
@@ -423,6 +425,7 @@ jobs:
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Build coco server web
+        if: false
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -446,6 +449,7 @@ jobs:
       - name: Build coco server go mod
         run: |
           cd $WORK/$PNAME 
+          (rm -rif .public/) && make build-web && make build-widget
           # build all targets
           for tag in $TARGETS; do
             make build-$tag
@@ -713,6 +717,7 @@ jobs:
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Build coco web server
+        if: false
         run: |
           # build web
           echo "Build $PNAME web start..."
@@ -758,6 +763,7 @@ jobs:
 
           # build all targets
           cd $WORK/$PNAME
+          (rm -rif .public/) && make build-web && make build-widget
           for tag in $TARGETS; do
             OFFLINE_BUILD=true make build-$tag
           done
