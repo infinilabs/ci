@@ -209,26 +209,11 @@ jobs:
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
       - name: Build coco server web
-        if: false
         run: |
           # build web
           echo "Build $PNAME web start..."
-          cd $WORK/$PNAME/web
-          pnpm install --frozen-lockfile --registry=https://registry.npmjs.com --quiet && pnpm build -- --silent
-
-          # build widgets
-          for w in fullscreen searchbox; do
-            cd $WORK/$PNAME/web/widgets/$w 
-            echo "Build $PNAME widgets $w start..."
-            pnpm install --registry=https://registry.npmjs.com --quiet .
-            echo "Build $PNAME widgets $w with tsup"
-            mkdir -p dist && pnpm exec tsup --silent
-            echo "Copy $PNAME widgets $w to $WORK/$PNAME/.public/widgets/$w"
-            mkdir -p $WORK/$PNAME/.public/widgets/$w && cp -rf dist/index.{css,js} $WORK/$PNAME/.public/widgets/$w
-
-            # check build files
-            ls -lrht $WORK/$PNAME/.public/widgets/$w
-          done
+          cd $WORK/$PNAME
+          (rm -rif .public/) && make build-web && make build-widget
 
       - name: Upload .public as github artifact
         uses: actions/upload-artifact@v7
@@ -256,8 +241,7 @@ jobs:
 
       - name: Build coco server go mod
         run: |
-          cd $WORK/$PNAME 
-          (rm -rif .public/) && make build-web && make build-widget
+          cd $WORK/$PNAME
           # build all targets
           for tag in $TARGETS; do
             OFFLINE_BUILD=true make build-$tag
