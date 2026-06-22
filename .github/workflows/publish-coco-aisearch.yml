@@ -392,18 +392,17 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
-          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
+          file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.aisearch
           target: prod
           platforms: |
             linux/amd64
             linux/arm64
+          tags: |
+            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+            ${{ steps.tags.outputs.RELEASE_TAG }}
           push: true
-          provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: |
-            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-            ${{ env.DEV_REPO_NAME }}:${{ env.VERSION }}
 
       - name: Archive coco server files
         if: ${{ !inputs.ONLY_DOCKER}}
