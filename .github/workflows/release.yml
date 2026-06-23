@@ -102,7 +102,7 @@ on:
       COCOSERVER_PUBLISH_VERSION:
         description: 'Publish Coco Server Version'
         required: false
-        default: "0.11.0-2258"
+        default: "0.11.0-2261"
 
 jobs:
   generate-matrix: 
