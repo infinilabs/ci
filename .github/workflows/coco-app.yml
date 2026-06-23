@@ -25,6 +25,7 @@ env:
   APPLE_ID: ${{ secrets.APPLE_ID }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
   NODEJS_VERSION: 20
   FILE_EXTENSIONS: '\.(dmg|rpm|deb|exe)$'
   UPGRADE_FILE_EXTENSIONS: '\.(gz|sig|AppImage|exe|json)$'
@@ -50,7 +51,6 @@ on:
 jobs:
   build-app:
     env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
       VITE_LOG_LEVEL: 'warn'
     strategy:
       fail-fast: false
@@ -380,8 +380,6 @@ jobs:
   release:
     needs: "build-app"
     runs-on: ubuntu-latest
-    env:
-      PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION || vars.COCO_APP_PUBLISH_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
