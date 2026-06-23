@@ -320,47 +320,6 @@ jobs:
           tea-version: 0.9.2
           pr-label: "auto-merge, automated"
 
-  update_repo:
-    if: ${{ inputs.OPERATION == 'PR' && inputs.FRAMEWORK_PUBLISH == true }}
-    name: Create PR for framework publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    env:
-      VERSION: ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Update release version in workflow files
-        id: update
-        run: |
-          cd $GITHUB_WORKSPACE/.github/workflows
-          source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
-
-          update_yaml_version "release.yml" "FRAMEWORK_PUBLISH_VERSION" "${VERSION}"
-          
-      - name: Create bumpver pull request
-        uses: peter-evans/create-pull-request@v8
-        id: create-pr
-        with:
-          token: ${{ secrets.REPO_PAT }}
-          commit-message: "bumpver: publish frmawork ${{ env.VERSION }}"
-          branch: "release/publish-frmawork-${{ github.run_id }}"
-          title: "bumpver: publish frmawork ${{ env.VERSION }}"
-          body: "Automated publish frmawork ${{ env.VERSION }}"
-          labels: "auto-merge, automated"
-          delete-branch: true
-          add-paths: |
-            .github/workflows/release.yml
-
-      - name: Auto-merge the pr
-        if: ${{ steps.create-pr.outputs.pull-request-url }}
-        env:
-          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
-          GH_TOKEN: ${{ secrets.REPO_PAT }}
-        run: gh pr merge "$PR_URL" --squash
-
   create-tag:
     needs: generate-matrix
     if: ${{ inputs.OPERATION == 'TAG' }}
