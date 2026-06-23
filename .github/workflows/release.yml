@@ -92,7 +92,7 @@ on:
       COCOAPP_PUBLISH_VERSION:
         description: 'Publish Coco App Version'
         required: false
-        default: "-2788"
+        default: "0.11.0-2788"
       COCOSERVER_PUBLISH:
         description: 'Products with Coco Server'
         required: false
