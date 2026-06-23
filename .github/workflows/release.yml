@@ -771,11 +771,14 @@ jobs:
           fi
           if [[ "$DO_COCO_APP" == "true" ]]; then
             echo "Move coco-app-${COCO_APP_VER} from snapshot to stable"
-            oss move -p coco-app --prefix coco-app-${COCO_APP_VER}
+            VER=${COCO_APP_VER%-*}
+            oss move -p coco-app --prefix Coco-AI-${COCO_APP_VER}
+            oss move -p coco-app -d .v${VER} --no-delete
+            oss move -k Coco-AI-0.10.0-2618-linux-amd64.tar.gz -p easysearch --no-delete
           fi
           if [[ "$DO_COCO_SERVER" == "true" ]]; then
             echo "Move coco-server-${COCO_VER} from snapshot to stable"
-            oss move -p coco-server --prefix coco-server-${COCO_VER}
+            oss move -p coco-server --prefix coco-${COCO_VER}
           fi
       - name: Refresh stable files cache
         env:
