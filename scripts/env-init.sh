@@ -95,10 +95,12 @@ env_init() {
 
         mkdir -p "$SSH_DIR"
         chmod 700 "$SSH_DIR"
-        echo "$SSH_PRIVATE_KEY" > "$SSH_DIR/id_rsa"
-        echo "$SSH_GITEA_PRIVATE_KEY" > "$SSH_DIR/id_ed25519"
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/id_rsa"
+        echo "$SSH_GITEA_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/id_ed25519"
 
-        # Initialize config file and add common settings
+        echo "" >> "$SSH_DIR/id_rsa"
+        echo "" >> "$SSH_DIR/id_ed25519"
+
         cat > "$SSH_DIR/config" <<-EOF
 			ConnectTimeout 600
 			ServerAliveInterval 300
