@@ -198,7 +198,7 @@ jobs:
             # --- 5. Install Dependencies ---
             pushd "$WORK_DIR" > /dev/null
             echo "  Installing dependencies..."
-            pnpm install
+            pnpm install --ignore-scripts && pnpm approve-builds --all
             popd > /dev/null
 
             # --- 6. Build ---
