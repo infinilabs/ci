@@ -110,7 +110,7 @@ env_init() {
             echo -e "\n# User-provided SSH config\n$SSH_CONFIG" >> "$SSH_DIR/config"
         fi
         
-        chmod 600 "$SSH_DIR"/id_rsa "$SSH_DIR"/config
+        chmod 600 "$SSH_DIR"/id_rsa "$SSH_DIR/id_ed25519" "$SSH_DIR"/config
         log_success "SSH configuration is complete."
     fi
 
