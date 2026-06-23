@@ -1,4 +1,4 @@
-name: Test Environment Setup (Dry-Run)
+name: Test Github Actions (Dry-Run)
 defaults:
   run:
     shell: bash
@@ -87,12 +87,6 @@ jobs:
           AGENT_VER=$(curl --connect-timeout 5 $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Get latest agent verion $AGENT_VER"
 
-      - name: Test SSH connction
-        if: ${{ inputs.TEST_NETWORK == true }}
-        env:
-          SSH_GIT_GITEA: ${{secrets.SSH_GIT_GITEA}}
-        run: |
-          ssh -vT $SSH_GIT_GITEA
       - name: Test checkout code
         if: ${{ inputs.TEST_NETWORK == true }}
         run: |
