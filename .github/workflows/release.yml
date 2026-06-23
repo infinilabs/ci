@@ -208,14 +208,13 @@ jobs:
           CONSOLE_VERSION: ${{ inputs.CONSOLE_PUBLISH_VERSION }}
           GATEWAY_VERSION: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
           LOADGEN_VERSION: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
+          FRAMEWORK_VERSION: ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
           EASYSEARCH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
-          COCO-APP_PUBLISH_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
-          COCO-SERVER_PUBLISH_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
+          COCO-APP_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
+          COCO-SERVER_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
         run: |
-          VAR_NAME="${PRODUCT^^}_PUBLISH_VERSION"
+          VAR_NAME="${PRODUCT^^}_VERSION"
           VERSION="${!VAR_NAME}"
-          FRAMEWORK_VER=${{ inputs.FRAMEWORK_PUBLISH_VERSION }}
-          EZS_VER=${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
           
           cd $GITHUB_WORKSPACE/$PRODUCT
           # Check if the branch already exists
@@ -230,6 +229,8 @@ jobs:
           PUBLISH="$(echo "$VERSION" | sed 's/-.*//') ($(date +'%Y-%m-%d'))"
           PRODUCT_NAME=$(echo "$PRODUCT" | sed 's/./\u&/')
           
+          echo "Process for $PRODUCT_NAME - $VERSION with $PUBLISH"
+
           for f in en zh; do
             if [[ ! -d docs/content.$f ]]; then
               echo "Checked $PRODUCT_NAME no need update docs $f"
@@ -256,13 +257,14 @@ jobs:
           if [[ -d docs/data ]]; then
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             if [[ "$PRODUCT" == "easysearch" ]]; then
-              sed -i "19s/version:.*/version: '$EZS_VER'/" docs/data/quick_start.yaml
+              sed -i "19s/version:.*/version: '$EASYSEARCH_VERSION'/" docs/data/quick_start.yaml
             fi
             if [[ "$PRODUCT" == "console" ]]; then
               sed -i "44s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             fi
             git add docs/data/quick_start.yaml
           fi
+          echo "Finished create branch and update release notes & data"
 
       - name: Create Commit Message
         id: commit_and_push
