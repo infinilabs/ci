@@ -124,7 +124,7 @@ jobs:
         LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
         SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
+        SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
         SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
         CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
         CONNECT_PORT: ${{ secrets.CONNECT_PORT }}
