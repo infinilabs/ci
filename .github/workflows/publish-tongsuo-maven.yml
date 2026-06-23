@@ -8,6 +8,7 @@ env:
   TZ: Asia/Shanghai
   PNAME: Tongsuo
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
 
 on:

@@ -52,6 +52,7 @@ jobs:
         OSS_BK: ${{ secrets.OSS_BK }}
         OSS_MODE: ${{ secrets.OSS_MODE }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
         SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
         LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
         LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
@@ -270,6 +271,7 @@ jobs:
         OSS_BK: ${{ secrets.OSS_BK }}
         OSS_MODE: ${{ secrets.OSS_MODE }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
         SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
         LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
         LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
@@ -548,6 +550,7 @@ jobs:
         OSS_BK: ${{ secrets.OSS_BK }}
         OSS_MODE: ${{ secrets.OSS_MODE }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
         SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
         LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
         LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
