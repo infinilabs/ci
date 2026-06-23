@@ -209,8 +209,8 @@ jobs:
           GATEWAY_VERSION: ${{ inputs.GATEWAY_PUBLISH_VERSION }}
           LOADGEN_VERSION: ${{ inputs.LOADGEN_PUBLISH_VERSION }}
           EASYSEARCH_VERSION: ${{ inputs.EASYSEARCH_PUBLISH_VERSION }}
-          COCO_APP_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
-          COCO_SERVER_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
+          COCO-APP_PUBLISH_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
+          COCO-SERVER_PUBLISH_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
         run: |
           VAR_NAME="${PRODUCT^^}_PUBLISH_VERSION"
           VERSION="${!VAR_NAME}"
@@ -231,7 +231,10 @@ jobs:
           PRODUCT_NAME=$(echo "$PRODUCT" | sed 's/./\u&/')
           
           for f in en zh; do
-            if [[ ! -d docs/content.$f ]]; then continue; fi
+            if [[ ! -d docs/content.$f ]]; then
+              echo "Checked $PRODUCT_NAME no need update docs $f"
+              continue; 
+            fi
 
             FRAMEWORK_UPDATE_NOTES="- This release includes updates from the underlying [Framework](https://docs.infinilabs.com/framework/main), which resolves several common issues and enhances overall stability and performance. While there are no direct changes to ${PRODUCT_NAME} itself, the improvements inherited from Framework benefit ${PRODUCT_NAME} indirectly."
             if [[ "$f" == "zh" ]]; then
@@ -240,11 +243,13 @@ jobs:
 
             if ! grep -wq "$(echo "$VERSION" | sed 's/-.*//')" docs/content.$f/docs/release-notes/_index.md; then
               if [[ "$PRODUCT" == "console" || "$PRODUCT" == "agent" || "$PRODUCT" == "gateway" || "$PRODUCT" == "loadgen" ]]; then
+                echo "Only update framework for $PRODUCT_NAME publish"
                 sed -i "0,/^[[:space:]]*###\{1,2\}[[:space:]]*✈️[[:space:]]*Improvements[[:space:]]*$/s||&\n$FRAMEWORK_UPDATE_NOTES|" docs/content.$f/docs/release-notes/_index.md
               fi
               sed -i "s/## Latest.*/## $PUBLISH/" docs/content.$f/docs/release-notes/_index.md
               sed -i -e "/^## $PUBLISH/i ## Latest (In development)  \\n### ❌ Breaking changes  \\n### 🚀 Features  \\n### 🐛 Bug fix  \\n### ✈️ Improvements  \\n" docs/content.$f/docs/release-notes/_index.md
               git add docs/content.$f/docs/release-notes/_index.md
+              echo "Chore update the docs content.$f release-notes index markdown"
             fi
           done
           
@@ -264,12 +269,12 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PRODUCT
           if [[ -n $(git status --porcelain) ]]; then
-            echo "✅ Changes detected. Proceeding with commit and push..."
+            echo "✅ Changes for $PRODUCT detected. Proceeding with commit and push..."
             git commit -m "$PR_MESSAGE"     
             git push origin "$PR_BRANCH"
             echo "changes_pushed=true" >> $GITHUB_OUTPUT
           else
-            echo "🤷 No changes detected. Skipping commit and push."
+            echo "🤷 No changes for $PRODUCT detected. Skipping commit and push."
             echo "changes_pushed=false" >> $GITHUB_OUTPUT
           fi
           if [[ "$PRODUCT" == "easysearch" ]]; then
