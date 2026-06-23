@@ -958,6 +958,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
         
       - name: Publish Website Tag
         run: |
