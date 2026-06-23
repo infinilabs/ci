@@ -4,7 +4,7 @@ defaults:
     shell: bash
 env:
   PNAME: coco
-  INCREMENT: 600
+  INCREMENT: 0
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
