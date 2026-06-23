@@ -389,7 +389,7 @@ jobs:
 
       - name: Build and push Dev Docker image
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
-        timeout-minutes: 30
+        timeout-minutes: 60
         continue-on-error: true
         uses: docker/build-push-action@v7
         with:
