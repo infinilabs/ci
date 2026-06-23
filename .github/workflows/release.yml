@@ -774,7 +774,7 @@ jobs:
             VER=${COCO_APP_VER%-*}
             oss move -p coco/app --prefix Coco-AI-${COCO_APP_VER}
             oss move -p coco/app -d .v${VER} --no-delete
-            oss move -k Release/coco/app/snapshot/.v${VER}/.latest.json -t Release/coco/app --no-delete
+            oss move -p coco/app -k Release/coco/app/snapshot/.v${VER}/.latest.json -t Release/coco/app --no-delete
           fi
           if [[ "$DO_COCO_SERVER" == "true" ]]; then
             echo "Move coco-server-${COCO_VER} from snapshot to stable"
