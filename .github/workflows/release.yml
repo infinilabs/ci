@@ -321,9 +321,8 @@ jobs:
           pr-label: "auto-merge, automated"
 
   update_repo:
-    needs: generate-matrix
     if: ${{ inputs.OPERATION == 'PR' && inputs.FRAMEWORK_PUBLISH == true }}
-    name: Create PR for ${{ matrix.product }} with version ${{ matrix.publish_version }}
+    name: Create PR for framework publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
