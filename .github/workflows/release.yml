@@ -214,7 +214,7 @@ jobs:
           COCO_APP_PUBLISH_VERSION: ${{ inputs.COCOAPP_PUBLISH_VERSION }}
           COCO_SERVER_PUBLISH_VERSION: ${{ inputs.COCOSERVER_PUBLISH_VERSION }}
         run: |
-          PRODUCT_UPPER="${${PRODUCT^^}//-/_}"
+          PRODUCT_UPPER=$(echo "$PRODUCT" | tr '[:lower:]-' '[:upper:]_')
           VAR_NAME="${PRODUCT_UPPER}_PUBLISH_VERSION"
           VERSION="${!VAR_NAME}"
           
