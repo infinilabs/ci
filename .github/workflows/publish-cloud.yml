@@ -40,7 +40,7 @@ on:
       EASYSEARCH_PUBLISH_VERSION:
         description: 'Easysearch Published version'
         required: false
-        default: "2.3.0"
+        default: "2.3.1"
       GATEWAY_PUBLISH_VERSION:
         description: 'Gateway Published version'
         required: false
