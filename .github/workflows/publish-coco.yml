@@ -4,7 +4,6 @@ defaults:
     shell: bash
 env:
   PNAME: coco
-  INCREMENT: -5
   TOKEN: ${{ secrets.X_TOKEN }}
   GO_VERSION: ${{ vars.GO_VERSION }}
   NODEJS_VERSION: ${{ vars.NODEJS_EXT_VERSION }}
@@ -112,20 +111,6 @@ jobs:
 
       - name: Setup coco server env
         run: |
-          COCO_PUBLISH_VERSION="${{ inputs.COCO_PUBLISH_VERSION }}"
-          RUN_NUMBER=${{ github.run_number }}
-          BUILD_NUMBER=$((RUN_NUMBER + INCREMENT))
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
-              IFS='-' read -r COCO_PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
-              if [[ "${{ inputs.COCO_PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-                COCO_PUBLISH_VERSION="${BASH_REMATCH[1]}"
-                RUN_NUMBER=${{ github.run_number }}
-                OFFSET=${{ vars.OFFSET }}
-                BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
-              fi
-            fi
-          fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
 
           echo "Publish enterprise version"
@@ -154,7 +139,7 @@ jobs:
               EZS_VER="$current_version-$build_number"
             fi
           fi
-          echo "Build coco with $COCO_PUBLISH_VERSION-$BUILD_NUMBER and Easysearch $EZS_VER"
+          echo "Build coco with Easysearch $EZS_VER"
           echo EZS_VER=$EZS_VER >> $GITHUB_ENV
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
@@ -199,7 +184,7 @@ jobs:
             if [[ "$COCO_PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$COCO_PUBLISH_VERSION"
             else
-              RUN_NUMBER=$(( ${{ github.run_number }} + ${{ env.INCREMENT }} ))
+              RUN_NUMBER=${{ github.run_number }}
               OFFSET=${{ vars.OFFSET }}
               DYNAMIC_BUILD_NUMBER=$((RUN_NUMBER + OFFSET))
               DYNAMIC_VERSION="$COCO_PUBLISH_VERSION"
