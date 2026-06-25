@@ -109,14 +109,14 @@ jobs:
           java-version: ${{ steps.resolve_config.outputs.java_version }}
 
       - name: Cache Gradle wrapper
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.gradle/wrapper
           key: gradle-wrapper-${{ runner.os }}-${{ steps.resolve_config.outputs.gradle_version }}
           restore-keys: gradle-wrapper-${{ runner.os }}-
 
       - name: Cache Gradle dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -128,7 +128,7 @@ jobs:
             gradle-deps-${{ runner.os }}-
 
       - name: Cache JDK toolchains
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/jdks
           key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ steps.resolve_config.outputs.java_version }}
@@ -673,14 +673,14 @@ jobs:
           java-version: ${{ needs.setup.outputs.java_version }}
 
       - name: Restore Gradle wrapper
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ~/.gradle/wrapper
           key: gradle-wrapper-${{ runner.os }}-${{ needs.setup.outputs.gradle_version }}
           restore-keys: gradle-wrapper-${{ runner.os }}-
 
       - name: Restore Gradle dependencies
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
@@ -692,7 +692,7 @@ jobs:
             gradle-deps-${{ runner.os }}-
 
       - name: Restore JDK toolchains
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/jdks
           key: jdks-${{ runner.os }}-${{ env.JAVA_DISTRIBUTION }}-${{ needs.setup.outputs.java_version }}
