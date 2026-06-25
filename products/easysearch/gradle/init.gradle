@@ -60,6 +60,18 @@ def fixRepos = { proj ->
     }
 }
 
+def fixBuildscriptRepos = { proj ->
+
+    proj.buildscript.repositories.clear()
+
+    proj.buildscript.repositories {
+        mavenCentral()
+        maven { url 'https://repo1.maven.org/maven2' }
+        maven { url 'https://plugins.gradle.org/m2/' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+}
+
 // ─────────────────────────────────────────────
 // settings
 // ─────────────────────────────────────────────
@@ -85,6 +97,8 @@ gradle.settingsEvaluated { settings ->
 // ─────────────────────────────────────────────
 allprojects { proj ->
 
+    fixBuildscriptRepos(proj)
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }
@@ -99,9 +113,16 @@ allprojects { proj ->
     if (SKIP_FIX_REPOS_PROJECTS.contains(proj.path)) {
 
         proj.repositories.clear()
+        proj.buildscript.repositories.clear()
 
         proj.repositories {
             // ⚠️ ONLY stable sources
+            mavenCentral()
+            maven { url 'https://repo1.maven.org/maven2' }
+            maven { url 'https://plugins.gradle.org/m2/' }
+        }
+
+        proj.buildscript.repositories {
             mavenCentral()
             maven { url 'https://repo1.maven.org/maven2' }
             maven { url 'https://plugins.gradle.org/m2/' }
