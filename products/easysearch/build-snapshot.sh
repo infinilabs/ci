@@ -101,11 +101,12 @@ for q in "${plugins[@]}"; do
 done
 
 # Update and upload .snapshot-versions.json
-VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/.snapshot-versions.json"
+FILE_NAME=".snapshot-versions.json"
+VERSIONS_FILE="$GITHUB_WORKSPACE/products/$PNAME/publish/$FILE_NAME"
 SNAPSHOT_KEY="${VERSION}-${BUILD_NUMBER%%-SNAPSHOT}"
 DEFAULT_PLATFORMS='["linux-amd64","linux-arm64","mac-amd64","mac-arm64","windows-amd64"]'
 
-echo "Updating .snapshot-versions.json with key: $SNAPSHOT_KEY"
+echo "Updating $FILE_NAME with key: $SNAPSHOT_KEY"
 UPDATED=$(jq --arg key "$SNAPSHOT_KEY" \
   --argjson platforms "$DEFAULT_PLATFORMS" \
   '.[$key] = {"platforms": $platforms}' \
@@ -126,8 +127,8 @@ PRUNED=$(echo "$UPDATED" | jq '
 echo "$PRUNED" > "$VERSIONS_FILE"
 
 if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" != "true" ]]; then
-  echo "Uploading .snapshot-versions.json to OSS"
-  oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/snapshot -f $VERSIONS_FILE
+  echo "Uploading $FILE_NAME to OSS"
+  oss upload -c $GITHUB_WORKSPACE/.oss.yml -o -k $PNAME/snapshot/$FILE_NAME -f $VERSIONS_FILE
 fi
 
 echo
