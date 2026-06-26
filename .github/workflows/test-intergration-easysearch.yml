@@ -425,6 +425,45 @@ jobs:
                       --tests org.easysearch.index.engine.InternalEngineTests \
                       --tests org.easysearch.index.store.StoreTests \
                       --rerun-tasks --info
+          - suite: source-reuse-unit
+            name: Source reuse unit tests
+            report_name: source-reuse-unit
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/test
+            timeout_minutes: 30
+            command: |
+              gradle clean :server:test \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      --tests org.easysearch.search.fetch.subphase.FetchSourcePhaseTests \
+                      --tests org.easysearch.common.util.JsonUtilsTests.testNestedJson \
+                      --tests org.easysearch.common.util.JsonUtilsTests.testNestedJsonSplitCacheIsBounded \
+                      --tests org.easysearch.common.util.JsonUtilsTests.testNestedJsonRejectsConflictingDottedPath \
+                      --tests org.easysearch.common.util.JsonUtilsTests.testConvertBytesReferenceToJsonNodeSupportsAllContentTypes \
+                      --tests org.easysearch.common.util.JsonUtilsTests.testConvertBytesReferenceToJsonNodePreservesYamlSemantics \
+                      --tests org.easysearch.index.engine.InternalEngineTests.testSourceReuseChangesSnapshotReadsFilledSeqNoGapNoop \
+                      --tests org.easysearch.index.engine.InternalEngineTests.testSourceReuseChangesSnapshotPreservesNestedSource \
+                      --rerun-tasks --info
+          - suite: source-reuse-internal-cluster
+            name: Source reuse internal cluster tests
+            report_name: source-reuse-internal-cluster
+            report_dirs: $GITHUB_WORKSPACE/$PNAME/server/build/reports/tests/internalClusterTest
+            timeout_minutes: 60
+            command: |
+              gradle clean :server:clean :server:internalClusterTest \
+                      -Deasysearch.version=$STEP_VERSION \
+                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.cluster.reroute.timeout=300s \
+                      -Dtests.cluster.recovery.timeout=300s \
+                      -Dtests.cluster.stabilization.timeout=300s \
+                      --tests org.easysearch.search.simple.SourceReuseNestedIT \
+                      --tests 'org.easysearch.search.simple.SimpleSearchIT.test*Source_reuse*' \
+                      --tests org.easysearch.search.simple.SimpleSearchIT.testGeoMapping \
+                      --tests org.easysearch.search.simple.SimpleSearchIT.testSourceReuseRejectsGeoShapeMapping \
+                      --tests org.easysearch.search.simple.SimpleSearchIT.testNotSupportedNested \
+                      --tests org.easysearch.search.simple.SimpleSearchIT.testKeyword \
+                      --tests org.easysearch.get.GetActionIT.testSimpleGet \
+                      --tests org.easysearch.get.GetActionIT.testSourceReuseGetWithAllIndexContentTypes \
+                      --rerun-tasks --info
           - suite: index-management-ilm-secure-core
             name: Index management ILM secure core tests
             report_name: index-management-ilm-secure-core
