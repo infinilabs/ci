@@ -307,12 +307,13 @@ jobs:
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
+        continue-on-error: true
         uses: infinilabs/gitea-pr@v1
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
           http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
@@ -925,7 +926,8 @@ jobs:
       - name: Commit and push
         id: commit_and_push
         run: |
-          cd $GITHUB_WORKSPACE/official-website-cn
+          PRODUCT=official-website-cn
+          cd $GITHUB_WORKSPACE/$PRODUCT
           if [[ -n $(git status --porcelain) ]]; then
             echo "✅ Changes detected. Proceeding with commit and push..."
             git add -A
@@ -936,16 +938,17 @@ jobs:
             echo "🤷 No changes detected. Skipping commit and push."
             echo "changes_pushed=false" >> $GITHUB_OUTPUT
           fi
-          git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/official-website-cn
+          git remote set-url origin https://${{ secrets.HTTP_GIT_REPO }}/infini/$PRODUCT
 
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' }}
+        continue-on-error: true
         uses: infinilabs/gitea-pr@v1
         env:
           https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
           http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: http://${{ secrets.HTTP_PR_GIT_REPO}}
+          url: https://${{ secrets.HTTP_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: official-website-cn
           base: master
