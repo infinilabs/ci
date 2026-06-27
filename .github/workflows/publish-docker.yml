@@ -77,7 +77,7 @@ jobs:
       matrix: ${{ steps.gen-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Generate matrix
         id: gen-matrix
@@ -126,20 +126,20 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
           path: framework
 
       - name: Checkout ${{ matrix.product }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
           ref: main
@@ -416,7 +416,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare update version env
         run: |
@@ -517,7 +517,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         
       - name: Notify message via feishu
         env:
@@ -539,7 +539,7 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       
       - name: Refresh download page on success ${{ matrix.product }}
         env:

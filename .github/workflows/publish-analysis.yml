@@ -61,13 +61,13 @@ jobs:
           - ${{ inputs.REPUBLISH_TNAME }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
@@ -263,13 +263,13 @@ jobs:
           - opensearch
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
@@ -416,13 +416,13 @@ jobs:
           - opensearch
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout ${{ matrix.plugins }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: master
@@ -560,7 +560,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         
       - name: Notify message via feishu
         env:

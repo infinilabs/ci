@@ -45,7 +45,7 @@ jobs:
       INPUTS_JSON: ${{ toJson(inputs) }}
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Generate publish matrix
         id: set-matrix
         run: |
@@ -118,7 +118,7 @@ jobs:
       COMPONENTS: ${{ matrix.components }}
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Load repo config
         run: |
@@ -127,7 +127,7 @@ jobs:
           echo "REPO_PRIVATE=$REPO_PRIVATE" >> $GITHUB_ENV
 
       - name: Checkout ${{ env.REPO_NAME }} repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ vars.GIT_REPO }}/${{ env.REPO_NAME }}
           ref: main
@@ -233,7 +233,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ci repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download all release infos
         uses: actions/download-artifact@v8
@@ -314,7 +314,7 @@ jobs:
     needs: [publish,update-workflow]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Notify message via feishu
         env:
           FEISHU_BOT_URL: ${{ secrets.FEISHU_BOT_WEBHOOK_URL }}

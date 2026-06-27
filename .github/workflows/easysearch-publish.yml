@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -397,7 +397,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true && inputs.ONLY_DOCKER == false && startsWith(inputs.PUBLISH_VERSION, '2.') }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare update version env
         run: |
@@ -459,7 +459,7 @@ jobs:
     if: ${{ success() && !(github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.REPO_PAT }}
 
@@ -496,7 +496,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Notify message via feishu
         env:
@@ -514,7 +514,7 @@ jobs:
     if: success()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       
       - name: Refresh download page on success
         env:
