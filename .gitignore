@@ -1,2 +1,6 @@
 # zip -r resources.zip resources/ -x "*/.DS_Store"
 resources.zip
+
+# IDE & AI tooling
+.claude/
+.vscode/
