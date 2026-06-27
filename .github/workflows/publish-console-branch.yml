@@ -166,7 +166,7 @@ jobs:
         if: ${{ matrix.product == 'console' }}
         with:
           repository: 'infinilabs/migration-enterprise-plugins'
-          ssh-key: ${{ secrets.SSH_HARDY_PRIVATE_KEY }}
+          ssh-key: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
           submodules: recursive
           ref: main
           path: ${{ matrix.product }}/plugin/enterprise
