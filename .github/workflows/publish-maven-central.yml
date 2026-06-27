@@ -83,7 +83,7 @@ jobs:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -228,7 +228,7 @@ jobs:
       PUBLISH_VERSION: ${{ inputs.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Update release version in workflow files
         id: update
@@ -266,7 +266,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Notify message via feishu
         env:

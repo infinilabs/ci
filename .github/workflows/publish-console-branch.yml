@@ -76,7 +76,7 @@ jobs:
       matrix: ${{ steps.gen-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Generate matrix
         id: gen-matrix
@@ -120,7 +120,7 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -148,14 +148,14 @@ jobs:
           echo "PUBLISH_FRAMEWORK_BRANCH=$PUBLISH_FRAMEWORK_BRANCH" >> $GITHUB_ENV
 
       - name: Checkout framework@${{ env.PUBLISH_FRAMEWORK_BRANCH }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: ${{ env.PUBLISH_FRAMEWORK_BRANCH }}
           path: framework
 
       - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_BRANCH}} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
           ref: ${{ env.PUBLISH_BRANCH}}

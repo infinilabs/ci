@@ -78,20 +78,20 @@ jobs:
         TARGETS: linux-amd64 linux-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout agent code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/agent
           ref: main
           path: agent
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
@@ -115,7 +115,7 @@ jobs:
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Checkout dependency repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: 'infinilabs/license'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}

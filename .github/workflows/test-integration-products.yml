@@ -89,41 +89,41 @@ jobs:
                 cat $GITHUB_ENV
             
             - name: Checkout current repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
 
             - name: Setup bootstrap
               uses: ./containers/bootstrap
 
             - name: Checkout console
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/console
                 path: console
                 
             - name: Checkout gateway
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/gateway
                 path: gateway
             
             - name: Checkout agent
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/agent
                 path: agent
               
             - name: Checkout loadgen
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/loadgen
                 path: loadgen
                   
             - name: Checkout framework
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/framework
@@ -558,7 +558,7 @@ jobs:
                 done
 
             - name: Checkout current repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
 
@@ -843,7 +843,7 @@ jobs:
       if: failure()
       steps:
         - name: Checkout code
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
           
         - name: Notify message via feishu
           env:

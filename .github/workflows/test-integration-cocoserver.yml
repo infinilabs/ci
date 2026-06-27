@@ -57,27 +57,27 @@ jobs:
                 cat $GITHUB_ENV
             
             - name: Checkout current repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
 
             - name: Setup bootstrap
               uses: ./containers/bootstrap
 
             - name: Checkout loadgen
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/loadgen
                 path: loadgen
                   
             - name: Checkout framework
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/framework
                 path: framework
             
             - name: Checkout coco
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                 ref: main
                 repository: infinilabs/coco
@@ -206,7 +206,7 @@ jobs:
       if: false
       steps:
         - name: Checkout code
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
           
         - name: Notify message via feishu
           env:

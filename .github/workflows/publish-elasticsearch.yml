@@ -50,7 +50,7 @@ jobs:
       AGENT_VERSION: ${{ inputs.AGENT_PUBLISH_VERSION || vars.PUBLISH_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap

@@ -80,20 +80,20 @@ jobs:
         TARGETS: linux-amd64 linux-arm64 win-amd64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout agent code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/agent
           ref: main
           path: agent
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
@@ -117,7 +117,7 @@ jobs:
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Checkout dependency repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: 'infinilabs/license'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -461,7 +461,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare update version env
         run: |
@@ -512,7 +512,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         
       - name: Notify message via feishu
         env:

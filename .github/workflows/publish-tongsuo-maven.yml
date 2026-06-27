@@ -142,7 +142,7 @@ jobs:
             cc_prefix: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 11
         uses: actions/setup-java@v5
@@ -238,7 +238,7 @@ jobs:
           fi
 
       - name: Checkout tongsuo-java-sdk
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: 'infinilabs/tongsuo-java-sdk'
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -705,10 +705,10 @@ jobs:
             use_docker: true
     
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Checkout tongsuo-java-sdk
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: infinilabs/tongsuo-java-sdk
           ref: ${{ inputs.BRANCH }}
@@ -978,7 +978,7 @@ jobs:
     if: always() && needs.build-all-platforms.result == 'success'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap

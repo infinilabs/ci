@@ -68,7 +68,7 @@ jobs:
         TARGETS: linux-amd64 linux-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -85,14 +85,14 @@ jobs:
           swap-storage: true
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: ${{ inputs.PUBLISH_FRAMEWORK_TAG != '' && inputs.PUBLISH_FRAMEWORK_TAG || 'main' }}
           path: framework
 
       - name: Checkout coco server code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: ${{ inputs.PUBLISH_BRANCH != '' && inputs.PUBLISH_BRANCH || 'main' }}
