@@ -75,34 +75,34 @@ jobs:
         cat $GITHUB_ENV
     
     - name: Checkout current repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Setup bootstrap
       uses: ./containers/bootstrap
         
     - name: Checkout gateway
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/gateway
         path: gateway
         
     - name: Checkout loadgen
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/loadgen
         path: loadgen
             
     - name: Checkout framework
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/framework
         path: framework
 
     - name: Checkout testing
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/testing

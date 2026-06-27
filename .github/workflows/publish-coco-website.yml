@@ -41,13 +41,13 @@ jobs:
         CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Setup bootstrap
       uses: ./containers/bootstrap
 
     - name: Checkout coco website
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/${{ env.PNAME }}

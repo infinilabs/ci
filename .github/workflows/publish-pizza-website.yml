@@ -44,7 +44,7 @@ jobs:
         CONNECT_METHOD: ${{ secrets.CONNECT_METHOD }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Setup bootstrap
       uses: ./containers/bootstrap
@@ -62,7 +62,7 @@ jobs:
         sudo mv hugo /usr/local/bin/
 
     - name: Checkout pizza repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
           repository: infinilabs/${{ env.SNAME }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -75,7 +75,7 @@ jobs:
         cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
     - name: Checkout publish pizza website repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: main
         repository: infinilabs/${{ env.PNAME }}

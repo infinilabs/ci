@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout easysearch-py at tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: infinilabs/easysearch-py
           ref: ${{ needs.tag.outputs.tag }}
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Update release version in workflow files
         run: |

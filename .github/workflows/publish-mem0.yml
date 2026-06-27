@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout ${{ env.PNAME }} code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
           ref: ${{ github.event.inputs.BRANCH }}
@@ -77,7 +77,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Update release version in workflow files
         run: |

@@ -65,13 +65,13 @@ jobs:
         TARGETS: linux-amd64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
@@ -79,7 +79,7 @@ jobs:
 
 
       - name: Checkout coco server code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
@@ -284,7 +284,7 @@ jobs:
         TARGETS: win-amd64 linux-amd64 linux-amd64-dev linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       
       - name: Setup bootstrap
         uses: ./containers/bootstrap
@@ -301,7 +301,7 @@ jobs:
           swap-storage: true
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
@@ -309,7 +309,7 @@ jobs:
 
 
       - name: Checkout coco server code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
@@ -563,13 +563,13 @@ jobs:
         TARGETS: win-amd64 linux-amd64 linux-amd64-dev linux-mips64 linux-mips64le linux-arm64 linux-loong64 linux-riscv64 darwin-amd64 darwin-arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup bootstrap
         uses: ./containers/bootstrap
 
       - name: Checkout framework code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
           ref: main
@@ -577,7 +577,7 @@ jobs:
 
 
       - name: Checkout coco server code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/coco-server
           ref: main
@@ -878,7 +878,7 @@ jobs:
     if: failure()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         
       - name: Notify message via feishu
         env:
@@ -896,7 +896,7 @@ jobs:
     if: success()
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       
       - name: Refresh download page on success
         env:
