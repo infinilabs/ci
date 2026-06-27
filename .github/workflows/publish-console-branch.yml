@@ -162,14 +162,19 @@ jobs:
           path: ${{ matrix.product }}
 
       - name: Checkout dependency repository
-        uses: actions/checkout@v6
         if: ${{ matrix.product == 'console' }}
-        with:
-          repository: 'infinilabs/migration-enterprise-plugins'
-          ssh-key: ${{ secrets.SSH_HARDY_PRIVATE_KEY }}
-          submodules: recursive
-          ref: main
-          path: ${{ matrix.product }}/plugin/enterprise
+        env:
+          SSH_KEY: ${{ secrets.SSH_HARDY_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/bot
+          chmod 600 ~/.ssh/bot
+
+          # clone
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/bot -o StrictHostKeyChecking=no" \
+          git clone --depth=1 --branch main --recurse-submodules \
+            git@github.com:infinilabs/migration-enterprise-plugins.git \
+            ${{ matrix.product }}/plugin/enterprise
 
       - name: Run connect in background for ${{ matrix.product }} web
         run: |
