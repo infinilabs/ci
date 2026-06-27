@@ -197,7 +197,7 @@ jobs:
           node -v && npm -v && pnpm -v
 
       - name: Cache Gradle packages and jdks
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
