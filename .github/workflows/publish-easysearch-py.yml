@@ -150,7 +150,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"
           branch: "release/publish-easysearch-py-${{ github.run_id }}"
           title: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"

@@ -494,7 +494,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish console/agent/gateway/loadgen ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           branch: "release/publish-products-${{ github.run_id }}"
           title: "bumpver: publish console/agent/gateway/loadgen ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"

@@ -243,7 +243,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish ${{ inputs.PUBLISH_COMPONENT }} ${{ inputs.PUBLISH_VERSION }}"
           branch: "release/publish-${{ inputs.PUBLISH_COMPONENT }}-${{ github.run_id }}"
           title: "bumpver: publish ${{ inputs.PUBLISH_COMPONENT }} ${{ inputs.PUBLISH_VERSION }} with ${{ inputs.JDK_VERSION}}"

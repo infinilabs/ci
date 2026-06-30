@@ -90,7 +90,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish mem0 ${{ github.event.inputs.PUBLISH_TAG }}"
           branch: "release/publish-mem0-${{ github.run_id }}"
           title: "bumpver: publish mem0 ${{ github.event.inputs.PUBLISH_TAG }}"

@@ -426,7 +426,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: taged framework ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
           branch: "release/release-${{ github.run_id }}"
           title: "bumpver: taged framework ${{ inputs.FRAMEWORK_PUBLISH_VERSION }}"
@@ -692,7 +692,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-versions-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: update easysearch .versions.json for ${{ env.EZS_VER_CLEAN }} (build ${{ env.EZS_BUILD_NUM }})"
           branch: "release/easysearch-versions-${{ github.run_id }}"
           title: "bumpver: update easysearch .versions.json for ${{ env.EZS_VER_CLEAN }} (build ${{ env.EZS_BUILD_NUM }})"

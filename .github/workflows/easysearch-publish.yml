@@ -435,7 +435,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish easysearch ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           branch: "release/publish-easysearch-${{ github.run_id }}"
           title: "bumpver: publish easysearch ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
@@ -473,7 +473,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "chore: update easysearch snapshot versions [skip ci]"
           branch: "snapshot/update-easysearch-versions-${{ github.run_id }}"
           title: "chore: update easysearch snapshot versions"

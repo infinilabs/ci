@@ -489,7 +489,7 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ secrets.REPO_PR_PAT }}
           commit-message: "bumpver: publish cloud ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
           branch: "release/publish-cloud-${{ github.run_id }}"
           title: "bumpver: publish cloud ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
