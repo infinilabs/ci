@@ -83,7 +83,7 @@ env_init() {
 
     # --- Configure SSH ---
     # Use -n to check if the variable is not empty, which is more robust
-    if [[ -n "$SSH_PRIVATE_KEY" ]]; then
+    if [[ -n "$SSH_PRIVATE_KEY" || -n "$SSH_GITEA_PRIVATE_KEY" ]]; then
         log_info "🔑  Configuring SSH key and settings..."
         # Determine SSH directory more safely
         local SSH_DIR
@@ -95,11 +95,11 @@ env_init() {
 
         mkdir -p "$SSH_DIR"
         chmod 700 "$SSH_DIR"
-        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/id_rsa"
-        echo "$SSH_GITEA_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/id_ed25519"
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/github"
+        echo "$SSH_GITEA_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/gitea"
 
-        echo "" >> "$SSH_DIR/id_rsa"
-        echo "" >> "$SSH_DIR/id_ed25519"
+        echo "" >> "$SSH_DIR/github"
+        echo "" >> "$SSH_DIR/gitea"
 
         cat > "$SSH_DIR/config" <<-EOF
 			ConnectTimeout 600
@@ -112,7 +112,7 @@ env_init() {
             echo -e "\n# User-provided SSH config\n$SSH_CONFIG" >> "$SSH_DIR/config"
         fi
         
-        chmod 600 "$SSH_DIR"/id_rsa "$SSH_DIR/id_ed25519" "$SSH_DIR"/config
+        chmod 600 "$SSH_DIR"/github "$SSH_DIR/gitea" "$SSH_DIR"/config
         log_success "SSH configuration is complete."
     fi
 
