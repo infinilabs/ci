@@ -73,9 +73,9 @@ jobs:
       - name: Upload test artifact
         if: ${{ inputs.TEST_UPLOAD == true }}
         run: |
-          echo "This is a test artifact" > test-artifact.txt
-          oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME
-          #oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
+          echo "This is a test artifact at $(date '+%Y-%m-%d %H:%M:%S')" > test-artifact.txt
+          oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
+          oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
 
       - name: Check network connection
         if: ${{ inputs.TEST_NETWORK == true }}
@@ -84,7 +84,7 @@ jobs:
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           no_proxy: "localhost,127.0.1,::1"
         run: |
-          AGENT_VER=$(curl -v --connect-timeout 15 $RELEASE_URL/.latest |jq -r ".${DNAME}")
+          AGENT_VER=$(curl --connect-timeout 15 $RELEASE_URL/.latest |jq -r ".${DNAME}")
           echo "Get latest agent verion $AGENT_VER"
 
       - name: Test checkout code
