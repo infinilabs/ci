@@ -165,7 +165,7 @@ publishing {
                     }
                 }
                 scm {
-                    url = "${{ secrets.SSH_GITHUB_REPO }}/easysearch-client.git"
+                    url = "https://github.com/infinilabs/easysearch-client.git"
                 }
             }
         }
