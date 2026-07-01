@@ -134,7 +134,7 @@ jobs:
           if [[ "${{ matrix.component }}" == "search" ]]; then
             git clone --depth 1 $SSH_GIT_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           elif [[ "${{ matrix.component }}" == "runtime" ]]; then
-            git clone $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+            git clone --depth 1 $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           fi
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
