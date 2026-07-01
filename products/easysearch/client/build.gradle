@@ -39,6 +39,9 @@ java {
     withJavadocJar()
 }
 
+def signingKey = System.getenv("SIGNING_KEY")
+def signingPassword = System.getenv("SIGNING_PASSWORD")
+
 def loadVersionProperties() {
     def props = new Properties()
     file('version.properties').withInputStream { stream ->
@@ -178,12 +181,12 @@ publishing {
 
 signing {
     required { gradle.taskGraph.hasTask("publishMavenJavaPublicationToStagingRepository") }
-    
-    def signingKey = System.getenv("SIGNING_KEY")
-    def signingPassword = System.getenv("SIGNING_PASSWORD")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    
-    sign publishing.publications.mavenJava
+    if (signingKey?.trim()) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.mavenJava
+    } else {
+        logger.lifecycle("SIGNING_KEY is empty, skipping artifact signing configuration.")
+    }
 }
 
 test {
