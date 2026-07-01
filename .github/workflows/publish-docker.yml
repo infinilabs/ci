@@ -170,10 +170,10 @@ jobs:
           git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
           if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
-            git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+            git clone ${{ secrets.SSH_GITHUB_REPO }}/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
           fi
           if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-            git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+            git clone ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
           fi
 
       - name: Setup ${{ matrix.product }} go toolchain

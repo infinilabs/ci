@@ -115,15 +115,15 @@ jobs:
 
           echo "Publish enterprise version"
           # init license and enterprise plugins
-          git clone git@github.com:infinilabs/license $WORK/license
+          git clone ${{ secrets.SSH_GITHUB_REPO }}/license $WORK/license
           
           REF="${{ inputs.PUBLISH_FRAMEWORK_TAG != '' && inputs.PUBLISH_FRAMEWORK_TAG || 'main' }}"
           git clone --branch "$REF" --depth 1 \
-            git@github.com:infinilabs/coco-server-enterprise-plugins.git \
+            ${{ secrets.SSH_GITHUB_REPO }}/coco-server-enterprise-plugins.git \
             $WORK/$PNAME/plugins/enterprise
             
           git clone --branch "$REF" --depth 1 \
-            git@github.com:infinilabs/framework-enterprise-plugins.git \
+            ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git \
             $WORK/framework/plugins/enterprise
 
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then

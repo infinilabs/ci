@@ -172,7 +172,7 @@ afterEvaluate {
                     
                     scm {
                         connection = 'scm:git:https://github.com/infinilabs/tongsuo-java-sdk.git'
-                        developerConnection = 'scm:git:git@github.com:infinilabs/tongsuo-java-sdk.git'
+                        developerConnection = 'scm:git:${{ secrets.SSH_GITHUB_REPO }}/tongsuo-java-sdk.git'
                         url = 'https://github.com/infinilabs/tongsuo-java-sdk'
                     }
                 }

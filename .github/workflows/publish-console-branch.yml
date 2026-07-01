@@ -164,7 +164,7 @@ jobs:
       - name: Checkout dependency repository
         if: ${{ matrix.product == 'console' }}
         run: |
-          git clone --depth=1 --branch main git@github.com:infinilabs/migration-enterprise-plugins.git \
+          git clone --depth=1 --branch main ${{ secrets.SSH_GITHUB_REPO }}/migration-enterprise-plugins.git \
             ${{ matrix.product }}/plugin/enterprise
 
       - name: Run connect in background for ${{ matrix.product }} web
@@ -194,13 +194,13 @@ jobs:
           (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
           # init license and enterprise plugins
           #if [ ! -d $WORK/license ]; then
-          #  git clone git@github.com:infinilabs/license $WORK/license
+          #  git clone ${{ secrets.SSH_GITHUB_REPO }}/license $WORK/license
           #fi
           if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
-            git clone git@github.com:infinilabs/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
+            git clone ${{ secrets.SSH_GITHUB_REPO }}/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
           fi
           if [ ! -d "$GITHUB_WORKSPACE/framework/plugins/enterprise" ]; then
-            git clone -b console git@github.com:infinilabs/framework-enterprise-plugins.git "$GITHUB_WORKSPACE/framework/plugins/enterprise"
+            git clone -b console ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git "$GITHUB_WORKSPACE/framework/plugins/enterprise"
           fi
 
       - name: Setup ${{ matrix.product }} go toolchain
@@ -294,10 +294,10 @@ jobs:
         run: |
           # init license and enterprise plugins
           if [ ! -d $WORK/license ]; then
-            git clone git@github.com:infinilabs/license $WORK/license
+            git clone ${{ secrets.SSH_GITHUB_REPO }}/license $WORK/license
           fi
           # if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-          #  git clone git@github.com:infinilabs/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
+          #  git clone ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
           # fi
 
       - name: Prepare console go module replacements
