@@ -4,7 +4,10 @@
 #   - Workflow:  publish-easysearch-py.yml
 #   - Env:       
 
-name: Publish easysearch-py to PyPI
+name: Publish product to PyPI
+
+env:
+  PNAME: easysearch-py
 
 on:
   # Triggered by easysearch-py when a v* tag is pushed
@@ -27,7 +30,7 @@ permissions:
 
 jobs:
   tag:
-    name: Commit version and tag in easysearch-py
+    name: Commit version and tag in $PNAME
     runs-on: ubuntu-latest
 
     outputs:
@@ -45,17 +48,14 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Publishing tag: ${TAG}"
 
-      - name: Commit version and create tag in easysearch-py
+      - name: Commit version and create tag in $PNAME
         env:
-          REPO_PAT: ${{ secrets.REPO_PAT }}
           TAG: ${{ steps.vars.outputs.tag }}
         run: |
           TAG_VERSION="${TAG#v}"
-          echo "Tagging ${TAG} (version ${TAG_VERSION}) in infinilabs/easysearch-py"
-          git clone https://x-access-token:${REPO_PAT}@github.com/infinilabs/easysearch-py.git
-          cd easysearch-py
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          echo "Tagging ${TAG} (version ${TAG_VERSION}) in infinilabs/$PNAME"
+          git clone ${{ secrets.SSH_GITHUB_REPO }}/$PNAME && cd $PNAME
+          git config user.name github-actions && git config user.email github-actions@github.com
           if git rev-parse --verify "refs/tags/${TAG}" 2>/dev/null; then
             echo "Tag ${TAG} already exists, skipping."
           else
@@ -77,10 +77,10 @@ jobs:
       tag: ${{ needs.tag.outputs.tag }}
 
     steps:
-      - name: Checkout easysearch-py at tag
+      - name: Checkout $PNAME at tag
         uses: actions/checkout@v7
         with:
-          repository: infinilabs/easysearch-py
+          repository: infinilabs/$PNAME
           ref: ${{ needs.tag.outputs.tag }}
 
       - name: Set up Python
@@ -144,21 +144,21 @@ jobs:
           TAG="${{ needs.tag.outputs.tag }}"
           cd $GITHUB_WORKSPACE/.github/workflows
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
-          update_yaml_version "publish-easysearch-py.yml" "tag" "${TAG}"
+          update_yaml_version "publish-$PNAME.yml" "tag" "${TAG}"
 
       - name: Create bumpver pull request
         uses: peter-evans/create-pull-request@v8
         id: create-pr
         with:
           token: ${{ secrets.REPO_PR_PAT }}
-          commit-message: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"
-          branch: "release/publish-easysearch-py-${{ github.run_id }}"
-          title: "bumpver: publish easysearch-py ${{ needs.tag.outputs.tag }}"
-          body: "Automated version update for easysearch-py ${{ needs.tag.outputs.tag }}"
+          commit-message: "bumpver: publish $PNAME ${{ needs.tag.outputs.tag }}"
+          branch: "release/publish-$PNAME-${{ github.run_id }}"
+          title: "bumpver: publish $PNAME ${{ needs.tag.outputs.tag }}"
+          body: "Automated version update for $PNAME ${{ needs.tag.outputs.tag }}"
           labels: "auto-merge, automated"
           delete-branch: true
           add-paths: |
-            .github/workflows/publish-easysearch-py.yml
+            .github/workflows/publish-$PNAME.yml
 
       - name: Auto-merge the pr
         if: ${{ steps.create-pr.outputs.pull-request-url }}
