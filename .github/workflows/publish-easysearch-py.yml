@@ -37,6 +37,10 @@ jobs:
       tag: ${{ steps.vars.outputs.tag }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Setup bootstrap
+        uses: ./containers/bootstrap
       - name: Resolve tag
         id: vars
         run: |
