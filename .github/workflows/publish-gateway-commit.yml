@@ -120,11 +120,11 @@ jobs:
           ref: ${{ env.PUBLISH_FRAMEWORK_VENDOR_COMMIT }}
           path: vendor
 
-      - name: Checkout license@${{ env.LICENSE_COMMIT }} code
+      - name: Checkout license@${{ env.PUBLISH_LICENSE_COMMIT }} code
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/license
-          ref: ${{ env.LICENSE_COMMIT }}
+          ref: ${{ env.PUBLISH_LICENSE_COMMIT }}
           path: license
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
