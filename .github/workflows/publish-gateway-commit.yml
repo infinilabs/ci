@@ -105,6 +105,7 @@ jobs:
           echo "PUBLISH_FRAMEWORK_COMMIT=$PUBLISH_FRAMEWORK_COMMIT" >> $GITHUB_ENV
           echo "PUBLISH_FRAMEWORK_VENDOR_COMMIT=$PUBLISH_FRAMEWORK_VENDOR_COMMIT" >> $GITHUB_ENV
           echo "PUBLISH_LICENSE_COMMIT=$PUBLISH_LICENSE_COMMIT" >> $GITHUB_ENV
+          cat $GITHUB_ENV
 
       - name: Checkout framework@${{ env.PUBLISH_FRAMEWORK_COMMIT }} code
         uses: actions/checkout@v7
