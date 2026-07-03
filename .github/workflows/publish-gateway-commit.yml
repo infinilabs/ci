@@ -124,10 +124,10 @@ jobs:
       - name: Checkout license@${{ env.PUBLISH_LICENSE_COMMIT }} code
         uses: actions/checkout@v7
         with: 
+          token: ${{ secrets.REPO_PAT }}
           repository: ${{ vars.GIT_REPO }}/license
           ref: ${{ env.PUBLISH_LICENSE_COMMIT }}
           path: license
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
       - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_BRANCH}} code
         uses: actions/checkout@v7
