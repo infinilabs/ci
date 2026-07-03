@@ -1,4 +1,4 @@
-name: Publish Products Files & Docker With Branch
+name: Publish Gateway With Commit
 defaults:
   run:
     shell: bash
@@ -18,52 +18,14 @@ on:
       - 'release*'
   workflow_dispatch:
     inputs:
-      AGENT_PUBLISH:
-        description: 'Agent'
-        required: false
-        type: boolean
-        default: false
-      CONSOLE_PUBLISH:
-        description: 'Console'
-        required: false
-        type: boolean
-        default: false
-      GATEWAY_PUBLISH:
-        description: 'Gateway'
-        required: false
-        type: boolean
-        default: true
-      LOADGEN_PUBLISH:
-        description: 'Loadgen'
-        required: false
-        type: boolean
-        default: false
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
-        required: false
-        type: boolean
-        default: true
-      ONLY_DOCKER:
-        description: 'Publish Docker <Only>'
-        required: false
-        type: boolean
-        default: false
       PUBLISH_VERSION:
         description: 'Publish Release Version'
         required: false
         default: "1.25.2"
-      PUBLISH_AGENT_BRANCH:
-          description: 'Publish With Agent Branch'
-          required: false
-          default: "main"
       PUBLISH_GATEWAY_BRANCH:
           description: 'Publish With Gateway Branch'
           required: false
           default: "release/v1.25.2"
-      PUBLISH_CONSOLE_BRANCH:
-        description: 'Publish With Console Branch'
-        required: false
-        default: "main"
       PUBLISH_FRAMEWORK_COMMIT:
         description: 'Publish With Framework Commit'
         required: false
@@ -89,10 +51,7 @@ jobs:
       - name: Generate matrix
         id: gen-matrix
         env:
-            AGENT_PUBLISH: ${{ inputs.AGENT_PUBLISH }}
-            CONSOLE_PUBLISH: ${{ inputs.CONSOLE_PUBLISH }}
-            GATEWAY_PUBLISH: ${{ inputs.GATEWAY_PUBLISH }}
-            LOADGEN_PUBLISH: ${{ inputs.LOADGEN_PUBLISH }}
+            GATEWAY_PUBLISH: true
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -137,23 +96,11 @@ jobs:
         env:
           VERSION: ${{ inputs.PUBLISH_VERSION }}
         run: |
-          if [ "${{ matrix.product }}" == "agent" ]; then
-            PUBLISH_BRANCH="${{ inputs.PUBLISH_AGENT_BRANCH }}"
-            PUBLISH_WITH_UI=false
-            [ "$(printf '%s\n' "$VERSION" "1.31.0" | sort -V | head -n1)" == "1.31.0" ] && PUBLISH_WITH_UI=true
-            echo "PUBLISH_WITH_UI=$PUBLISH_WITH_UI" >> $GITHUB_ENV
-          elif [ "${{ matrix.product }}" == "gateway" ]; then
-            PUBLISH_BRANCH="${{ inputs.PUBLISH_GATEWAY_BRANCH }}"
-          elif [ "${{ matrix.product }}" == "console" ]; then
-            PUBLISH_BRANCH="${{ inputs.PUBLISH_CONSOLE_BRANCH }}"
-          else
-            PUBLISH_BRANCH="main"
-          fi
-
+          PUBLISH_BRANCH="${{ inputs.PUBLISH_GATEWAY_BRANCH }}"
           PUBLISH_FRAMEWORK_COMMIT="${{ inputs.PUBLISH_FRAMEWORK_COMMIT }}"
           PUBLISH_FRAMEWORK_VENDOR_COMMIT="${{ inputs.PUBLISH_FRAMEWORK_VENDOR_COMMIT }}"
           PUBLISH_LICENSE_COMMIT="${{ inputs.PUBLISH_LICENSE_COMMIT }}"
-          
+
           echo "PUBLISH_BRANCH=$PUBLISH_BRANCH" >> $GITHUB_ENV
           echo "PUBLISH_FRAMEWORK_COMMIT=$PUBLISH_FRAMEWORK_COMMIT" >> $GITHUB_ENV
           echo "PUBLISH_FRAMEWORK_VENDOR_COMMIT=$PUBLISH_FRAMEWORK_VENDOR_COMMIT" >> $GITHUB_ENV
@@ -188,18 +135,6 @@ jobs:
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
           ref: ${{ env.PUBLISH_BRANCH}}
           path: ${{ matrix.product }}
-      
-      - name: Checkout dependency repository
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          git clone --depth=1 --branch main ${{ secrets.SSH_GITHUB_REPO }}/migration-enterprise-plugins.git \
-            ${{ matrix.product }}/plugin/enterprise
-
-      - name: Run connect in background for ${{ matrix.product }} web
-        run: |
-          connect -c "$GITHUB_WORKSPACE/.net.json" >/dev/null 2>&1 &
-          echo "Connect started with pid $!"
-          sleep 5
 
       - name: Setup ${{ matrix.product }} env
         run: |
@@ -213,69 +148,14 @@ jobs:
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
-      - name: Checkout depends repo code for ${{ matrix.product }} web
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        env:
-          BRANCH: main
-        run: |
-          git clone --depth 1 --branch "$BRANCH" --sparse ${{ secrets.SSH_GIT_REPO }}/easysearch $GITHUB_WORKSPACE/easysearch
-          (cd $GITHUB_WORKSPACE/easysearch && git sparse-checkout set plugins/ui)
-          # init license and enterprise plugins
-          if [ ! -d $GITHUB_WORKSPACE/$PNAME/plugin/enterprise ]; then
-            git clone ${{ secrets.SSH_GITHUB_REPO }}/agent-enterprise-plugin.git $GITHUB_WORKSPACE/$PNAME/plugin/enterprise
-          fi
-          if [ ! -d "$GITHUB_WORKSPACE/framework/plugins/enterprise" ]; then
-            git clone -b console ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git "$GITHUB_WORKSPACE/framework/plugins/enterprise"
-          fi
-
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: false
-          cache: true
-          cache-dependency-path: "**/*.sum"
 
       - name: Check ${{ matrix.product }} go toolchain
         run: go version && go env
-
-      - name: Set up Node.js for console
-        if: matrix.product == 'console'
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODEJS_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: "console/web/package.json"
-
-      - name: Set up Node.js for agent
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODEJS_EXT_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: "easysearch/plugins/ui/web/package.json"
-
-      - name: Setup pnpm (agent only)
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        uses: pnpm/action-setup@v6
-        with:
-          version: latest
-
-      - name: Setup cnpm (console only)
-        if: matrix.product == 'console'
-        run: |
-          npm install -g rimraf
-          npm install -g cnpm@9.2.0
-
-      - name: Verify toolchain for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' || (matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true') }}
-        run: |
-          node -v && npm -v
-          if [[ "${{ matrix.product }}" == "agent" ]]; then
-            pnpm -v
-          elif [[ "${{ matrix.product }}" == "console" ]]; then
-            cnpm -v
-          fi
 
       - name: Prepare ${{ matrix.product }} build code
         if: ${{ inputs.PUBLISH_VERSION !='' || vars.PUBLISH_VERSION !='' }}
@@ -313,35 +193,6 @@ jobs:
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
-
-      - name: Checkout depends repo code for ${{ matrix.product }}
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          # init license and enterprise plugins
-          if [ ! -d $WORK/license ]; then
-            git clone ${{ secrets.SSH_GITHUB_REPO }}/license $WORK/license
-          fi
-          # if  [ ! -d $GITHUB_WORKSPACE/framework/plugins/enterprise ]; then
-          #  git clone ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
-          # fi
-
-      - name: Prepare console go module replacements
-        if: ${{ matrix.product == 'console' }}
-        run: |
-          cd $WORK/$PNAME
-          go mod edit -replace infini.sh/license=../license
-          go mod edit -require infini.sh/license@v0.0.0
-
-      - name: Build ui for ${{ matrix.product }} web
-        if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        run: |
-          SRC=$GITHUB_WORKSPACE/easysearch/plugins/ui/web
-          DEST=$GITHUB_WORKSPACE/easysearch/plugins/ui/_ui
-          (cd $SRC && pnpm i && pnpm run build:agent )
-          if [ -d $DEST ]; then
-            mv $DEST $GITHUB_WORKSPACE/$PNAME/.public
-          fi
-
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # for agent web
@@ -384,46 +235,7 @@ jobs:
           fi
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
-
-      - name: Set up qemu with ${{ matrix.product }}
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up docker buildx with ${{ matrix.product }}
-        uses: docker/setup-buildx-action@v4
-        #with:
-        #  buildkitd-flags: --debug
-
-      - name: Login to dockerhub with ${{ matrix.product }}
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker build meta with ${{ matrix.product }}
-        id: tags
-        run: |
-          echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ matrix.product }} >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
-            echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ matrix.product }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Docker build and push for ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-        if: ${{ inputs.ONLY_DOCKER }}
-        uses: docker/build-push-action@v7
-        with:
-          context: ${{ github.workspace }}/${{ matrix.product }}/bin
-          file: ${{ github.workspace }}/products/${{ matrix.product }}/Dockerfile
-          target: prod
-          platforms: |
-            linux/amd64
-            linux/arm64
-          tags: |
-            ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-            ${{ steps.tags.outputs.RELEASE_TAG }}
-          push: true
-
       - name: Archive ${{ matrix.product }} files
-        if: ${{ ! inputs.ONLY_DOCKER }}
         run: |
           cd $WORK/$PNAME/bin
 
@@ -454,7 +266,6 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload ${{ matrix.product }} files
-        if: ${{ ! inputs.ONLY_DOCKER }}
         run: | 
           cd $WORK
           for tag in $TARGETS; do
