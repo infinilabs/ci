@@ -59,7 +59,7 @@ jobs:
 
   publish:
     needs: generate-matrix
-    name: Publish ${{ matrix.product }}@${{ matrix.product == 'console' && inputs.PUBLISH_CONSOLE_BRANCH || matrix.product == 'agent' && inputs.PUBLISH_AGENT_BRANCH || matrix.product == 'gateway' && inputs.PUBLISH_GATEWAY_BRANCH || 'main' }}
+    name: Publish ${{ matrix.product }}@${{ matrix.product == 'gateway' && inputs.PUBLISH_GATEWAY_BRANCH || 'main' }}
     runs-on: ubuntu-latest
     env:
         OSS_EP: ${{ secrets.OSS_EP }}
@@ -114,7 +114,6 @@ jobs:
           path: framework
 
       - name: Checkout framework-vendor@${{ env.PUBLISH_FRAMEWORK_COMMIT }} code
-        if: matrix.product == 'gateway'
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework-vendor
@@ -122,12 +121,12 @@ jobs:
           path: vendor
 
       - name: Checkout license@${{ env.LICENSE_COMMIT }} code
-        if: matrix.product == 'gateway'
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/license
           ref: ${{ env.LICENSE_COMMIT }}
           path: license
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
       - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_BRANCH}} code
         uses: actions/checkout@v7
@@ -195,19 +194,6 @@ jobs:
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
-          # for agent web
-          if [[ "${{ matrix.product }}" == "agent" && $PUBLISH_WITH_UI == "true" ]]; then
-            echo "Check the .public for $PNAME"
-            ls -lrt $GITHUB_WORKSPACE/$PNAME/.public
-          fi
-          # for console web
-          if [[ "${{ matrix.product }}" == "console" ]]; then
-            cd $WORK/$PNAME/web && cnpm install --quiet --no-progress && cnpm run build --quiet
-            #update publish version with agent
-            # FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
-            # (cd $WORK/$PNAME && yq -i ".agent.setup.version = \"${FULL_VERSION}\" | .gateway.setup.version = \"${FULL_VERSION}\"" $PNAME.yml)
-          fi
-
           # build all targets with offline
           for tag in $TARGETS; do
             cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
@@ -227,14 +213,9 @@ jobs:
         run: |
           cp -rf $WORK/$PNAME/config $WORK/$PNAME/bin
           find $WORK/$PNAME/bin -name "*.go" -delete
-          if [[ "${{ matrix.product }}" == "console" ]]; then
-            PERMJSON=$WORK/$PNAME/modules/security/realm/authc/native/permission.json
-            if [[ -e $PERMJSON ]]; then
-              cp -rf $PERMJSON $WORK/$PNAME/bin/config
-            fi
-          fi
           cp -rf $WORK/framework/LICENSE $WORK/$PNAME/bin && cat $WORK/framework/NOTICE $WORK/$PNAME/NOTICE > $WORK/$PNAME/bin/NOTICE
           ls -lrt $WORK/$PNAME/bin
+
       - name: Archive ${{ matrix.product }} files
         run: |
           cd $WORK/$PNAME/bin
