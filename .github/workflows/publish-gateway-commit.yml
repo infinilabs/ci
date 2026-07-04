@@ -180,7 +180,7 @@ jobs:
           # check commitid
           W=$(realpath ~/go/src/infini.sh)
           for d in framework vendor gateway license; do 
-            git -C "$W" log -1 --format="$d: %H" -- "$d" 2>/dev/null
+            (cd "$W/$d" && git log -1 --format="$d: %H" 2>/dev/null)
           done
 
           # build all targets with offline
