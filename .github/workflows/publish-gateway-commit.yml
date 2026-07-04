@@ -27,9 +27,9 @@ on:
           required: false
           default: "release/v1.25.2"
       PUBLISH_FRAMEWORK_COMMIT:
-        description: 'Publish With Framework Commit'
+        description: 'Publish With Framework branch'
         required: false
-        default: "4ea3e6604c6441de981c1ecf44cae56f52e975dc"
+        default: "release/v1.25.2"
       PUBLISH_FRAMEWORK_VENDOR_COMMIT:
         description: 'Publish With Framework Vendor Commit'
         required: false
