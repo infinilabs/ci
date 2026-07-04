@@ -12,7 +12,10 @@ echo "Build path is $WORK"
 
 # update Makefile,if use legacy，EXT will be .legacy
 EXT=$([[ "$*" == *legacy* ]] && echo ".legacy") || true
-cp -rf "$WORK/products/framework/Makefile$EXT" "$WORK/framework/Makefile"
+if [ -f "$GITHUB_WORKSPACE/products/framework/Makefile$EXT" ]; then
+    echo "Update with ci makefile"
+    cp -rf "$GITHUB_WORKSPACE/products/framework/Makefile$EXT" "$WORK/framework/Makefile"
+fi
 
 # --- Configure go environment ---
 echo "🔧 Configuring Go environment..."
