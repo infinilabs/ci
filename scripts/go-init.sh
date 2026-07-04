@@ -9,7 +9,6 @@ mkdir -p $WORKBASE
 ln -sf $GITHUB_WORKSPACE $WORK
 
 echo "Build path is $WORK"
-ls -lrt $WORK/
 
 # update Makefile
 # cp -rf $WORK/products/framework/Makefile $WORK/framework

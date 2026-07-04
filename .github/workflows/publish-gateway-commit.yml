@@ -144,7 +144,6 @@ jobs:
           fi
           # settting env for build
           echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
-          cat $GITHUB_ENV
 
       - name: Setup ${{ matrix.product }} go toolchain
         uses: actions/setup-go@v6
@@ -179,18 +178,9 @@ jobs:
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # check commitid
-          for d in framework vendor gateway license; do
-            target_dir="$WORK/$d"
-            if [ -d "$target_dir" ]; then
-                commit=$(git -C "$WORK" log -1 --format=%H -- "$d" 2>/dev/null)
-                if [ -n "$commit" ]; then
-                    printf "%-15s %s\n" "$d" "$commit"
-                else
-                    printf "%-15s %s\n" "$d" "(No commits found)"
-                fi
-            else
-                printf "%-15s %s\n" "$d" "(Directory not found)"
-            fi
+          W=$(realpath ~/go/src/infini.sh)
+          for d in framework vendor gateway license; do 
+            git -C "$W" log -1 --format="$d: %H" -- "$d" 2>/dev/null
           done
 
           # build all targets with offline
