@@ -181,12 +181,18 @@ jobs:
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # check commitid
-          CHK=~/go/src/infini.sh
-          for d in "$CHK"/*/; do
-              [ -d "$d" ] || continue 
-              rel_d=${d#$CHK/}
-              commit=$(git -C "$CHK" log -1 --format=%h -- "$rel_d" 2>/dev/null)
-              [ -n "$commit" ] && echo "$rel_d: $commit"
+          for d in framework vendor gateway license; do
+            target_dir="$WORK/$d"
+            if [ -d "$target_dir" ]; then
+                commit=$(git -C "$WORK" log -1 --format=%H -- "$d" 2>/dev/null)
+                if [ -n "$commit" ]; then
+                    printf "%-15s %s\n" "$d" "$commit"
+                else
+                    printf "%-15s %s\n" "$d" "(No commits found)"
+                fi
+            else
+                printf "%-15s %s\n" "$d" "(Directory not found)"
+            fi
           done
           
           # build all targets with offline
