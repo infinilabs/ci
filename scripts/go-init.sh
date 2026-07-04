@@ -10,8 +10,9 @@ ln -sf $GITHUB_WORKSPACE $WORK
 
 echo "Build path is $WORK"
 
-# update Makefile
-# cp -rf $WORK/products/framework/Makefile $WORK/framework
+# update Makefile,if use legacy，EXT will be .legacy
+EXT=$([[ "$*" == *legacy* ]] && echo ".legacy")
+cp -rf "$WORK/products/framework/Makefile$EXT" "$WORK/framework/Makefile"
 
 # --- Configure go environment ---
 echo "🔧 Configuring Go environment..."
