@@ -137,8 +137,10 @@ jobs:
           path: ${{ matrix.product }}
 
       - name: Setup ${{ matrix.product }} env
+        env:
+          LEGACY_MODE: true
         run: |
-          source $GITHUB_WORKSPACE/scripts/go-init.sh legacy
+          source $GITHUB_WORKSPACE/scripts/go-init.sh
           if [[ "$(echo "${{ vars.PRE_RELEASE }}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             grep -wq "pre" $GITHUB_WORKSPACE/.oss.yml || echo "pre: true" >> $GITHUB_WORKSPACE/.oss.yml
           fi

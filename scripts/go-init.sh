@@ -9,19 +9,20 @@ mkdir -p $WORKBASE
 ln -sf $GITHUB_WORKSPACE $WORK
 
 echo "Build path is $WORK"
-echo "---------------------------"
-ls -lf $GITHUB_WORKSPACE
-echo "---------------------------"
-ls -lf $GITHUB_WORKSPACE/products
-echo "---------------------------"
-ls -lf $GITHUB_WORKSPACE/products/framework
-echo "---------------------------"
 
 # update Makefile,if use legacy，EXT will be .legacy
-EXT=$([[ "$*" == *legacy* ]] && echo ".legacy") || true
-if [ -f "$GITHUB_WORKSPACE/products/framework/Makefile$EXT" ]; then
-    echo "Update with ci makefile"
-    cp -rf "$GITHUB_WORKSPACE/products/framework/Makefile$EXT" "$WORK/framework/Makefile"
+if [[ "$*" == *legacy* ]] || [[ "$LEGACY_MODE" == "true" ]]; then
+    EXT=".legacy"
+else
+    EXT=""
+fi
+
+MAKEFILE_PATH="$GITHUB_WORKSPACE/products/framework/Makefile$EXT"
+if [ -f "$MAKEFILE_PATH" ]; then
+    echo "Update with ci makefile: $MAKEFILE_PATH"
+    cp -rf "$MAKEFILE_PATH" "$WORK/framework/Makefile"
+else
+    echo "Warning: $MAKEFILE_PATH not found, skipping"
 fi
 
 # --- Configure go environment ---
