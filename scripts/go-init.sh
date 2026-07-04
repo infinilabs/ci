@@ -9,6 +9,13 @@ mkdir -p $WORKBASE
 ln -sf $GITHUB_WORKSPACE $WORK
 
 echo "Build path is $WORK"
+echo "---------------------------"
+ls -lf $GITHUB_WORKSPACE
+echo "---------------------------"
+ls -lf $GITHUB_WORKSPACE/products
+echo "---------------------------"
+ls -lf $GITHUB_WORKSPACE/products/framework
+echo "---------------------------"
 
 # update Makefile,if use legacy，EXT will be .legacy
 EXT=$([[ "$*" == *legacy* ]] && echo ".legacy") || true
