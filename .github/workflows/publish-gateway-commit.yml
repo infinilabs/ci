@@ -181,11 +181,14 @@ jobs:
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # check commitid
-          for d in "$WORK"/*/; do
-              rel_d=${d#$WORK/}
-              commit=$(git -C "$WORK" log -1 --format=%H -- "$rel_d" 2>/dev/null)
+          CHK=~/go/src/infini.sh
+          for d in "$CHK"/*/; do
+              [ -d "$d" ] || continue 
+              rel_d=${d#$CHK/}
+              commit=$(git -C "$CHK" log -1 --format=%h -- "$rel_d" 2>/dev/null)
               [ -n "$commit" ] && echo "$rel_d: $commit"
           done
+          
           # build all targets with offline
           for tag in $TARGETS; do
             cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
