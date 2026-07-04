@@ -72,7 +72,7 @@ ifneq "$(PREFER_MANAGED_VENDOR)" "true"
 endif
 
 GO        := go
-GOMODULE ?= true
+GOMODULE ?= false
 ifneq "$(GOMODULE)" "true"
     GO        := GO15VENDOREXPERIMENT="1" GO111MODULE=off go
 endif
