@@ -181,7 +181,7 @@ jobs:
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
           # check commitid
-          for d in */; do
+          for d in $WORK/; do
             commit=$(git log -1 --format=%H -- "$d" 2>/dev/null)
             [ -n "$commit" ] && echo "$d: $commit"
           done
