@@ -22,20 +22,20 @@ on:
         description: 'Publish Release Version'
         required: false
         default: "1.25.2"
-      PUBLISH_GATEWAY_BRANCH:
-          description: 'Publish With Gateway Branch'
+      PUBLISH_GATEWAY_REF:
+          description: 'Publish With Gateway Ref'
           required: false
           default: "release/v1.25.2"
-      PUBLISH_FRAMEWORK_COMMIT:
-        description: 'Publish With Framework branch'
+      PUBLISH_FRAMEWORK_REF:
+        description: 'Publish With Framework Ref'
         required: false
         default: "release/v1.25.2"
-      PUBLISH_FRAMEWORK_VENDOR_COMMIT:
-        description: 'Publish With Framework Vendor Commit'
+      PUBLISH_FRAMEWORK_VENDOR_REF:
+        description: 'Publish With Framework Vendor Ref'
         required: false
         default: "fe3ba958b63eac4aa11142ec730574c6fadb5fbe"
-      PUBLISH_LICENSE_COMMIT:
-        description: 'Publish With License Commit'
+      PUBLISH_LICENSE_REF:
+        description: 'Publish With License Ref'
         required: false
         default: "b70ed3a71111cc5abf4d008245c8e7ff755f6485"
 
@@ -59,7 +59,7 @@ jobs:
 
   publish:
     needs: generate-matrix
-    name: Publish ${{ matrix.product }}@${{ matrix.product == 'gateway' && inputs.PUBLISH_GATEWAY_BRANCH || 'main' }}
+    name: Publish ${{ matrix.product }}@${{ matrix.product == 'gateway' && inputs.PUBLISH_GATEWAY_REF || 'main' }}
     runs-on: ubuntu-latest
     env:
         OSS_EP: ${{ secrets.OSS_EP }}
@@ -96,44 +96,44 @@ jobs:
         env:
           VERSION: ${{ inputs.PUBLISH_VERSION }}
         run: |
-          PUBLISH_BRANCH="${{ inputs.PUBLISH_GATEWAY_BRANCH }}"
-          PUBLISH_FRAMEWORK_COMMIT="${{ inputs.PUBLISH_FRAMEWORK_COMMIT }}"
-          PUBLISH_FRAMEWORK_VENDOR_COMMIT="${{ inputs.PUBLISH_FRAMEWORK_VENDOR_COMMIT }}"
-          PUBLISH_LICENSE_COMMIT="${{ inputs.PUBLISH_LICENSE_COMMIT }}"
+          PUBLISH_REF="${{ inputs.PUBLISH_GATEWAY_REF }}"
+          PUBLISH_FRAMEWORK_REF="${{ inputs.PUBLISH_FRAMEWORK_REF }}"
+          PUBLISH_FRAMEWORK_VENDOR_REF="${{ inputs.PUBLISH_FRAMEWORK_VENDOR_REF }}"
+          PUBLISH_LICENSE_REF="${{ inputs.PUBLISH_LICENSE_REF }}"
 
-          echo "PUBLISH_BRANCH=$PUBLISH_BRANCH" >> $GITHUB_ENV
-          echo "PUBLISH_FRAMEWORK_COMMIT=$PUBLISH_FRAMEWORK_COMMIT" >> $GITHUB_ENV
-          echo "PUBLISH_FRAMEWORK_VENDOR_COMMIT=$PUBLISH_FRAMEWORK_VENDOR_COMMIT" >> $GITHUB_ENV
-          echo "PUBLISH_LICENSE_COMMIT=$PUBLISH_LICENSE_COMMIT" >> $GITHUB_ENV
+          echo "PUBLISH_REF=$PUBLISH_REF" >> $GITHUB_ENV
+          echo "PUBLISH_FRAMEWORK_REF=$PUBLISH_FRAMEWORK_REF" >> $GITHUB_ENV
+          echo "PUBLISH_FRAMEWORK_VENDOR_REF=$PUBLISH_FRAMEWORK_VENDOR_REF" >> $GITHUB_ENV
+          echo "PUBLISH_LICENSE_REF=$PUBLISH_LICENSE_REF" >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - name: Checkout framework@${{ env.PUBLISH_FRAMEWORK_COMMIT }} code
+      - name: Checkout framework@${{ env.PUBLISH_FRAMEWORK_REF }} code
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework
-          ref: ${{ env.PUBLISH_FRAMEWORK_COMMIT }}
+          ref: ${{ env.PUBLISH_FRAMEWORK_REF }}
           path: framework
 
-      - name: Checkout framework-vendor@${{ env.PUBLISH_FRAMEWORK_COMMIT }} code
+      - name: Checkout framework-vendor@${{ env.PUBLISH_FRAMEWORK_REF }} code
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/framework-vendor
-          ref: ${{ env.PUBLISH_FRAMEWORK_VENDOR_COMMIT }}
+          ref: ${{ env.PUBLISH_FRAMEWORK_VENDOR_REF }}
           path: vendor
 
-      - name: Checkout license@${{ env.PUBLISH_LICENSE_COMMIT }} code
+      - name: Checkout license@${{ env.PUBLISH_LICENSE_REF }} code
         uses: actions/checkout@v7
         with: 
           token: ${{ secrets.REPO_PAT }}
           repository: ${{ vars.GIT_REPO }}/license
-          ref: ${{ env.PUBLISH_LICENSE_COMMIT }}
+          ref: ${{ env.PUBLISH_LICENSE_REF }}
           path: license
       
-      - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_BRANCH}} code
+      - name: Checkout ${{ matrix.product }}@${{ env.PUBLISH_REF}} code
         uses: actions/checkout@v7
         with: 
           repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
-          ref: ${{ env.PUBLISH_BRANCH}}
+          ref: ${{ env.PUBLISH_REF}}
           path: ${{ matrix.product }}
 
       - name: Setup ${{ matrix.product }} env
