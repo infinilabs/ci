@@ -16,7 +16,7 @@
     </parent>
 
     <groupId>com.infinilabs</groupId>
-    <artifactId>spring-ai-vectorstore</artifactId>
+    <artifactId>spring-ai-easysearch-vectorstore</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>Spring AI Vector Store - Easysearch</name>
