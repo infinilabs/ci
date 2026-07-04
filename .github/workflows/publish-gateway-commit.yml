@@ -177,8 +177,14 @@ jobs:
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
+
       - name: Build ${{ matrix.product }} with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         run: |
+          # check commitid
+          for d in */; do
+            commit=$(git log -1 --format=%H -- "$d" 2>/dev/null)
+            [ -n "$commit" ] && echo "$d: $commit"
+          done
           # build all targets with offline
           for tag in $TARGETS; do
             cd $WORK/$PNAME && OFFLINE_BUILD=true make build-$tag
