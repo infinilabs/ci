@@ -3,4 +3,6 @@ build-*.sh
 gradle/
 publish/
 security/
+client/
+spring/
 config/*.yml

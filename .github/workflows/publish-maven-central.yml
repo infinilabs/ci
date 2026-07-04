@@ -61,6 +61,7 @@ on:
           - 'license'
           - 'easysearch'
           - 'easysearch-client'
+          - 'spring-ai'
         default: 'easysearch'
       PUBLISH_VERSION:
         description: 'Publish Version'
@@ -125,7 +126,9 @@ jobs:
           if [ "$PNAME" == 'license' ]; then
             REPO_NAME="$PNAME-java"
           fi
-  
+          if [ "$PNAME" == 'spring-ai' ]; then
+            REPO_NAME="spring-ai-easysearch-store"
+          fi
           echo "Cloning component repository: $REPO_NAME"
           git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
@@ -143,12 +146,21 @@ jobs:
           elif [ "$PNAME" == 'license' ]; then
             cp -rf $GITHUB_WORKSPACE/products/license/pom.xml .
             mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
+          elif [ "$PNAME" == 'spring-ai' ]; then
+            cp -rf $GITHUB_WORKSPACE/products/easysearch/spring/pom.xml .
+            mvn versions:set -DnewVersion=$PUBLISH_VERSION -DgenerateBackupPoms=false
           fi
       
       - name: Publish with maven
-        if: ${{ env.BUILD_TOOL == 'maven' && env.PNAME == 'license' }}
+        if: ${{ env.BUILD_TOOL == 'maven' && (env.PNAME == 'license' || env.PNAME == 'spring-ai') }}
         working-directory: ${{ env.PNAME}}
-        run: mvn -DskipTests clean deploy
+        run: |
+          if [ "${{ inputs.DRY_RUN }}" == "true" ]; then
+            EXTRA_ARGS="-Dcentral.autoPublish=false -Dcentral.waitUntil=VALIDATED"
+          else
+            EXTRA_ARGS="-Dcentral.autoPublish=true -Dcentral.waitUntil=published"
+          fi
+          mvn -DskipTests clean deploy $EXTRA_ARGS
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
