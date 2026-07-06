@@ -260,8 +260,8 @@ jobs:
           if [[ -d docs/data ]]; then
             sed -i "s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
             if [[ "$PRODUCT" == "easysearch" ]]; then
-              sed -i "15s/version:.*/version: '$EASYSEARCH_VERSION'/" docs/data/quick_start.yaml
-              sed -i "19s/version:.*/version: '$VERSION'/" docs/data/quick_start.yaml
+              sed -i "15s/version:.*/version: '$VERSION'/" docs/data/quick_start.yaml
+              sed -i "19s/version:.*/version: '$CONSOLE_PUBLISH_VERSION'/" docs/data/quick_start.yaml
             fi
             if [[ "$PRODUCT" == "console" ]]; then
               sed -i "44s/version:.*/version: '$VERSION',/" docs/data/quick_start.yaml
