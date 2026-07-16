@@ -132,7 +132,7 @@ jobs:
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           
       - name: Setup ${{ env.PNAME }} go toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: false
