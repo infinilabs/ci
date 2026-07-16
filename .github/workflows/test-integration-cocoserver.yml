@@ -84,7 +84,7 @@ jobs:
                 path: coco
 
             - name: Set up nodejs toolchain
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@v7
               with:
                 node-version: ${{ env.NODEJS_VERSION }}
                 cache: 'npm'
