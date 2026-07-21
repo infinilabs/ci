@@ -189,7 +189,7 @@ jobs:
 
       - name: Set up Node.js for ${{ matrix.product }}
         if: matrix.product == 'agent' || matrix.product == 'console'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.product == 'agent' && env.NODEJS_EXT_VERSION || env.NODEJS_VERSION }}
           cache: 'npm'

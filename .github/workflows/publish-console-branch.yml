@@ -216,7 +216,7 @@ jobs:
 
       - name: Set up Node.js for console
         if: matrix.product == 'console'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'npm'
@@ -224,7 +224,7 @@ jobs:
 
       - name: Set up Node.js for agent
         if: ${{ matrix.product == 'agent' && env.PUBLISH_WITH_UI == 'true' }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODEJS_EXT_VERSION }}
           cache: 'npm'

@@ -135,7 +135,7 @@ jobs:
           ssh-key: ${{ env.REPO_PRIVATE == 'true' && secrets.SSH_PRIVATE_KEY || '' }}
 
       - name: Setup node-${{ env.NODEJS_VERSION }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           registry-url: ${{ env.NPM_REGISTRY }}

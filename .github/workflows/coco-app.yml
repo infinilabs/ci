@@ -227,7 +227,7 @@ jobs:
           echo "UPGRADE=.v${tauri_version}-SNAPSHOT" >> $GITHUB_ENV
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODEJS_VERSION }}
 
@@ -260,7 +260,7 @@ jobs:
           workspaces: './coco-app/src-tauri -> target'
 
       - name: Sync node version and setup cache
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODEJS_VERSION }}
           cache: 'pnpm'
