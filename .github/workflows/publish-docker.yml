@@ -248,7 +248,7 @@ jobs:
           echo EOL=$(date -u -d "1 year" +"%Y-12-31T10:10:10Z") >> $GITHUB_ENV
           echo BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S') >> $GITHUB_ENV
 
-      - name: Prepare coco server enterprise go mod
+      - name: Prepare ${{ matrix.product }} enterprise go mod
         continue-on-error: true
         if: ${{ matrix.product == 'gateway' }}
         run: |

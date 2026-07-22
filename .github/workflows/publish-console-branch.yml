@@ -300,7 +300,7 @@ jobs:
           #  git clone ${{ secrets.SSH_GITHUB_REPO }}/framework-enterprise-plugins.git $GITHUB_WORKSPACE/framework/plugins/enterprise
           # fi
 
-      - name: Prepare console go module replacements
+      - name: Prepare ${{ matrix.product }} go module replacements
         if: ${{ matrix.product == 'console' }}
         run: |
           cd $WORK/$PNAME
