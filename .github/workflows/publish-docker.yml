@@ -49,7 +49,7 @@ on:
       GATEWAY_PUBLISH_VERSION:
         description: 'Publish Gateway Version'
         required: false
-        default: "1.30.3"
+        default: "1.31.1"
       LOADGEN_PUBLISH:
         description: 'Loadgen'
         required: false
