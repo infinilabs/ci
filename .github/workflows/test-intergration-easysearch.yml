@@ -234,7 +234,7 @@ jobs:
             command: |
               gradle clean :rest-api-spec:yamlRestTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.test.rest.ClientYamlTestSuiteIT \
                       --info --stacktrace
           - suite: license-rest
@@ -245,7 +245,7 @@ jobs:
             command: |
               gradle clean :server:yamlRestTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 -Dtests.rest.suite=license \
                 --rerun-tasks --info
           - suite: license
@@ -256,7 +256,7 @@ jobs:
             command: |
               gradle clean :server:test \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests com.infinilabs.license.LicenseTests \
                 --tests com.infinilabs.license.LicenseMetadataXContentTests \
                 --tests org.easysearch.license.DefaultLicenseVerifierTests \
@@ -271,7 +271,7 @@ jobs:
             command: |
               gradle clean :modules:security:test \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests com.infinilabs.security.dlic.rest.api.AccessTokenApiActionTest \
                 --tests com.infinilabs.security.dlic.rest.api.access.AccessTokenServiceTest \
                 --tests com.infinilabs.security.filter.SecurityFilterAccessTokenAuthTest \
@@ -285,7 +285,7 @@ jobs:
             command: |
               gradle clean :modules:security:test \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests com.infinilabs.security.auditlog.impl.AuditCategoryTest \
                 --tests com.infinilabs.security.auditlog.impl.DisabledCategoriesTest \
                 --tests com.infinilabs.security.auditlog.impl.AuditlogTest \
@@ -308,7 +308,8 @@ jobs:
             command: |
               gradle clean :modules:security:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
+                      -Dtests.jvms=1 \
                       --tests com.infinilabs.security.dlic.rest.api.AccountApiTest \
                       --tests com.infinilabs.security.HttpIntegrationTests \
                       --tests com.infinilabs.security.dlic.rest.api.RolesApiTest \
@@ -338,7 +339,7 @@ jobs:
             command: |
               gradle clean :modules:security:rulesSecurityTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests com.infinilabs.security.dlic.rest.api.RulesIndexAccessTest \
                 --rerun-tasks --info
           - suite: security-ldap
@@ -349,7 +350,7 @@ jobs:
             command: |
               gradle clean :modules:security:test \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests com.infinilabs.dlic.auth.ldap.UtilsTest \
                 --tests com.infinilabs.dlic.auth.ldap.LdapBackendTest \
                 --tests com.infinilabs.dlic.auth.ldap.LdapBackendNewStyleConfigTest \
@@ -363,7 +364,7 @@ jobs:
             command: |
               gradle clean :modules:model-provider:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.modelprovider.ModelProviderServiceTests \
                       --rerun-tasks --info
           - suite: datastream
@@ -374,7 +375,7 @@ jobs:
             command: |
               gradle clean :server:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.cluster.metadata.DataStreamTests \
                       --tests org.easysearch.cluster.metadata.DataStreamMetadataTests \
                       --tests org.easysearch.cluster.metadata.DataStreamTemplateTests \
@@ -393,7 +394,7 @@ jobs:
             command: |
               gradle clean :server:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.action.admin.cluster.settings.ClusterGetSettingsActionTests \
                       --tests org.easysearch.action.admin.cluster.settings.ClusterUpdateSettingsActionTests \
                       --tests org.easysearch.rest.action.admin.cluster.RestClusterGetSettingsActionTests \
@@ -406,7 +407,7 @@ jobs:
             command: |
               gradle clean :server:clean :server:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.cluster.reroute.timeout=300s \
                       -Dtests.cluster.recovery.timeout=300s \
                       -Dtests.cluster.stabilization.timeout=300s \
@@ -421,7 +422,7 @@ jobs:
             command: |
               gradle clean :server:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.index.engine.InternalEngineTests \
                       --tests org.easysearch.index.store.StoreTests \
                       --rerun-tasks --info
@@ -433,7 +434,7 @@ jobs:
             command: |
               gradle clean :server:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.search.fetch.subphase.FetchSourcePhaseTests \
                       --tests org.easysearch.common.util.JsonUtilsTests.testNestedJson \
                       --tests org.easysearch.common.util.JsonUtilsTests.testNestedJsonSplitCacheIsBounded \
@@ -451,7 +452,7 @@ jobs:
             command: |
               gradle clean :server:clean :server:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.cluster.reroute.timeout=300s \
                       -Dtests.cluster.recovery.timeout=300s \
                       -Dtests.cluster.stabilization.timeout=300s \
@@ -472,7 +473,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:integTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMManagedIndexSecurityIT \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMPermissionsIT \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMPolicyFilterByBackendRolesIT \
@@ -491,7 +492,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:integTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMForceMergeActionSecurityIT \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMRollupActionSecurityIT \
                 --tests org.easysearch.indexmanagement.secure.ilm.ILMShrinkActionSecurityIT \
@@ -507,7 +508,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:integTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests org.easysearch.indexmanagement.secure.slm.SLMExecutionIT \
                 --tests org.easysearch.indexmanagement.secure.slm.SLMPolicySecurityIT \
                 --rerun-tasks --info
@@ -519,7 +520,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:integTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests org.easysearch.indexmanagement.secure.rollup.RollupSecurityIT \
                 --tests org.easysearch.indexmanagement.secure.rollup.RollupFilterByBackendRolesIT \
                 --rerun-tasks --info
@@ -531,7 +532,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:integTest \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 --tests org.easysearch.indexmanagement.rollup.RollupExecutionIT \
                 --tests org.easysearch.indexmanagement.rollup.RollupLifecycleIT \
                 --tests org.easysearch.indexmanagement.rollup.RollupSearchIT \
@@ -545,7 +546,7 @@ jobs:
             command: |
               gradle clean :modules:index-management:test \
                 -Deasysearch.version=$STEP_VERSION \
-                -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                -Dtests.heap.size=2g \
                 -Dtests.jvms=1 \
                 --tests org.easysearch.indexmanagement.rollup.RollupRunnerTests \
                 --rerun-tasks --info
@@ -557,7 +558,7 @@ jobs:
             command: |
               gradle clean :plugins:rules:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.rules.compiler.RuleCompilerTests \
                       --rerun-tasks --info
           - suite: rules-plugin-multi-node
@@ -568,7 +569,7 @@ jobs:
             command: |
               gradle clean :plugins:rules:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.easysearch.rules.sync.RulesMultiNodeIT \
                       --tests org.easysearch.rules.sync.RulesSyncBlockIT \
                       --rerun-tasks --info
@@ -580,7 +581,7 @@ jobs:
             command: |
               gradle clean :modules:cross-cluster-replication:integTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       --tests 'org.easysearch.replication.integ.*IT' \
                       --rerun-tasks --info
@@ -592,7 +593,7 @@ jobs:
             command: |
               gradle clean :modules:cross-cluster-replication:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       -Dtests.security.manager=true \
                       --tests org.easysearch.replication.internal.FollowerDeleteProtectionRestartIT \
@@ -605,7 +606,7 @@ jobs:
             command: |
               gradle clean :modules:custom-codecs:test :modules:custom-codecs:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests '*Zstd*' \
                       --rerun-tasks --info
           - suite: zstd-oom-smoke
@@ -626,7 +627,7 @@ jobs:
             command: |
               gradle clean :plugins:analysis-ik:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       --tests org.wltea.analyzer.lucene.IKTokenizerBehaviorTests \
                       --tests org.wltea.analyzer.lucene.IKTokenizerGoldenCorrectnessTests \
                       --tests org.wltea.analyzer.dic.IKAnalyzerTests \
@@ -647,7 +648,7 @@ jobs:
             command: |
               gradle clean :modules:async_search:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       --tests org.easysearch.search.async.AsyncSearchActionIT \
                       --rerun-tasks --info
@@ -659,7 +660,7 @@ jobs:
             command: |
               gradle clean :modules:async_search:yamlRestTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       --rerun-tasks --info
           - suite: searchable-snapshot
@@ -670,7 +671,7 @@ jobs:
             command: |
               gradle clean :server:clean :server:internalClusterTest \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       -Dtests.cluster.reroute.timeout=300s \
                       -Dtests.cluster.recovery.timeout=300s \
@@ -685,7 +686,7 @@ jobs:
             command: |
               gradle clean :server:test \
                       -Deasysearch.version=$STEP_VERSION \
-                      -Dtest.jvmArgs=-Xmx4g -Dtests.heap.size=2g \
+                      -Dtests.heap.size=2g \
                       -Dtests.jvms=1 \
                       --tests org.easysearch.index.store.remote.filecache.FileCacheTests \
                       --tests org.easysearch.index.store.remote.filecache.FileCacheCleanerTests \
