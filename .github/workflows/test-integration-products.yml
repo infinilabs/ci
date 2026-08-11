@@ -41,7 +41,7 @@ on:
         description: 'Gateway Published Version'
         required: false
         type: string
-        default: "1.31.1"
+        default: "1.31.2"
       LOADGEN_PUBLISH_VERSION:
         description: 'Loadgen Published Version'
         required: false
