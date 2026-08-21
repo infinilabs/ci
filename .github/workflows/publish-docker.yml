@@ -31,7 +31,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Agent Version'
         required: false
-        default: "1.31.1"
+        default: "1.31.2"
       CONSOLE_PUBLISH:
         description: 'Console'
         required: false
