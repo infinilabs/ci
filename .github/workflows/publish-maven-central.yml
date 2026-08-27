@@ -96,7 +96,7 @@ jobs:
           sleep 5
 
       - name: Set up jdk ${{ env.JDK_VERSION }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: ${{ env.JDK_VERSION }}
           distribution: 'temurin'

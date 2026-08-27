@@ -86,7 +86,7 @@ jobs:
           echo "Checked out $(git log -1 --pretty=format:'%h %s')"
 
       - name: Set up Java with ${{ vars.JAVA_DISTRIBUTION }}@${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ vars.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}

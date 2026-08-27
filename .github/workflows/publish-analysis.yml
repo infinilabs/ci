@@ -74,7 +74,7 @@ jobs:
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -276,7 +276,7 @@ jobs:
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -429,7 +429,7 @@ jobs:
           path: ${{ env.PNAME }}
 
       - name: Set up java toolchain with ${{ env.JAVA_DISTRIBUTION }}-${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
