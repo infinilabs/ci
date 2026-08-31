@@ -103,7 +103,7 @@ jobs:
           echo "GRADLE_VERSION=$GRADLE_VERSION" >> "$GITHUB_ENV"
 
       - name: Set up java toolchain
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ steps.resolve_config.outputs.java_version }}
@@ -707,7 +707,7 @@ jobs:
           sleep 5
 
       - name: Set up java toolchain
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ needs.setup.outputs.java_version }}
