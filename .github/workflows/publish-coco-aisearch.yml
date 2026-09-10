@@ -29,7 +29,7 @@ on:
       PUBLISH_EASYSEARCH_VERSION:
         description: 'Publish Release Easysearch Version'
         required: false
-        default: "2.4.0-2953"
+        default: "2.4.0-2963"
       PUBLISH_RELEASE:
         description: 'Publish Release'
         required: false
