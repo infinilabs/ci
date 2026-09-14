@@ -147,7 +147,7 @@ env_init() {
         log_info "📦  Generating OSS configuration file..."
         cat > "$GITHUB_WORKSPACE/.oss.yml" <<-EOF
         service:
-          endpoint: "http://s3.infini.cloud"
+          endpoint: "https://release.infinilabs.com/"
 
         storage:
           primary: rustfs
