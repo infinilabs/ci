@@ -168,7 +168,7 @@ env_init() {
 		      access_key_secret: "$OSS_SK"
 		      bucket_name: "$OSS_BK"
 		token: "$TOKEN"
-		log_level: "error"
+		log_level: "debug"
 		EOF
         log_success "OSS config (.oss.yml) created."
     fi
