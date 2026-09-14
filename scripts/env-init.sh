@@ -146,28 +146,28 @@ env_init() {
     if [[ -n "$OSS_EP" ]]; then
         log_info "📦  Generating OSS configuration file..."
         cat > "$GITHUB_WORKSPACE/.oss.yml" <<-EOF
-        service:
-          endpoint: "https://release.infinilabs.com/"
+		service:
+			endpoint: "https://release.infinilabs.com/"
 
-        storage:
-          primary: rustfs
-          fallback: aliyun
+		storage:
+			primary: rustfs
+			fallback: aliyun
 
-          profiles:
-            rustfs:
-              type: "rustfs"
-              endpoint: "$OSS_RUSTFS_EP"
-              access_key_id: "$OSS_RUSTFS_AK"
-              access_key_secret: "$OSS_RUSTFS_SK"
-              bucket_name: "$OSS_BK"
-              region: "auto"
-            aliyun:
-              type: "aliyun"
-              endpoint: "$OSS_EP"
-              access_key_id: "$OSS_AK"
-              access_key_secret: "$OSS_SK"
-              bucket_name: "$OSS_BK"
-        token: "$TOKEN"
+		profiles:
+			rustfs:
+				type: "rustfs"
+				endpoint: "$OSS_RUSTFS_EP"
+				access_key_id: "$OSS_RUSTFS_AK"
+				access_key_secret: "$OSS_RUSTFS_SK"
+				bucket_name: "$OSS_BK"
+				region: "auto"
+			aliyun:
+				type: "aliyun"
+				endpoint: "$OSS_EP"
+				access_key_id: "$OSS_AK"
+				access_key_secret: "$OSS_SK"
+				bucket_name: "$OSS_BK"
+		token: "$TOKEN"
 		log_level: "error"
 		EOF
         log_success "OSS config (.oss.yml) created."
