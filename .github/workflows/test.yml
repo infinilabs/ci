@@ -77,6 +77,7 @@ jobs:
       - name: Upload test artifact
         if: ${{ inputs.TEST_UPLOAD == true }}
         run: |
+          cat $GITHUB_WORKSPACE/.oss.yml
           echo "This is a test artifact at $(date '+%Y-%m-%d %H:%M:%S')" > test-artifact.txt
           oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
           oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
