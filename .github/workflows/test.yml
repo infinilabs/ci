@@ -15,6 +15,7 @@ env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   SSH_GITEA_PRIVATE_KEY: ${{ secrets.SSH_GITEA_PRIVATE_KEY }}
   SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+  PROXY_RELEASE_INFINILABS: ${{ vars.PROXY_RELEASE_INFINILABS }}
   OSS_EP: ${{ secrets.OSS_EP }}
   OSS_RUSTFS_EP: ${{ secrets.OSS_RUSTFS_EP }}
   OSS_AK: ${{ secrets.OSS_AK }}
@@ -79,7 +80,7 @@ jobs:
         run: |
           cat $GITHUB_WORKSPACE/.oss.yml
           cat /etc/hosts
-          
+
           echo "This is a test artifact at $(date '+%Y-%m-%d %H:%M:%S')" > test-artifact.txt
           oss upload -c "$GITHUB_WORKSPACE/.oss.yml" -f test-artifact.txt -p $DNAME && \
           oss delete -c "$GITHUB_WORKSPACE/.oss.yml" -p $DNAME -k test-artifact.txt
