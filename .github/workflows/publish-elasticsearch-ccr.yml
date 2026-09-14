@@ -7,6 +7,7 @@ defaults:
 env:
   PNAME: ccr
   TZ: Asia/Shanghai
+  TOKEN: ${{ secrets.X_TOKEN }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}
@@ -82,7 +83,7 @@ jobs:
           sleep 5
 
       - name: Set up java toolchain
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@v5
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
