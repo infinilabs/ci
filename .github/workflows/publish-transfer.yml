@@ -97,12 +97,10 @@ jobs:
           path: framework
 
       - name: Checkout ${{ matrix.product }} code
-        uses: actions/checkout@v7
-        with: 
-          repository: ${{ vars.GIT_REPO }}/${{ matrix.product }}
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ref: main
-          path: ${{ matrix.product }}
+        run: |
+          git clone --depth 1 --branch "$BRANCH" $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+
 
       - name: Setup ${{ matrix.product }} env
         run: |
