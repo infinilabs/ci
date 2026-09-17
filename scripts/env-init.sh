@@ -156,9 +156,9 @@ env_init() {
 		  profiles:
 		    rustfs:
 		      type: "rustfs"
-		      endpoint: "$OSS_RUSTFS_EP"
-		      access_key_id: "$OSS_RUSTFS_AK"
-		      access_key_secret: "$OSS_RUSTFS_SK"
+		      endpoint: "$OSS_PRIMARY_EP"
+		      access_key_id: "$OSS_PRIMARY_AK"
+		      access_key_secret: "$OSS_PRIMARY_SK"
 		      bucket_name: "$OSS_BK"
 		      region: "auto"
 		    aliyun:
