@@ -117,7 +117,7 @@ jobs:
       - name: Checkout Docs Repo
         uses: actions/checkout@v7
         with:
-          repository: infinilabs/docs
+          repository: ${{ vars.GIT_REPO }}/docs
           path: docs-output
           token: ${{ secrets.REPO_PAT }}
 

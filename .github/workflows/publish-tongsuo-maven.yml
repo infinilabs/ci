@@ -710,7 +710,7 @@ jobs:
       - name: Checkout tongsuo-java-sdk
         uses: actions/checkout@v7
         with:
-          repository: infinilabs/tongsuo-java-sdk
+          repository: ${{ vars.GIT_REPO }}/tongsuo-java-sdk
           ref: ${{ inputs.BRANCH }}
           path: tongsuo-java-sdk
       

@@ -64,7 +64,7 @@ jobs:
     - name: Checkout pizza repository
       uses: actions/checkout@v7
       with:
-          repository: infinilabs/${{ env.SNAME }}
+          repository: ${{ vars.GIT_REPO }}/${{ env.SNAME }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ref: main
           path: ${{ env.SNAME }}
@@ -78,7 +78,7 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: main
-        repository: infinilabs/${{ env.PNAME }}
+        repository: ${{ vars.GIT_REPO }}/${{ env.PNAME }}
         path: ${{ env.DNAME }}
     
     - name: Setup pnpm

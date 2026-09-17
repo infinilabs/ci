@@ -84,28 +84,28 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: main
-        repository: infinilabs/gateway
+        repository: ${{ vars.GIT_REPO }}/gateway
         path: gateway
         
     - name: Checkout loadgen
       uses: actions/checkout@v7
       with:
         ref: main
-        repository: infinilabs/loadgen
+        repository: ${{ vars.GIT_REPO }}/loadgen
         path: loadgen
             
     - name: Checkout framework
       uses: actions/checkout@v7
       with:
         ref: main
-        repository: infinilabs/framework
+        repository: ${{ vars.GIT_REPO }}/framework
         path: framework
 
     - name: Checkout testing
       uses: actions/checkout@v7
       with:
         ref: main
-        repository: infinilabs/testing
+        repository: ${{ vars.GIT_REPO }}/testing
         path: testing
 
     - name: Set up go toolchain

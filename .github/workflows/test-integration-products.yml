@@ -98,35 +98,35 @@ jobs:
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/console
+                repository: ${{ vars.GIT_REPO }}/console
                 path: console
                 
             - name: Checkout gateway
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/gateway
+                repository: ${{ vars.GIT_REPO }}/gateway
                 path: gateway
             
             - name: Checkout agent
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/agent
+                repository: ${{ vars.GIT_REPO }}/agent
                 path: agent
               
             - name: Checkout loadgen
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/loadgen
+                repository: ${{ vars.GIT_REPO }}/loadgen
                 path: loadgen
                   
             - name: Checkout framework
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/framework
+                repository: ${{ vars.GIT_REPO }}/framework
                 path: framework
 
             - name: Set up nodejs toolchain

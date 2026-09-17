@@ -66,21 +66,21 @@ jobs:
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/loadgen
+                repository: ${{ vars.GIT_REPO }}/loadgen
                 path: loadgen
                   
             - name: Checkout framework
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/framework
+                repository: ${{ vars.GIT_REPO }}/framework
                 path: framework
             
             - name: Checkout coco
               uses: actions/checkout@v7
               with:
                 ref: main
-                repository: infinilabs/coco
+                repository: ${{ vars.GIT_REPO }}/coco
                 path: coco
 
             - name: Set up nodejs toolchain

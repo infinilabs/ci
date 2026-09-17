@@ -90,7 +90,7 @@ jobs:
       - name: Checkout $PNAME at tag
         uses: actions/checkout@v7
         with:
-          repository: infinilabs/$PNAME
+          repository: ${{ vars.GIT_REPO }}/$PNAME
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ref: ${{ needs.tag.outputs.tag }}
 
