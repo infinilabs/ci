@@ -65,7 +65,7 @@ jobs:
           else
             AGENT_VERSION="${{ env.AGENT_VERSION }}"
           fi
-          echo "AGENT_VERSION=$AGENT_VERSION" >> "$GITHUB_ENV"
+          echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
 
           # Ensure PUBLISH_VERSION is set
           if [ -z "${{ inputs.PUBLISH_VERSION }}" ]; then
@@ -73,7 +73,7 @@ jobs:
             exit 1
           else
             PUBLISH_VERSION="${{ inputs.PUBLISH_VERSION }}"
-            echo "PUBLISH_VERSION=$PUBLISH_VERSION" >> "$GITHUB_ENV"
+            echo "PUBLISH_VERSION=$PUBLISH_VERSION" >> $GITHUB_ENV
           fi
 
           MAJOR_VERSION=$(echo "$PUBLISH_VERSION" | cut -d'.' -f1)
@@ -94,8 +94,8 @@ jobs:
             JAVA_VERSION=8
           fi
           
-          echo "JDK_EXT=.jdk$JAVA_VERSION" >> "$GITHUB_ENV"
-          echo "JAVA_VERSION=$JAVA_VERSION" >> "$GITHUB_ENV"
+          echo "JDK_EXT=.jdk$JAVA_VERSION" >> $GITHUB_ENV
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
 
       - name: Set up java toolchain
         uses: actions/setup-java@v6

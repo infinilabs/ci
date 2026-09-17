@@ -37,11 +37,11 @@ jobs:
       - name: Setup env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH ||  'true' }}" >> "$GITHUB_ENV"
-            echo "TRANSFER_PUBLISH_VERSION=${{ inputs.TRANSFER_PUBLISH_VERSION || '0.1.0' }}" >> "$GITHUB_ENV"
+            echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH || 'true' }}" >> $GITHUB_ENV
+            echo "TRANSFER_PUBLISH_VERSION=${{ inputs.TRANSFER_PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
           else
-            echo "TRANSFER_PUBLISH=true" >> "$GITHUB_ENV"
-            echo "TRANSFER_PUBLISH_VERSION="0.1.0-${{ github.run_number }}" >> "$GITHUB_ENV"
+            echo "TRANSFER_PUBLISH=true" >> $GITHUB_ENV
+            echo "TRANSFER_PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
 
