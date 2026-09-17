@@ -36,8 +36,8 @@ jobs:
 
       - name: Setup env
         run: |
-          echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH || vars.TRANSFER_PUBLISH || 'true' }}" >> "$GITHUB_ENV"
-          echo "TRANSFER_PUBLISH_VERSION=${{ inputs.TRANSFER_PUBLISH_VERSION || vars.TRANSFER_PUBLISH_VERSION || '1.0.0' }}" >> "$GITHUB_ENV"
+          echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH ||  'true' }}" >> "$GITHUB_ENV"
+          echo "TRANSFER_PUBLISH_VERSION=${{ inputs.TRANSFER_PUBLISH_VERSION || '0.1.0' }}" >> "$GITHUB_ENV"
           
           echo "TRANSFER_PUBLISH=$TRANSFER_PUBLISH"
           echo "TRANSFER_PUBLISH_VERSION=$TRANSFER_PUBLISH_VERSION"
