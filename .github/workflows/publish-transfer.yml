@@ -57,6 +57,7 @@ jobs:
     name: Publish ${{ matrix.product }}
     runs-on: ubuntu-latest
     env:
+        PNAME: ${{ matrix.product }}
         OSS_EP: ${{ secrets.OSS_EP }}
         OSS_AK: ${{ secrets.OSS_AK }}
         OSS_SK: ${{ secrets.OSS_SK }}
@@ -98,7 +99,7 @@ jobs:
 
       - name: Checkout ${{ matrix.product }} code
         run: |
-          git clone --depth 1 --branch "$BRANCH" $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
+          git clone --depth 1 $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
 
@@ -110,7 +111,6 @@ jobs:
           fi
           echo WORK=$WORK >> $GITHUB_ENV
           echo WORKBASE=$WORKBASE >> $GITHUB_ENV
-          echo PNAME=${{ matrix.product }} >> $GITHUB_ENV
           echo PATH=$PATH:$GITHUB_WORKSPACE/tools >> $GITHUB_ENV
 
       - name: Setup ${{ matrix.product }} go toolchain
