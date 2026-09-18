@@ -87,7 +87,7 @@ on:
       EASYSEARCH_PUBLISH_VERSION:
         description: 'Publish Easysearch Version'
         required: false
-        default: "2.4.0-2972"
+        default: "2.4.0-2975"
       COCOAPP_PUBLISH:
         description: 'Products with Coco App'
         required: false
