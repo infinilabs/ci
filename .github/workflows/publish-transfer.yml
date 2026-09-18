@@ -47,9 +47,6 @@ jobs:
 
       - name: Generate matrix
         id: gen-matrix
-        env:
-            TRANSFER_PUBLISH: ${{ inputs.TRANSFER_PUBLISH }}
-            TRANSFER_PUBLISH_VERSION: ${{ inputs.TRANSFER_PUBLISH_VERSION }}
         run: |
           matrix=$($GITHUB_WORKSPACE/scripts/go-matrix.sh)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
