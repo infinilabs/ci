@@ -25,7 +25,7 @@ COCO_SERVER_PUBLISH_VERSION=${COCO_SERVER_PUBLISH_VERSION:-""}
 TRANSFER_PUBLISH_VERSION=${TRANSFER_PUBLISH_VERSION:-""}
 
 # if use workflow_dispatch, only include products explicitly set to true
-if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" && "$TRANSFER_PUBLISH" != "true" ]]; then
     AGENT_PUBLISH=true
     CONSOLE_PUBLISH=true
     GATEWAY_PUBLISH=true
