@@ -25,11 +25,21 @@ COCO_SERVER_PUBLISH_VERSION=${COCO_SERVER_PUBLISH_VERSION:-""}
 TRANSFER_PUBLISH_VERSION=${TRANSFER_PUBLISH_VERSION:-""}
 
 # if use workflow_dispatch, only include products explicitly set to true
-if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" && "$TRANSFER_PUBLISH" != "true" ]]; then
-    AGENT_PUBLISH=true
-    CONSOLE_PUBLISH=true
-    GATEWAY_PUBLISH=true
-    LOADGEN_PUBLISH=true
+if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+    all_false=true
+    for var in AGENT_PUBLISH CONSOLE_PUBLISH GATEWAY_PUBLISH LOADGEN_PUBLISH FRAMEWORK_PUBLISH EASYSEARCH_PUBLISH COCO_APP_PUBLISH COCO_SERVER_PUBLISH TRANSFER_PUBLISH; do
+        if [[ "${!var}" != "false" ]]; then
+            all_false=false
+            break
+        fi
+    done
+
+    if [[ "$all_false" == "true" ]]; then
+        AGENT_PUBLISH=true
+        CONSOLE_PUBLISH=true
+        GATEWAY_PUBLISH=true
+        LOADGEN_PUBLISH=true
+    fi
 fi
 
 # generate matrix
