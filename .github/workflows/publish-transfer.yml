@@ -152,7 +152,7 @@ jobs:
           node -v && npm -v && pnpm -v
 
       - name: Prepare ${{ matrix.product }} build code
-        if: ${{ inputs.TRANSFER_PUBLISH_VERSION !='' }}
+        if: ${{ env.PUBLISH_VERSION !='' }}
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
