@@ -199,6 +199,7 @@ jobs:
           # for logpilot web
           if [[ "${{ matrix.product }}" == "logpilot" ]]; then
             cd $WORK/$PNAME/web
+            rm -f pnpm-lock.yaml ../pnpm-lock.yaml
             pnpm install --ignore-scripts --no-frozen-lockfile || exit 1
             pnpm approve-builds --all || exit 1
             pnpm run build
