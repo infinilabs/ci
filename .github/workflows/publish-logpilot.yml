@@ -224,6 +224,7 @@ jobs:
           for tag in $TARGETS; do
             cd $WORK/$PNAME && make build-$tag
           done
+          (cd $WORK/$PNAME/rust && make build-rust-linux)
 
       - name: Build ${{ matrix.product }} check
         run: |
@@ -234,6 +235,7 @@ jobs:
             [[ "$p1" == "win" ]] && TAG="$TAG.exe"
             [ -f "$WORK/$PNAME/bin/$PNAME-$TAG" ] || { echo "Build $PNAME failed with not found $PNAME-$TAG" && exit 1; }
           done
+          ls -lrt $WORK/$PNAME/rust/target/release/logpilot
 
       - name: Build ${{ matrix.product }} License and notice process
         run: |
@@ -273,6 +275,7 @@ jobs:
           ls -lrt $WORK/$PNAME-$VERSION-*.*
                       
       - name: Upload ${{ matrix.product }} files
+        if: false
         run: | 
           cd $WORK
           for tag in $TARGETS; do
