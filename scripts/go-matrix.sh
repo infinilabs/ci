@@ -13,6 +13,7 @@ EASYSEARCH_PUBLISH=${EASYSEARCH_PUBLISH:-false}
 COCO_APP_PUBLISH=${COCO_APP_PUBLISH:-false}
 COCO_SERVER_PUBLISH=${COCO_SERVER_PUBLISH:-false}
 TRANSFER_PUBLISH=${TRANSFER_PUBLISH:-false}
+LOGPILOT_PUBLISH=${LOGPILOT_PUBLISH:-false}
 
 AGENT_PUBLISH_VERSION=${AGENT_PUBLISH_VERSION:-""}
 CONSOLE_PUBLISH_VERSION=${CONSOLE_PUBLISH_VERSION:-""}
@@ -23,6 +24,7 @@ EASYSEARCH_PUBLISH_VERSION=${EASYSEARCH_PUBLISH_VERSION:-""}
 COCO_APP_PUBLISH_VERSION=${COCO_APP_PUBLISH_VERSION:-""}
 COCO_SERVER_PUBLISH_VERSION=${COCO_SERVER_PUBLISH_VERSION:-""}
 TRANSFER_PUBLISH_VERSION=${TRANSFER_PUBLISH_VERSION:-""}
+LOGPILOT_PUBLISH_VERSION=${LOGPILOT_PUBLISH_VERSION:-""}
 
 # if use workflow_dispatch, only include products explicitly set to true
 if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
@@ -52,6 +54,7 @@ fi
 [[ "$COCO_APP_PUBLISH" == "true" ]] && matrix_includes+=("{\"product\":\"coco-app\",\"publish_version\":\"${COCO_APP_PUBLISH_VERSION}\"}")
 [[ "$COCO_SERVER_PUBLISH" == "true" ]] && matrix_includes+=("{\"product\":\"coco-server\",\"publish_version\":\"${COCO_SERVER_PUBLISH_VERSION}\"}")
 [[ "$TRANSFER_PUBLISH" == "true" ]] && matrix_includes+=("{\"product\":\"transfer\",\"publish_version\":\"${TRANSFER_PUBLISH_VERSION}\"}")
+[[ "$LOGPILOT_PUBLISH" == "true" ]] && matrix_includes+=("{\"product\":\"logpilot\",\"publish_version\":\"${LOGPILOT_PUBLISH_VERSION}\"}")
 
 # output JSON array, ensure commas are correct
 # handle potential spaces between matrix_includes[*] causing invalid JSON
