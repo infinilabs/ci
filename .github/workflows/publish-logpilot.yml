@@ -1,4 +1,4 @@
-name: Publish Enterprise Transfer Files
+name: Publish Enterprise Logpilot Files
 defaults:
   run:
     shell: bash
@@ -13,8 +13,8 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      TRANSFER_PUBLISH:
-        description: 'Publish Transfer'
+      LOGPILOT_PUBLISH:
+        description: 'Publish Logpilot'
         required: false
         type: boolean
         default: true
@@ -37,10 +37,10 @@ jobs:
       - name: Setup env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH || 'true' }}" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=${{ inputs.LOGPILOT_PUBLISH || 'true' }}" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=${{ inputs.PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
           else
-            echo "TRANSFER_PUBLISH=true" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=true" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
@@ -111,10 +111,10 @@ jobs:
       - name: Setup ${{ matrix.product }} env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH || 'true' }}" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=${{ inputs.LOGPILOT_PUBLISH || 'true' }}" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=${{ inputs.PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
           else
-            echo "TRANSFER_PUBLISH=true" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=true" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
           fi
           source $GITHUB_WORKSPACE/scripts/go-init.sh
@@ -156,7 +156,7 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.TRANSFER_PUBLISH || 'FALSE' }}"
+          PUBLISH_RELEASE="${{ inputs.LOGPILOT_PUBLISH || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
@@ -196,8 +196,8 @@ jobs:
           CI: true
           npm_config_ignore_scripts: true
         run: |
-          # for transfer web
-          if [[ "${{ matrix.product }}" == "transfer" ]]; then
+          # for logpilot web
+          if [[ "${{ matrix.product }}" == "logpilot" ]]; then
             cd $WORK/$PNAME/web
             pnpm install --ignore-scripts && pnpm approve-builds --all
             pnpm run build
@@ -297,7 +297,7 @@ jobs:
   update_repo:
     runs-on: ubuntu-latest
     needs: publish
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.TRANSFER_PUBLISH == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.LOGPILOT_PUBLISH == true }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -305,14 +305,14 @@ jobs:
       - name: Setup env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "TRANSFER_PUBLISH=${{ inputs.TRANSFER_PUBLISH || 'true' }}" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=${{ inputs.LOGPILOT_PUBLISH || 'true' }}" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=${{ inputs.PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
           else
-            echo "TRANSFER_PUBLISH=true" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH=true" >> $GITHUB_ENV
             echo "PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
-
+      
       - name: Prepare update version env
         run: |
           if [[ "$PUBLISH_VERSION" == *-* ]]; then
@@ -355,7 +355,7 @@ jobs:
           PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
           GH_TOKEN: ${{ secrets.REPO_PAT }}
         run: gh pr merge "$PR_URL" --squash
-
+  
   notify_on_failure:
     runs-on: ubuntu-latest
     needs: [publish]
