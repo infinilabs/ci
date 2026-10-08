@@ -38,10 +38,10 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "LOGPILOT_PUBLISH=${{ inputs.LOGPILOT_PUBLISH || 'true' }}" >> $GITHUB_ENV
-            echo "PUBLISH_VERSION=${{ inputs.PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH_VERSION=${{ inputs.PUBLISH_VERSION || '0.1.0' }}" >> $GITHUB_ENV
           else
             echo "LOGPILOT_PUBLISH=true" >> $GITHUB_ENV
-            echo "PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "LOGPILOT_PUBLISH_VERSION=0.1.0-${{ github.run_number }}" >> $GITHUB_ENV
           fi
           cat $GITHUB_ENV
 
