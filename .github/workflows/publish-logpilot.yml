@@ -145,7 +145,7 @@ jobs:
 
       - name: Install additional tools for ${{ matrix.product }}
         run: |
-          pnpm setup || npm install -g pnpm@latest
+          npm install -g pnpm@10
 
       - name: Check  with ${{ matrix.product }} nodejs toolchain
         run: |
