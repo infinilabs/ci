@@ -70,7 +70,7 @@ RUN set -eux; \
     echo "JDK_DIR resolved to: ${JDK_DIR}"; \
     rm jdk.tar.gz; \
     # just add jdk.incubator.vector for jdk 21
-    if [ "${ADD_INCUBATOR}" = "true" ]; then \
+    if [ "${ADD_INCUBATOR:-}" = "true" ]; then \
         if ${JDK_DIR}/bin/java --list-modules 2>/dev/null | grep -q "jdk.incubator.vector"; then \
             FINAL_MODULES="${FINAL_MODULES}"; \
             echo "jdk.incubator.vector available, adding."; \
