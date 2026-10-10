@@ -5,6 +5,7 @@ USE_MACOS_TARGZ=false
 WORK="$(mktemp -d)"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
+JAVA_VERSION=$BUNDLE_JAVA_VERSION
 JDK_BASE_URL="$RELEASE_URL/$PNAME/jdk"
 
 echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USE_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"

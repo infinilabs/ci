@@ -100,14 +100,15 @@ jobs:
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
             GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
-            JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+            BUILD_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
             # >= 2.4.0 的版本使用 JDK 25
             if [[ "$(printf '%s\n' "2.4.0" "$PUBLISH_VERSION" | sort -V | head -n1)" == "2.4.0" ]]; then
-              JAVA_VERSION=${{ vars.JAVA_VERSION_25 }}
+              BUNDLE_JAVA_VERSION=${{ vars.JAVA_VERSION_25 }}
             fi
           fi
-          echo "JAVA_VERSION=$JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
-          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+          echo "JAVA_VERSION=$BUILD_JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          echo "JAVA_VERSION=$BUILD_JAVA_VERSION" >> $GITHUB_ENV
+          echo "BUNDLE_JAVA_VERSION=$BUNDLE_JAVA_VERSION" >> $GITHUB_ENV
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
           echo "GRADLE_VERSION=$GRADLE_VERSION" >> $GITHUB_ENV
 
@@ -338,7 +339,7 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            JAVA_VERSION=${{ env.JAVA_VERSION }}
+            JAVA_VERSION=${{ env.BUNDLE_JAVA_VERSION }}
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ github.run_number }}
           push: true
@@ -354,7 +355,7 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            JAVA_VERSION=${{ env.JAVA_VERSION }}
+            JAVA_VERSION=${{ env.BUNDLE_JAVA_VERSION }}
           tags: |
             ${{ env.REPO_NAME }}:${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
             ${{ steps.tags.outputs.RELEASE_TAG }}
