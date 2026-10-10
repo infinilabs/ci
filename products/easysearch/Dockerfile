@@ -1,4 +1,5 @@
-FROM infinilabs/baseos:almalinux-jdk-21 AS builder
+ARG JAVA_VERSION=21
+FROM infinilabs/baseos:almalinux-jdk-${JAVA_VERSION} AS builder
 
 ARG TARGETARCH
 

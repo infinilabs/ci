@@ -36,12 +36,12 @@ if [[ "$USE_GRAALVM" == "true" ]]; then
   for x in linux-x64 linux-aarch64 macos-x64 macos-aarch64 windows-x64; do
     
     EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
-    FILE=graalvm-jdk-${JAVA_VERSION_21}_${x}_bin.$EXT
-    echo "Download GraalVM JDK with $JDK_BASE_URL/$JAVA_VERSION_21/$FILE"
+    FILE=graalvm-jdk-${JAVA_VERSION}_${x}_bin.$EXT
+    echo "Download GraalVM JDK with $JDK_BASE_URL/$JAVA_VERSION/$FILE"
 
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
       wget \
-        $JDK_BASE_URL/${JAVA_VERSION_21}/$FILE \
+        $JDK_BASE_URL/${JAVA_VERSION}/$FILE \
         -P "$BUILD_JDKS"
     fi
   done
