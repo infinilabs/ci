@@ -21,7 +21,7 @@ on:
         description: 'Easysearch Published Version'
         required: false
         type: string
-        default: "2.4.0"
+        default: "2.5.0"
       USE_DOWNLOAD:
         description: 'Download Easysearch'
         required: false

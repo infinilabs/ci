@@ -19,7 +19,7 @@ on:
         description: 'Easysearch Version'
         required: false
         type: string
-        default: "2.4.0-2975"
+        default: "2.5.0-3000"
       RUN_COMPILE_TEST:
         description: 'Run Coco Server Compile Test?'
         required: false
