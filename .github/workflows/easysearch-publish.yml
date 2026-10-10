@@ -182,9 +182,8 @@ jobs:
           echo BUILD_NUMBER=$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
           echo BUILD_DATE=$DYNAMIC_BUILD_DATE >> $GITHUB_ENV
           echo FULL_VERSION=$DYNAMIC_VERSION-$DYNAMIC_BUILD_NUMBER >> $GITHUB_ENV
-          cat $GITHUB_ENV
 
-          echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
+          echo "Build $PNAME with [ VERSION $DYNAMIC_VERSION | BUILD_NUMBER $DYNAMIC_BUILD_NUMBER ] at $DYNAMIC_BUILD_DATE"
 
       - name: Set up with pnpm toolchain
         uses: pnpm/action-setup@v6
