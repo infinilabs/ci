@@ -1,4 +1,14 @@
 {
+  "2.5.0": {
+    "platforms": [
+      "linux-amd64",
+      "linux-arm64",
+      "mac-amd64",
+      "mac-arm64",
+      "windows-amd64"
+    ],
+    "build_number": 3015
+  },
   "2.4.0": {
     "platforms": [
       "linux-amd64",
