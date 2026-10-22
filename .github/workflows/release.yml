@@ -51,7 +51,7 @@ on:
       AGENT_PUBLISH_VERSION:
         description: 'Publish Products Release Version'
         required: false
-        default: "1.33.0-2663"
+        default: "1.33.0-2666"
       CONSOLE_PUBLISH:
         description: 'Products with Console'
         required: false
