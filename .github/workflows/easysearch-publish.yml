@@ -262,7 +262,14 @@ jobs:
       - name: Build plugins with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
-          cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
+          # On 1.x (Gradle 6.6.1), the shadow plugin's bundled ASM cannot read Java 17
+          # class files ("Unsupported class file major version 61") from sql-jdbc
+          # dependencies, so skip that standalone JDBC fat jar; it is not part of the plugin zips.
+          EXCLUDE_TASKS=""
+          if [[ "$BRANCH" == "1.x" ]]; then
+            EXCLUDE_TASKS="-x :plugins:search-sql:sql-jdbc:shadowJar"
+          fi
+          cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc $EXCLUDE_TASKS
           
           # Check the build zip file
           echo "Built plugin zip files ..."
