@@ -13,7 +13,7 @@ env:
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
-  JAVA_VERSION: ${{ vars.JAVA_VERSION_15 }}
+  JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
   SSH_GIT_REPO: ${{ secrets.SSH_GIT_REPO }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -132,6 +132,7 @@ jobs:
           fi
           echo "PATH=$HOME/gradle-$GRADLE_VERSION/bin:$PATH" >> $GITHUB_ENV
           echo Gradle path is $HOME/gradle-$GRADLE_VERSION
+          gradle -v
 
       - name: Checkout ${{ env.PNAME }} repo
         run: |
