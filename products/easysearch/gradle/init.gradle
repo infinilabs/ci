@@ -82,12 +82,15 @@ gradle.settingsEvaluated { settings ->
         }
     }
 
-    settings.dependencyResolutionManagement {
-        repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
-        repositories {
-            mavenCentral()
-            google()
-            maven { url 'https://plugins.gradle.org/m2/' }
+    // dependencyResolutionManagement is only available since Gradle 6.8
+    if (settings.metaClass.respondsTo(settings, 'dependencyResolutionManagement', Closure)) {
+        settings.dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+            repositories {
+                mavenCentral()
+                google()
+                maven { url 'https://plugins.gradle.org/m2/' }
+            }
         }
     }
 }
