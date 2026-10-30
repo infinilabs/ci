@@ -98,8 +98,11 @@ jobs:
           # Set GRADLE version and BRANCH based on PUBLISH_VERSION
           BRANCH="1.x"
           # Defaults for 1.x: keep the job-level JAVA_VERSION / GRADLE_VERSION
-          BUILD_JAVA_VERSION="$JAVA_VERSION"
+          # 1.x is built with Gradle 6.6.1, which only works with JDK 15 (not 16+),
+          # so pin both explicitly instead of relying on repository variables.
           # Temurin no longer provides JDK 15, use Zulu for the 1.x build
+          GRADLE_VERSION="6.6.1"
+          BUILD_JAVA_VERSION="15"
           BUILD_JAVA_DISTRIBUTION="zulu"
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
@@ -123,6 +126,9 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Show java version
+        run: java -version 2>&1; echo "JAVA_HOME=$JAVA_HOME"
 
       - name: Set up gradle
         run: |
