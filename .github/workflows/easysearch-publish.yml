@@ -99,12 +99,14 @@ jobs:
           BRANCH="1.x"
           # Defaults for 1.x: keep the job-level JAVA_VERSION / GRADLE_VERSION
           BUILD_JAVA_VERSION="$JAVA_VERSION"
+          BUNDLE_JAVA_VERSION="$BUILD_JAVA_VERSION"
           # Temurin no longer provides JDK 15, use Zulu for the 1.x build
           BUILD_JAVA_DISTRIBUTION="zulu"
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
             GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
             BUILD_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+            BUNDLE_JAVA_VERSION="$BUILD_JAVA_VERSION"
             BUILD_JAVA_DISTRIBUTION="$JAVA_DISTRIBUTION"
             # >= 2.4.0 的版本使用 JDK 25
             if [[ "$(printf '%s\n' "2.4.0" "$PUBLISH_VERSION" | sort -V | head -n1)" == "2.4.0" ]]; then
