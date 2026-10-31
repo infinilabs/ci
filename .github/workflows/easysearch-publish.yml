@@ -97,10 +97,12 @@ jobs:
 
           # Set GRADLE version and BRANCH based on PUBLISH_VERSION
           BRANCH="1.x"
-          # Defaults for 1.x: keep the job-level JAVA_VERSION / GRADLE_VERSION
-          BUILD_JAVA_VERSION="$JAVA_VERSION"
+          # Defaults for 1.x: keep the job-level JAVA_VERSION / GRADLE_VERSION / BUILD_JAVA_VERSION
           # Temurin no longer provides JDK 15, use Zulu for the 1.x build
           BUILD_JAVA_DISTRIBUTION="zulu"
+          BUILD_JAVA_VERSION="$JAVA_VERSION"
+          BUNDLE_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
+
           if [[ "$PUBLISH_VERSION" == 2.* ]]; then
             BRANCH="main"
             GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
