@@ -96,9 +96,9 @@ jobs:
           echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
 
           # Set GRADLE version and BRANCH based on PUBLISH_VERSION
-          BRANCH="1.x"
           # Defaults for 1.x: keep the job-level JAVA_VERSION / GRADLE_VERSION / BUILD_JAVA_VERSION
           # Temurin no longer provides JDK 15, use Zulu for the 1.x build
+          BRANCH="1.x"
           BUILD_JAVA_DISTRIBUTION="zulu"
           BUILD_JAVA_VERSION="$JAVA_VERSION"
           BUNDLE_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
