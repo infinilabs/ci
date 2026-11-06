@@ -27,16 +27,30 @@ ls -lrt $WORKDIR
 for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
   FNAME=`ls -lrt |grep $PNAME |head -n 1 |awk '{print $NF}'`
   DNAME=`echo $FNAME |sed "s/$VERSION/$VERSION-$BUILD_NUMBER/"|sed 's/darwin/mac/;s/aarch64/arm64/;s/x86_64/amd64/' |awk -F'-' '{print $1"-"$3"-"$4"-"$(NF-1)"-"$NF}'`
-  if [ "${FNAME##*.}" == "gz" ]; then
-    tar -zxf $FNAME && cd $PNAME-$VERSION
-    if [ "$(echo $DNAME |grep -wo mac)" == "mac" ]; then
-      DNAME=`echo $DNAME |sed 's/.tar.gz/.zip/'`
-      zip -r -q $DNAME *
-    else
-      tar -zcf $DNAME *
-    fi
+  MAJOR="${VERSION%%.*}"
+  TOP_DIR="$PNAME-$VERSION"
+
+  # 解压
+  if [ "${FNAME##*.}" == "gz" ]; then tar -zxf "$FNAME"; else unzip -q "$FNAME"; fi
+
+  # mac 平台的 tar.gz 改为 zip
+  if [ "${FNAME##*.}" == "gz" ] && [ "$(echo "$DNAME" | grep -wo mac)" == "mac" ]; then
+    DNAME=$(echo "$DNAME" | sed 's/.tar.gz/.zip/')
+  fi
+
+  # 3.x+：直接打包顶层目录；1.x/2.x：cd 进去打包内容
+  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+    PACK_SRC=("$TOP_DIR")
   else
-    unzip -q $FNAME && cd $PNAME-$VERSION && zip -r -q $DNAME *
+    cd "$TOP_DIR"
+    PACK_SRC=(*)
+  fi
+
+  # 重新打包
+  if [ "${DNAME##*.}" == "gz" ]; then
+    tar -zcf "$DNAME" "${PACK_SRC[@]}"
+  else
+    zip -r -q "$DNAME" "${PACK_SRC[@]}"
   fi
   echo -e "Repackaged file at $PWD \nfrom $FNAME \nto $DNAME"
 

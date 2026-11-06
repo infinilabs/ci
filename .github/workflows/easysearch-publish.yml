@@ -103,7 +103,8 @@ jobs:
           BUILD_JAVA_VERSION="$JAVA_VERSION"
           BUNDLE_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
 
-          if [[ "$PUBLISH_VERSION" == 2.* ]]; then
+          MAJOR="${PUBLISH_VERSION%%.*}"
+          if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 2 ]]; then
             BRANCH="main"
             GRADLE_VERSION=${{ vars.GRADLE_VERSION_8 }}
             BUILD_JAVA_VERSION=${{ vars.JAVA_VERSION_21 }}
@@ -113,7 +114,36 @@ jobs:
               BUNDLE_JAVA_VERSION=${{ vars.JAVA_VERSION_25 }}
             fi
           fi
-          echo "JAVA_VERSION=$BUILD_JAVA_VERSION → using gradle version: $GRADLE_VERSION for branch: $BRANCH"
+          
+          echo "::group::Resolved build configuration"
+          echo "PUBLISH_VERSION         = $PUBLISH_VERSION"
+          echo "MAJOR                   = $MAJOR"
+          echo "AGENT_VERSION           = $AGENT_VERSION"
+          echo "DNAME                   = $DNAME"
+          echo "BRANCH                  = $BRANCH"
+          echo "GRADLE_VERSION          = $GRADLE_VERSION"
+          echo "BUILD_JAVA_VERSION      = $BUILD_JAVA_VERSION"
+          echo "BUILD_JAVA_DISTRIBUTION = $BUILD_JAVA_DISTRIBUTION"
+          echo "BUNDLE_JAVA_VERSION     = $BUNDLE_JAVA_VERSION"
+          echo "::endgroup::"
+
+          # 写入 Job Summary
+          {
+            echo "### 🔧 Resolved build configuration"
+            echo ""
+            echo "| Key | Value |"
+            echo "| --- | --- |"
+            echo "| PUBLISH_VERSION | \`$PUBLISH_VERSION\` |"
+            echo "| MAJOR | \`$MAJOR\` |"
+            echo "| AGENT_VERSION | \`$AGENT_VERSION\` |"
+            echo "| DNAME | \`$DNAME\` |"
+            echo "| BRANCH | \`$BRANCH\` |"
+            echo "| GRADLE_VERSION | \`$GRADLE_VERSION\` |"
+            echo "| BUILD_JAVA_VERSION | \`$BUILD_JAVA_VERSION\` |"
+            echo "| BUILD_JAVA_DISTRIBUTION | \`$BUILD_JAVA_DISTRIBUTION\` |"
+            echo "| BUNDLE_JAVA_VERSION | \`$BUNDLE_JAVA_VERSION\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+           
           echo "JAVA_VERSION=$BUILD_JAVA_VERSION" >> $GITHUB_ENV
           echo "JAVA_DISTRIBUTION=$BUILD_JAVA_DISTRIBUTION" >> $GITHUB_ENV
           echo "BUNDLE_JAVA_VERSION=$BUNDLE_JAVA_VERSION" >> $GITHUB_ENV

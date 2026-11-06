@@ -33,17 +33,18 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
   FNAME=`ls -lrt |grep $PNAME |head -n 1 |awk '{print $NF}'`
   TNAME=`echo $FNAME |sed "s/$VERSION/$VERSION-$BUILD_NUMBER/"|sed 's/darwin/mac/;s/aarch64/arm64/;s/x86_64/amd64/' |awk -F'-' '{print $1"-"$3"-"$4"-"$(NF-1)"-"$NF}'`
   DNAME=`echo $FNAME |sed "s/$VERSION/$VERSION-$BUILD_NUMBER/"|sed 's/darwin/mac/;s/aarch64/arm64/;s/x86_64/amd64/' |awk -F'-' '{print $1"-"$3"-"$4"-"$5"-"$(NF-1)"-"$NF}'`
-  if [ "${FNAME##*.}" == "gz" ]; then
-    tar -zxf $FNAME && cd $PNAME-$VERSION-SNAPSHOT
-    if [ "$(echo $DNAME |grep -wo mac)" == "mac" ]; then
-      DNAME=`echo $DNAME |sed 's/.tar.gz/.zip/'`
-      zip -r -q $DNAME *
-    else
-      tar -zcf $DNAME *
-    fi
-  else
-    unzip -q $FNAME && cd $PNAME-$VERSION-SNAPSHOT && zip -r -q $DNAME *
+  MAJOR="${VERSION%%.*}"
+  TOP_DIR="$PNAME-$VERSION-SNAPSHOT"
+
+  if [ "${FNAME##*.}" == "gz" ]; then tar -zxf $FNAME; else unzip -q $FNAME; fi
+
+  # mac 平台的 tar.gz 改为 zip
+  if [ "${FNAME##*.}" == "gz" ] && [ "$(echo $DNAME | grep -wo mac)" == "mac" ]; then
+    DNAME=$(echo $DNAME | sed 's/.tar.gz/.zip/')
   fi
+
+  if [ "${DNAME##*.}" == "gz" ]; then tar -zcf $DNAME $TOP_DIR; else zip -r -q $DNAME $TOP_DIR; fi
+
   echo -e "Repackaged file at $PWD \nfrom $FNAME \nto $DNAME"
 
   # 文件上传

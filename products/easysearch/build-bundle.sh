@@ -161,11 +161,17 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   # echo "Check current files" && ls -lrt  $WORK/$PNAME
 
   # 重新打包
-  if [ "${DNAME##*.}" == "gz" ]; then
-    tar -zcf $DNAME *
+  MAJOR="${VERSION%%.*}"
+  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+    TOP_DIR="$PNAME-$VERSION"
+    mkdir "$TOP_DIR"
+    for f in *; do [ "$f" = "$TOP_DIR" ] || mv "$f" "$TOP_DIR"/; done
+    SRC=("$TOP_DIR")
   else
-    zip -r -q $DNAME *
+    SRC=(*)
   fi
+
+  if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" "${SRC[@]}"; else zip -r -q "$DNAME" "${SRC[@]}"; fi
 
   if [ -f $WORK/$PNAME/$DNAME ]; then
     echo "Repackaged file at $WORK/$PNAME/$DNAME"
