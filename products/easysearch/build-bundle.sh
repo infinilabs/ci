@@ -162,16 +162,26 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
 
   # 重新打包
   MAJOR="${VERSION%%.*}"
-  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
-    TOP_DIR="$PNAME-$VERSION"
-    mkdir "$TOP_DIR"
-    for f in *; do [ "$f" = "$TOP_DIR" ] || mv "$f" "$TOP_DIR"/; done
-    SRC=("$TOP_DIR")
-  else
-    SRC=(*)
+  TOP_DIR="$PNAME-$VERSION"
+
+  # 解压
+  if [ "${FNAME##*.}" == "gz" ]; then tar -zxf "$FNAME"; else unzip -q "$FNAME"; fi
+
+  # mac 平台的 tar.gz 改为 zip
+  if [ "${FNAME##*.}" == "gz" ] && [ "$(echo "$DNAME" | grep -wo mac)" == "mac" ]; then
+    DNAME=$(echo "$DNAME" | sed 's/.tar.gz/.zip/')
   fi
 
-  if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" "${SRC[@]}"; else zip -r -q "$DNAME" "${SRC[@]}"; fi
+  # 打包
+  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+    # 3.x+：包内保留 $TOP_DIR 这一层
+    if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" "$TOP_DIR"; else zip -r -q "$DNAME" "$TOP_DIR"; fi
+    mv "$DNAME" "$TOP_DIR"/ && cd "$TOP_DIR"
+  else
+    # 1.x/2.x：保持原逻辑，包内没有顶层目录
+    cd "$TOP_DIR"
+    if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" *; else zip -r -q "$DNAME" *; fi
+  fi
 
   if [ -f $WORK/$PNAME/$DNAME ]; then
     echo "Repackaged file at $WORK/$PNAME/$DNAME"

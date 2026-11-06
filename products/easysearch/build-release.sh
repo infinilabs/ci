@@ -38,19 +38,15 @@ for x in linux-amd64 linux-aarch64 mac-amd64 mac-aarch64 windows; do
     DNAME=$(echo "$DNAME" | sed 's/.tar.gz/.zip/')
   fi
 
-  # 3.x+：直接打包顶层目录；1.x/2.x：cd 进去打包内容
-  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
-    PACK_SRC=("$TOP_DIR")
-  else
-    cd "$TOP_DIR"
-    PACK_SRC=(*)
-  fi
-
   # 重新打包
-  if [ "${DNAME##*.}" == "gz" ]; then
-    tar -zcf "$DNAME" "${PACK_SRC[@]}"
+  if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+    # 3.x+：包内保留 $TOP_DIR 这一层，打完把产物移回 $TOP_DIR/，下游路径不变
+    if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" "$TOP_DIR"; else zip -r -q "$DNAME" "$TOP_DIR"; fi
+    mv "$DNAME" "$TOP_DIR"/ && cd "$TOP_DIR"
   else
-    zip -r -q "$DNAME" "${PACK_SRC[@]}"
+    # 1.x/2.x：包内没有顶层目录
+    cd "$TOP_DIR"
+    if [ "${DNAME##*.}" == "gz" ]; then tar -zcf "$DNAME" *; else zip -r -q "$DNAME" *; fi
   fi
   echo -e "Repackaged file at $PWD \nfrom $FNAME \nto $DNAME"
 
