@@ -19,10 +19,16 @@ echo "Publish setting $PNAME with docker tag $DOCKER_TAG"
 
 for t in amd64 arm64; do
   mkdir -p $WORK/{$PNAME-$t,agent-$t}
+  MAJOR="${VERSION%%.*}"
   EZS_FILE=$DEST/$PNAME-$VERSION-$BUILD_NUMBER-linux-$t.tar.gz
-  if [ -f $EZS_FILE ]; then
+
+  if [ -f "$EZS_FILE" ]; then
     echo -e "Extract file \nfrom $EZS_FILE \nto $WORK/$PNAME-$t"
-    tar -zxf $EZS_FILE -C $WORK/$PNAME-$t
+    if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+      tar -zxf "$EZS_FILE" -C "$WORK/$PNAME-$t" --strip-components=1
+    else
+      tar -zxf "$EZS_FILE" -C "$WORK/$PNAME-$t"
+    fi
   else
     echo "Error: $EZS_FILE not found exit now."
     exit 1
