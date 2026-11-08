@@ -3,6 +3,7 @@
 USE_GRAALVM=true
 USE_MACOS_TARGZ=false
 WORK="$(mktemp -d)"
+MAJOR="${VERSION%%.*}"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
 JAVA_VERSION=$BUNDLE_JAVA_VERSION
@@ -84,9 +85,19 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   mkdir -p $WORK/$PNAME && cd $WORK/$PNAME
   echo "Current work directory: $(pwd)"
   if [ "${FNAME##*.}" == "gz" ]; then
-    tar -zxf $WORK/$FNAME
+    if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+      tar -zxf "$WORK/$FNAME" --strip-components=1   # 3.x+：忽略最外层 $PNAME-$VERSION
+    else
+      tar -zxf "$WORK/$FNAME"
+    fi
   else
-    unzip -q $WORK/$FNAME
+    unzip -q "$WORK/$FNAME"
+    if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
+      # zip 没有 strip 选项：把 $PNAME-$VERSION 里的内容提上来（含隐藏文件）
+      shopt -s dotglob
+      mv "$PNAME-$VERSION"/* . && rmdir "$PNAME-$VERSION"
+      shopt -u dotglob
+    fi
   fi
  
   # 配置jdk
@@ -146,7 +157,7 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
     done
 
     # for debug
-    # echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
+    #echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt $WORK/$PNAME/plugins
   fi
 
   # Copy the JDK to the expected location
@@ -161,10 +172,9 @@ for x in linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64; do
   fi
 
   # for debug
-  # echo "Check current files" && ls -lrt  $WORK/$PNAME
+  #echo "Check current files" && ls -lrt  $WORK/$PNAME
 
   # 重新打包
-  MAJOR="${VERSION%%.*}"
   TOP_DIR="$PNAME-$VERSION"
 
   # 解压
