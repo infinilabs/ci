@@ -132,7 +132,7 @@ extract_product() {
 
   [[ -f "$src" ]] || die "$src not found, exit now."
 
-  echo -e "Extract file \nfrom $src \nto $out"
+  echo -e "Extract file \n\tfrom $src \n\tto $out"
   if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 3 ]]; then
     tar -zxf "$src" -C "$out" --strip-components=1
   else

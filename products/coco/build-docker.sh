@@ -24,7 +24,7 @@ for t in amd64 arm64; do
   if [[ -e $DEST/$EZS_FILE ]]; then
     file_size=$(stat -c%s "$DEST/$EZS_FILE")
     if [[ "$file_size" -gt 0 ]]; then
-      echo -e "Extract file \nfrom $DEST/$EZS_FILE \nto $WORK/$DNAME-$t"
+      echo -e "Extract file \n\tfrom $DEST/$EZS_FILE \n\tto $WORK/$DNAME-$t"
       tar -zxf $DEST/$EZS_FILE -C $WORK/$DNAME-$t
     else
       echo "Download failed or file is empty!"
