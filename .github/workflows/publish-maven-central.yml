@@ -215,6 +215,7 @@ jobs:
             :libs:easysearch-security-agent-bootstrap:bundleMavenCentral \
             :libs:easysearch-security-agent:bundleMavenCentral \
             :modules:analysis-common:bundleMavenCentral
+          ./gradlew :distribution:archives:integ-test-zip:bundleMavenCentral
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
