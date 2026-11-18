@@ -211,7 +211,11 @@ jobs:
             :client:sniffer:bundleMavenCentral \
             :test:framework:bundleMavenCentral \
             :distribution:archives:integ-test-zip:bundleMavenCentral \
-            :rest-api-spec:bundleMavenCentral
+            :rest-api-spec:bundleMavenCentral \
+            :libs:easysearch-security-agent-policy:publishToMavenLocal \
+            :libs:easysearch-security-agent-bootstrap:publishToMavenLocal \
+            :libs:easysearch-security-agent:publishToMavenLocal \
+            :modules:analysis-common:publishToMavenLocal
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
