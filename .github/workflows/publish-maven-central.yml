@@ -125,15 +125,27 @@ jobs:
 
       - name: Checkout ${{ env.PNAME }} code
         run: |
+          BRANCH="main"
           REPO_NAME=$PNAME
+          MAJOR="${PUBLISH_VERSION%%.*}"
           if [ "$PNAME" == 'license' ]; then
             REPO_NAME="$PNAME-java"
           fi
           if [ "$PNAME" == 'spring-ai' ]; then
             REPO_NAME="spring-ai-easysearch-store"
           fi
-          echo "Cloning component repository: $REPO_NAME"
-          git clone --depth 1 --branch main $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
+
+          if [ "$PNAME" == 'easysearch' ]; then
+            if [[ "$MAJOR" =~ ^[0-9]+$ && "$MAJOR" -ge 2 ]]; then
+              if [[ "$MAJOR" -ge 3 ]]; then
+                BRANCH="main"
+              else
+                BRANCH="2.x"
+              fi
+            fi
+          fi
+          echo "Cloning component repository: $REPO_NAME with $BRANCH"
+          git clone --depth 1 --branch $BRANCH $SSH_GIT_REPO/$REPO_NAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
       
       - name: Prepare publish version ${{ env.PNAME}}@${{env.PUBLISH_VERSION }}
