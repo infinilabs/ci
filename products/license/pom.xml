@@ -49,7 +49,7 @@
         
         <!-- Dependency Versions Management -->
         <logback.version>1.6.6</logback.version>
-        <jackson.version>2.22.0</jackson.version>
+        <jackson.version>2.23.0</jackson.version>
 
         <junit.version>4.13.2</junit.version>
     </properties>
