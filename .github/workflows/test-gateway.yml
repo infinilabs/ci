@@ -20,7 +20,7 @@ on:
         description: 'Easysearch Published Version'
         required: false
         type: string
-        default: "2.5.1"
+        default: "2.5.2"
       AGENT_PUBLISH_VERSION:
         description: 'Agent Published Version'
         required: false
