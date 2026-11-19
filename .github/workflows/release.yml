@@ -374,6 +374,26 @@ jobs:
           git clone $GIT_BASE/$REPO $GITHUB_WORKSPACE/$REPO
           cd $GITHUB_WORKSPACE/$REPO
           git config user.name github-actions && git config user.email github-actions@github.com
+
+          # Easysearch: 1.x / 2.x 是旧版本线，必须在对应分支上打 tag；3.x 及以上在 main 上打
+          if [[ "$REPO" == "easysearch" ]]; then
+            MAJOR="${VERSION%%.*}"
+            case "$MAJOR" in
+              1|2)
+                TAG_BRANCH="${MAJOR}.x"
+                if ! git ls-remote --exit-code --heads origin "$TAG_BRANCH" >/dev/null 2>&1; then
+                  echo "❌ Branch $TAG_BRANCH not found in $REPO, refusing to tag $VERSION on the default branch."
+                  exit 1
+                fi
+                git checkout "$TAG_BRANCH"
+                echo "Easysearch $VERSION -> tagging on branch $TAG_BRANCH"
+                ;;
+              *)
+                echo "Easysearch $VERSION -> tagging on default branch (main)"
+                ;;
+            esac
+          fi
+
           # Check if the tag already exists, if yes, skip to avoid duplicate tag error
           PVER=$(echo "v$VERSION" | sed 's/-.*//')
           if git rev-parse --verify "refs/tags/$PVER" >/dev/null 2>&1; then
@@ -516,12 +536,23 @@ jobs:
 
           # 2. Update Easysearch Version
           if [[ "$DO_EZS" == "true" ]]; then
-            if [[ "$EZS_VER" =~ ^1\. ]]; then
-              echo "⏭️ Easysearch 1.x legacy patch, skipping variable update."
-            elif [[ ! -z "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
-               EZS_VER_CLEAN="${EZS_VER%%-*}"
-               echo "Updating GitHub release Easysearch version to $EZS_VER_CLEAN"
-               gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
+            if [[ -n "$EZS_VER" && "$EZS_VER" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z0-9_.-]+)?$ ]]; then
+              EZS_VER_CLEAN="${EZS_VER%%-*}"
+
+              # 读取已记录的版本（变量不存在时视为空）
+              CURRENT_VER="$(gh variable get EASYSEARCH_PUBLISH_VERSION 2>/dev/null || true)"
+              CURRENT_VER="${CURRENT_VER//[[:space:]]/}"
+
+              if [[ -n "$CURRENT_VER" ]] && \
+                 [[ "$(printf '%s\n%s\n' "$CURRENT_VER" "$EZS_VER_CLEAN" | sort -V | tail -n1)" == "$CURRENT_VER" ]]; then
+                # 已记录版本 >= 本次发布版本（含相等）
+                echo "⏭️ Easysearch $EZS_VER_CLEAN <= recorded $CURRENT_VER, skipping variable update."
+              else
+                echo "Updating GitHub release Easysearch version: ${CURRENT_VER:-<unset>} -> $EZS_VER_CLEAN"
+                gh variable set EASYSEARCH_PUBLISH_VERSION --body "$EZS_VER_CLEAN"
+              fi
+            else
+              echo "⚠️ EZS_VER '$EZS_VER' is empty or not a valid version, skipping."
             fi
           else
             echo "Skipping Easysearch variable update."
@@ -914,8 +945,14 @@ jobs:
             run_update "loadgen" "$LOADGEN_VER"
           fi
           if [[ "$DO_EZS" == "true" ]]; then
-            if [[ "$EZS_VER" =~ ^1\. ]]; then
-              echo "⏭️ Easysearch 1.x legacy patch, skipping official website update."
+            EZS_VER_CLEAN="${EZS_VER%%-*}"
+            CURRENT_VER="$(gh variable get EASYSEARCH_PUBLISH_VERSION 2>/dev/null || true)"
+            CURRENT_VER="${CURRENT_VER//[[:space:]]/}"
+
+            if [[ -n "$CURRENT_VER" && -n "$EZS_VER_CLEAN" && "$CURRENT_VER" != "$EZS_VER_CLEAN" ]] && \
+               [[ "$(printf '%s\n%s\n' "$CURRENT_VER" "$EZS_VER_CLEAN" | sort -V | tail -n1)" == "$CURRENT_VER" ]]; then
+              # 已记录版本 > 本次发布版本，说明发布的是旧版本线的补丁
+              echo "⏭️ Easysearch $EZS_VER_CLEAN < recorded $CURRENT_VER, skipping official website update."
             else
               run_update "easysearch" "$EZS_VER"
             fi
