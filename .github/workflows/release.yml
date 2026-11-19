@@ -312,18 +312,19 @@ jobs:
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' && matrix.product == 'easysearch' }}
         continue-on-error: true
-        uses: infinilabs/gitea-pr@v1
+        uses: infinilabs/gitea-pr@v2
         env:
-          https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
-          http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
+          HTTP_PROXY: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
+          HTTPS_PROXY: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: https://${{ secrets.HTTP_GIT_REPO}}
+          url: http://${{ secrets.HTTP_INNER_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: ${{ env.PNAME }}
           base: main
           branch: ${{ env.PR_BRANCH}}
           assignee : hardy
           tea-version: 0.9.2
+          use-proxy: true
           pr-label: "auto-merge, automated"
 
   create-tag:
@@ -984,17 +985,18 @@ jobs:
       - name: Create Pull Request (Gitea)
         if: ${{ steps.commit_and_push.outputs.changes_pushed == 'true' }}
         continue-on-error: true
-        uses: infinilabs/gitea-pr@v1
+        uses: infinilabs/gitea-pr@v2
         env:
-          https_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
-          http_proxy: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
+          HTTP_PROXY: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
+          HTTPS_PROXY: http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}
         with:
-          url: https://${{ secrets.HTTP_GIT_REPO}}
+          url: http://${{ secrets.HTTP_INNER_GIT_REPO}}
           token: ${{ secrets.GITEA_TOKEN }}
           path: official-website-cn
           base: master
           branch: ${{ env.PR_BRANCH }}
           assignee: hardy
+          use-proxy: true
           tea-version: 0.9.2
           pr-label: "auto-merge, automated"
 
