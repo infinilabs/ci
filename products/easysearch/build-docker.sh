@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 #
 # Prepare the docker build context for $PNAME:
-#   1. extract the product tarball for each arch
+#   1. extract the product tarball for each arch (from local $GITHUB_WORKSPACE/dest)
 #   2. download + extract the matching agent (stable -> snapshot fallback)
 #   3. switch distribution type to docker, install plugins
 #
+# The per-arch preparation (amd64 / arm64) runs in parallel; each arch writes to
+# its own directory and its log is printed as a ::group:: once it finishes.
+# Set ARCH_PARALLEL=false to run the archs one after another.
+#
 # Required env: GITHUB_WORKSPACE PNAME VERSION BUILD_NUMBER AGENT_VERSION RELEASE_URL
 # Optional env: EZS_TAG EZS_VER PROBE_MAX (default 5) DOWNLOAD_MAX (default 3)
+#               ARCH_PARALLEL (default true)
 
 set -euo pipefail
 
@@ -23,6 +28,7 @@ ARCHS=(amd64 arm64)
 MAJOR="${VERSION%%.*}"
 PROBE_MAX="${PROBE_MAX:-5}"
 DOWNLOAD_MAX="${DOWNLOAD_MAX:-3}"
+ARCH_PARALLEL="${ARCH_PARALLEL:-true}"
 
 # plugin -> space separated list of plugins that must be installed first
 declare -A PLUGIN_DEPS=(
@@ -235,23 +241,9 @@ install_plugins() {
   shopt -u nullglob
 }
 
-# ── main ───────────────────────────────────────────────────
-echo "Prepare build docker files"
-if [[ -d "$DEST" ]]; then
-  ls -lrt "$DEST"/*.tar.gz || true
-  ls -lrt "$DEST/plugins" || true
-else
-  mkdir -p "$DEST"
-fi
-
-cd "$WORK"
-
-# docker image tag
-DOCKER_TAG="${EZS_TAG:-${EZS_VER:-$(grep "$PNAME" "$GITHUB_WORKSPACE/.latest" | awk -F'"' '{print $(NF-1)}' || true)}}"
-[[ -n "$DOCKER_TAG" ]] || warn "docker tag for $PNAME is empty"
-echo "Publish $PNAME with docker tag $DOCKER_TAG"
-
-for t in "${ARCHS[@]}"; do
+# ── per-arch preparation (each arch only touches its own directories) ──
+prepare_arch() {
+  local t="$1"
   echo "===== $t ====="
   mkdir -p "$WORK/$PNAME-$t" "$WORK/agent-$t"
 
@@ -268,4 +260,46 @@ for t in "${ARCHS[@]}"; do
     # for debug
     # echo "Checked the installed plugins for $PNAME-$VERSION." && ls -lrt "$WORK/$PNAME-$t/plugins"
   fi
+}
+
+# ── main ───────────────────────────────────────────────────
+echo "Prepare build docker files"
+if [[ -d "$DEST" ]]; then
+  ls -lrt "$DEST"/*.tar.gz || true
+  ls -lrt "$DEST/plugins" || true
+else
+  mkdir -p "$DEST"
+fi
+
+cd "$WORK"
+
+# docker image tag
+DOCKER_TAG="${EZS_TAG:-${EZS_VER:-$(grep "$PNAME" "$GITHUB_WORKSPACE/.latest" | awk -F'"' '{print $(NF-1)}' || true)}}"
+[[ -n "$DOCKER_TAG" ]] || warn "docker tag for $PNAME is empty"
+echo "Publish $PNAME with docker tag $DOCKER_TAG"
+
+if [[ "$ARCH_PARALLEL" != "true" ]]; then
+  for t in "${ARCHS[@]}"; do
+    prepare_arch "$t"
+  done
+  exit 0
+fi
+
+LOG_DIR="$(mktemp -d)"
+declare -A PIDS=()
+for t in "${ARCHS[@]}"; do
+  prepare_arch "$t" >"$LOG_DIR/$t.log" 2>&1 &
+  PIDS[$t]=$!
 done
+
+failed=()
+for t in "${ARCHS[@]}"; do
+  if wait "${PIDS[$t]}"; then rc=0; else rc=$?; failed+=("$t"); fi
+  echo "::group::prepare $t (exit $rc)"
+  cat "$LOG_DIR/$t.log"
+  echo "::endgroup::"
+done
+rm -rf "$LOG_DIR"
+
+((${#failed[@]} == 0)) || die "prepare failed for arch: ${failed[*]}"
+echo "Docker build context ready for: ${ARCHS[*]}"
