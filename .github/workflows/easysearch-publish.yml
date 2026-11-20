@@ -58,7 +58,7 @@ on:
         required: false
         default: "2.5.2"
       AGENT_PUBLISH_VERSION:
-        description: "Agent Published Version"
+        description: "Docker Bundle Agent Version"
         required: false
         default: "1.30.3-2407"
       PUBLISH_STABLE:
