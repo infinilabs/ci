@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "1.25.2"
       PUBLISH_GATEWAY_REF:

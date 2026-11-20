@@ -54,8 +54,8 @@ on:
         description: 'Publish Loadgen Version'
         required: false
         default: "1.0.0"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: true      
@@ -195,8 +195,8 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else

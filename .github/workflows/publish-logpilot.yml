@@ -19,7 +19,7 @@ on:
         type: boolean
         default: true
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "0.1.0"
   schedule:
@@ -156,8 +156,8 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.LOGPILOT_PUBLISH || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.LOGPILOT_PUBLISH || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else

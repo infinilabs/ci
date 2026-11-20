@@ -41,7 +41,7 @@ for x in linux-amd64 linux-aarch64; do
   echo -e "Repackaged file at $PWD \nfrom $FNAME \nto $DNAME"
 
   # 文件上传
-  if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+  if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
     echo Upload $DNAME to oss
     [ ! -f /tmp/.oss.yml ] && cp -rf $GITHUB_WORKSPACE/.oss.yml /tmp
     if [[ "$(echo "$PRE_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
@@ -77,7 +77,7 @@ for q in "${plugins[@]}"; do
   fi
   
   if [ "$p" == "sql" ]; then
-    if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+    if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
       echo Upload $SRC/plugins/$q/sql-jdbc/build/libs/sql-jdbc-$VERSION.jar to oss
       if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         echo "Publish Docker <Only> image no need to upload with $p"
@@ -105,7 +105,7 @@ for q in "${plugins[@]}"; do
       cp -rf "$zip" "$f"
       (cd "$(dirname "$f")" && sha512sum "$filename" > "$filename.sha512")
 
-      #if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+      #if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
         #if [[ "$(echo "$ONLY_DOCKER" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
           #echo "Publish Docker <Only> image no need to upload with $p"
         #else

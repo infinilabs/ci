@@ -19,7 +19,7 @@ on:
     inputs:
 
       AGENT_PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "1.33.0-2666"
       EASYSEARCH_PUBLISH_BRANCH:
@@ -31,8 +31,8 @@ on:
         required: false
         type: boolean
         default: true
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: true       
@@ -157,12 +157,12 @@ jobs:
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
             fi
           fi
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -260,7 +260,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ matrix.product }} >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ matrix.product }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
@@ -339,7 +339,7 @@ jobs:
   update_repo:
     runs-on: ubuntu-latest
     needs: publish
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -366,7 +366,7 @@ jobs:
           FULL_VERSION="${VERSION}-${BUILD_NUMBER}"
           source $GITHUB_WORKSPACE/scripts/update_publish_version.sh
 
-          update_yaml_version "easysearch-publish.yml"        "AGENT_PUBLISH_VERSION" "$FULL_VERSION"
+          #update_yaml_version "easysearch-publish.yml"        "AGENT_PUBLISH_VERSION" "$FULL_VERSION"
           update_yaml_version "publish-cloud.yml"             "GATEWAY_VERSION"       "$VERSION"
           update_yaml_version "publish-agent.yml"             "PUBLISH_VERSION"       "$VERSION"
           update_yaml_version "publish-elasticsearch.yml"     "AGENT_PUBLISH_VERSION" "$FULL_VERSION"

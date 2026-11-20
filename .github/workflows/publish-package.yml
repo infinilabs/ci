@@ -49,8 +49,8 @@ on:
         description: 'Publish Package Build Number'
         required: false
         default: "2374"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: true

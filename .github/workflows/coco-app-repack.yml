@@ -18,11 +18,11 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: true
         default: ""
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: true
         type: boolean
         default: false

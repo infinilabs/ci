@@ -11,8 +11,8 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: false
@@ -179,7 +179,7 @@ jobs:
         sleep 5
 
     - name: Deploy ${{env.PNAME}} 
-      if: ${{ !inputs.PUBLISH_RELEASE }}
+      if: ${{ !inputs.PUBLISH_STABLE }}
       timeout-minutes: 60
       continue-on-error: true
       working-directory: ${{ env.PNAME }}

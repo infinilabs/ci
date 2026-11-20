@@ -51,8 +51,8 @@ on:
         description: 'CocoServer Published version'
         required: false
         default: "1.0.0"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: true
@@ -265,12 +265,12 @@ jobs:
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               PUBLISH_VERSION=${{ vars.CLOUD_PUBLISH_VERSION }}
             fi
           fi
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.CLOUD_PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.CLOUD_PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -331,7 +331,7 @@ jobs:
           ls -lrt $WORK/$PNAME/bin
       
       - name: Archive ${{ env.PNAME }} files
-        if: ${{ inputs.PUBLISH_RELEASE }}
+        if: ${{ inputs.PUBLISH_STABLE }}
         run: |
           cd $WORK/$PNAME/bin
           for tag in $TARGETS; do

@@ -14,8 +14,8 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: false
@@ -139,7 +139,7 @@ jobs:
         (cd $DEST && echo "pizza.rs" > CNAME)
 
     - name: Publish to github website repo
-      if: ${{ inputs.PUBLISH_RELEASE }}
+      if: ${{ inputs.PUBLISH_STABLE }}
       run: |
         cd $DEST
         git init .
@@ -157,7 +157,7 @@ jobs:
         (cd $DEST && zip -qr ../$PNAME.zip .)
 
     - name: Deploy ${{env.PNAME}} to staging for check
-      if: ${{ !inputs.PUBLISH_RELEASE }}
+      if: ${{ !inputs.PUBLISH_STABLE }}
       timeout-minutes: 60
       continue-on-error: true
       run: |

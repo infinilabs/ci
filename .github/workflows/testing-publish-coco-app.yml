@@ -38,11 +38,11 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: true
         default: "1.0.0"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: true
         type: boolean
         default: true
@@ -91,7 +91,7 @@ jobs:
           echo "Running on ${{ matrix.platform }} with target ${{ matrix.target }} and arch ${{ matrix.arch }}"
 
       - name: Set version & tag with ${{ matrix.platform }}
-        if: ${{ inputs.PUBLISH_RELEASE }}
+        if: ${{ inputs.PUBLISH_STABLE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
@@ -136,7 +136,7 @@ jobs:
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
-        if: ${{ !inputs.PUBLISH_RELEASE }}
+        if: ${{ !inputs.PUBLISH_STABLE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |

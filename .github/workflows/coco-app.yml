@@ -44,11 +44,11 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "0.11.0"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: false
@@ -113,7 +113,7 @@ jobs:
           echo "Running on ${{ matrix.platform }} with target ${{ matrix.target }} and arch ${{ matrix.arch }}"
 
       - name: Set version & tag with ${{ matrix.platform }}
-        if: ${{ inputs.PUBLISH_RELEASE }}
+        if: ${{ inputs.PUBLISH_STABLE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
@@ -158,7 +158,7 @@ jobs:
           echo "UPGRADE=$tag" >> $GITHUB_ENV
 
       - name: Set Version with ${{ matrix.platform }}
-        if: ${{ !inputs.PUBLISH_RELEASE }}
+        if: ${{ !inputs.PUBLISH_STABLE }}
         working-directory: ${{ env.REPO-NAME }}
         shell: bash
         run: |
@@ -411,7 +411,7 @@ jobs:
                 offset=${{ vars.OFFSET }}
                 build_number=$((run_number + offset))
               fi
-              if [[ "${{ inputs.PUBLISH_RELEASE }}" != "true" ]]; then
+              if [[ "${{ inputs.PUBLISH_STABLE }}" != "true" ]]; then
                 IFS=. read -r major minor patch <<< "$current_version"
                 if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
                   current_version="$current_version-SNAPSHOT"
@@ -451,7 +451,7 @@ jobs:
   update_repo:
     runs-on: ubuntu-latest
     needs: release
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

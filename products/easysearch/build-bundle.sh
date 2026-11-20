@@ -15,7 +15,7 @@ USE_MACOS_TARGZ=false
 # ── 通用函数 ──────────────────────────────────────────────
 is_true() { [[ "$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')" == "true" ]]; }
 should_upload_oss() {
-  is_true "${PUBLISH_RELEASE:-}" && ! is_true "${ONLY_DOCKER:-}" && ! is_true "${SKIP_OSS_UPLOAD:-}"
+  is_true "${PUBLISH_STABLE:-}" && ! is_true "${ONLY_DOCKER:-}" && ! is_true "${SKIP_OSS_UPLOAD:-}"
 }
 should_stage() { is_true "${STAGE_ARTIFACTS:-}" && ! is_true "${ONLY_DOCKER:-}"; }
 

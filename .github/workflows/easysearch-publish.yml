@@ -11,7 +11,7 @@ env:
   TOKEN: ${{ secrets.X_TOKEN }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
+  PUBLISH_STABLE: ${{ vars.PUBLISH_STABLE }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
@@ -60,24 +60,24 @@ on:
       AGENT_PUBLISH_VERSION:
         description: "Agent Published Version"
         required: false
-        default: "1.31.0-2453"
-      PUBLISH_RELEASE:
-        description: "Publish Release"
+        default: "1.30.3-2407"
+      PUBLISH_STABLE:
+        description: "Publish Stable"
         required: false
         type: boolean
-        default: false
+        default: true
       ONLY_DOCKER:
-        description: "Publish Docker <Only>"
+        description: "Publish Docker"
         required: false
         type: boolean
         default: false
       SKIP_OSS_UPLOAD:
-        description: "Skip release upload"
+        description: "Skip upload packages to release"
         required: false
         type: boolean
         default: true
       UPLOAD_ARTIFACTS:
-        description: "Also upload packages with github"
+        description: "Also upload packages as github artifacts"
         required: false
         type: boolean
         default: false
@@ -107,13 +107,13 @@ jobs:
           fi
           echo "AGENT_VERSION=$AGENT_VERSION" >> $GITHUB_ENV
 
-          PUBLISH_RELEASE="$(echo "${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}" | tr '[:upper:]' '[:lower:]')"
+          PUBLISH_STABLE="$(echo "${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}" | tr '[:upper:]' '[:lower:]')"
           SKIP_OSS_UPLOAD="$(echo "${{ inputs.SKIP_OSS_UPLOAD || 'false' }}" | tr '[:upper:]' '[:lower:]')"
           UPLOAD_ARTIFACTS="$(echo "${{ inputs.UPLOAD_ARTIFACTS || 'false' }}" | tr '[:upper:]' '[:lower:]')"
           if [[ "$SKIP_OSS_UPLOAD" == "true" ]]; then STAGE_ARTIFACTS=true; else STAGE_ARTIFACTS="$UPLOAD_ARTIFACTS"; fi
-          if [[ "$PUBLISH_RELEASE" != "true" ]]; then STAGE_ARTIFACTS=false; fi
+          if [[ "$PUBLISH_STABLE" != "true" ]]; then STAGE_ARTIFACTS=false; fi
           {
-            echo "PUBLISH_RELEASE=$PUBLISH_RELEASE"
+            echo "PUBLISH_STABLE=$PUBLISH_STABLE"
             echo "SKIP_OSS_UPLOAD=$SKIP_OSS_UPLOAD"
             echo "STAGE_ARTIFACTS=$STAGE_ARTIFACTS"
           } >> $GITHUB_ENV
@@ -153,7 +153,7 @@ jobs:
           echo "BUILD_JAVA_VERSION      = $BUILD_JAVA_VERSION"
           echo "BUILD_JAVA_DISTRIBUTION = $BUILD_JAVA_DISTRIBUTION"
           echo "BUNDLE_JAVA_VERSION     = $BUNDLE_JAVA_VERSION"
-          echo "PUBLISH_RELEASE         = $PUBLISH_RELEASE"
+          echo "PUBLISH_STABLE         = $PUBLISH_STABLE"
           echo "SKIP_OSS_UPLOAD         = $SKIP_OSS_UPLOAD"
           echo "STAGE_ARTIFACTS         = $STAGE_ARTIFACTS"
           echo "::endgroup::"
@@ -173,7 +173,7 @@ jobs:
             echo "| BUILD_JAVA_VERSION | \`$BUILD_JAVA_VERSION\` |"
             echo "| BUILD_JAVA_DISTRIBUTION | \`$BUILD_JAVA_DISTRIBUTION\` |"
             echo "| BUNDLE_JAVA_VERSION | \`$BUNDLE_JAVA_VERSION\` |"
-            echo "| PUBLISH_RELEASE | \`$PUBLISH_RELEASE\` |"
+            echo "| PUBLISH_STABLE | \`$PUBLISH_STABLE\` |"
             echo "| SKIP_OSS_UPLOAD | \`$SKIP_OSS_UPLOAD\` |"
             echo "| STAGE_ARTIFACTS | \`$STAGE_ARTIFACTS\` |"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -211,7 +211,7 @@ jobs:
           # check git log
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           # setting env PUBLISH_VERSION
-          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
             fi
@@ -221,9 +221,9 @@ jobs:
             echo PUBLISH_VERSION=$PUBLISH_VERSION >> $GITHUB_ENV
           fi
           # setting build version and number
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
-            if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
               DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
@@ -242,7 +242,7 @@ jobs:
               DYNAMIC_VERSION=$PUBLISH_VERSION
               RUN_NUMBER=${{ github.run_number }}
               OFFSET=${{ vars.OFFSET }}
-              if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
                 DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
               else
                 DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))"
@@ -294,10 +294,10 @@ jobs:
           fi
           echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
 
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
             $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-            echo "Publish release version $STEP_VERSION with ${{ github.event_name }}"
+            echo "Publish Stable version $STEP_VERSION with ${{ github.event_name }}"
           else
             export BUILD_TYPE="${{ github.event_name }}"
             export PUBLISHED_VERSION="$STEP_VERSION"
@@ -327,8 +327,8 @@ jobs:
       - name: Repackage and bundle for publish with ${{ env.PUBLISH_VERSION }}
         run: |
           # build release or snapshot
-          if [[ "$PUBLISH_RELEASE" == "true" ]]; then
-            export PUBLISH_RELEASE ONLY_DOCKER SKIP_OSS_UPLOAD STAGE_ARTIFACTS
+          if [[ "$PUBLISH_STABLE" == "true" ]]; then
+            export PUBLISH_STABLE ONLY_DOCKER SKIP_OSS_UPLOAD STAGE_ARTIFACTS
             $GITHUB_WORKSPACE/products/$PNAME/build-release.sh
             $GITHUB_WORKSPACE/products/$PNAME/build-bundle.sh
           else
@@ -446,7 +446,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload snapshot versions artifact
-        if: ${{ !(inputs.PUBLISH_RELEASE == true) }}
+        if: ${{ !(inputs.PUBLISH_STABLE == true) }}
         uses: actions/upload-artifact@v7
         with:
           name: snapshot-versions
@@ -456,7 +456,6 @@ jobs:
           include-hidden-files: true
 
       - name: Build for docker version ${{ env.VERSION }}-${{ env.BUILD_NUMBER }} with agent version ${{ env.AGENT_VERSION }}
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' }}
         env:
           http_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
           https_proxy: "http://${{ secrets.LOCAL_HOST }}:${{ secrets.LOCAL_PORT }}"
@@ -465,25 +464,22 @@ jobs:
           echo "Build docker for $PNAME start..."
           #prepare docker build
           chmod 755 $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             EZS_VER=$VERSION-$BUILD_NUMBER $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           else
             EZS_TAG="$VERSION-$BUILD_NUMBER" $GITHUB_WORKSPACE/products/$PNAME/build-docker.sh
           fi
 
       - name: Set up qemu
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' }}
         uses: docker/setup-qemu-action@v4
 
       - name: Set up docker buildx
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' }}
         uses: docker/setup-buildx-action@v4
         #with:
         #  buildkitd-flags: --debug
 
       - name: Login to dockerhub
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' }}
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -495,13 +491,13 @@ jobs:
           DEV_DOCKER_REPO=$(echo "${{ secrets.INFINI_DOCKER_REGISTRY }}" | sed 's|/$||;s|https://||')
           echo "DEV_REPO_NAME=$DEV_DOCKER_REPO/infinilabs/$PNAME" >> $GITHUB_ENV
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Docker Build and push with anolisos ${{ env.VERSION }}-${{ github.run_number }}
         uses: docker/build-push-action@v7
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' && (github.event_name == 'workflow_dispatch' || inputs.PUBLISH_RELEASE == true) }}
+        if: ${{ github.event_name == 'workflow_dispatch' || inputs.PUBLISH_STABLE == true }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile.anolisos
@@ -518,7 +514,6 @@ jobs:
 
       - name: Docker Build and push with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
         uses: docker/build-push-action@v7
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' }}
         with:
           context: ${{ github.workspace }}/products/${{ env.PNAME }}
           file: ${{ github.workspace }}/products/${{ env.PNAME }}/Dockerfile
@@ -536,7 +531,7 @@ jobs:
           #no-cache: true
 
       - name: Login to Dev Docker registry
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' && github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true }}
         uses: docker/login-action@v4
         with:
           registry: ${{ secrets.INFINI_DOCKER_REGISTRY }}
@@ -544,7 +539,7 @@ jobs:
           password: ${{ secrets.INFINI_DOCKER_PASSWORD }}
 
       - name: Build and push Dev Docker image
-        if: ${{ env.SKIP_OSS_UPLOAD != 'true' && github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true }}
         timeout-minutes: 30
         continue-on-error: true
         uses: docker/build-push-action@v7
@@ -577,7 +572,7 @@ jobs:
   update_repo:
     runs-on: ubuntu-latest
     needs: publish
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true && inputs.ONLY_DOCKER == false && inputs.SKIP_OSS_UPLOAD == false && startsWith(inputs.PUBLISH_VERSION, '2.') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true && inputs.ONLY_DOCKER == false && inputs.SKIP_OSS_UPLOAD == false && startsWith(inputs.PUBLISH_VERSION, '2.') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -639,7 +634,7 @@ jobs:
   update_snapshot_versions:
     runs-on: ubuntu-latest
     needs: publish
-    if: ${{ success() && !(github.event_name == 'workflow_dispatch' && inputs.PUBLISH_RELEASE == true) }}
+    if: ${{ success() && !(github.event_name == 'workflow_dispatch' && inputs.PUBLISH_STABLE == true) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

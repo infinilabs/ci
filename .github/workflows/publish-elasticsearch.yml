@@ -8,7 +8,7 @@ env:
   DNAME: agent
   PNAME: elasticsearch
   TZ: Asia/Shanghai
-  PUBLISH_RELEASE: "TRUE"
+  PUBLISH_STABLE: "TRUE"
   RELEASE_URL: ${{ vars.RELEASE_URL }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}

@@ -15,15 +15,15 @@ on:
   workflow_dispatch:
     inputs:
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "0.9.0"
       PUBLISH_EASYSEARCH_VERSION:
-        description: 'Publish Release Easysearch Version'
+        description: 'Publish Stable Easysearch Version'
         required: false
         default: "1.15.6-2460"
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: false
@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
                 PUBLISH_VERSION="${BASH_REMATCH[1]}"
@@ -155,8 +155,8 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -264,7 +264,7 @@ jobs:
 
   publish:
     name: Publish coco server files and docker
-    if: ${{ github.event_name == 'schedule' || inputs.PUBLISH_RELEASE == true }}
+    if: ${{ github.event_name == 'schedule' || inputs.PUBLISH_STABLE == true }}
     runs-on: ubuntu-latest
     env:
         DNAME: easysearch
@@ -326,7 +326,7 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
                 PUBLISH_VERSION="${BASH_REMATCH[1]}"
@@ -390,8 +390,8 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -484,7 +484,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/$PNAME >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/$PNAME:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
           
@@ -598,7 +598,7 @@ jobs:
       - name: Setup coco server env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               IFS='-' read -r PUBLISH_VERSION BUILD_NUMBER <<< "${{ vars.COCO_PUBLISH_VERSION }}"
               if [[ "${{ inputs.PUBLISH_VERSION }}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
                 PUBLISH_VERSION="${BASH_REMATCH[1]}"
@@ -668,8 +668,8 @@ jobs:
         run: |
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -778,7 +778,7 @@ jobs:
           echo "Finished deploying $PNAME to staging at $(date +'%m-%d %H:%M:%S')"
 
       - name: Deploy files to production with ${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
-        if: ${{ inputs.PUBLISH_RELEASE == 'true' }}
+        if: ${{ inputs.PUBLISH_STABLE == 'true' }}
         timeout-minutes: 30
         continue-on-error: true
         run: |
@@ -818,7 +818,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ env.PNAME }}${{ env.ENT }} >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ env.PNAME }}${{ env.ENT }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 

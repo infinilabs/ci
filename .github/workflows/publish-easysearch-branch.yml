@@ -11,7 +11,7 @@ env:
   TOKEN: ${{ secrets.X_TOKEN }}
   PRE_RELEASE: ${{ vars.PRE_RELEASE }}
   RELEASE_URL: ${{ vars.RELEASE_URL }}
-  PUBLISH_RELEASE: ${{ vars.PUBLISH_RELEASE }}
+  PUBLISH_STABLE: ${{ vars.PUBLISH_STABLE }}
   JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION }}
   JAVA_VERSION: ${{ vars.JAVA_VERSION }}
   GRADLE_VERSION: ${{ vars.GRADLE_VERSION }}
@@ -63,8 +63,8 @@ on:
         description: "Publish With Agent Version"
         required: false
         default: "1.30.2-2333"
-      PUBLISH_RELEASE:
-        description: "Publish Release"
+      PUBLISH_STABLE:
+        description: "Publish Stable"
         required: false
         type: boolean
         default: true
@@ -164,7 +164,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
           # for build init
-          if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               PUBLISH_VERSION=${{ vars.EASYSEARCH_PUBLISH_VERSION }}
             fi
@@ -181,10 +181,10 @@ jobs:
           fi
           echo STEP_VERSION=$STEP_VERSION >> $GITHUB_ENV
 
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" = "true" ]]; then
             $GITHUB_WORKSPACE/products/$PNAME/init-release.sh
-            echo "Publish release version $STEP_VERSION with ${{ github.event_name }}"
+            echo "Publish Stable version $STEP_VERSION with ${{ github.event_name }}"
           else
             export BUILD_TYPE="${{ github.event_name }}"
             export PUBLISHED_VERSION="${{ vars.EASYSEARCH_PUBLISH_VERSION }}"
@@ -228,9 +228,9 @@ jobs:
 
       - name: Repackage and bundle for publish with ${{ env.STEP_VERSION}}
         run: |
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
           if [[ "$(echo "$PUBLISH_VERSION" | grep -o '-' | wc -l)" -eq 1 ]]; then
-            if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+            if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
               DYNAMIC_BUILD_NUMBER="$(date +%Y%m%d)-SNAPSHOT"
@@ -249,7 +249,7 @@ jobs:
               DYNAMIC_VERSION=$PUBLISH_VERSION
               RUN_NUMBER=${{ github.run_number }}
               OFFSET=${{ vars.OFFSET }}
-              if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+              if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
                 DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))-SNAPSHOT"
               else
                 DYNAMIC_BUILD_NUMBER="$((RUN_NUMBER + OFFSET))"
@@ -275,7 +275,7 @@ jobs:
           echo "Build $PNAME with [ VERSION $VERSION | BUILD_NUMBER $BUILD_NUMBER ] at $BUILD_DATE"
 
           # build release or snapshot
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             $GITHUB_WORKSPACE/products/$PNAME/build-release.sh
             $GITHUB_WORKSPACE/products/$PNAME/build-bundle.sh
           else

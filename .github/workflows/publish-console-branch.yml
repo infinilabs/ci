@@ -38,8 +38,8 @@ on:
         required: false
         type: boolean
         default: false
-      PUBLISH_RELEASE:
-        description: 'Publish Release'
+      PUBLISH_STABLE:
+        description: 'Publish Stable'
         required: false
         type: boolean
         default: true
@@ -49,7 +49,7 @@ on:
         type: boolean
         default: false
       PUBLISH_VERSION:
-        description: 'Publish Release Version'
+        description: 'Publish Stable Version'
         required: false
         default: "1.31.1"
       PUBLISH_AGENT_BRANCH:
@@ -262,12 +262,12 @@ jobs:
           cd $WORK/$PNAME
           echo "Build $PNAME at $PWD"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.PUBLISH_RELEASE}}" != "true" ]]; then
+            if [[ "${{ inputs.PUBLISH_STABLE}}" != "true" ]]; then
               PUBLISH_VERSION=${{ vars.PUBLISH_VERSION }}
             fi
           fi
-          PUBLISH_RELEASE="${{ inputs.PUBLISH_RELEASE || vars.PUBLISH_RELEASE || 'FALSE' }}"
-          if [[ "$(echo "$PUBLISH_RELEASE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
+          PUBLISH_STABLE="${{ inputs.PUBLISH_STABLE || vars.PUBLISH_STABLE || 'FALSE' }}"
+          if [[ "$(echo "$PUBLISH_STABLE" | tr '[:upper:]' '[:lower:]')" == "true" ]]; then
             if [[ "$PUBLISH_VERSION" == *-* ]]; then
               IFS=- read -r DYNAMIC_VERSION DYNAMIC_BUILD_NUMBER <<< "$PUBLISH_VERSION"
             else
@@ -382,7 +382,7 @@ jobs:
         id: tags
         run: |
           echo REPO_NAME=${{ vars.DOCKER_REPO }}/${{ matrix.product }} >> $GITHUB_ENV
-          if [[ "${{ inputs.PUBLISH_RELEASE }}" == "true" ]]; then
+          if [[ "${{ inputs.PUBLISH_STABLE }}" == "true" ]]; then
             echo "RELEASE_TAG=${{ vars.DOCKER_REPO }}/${{ matrix.product }}:${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
           fi
 
