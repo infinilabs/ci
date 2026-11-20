@@ -66,11 +66,6 @@ on:
         required: false
         type: boolean
         default: true
-      ONLY_DOCKER:
-        description: "Publish Docker"
-        required: false
-        type: boolean
-        default: false
       SKIP_OSS_UPLOAD:
         description: "Skip upload packages to release"
         required: false
@@ -78,6 +73,11 @@ on:
         default: true
       UPLOAD_ARTIFACTS:
         description: "Also upload packages as github artifacts"
+        required: false
+        type: boolean
+        default: false
+      ONLY_DOCKER:
+        description: "Publish Docker Only"
         required: false
         type: boolean
         default: false
