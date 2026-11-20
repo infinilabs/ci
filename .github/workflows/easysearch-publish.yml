@@ -318,7 +318,7 @@ jobs:
       - name: Build plugins with ${{ env.PUBLISH_VERSION }}
         run: |
           echo "Build $PNAME start..."          
-          cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc"
+          cd $GITHUB_WORKSPACE/$PNAME/plugins && gradle assemble -x test -x javadoc
           
           # Check the build zip file
           echo "Built plugin zip files ..."
