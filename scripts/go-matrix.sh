@@ -38,9 +38,9 @@ if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
 
     if [[ "$non_publish" == "true" ]]; then
         AGENT_PUBLISH=true
-        CONSOLE_PUBLISH=true
+        #CONSOLE_PUBLISH=true
         GATEWAY_PUBLISH=true
-        LOADGEN_PUBLISH=true
+        #LOADGEN_PUBLISH=true
     fi
 fi
 
