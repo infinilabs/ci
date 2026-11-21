@@ -22,8 +22,6 @@ on:
         description: 'Publish Stable Version'
         required: false
         default: "0.1.0"
-  schedule:
-    - cron: '30 17 * * *'
 
 jobs:
   generate-matrix: 
