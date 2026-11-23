@@ -2,7 +2,9 @@
 #
 # Prepare the docker build context for $PNAME:
 #   1. extract the product tarball for each arch (from local $GITHUB_WORKSPACE/dest)
-#   2. download + extract the matching agent (stable -> snapshot fallback)
+#   2. download + extract the matching agent:
+#      - AGENT_VERSION=1.30.3-2407: jdk-assets -> stable -> snapshot
+#      - other versions:            stable -> snapshot -> jdk-assets
 #   3. switch distribution type to docker, install plugins
 #
 # The per-arch preparation (amd64 / arm64) runs in parallel; each arch writes to
@@ -11,7 +13,7 @@
 #
 # Required env: GITHUB_WORKSPACE PNAME VERSION BUILD_NUMBER AGENT_VERSION RELEASE_URL
 # Optional env: EZS_TAG EZS_VER PROBE_MAX (default 5) DOWNLOAD_MAX (default 3)
-#               ARCH_PARALLEL (default true)
+#               ARCH_PARALLEL (default true) AGENT_ASSETS_URL
 
 set -euo pipefail
 
@@ -29,6 +31,7 @@ MAJOR="${VERSION%%.*}"
 PROBE_MAX="${PROBE_MAX:-5}"
 DOWNLOAD_MAX="${DOWNLOAD_MAX:-3}"
 ARCH_PARALLEL="${ARCH_PARALLEL:-true}"
+AGENT_ASSETS_URL="${AGENT_ASSETS_URL:-https://github.com/infinilabs/jdk-assets/releases/download/agents}"
 
 # plugin -> space separated list of plugins that must be installed first
 declare -A PLUGIN_DEPS=(
@@ -42,7 +45,8 @@ EXCLUDED_PLUGINS=(analysis-hanlp jieba)
 warn() { echo "::warning::$*" >&2; }
 die()  { echo "::error::$*" >&2; exit 1; }
 
-# Probe a URL with HEAD. Retries on network errors (http 000), 408, 429 and 5xx;
+# Probe a URL with HEAD (follows redirects so GitHub Releases 302 -> 200 works).
+# Retries on network errors (http 000), 408, 429 and 5xx;
 # gives up immediately on other 4xx (e.g. 404).
 # Sets PROBE_STATUS / PROBE_RC / PROBE_ERR for the caller. Returns 0 only on 2xx.
 probe_url() {
@@ -51,7 +55,7 @@ probe_url() {
   PROBE_STATUS="000"; PROBE_RC=0; PROBE_ERR=""
 
   for ((attempt = 1; attempt <= PROBE_MAX; attempt++)); do
-    PROBE_STATUS="$(curl -sS -I -o /dev/null -w '%{http_code}' \
+    PROBE_STATUS="$(curl -sSL -I -o /dev/null -w '%{http_code}' \
       --connect-timeout 10 --max-time 30 "$url" 2>"$errfile")" && rc=0 || rc=$?
     PROBE_RC=$rc
     PROBE_ERR="$(<"$errfile")"
@@ -103,21 +107,60 @@ download_file() {
   return 1
 }
 
-# Fetch the agent for <arch> from stable, falling back to snapshot.
+# Verify downloaded agent tarball against <url>.sha512 when available.
+verify_agent_sha512() {
+  local file="$1" sha_url="$2" tmp_sha expected actual
+  tmp_sha="$(mktemp)"
+
+  if curl -fsSL --retry 3 --connect-timeout 10 --max-time 30 -o "$tmp_sha" "$sha_url"; then
+    expected="$(grep -oE '(^|[^0-9a-fA-F])[0-9a-fA-F]{128}([^0-9a-fA-F]|$)' "$tmp_sha" | grep -oE '[0-9a-fA-F]{128}' | head -n1 | tr '[:upper:]' '[:lower:]')"
+    actual="$(sha512sum "$file" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')"
+    rm -f "$tmp_sha"
+    if [[ -n "$expected" && "$expected" == "$actual" ]]; then
+      echo "  [verify] SHA512 verified for $(basename "$file")"
+      return 0
+    fi
+    echo "  [verify] SHA512 mismatch for $(basename "$file") (expected=${expected:-<empty>} actual=$actual)" >&2
+    return 1
+  fi
+
+  rm -f "$tmp_sha"
+  echo "  [verify] SHA512 not found at $sha_url, skipping sha512 check" >&2
+  return 0
+}
+
+# Fetch the agent for <arch> (routes 1.30.3-2407 to jdk-assets first, others to stable -> snapshot).
 # Sets AGENT_FILE_PATH on success; exits with a detailed error otherwise.
 fetch_agent() {
   local arch="$1" channel url last_error=""
   local filename="agent-$AGENT_VERSION-linux-$arch.tar.gz"
+  local -a channels
   AGENT_FILE_PATH="$WORK/$filename"
   rm -f "$AGENT_FILE_PATH"
 
-  for channel in stable snapshot; do
-    url="$RELEASE_URL/agent/$channel/$filename"
+  if [[ "$AGENT_VERSION" == "1.30.3-2407" ]]; then
+    channels=(jdk-assets stable snapshot)
+  else
+    channels=(stable snapshot jdk-assets)
+  fi
+
+  for channel in "${channels[@]}"; do
+    if [[ "$channel" == "jdk-assets" ]]; then
+      url="$AGENT_ASSETS_URL/$filename"
+    else
+      url="$RELEASE_URL/agent/$channel/$filename"
+    fi
     echo "Checking [$channel] $url"
 
     if probe_url "$url"; then
       echo "Found $filename at $url. Starting download with retries..."
       if download_file "$url" "$AGENT_FILE_PATH"; then
+        if [[ "$channel" == "jdk-assets" ]] && ! verify_agent_sha512 "$AGENT_FILE_PATH" "$url.sha512"; then
+          rm -f "$AGENT_FILE_PATH"
+          last_error="[$channel] sha512 verification failed: $url.sha512"
+          echo "$last_error" >&2
+          continue
+        fi
         echo "Download of $filename successful from $channel channel."
         return 0
       fi
@@ -128,7 +171,7 @@ fetch_agent() {
     echo "$last_error" >&2
   done
 
-  die "$filename not found or failed to download from both stable and snapshot channels. Last error: $last_error"
+  die "$filename not found or failed to download from channels (${channels[*]}). Last error: $last_error"
 }
 
 extract_product() {

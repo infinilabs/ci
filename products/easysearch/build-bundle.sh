@@ -2,9 +2,12 @@
 
 # =====================================================================
 # build-bundle.sh
-#   1. JDK 并行下载；5 个平台的 bundle 并行打包（每个平台独立工作目录）
-#   2. OSS 上传可通过 SKIP_OSS_UPLOAD / ONLY_DOCKER 跳过
-#   3. STAGE_ARTIFACTS=true 时，每个 bundle 暂存为独立 artifact 目录：
+#   1. JDK 并行下载（自动从 jdk-assets Release 拉取并校验 sha512）
+#      - JDK 25: graalvm（macos-x64 自动使用 temurin 替代）
+#      - JDK 21 / 17: kona
+#   2. 5 个平台的 bundle 并行打包（每个平台独立工作目录）
+#   3. OSS 上传可通过 SKIP_OSS_UPLOAD / ONLY_DOCKER 跳过
+#   4. STAGE_ARTIFACTS=true 时，每个 bundle 暂存为独立 artifact 目录：
 #      $GITHUB_WORKSPACE/artifacts/bundle-<platform>/
 #   注意：并行会同时占用多份解压空间，磁盘紧张时调小 BUNDLE_PARALLEL
 # =====================================================================
@@ -24,6 +27,38 @@ stage_file() {
   local name="$1" sub="$2" f="$3"
   mkdir -p "$ART/$name/$sub"
   ln -f "$f" "$ART/$name/$sub/" 2>/dev/null || cp -f "$f" "$ART/$name/$sub/"
+}
+
+# ── 加载 jdk-assets 下载链接生成函数 get_release_url ────────
+if [ -f "$GITHUB_WORKSPACE/scripts/get_release_url.sh" ]; then
+  # shellcheck disable=SC1091
+  source "$GITHUB_WORKSPACE/scripts/get_release_url.sh"
+else
+  # shellcheck disable=SC1090
+  source <(curl -fsSL --retry 3 https://github.com/infinilabs/jdk-assets/releases/download/scripts/get_release_url.sh)
+fi
+
+# 按主版本与平台 (<os>-<arch>) 路由 JDK 品牌：
+#   25      -> macos-x64 使用 temurin，其余使用 graalvm
+#   21 / 17 -> 全平台使用 kona
+get_jdk_brand() {
+  local major="$1" plat="$2"
+  if [[ "$major" == "25" ]]; then
+    if [[ "$plat" == "macos-x64" ]]; then
+      echo "temurin"
+    else
+      echo "graalvm"
+    fi
+  else
+    echo "kona"
+  fi
+}
+
+get_jdk_filename() {
+  local brand="$1" major="$2" plat="$3"
+  local ext="tar.gz"
+  [[ "$plat" == windows-* ]] && ext="zip"
+  echo "${brand}-jdk-${major}_${plat}_bin.${ext}"
 }
 
 # ── 并行任务工具 ──────────────────────────────────────────
@@ -56,14 +91,14 @@ MAJOR="${VERSION%%.*}"
 DEST=$GITHUB_WORKSPACE/dest
 BUILD_JDKS=$GITHUB_WORKSPACE/jdks
 JAVA_VERSION=$BUNDLE_JAVA_VERSION
-JDK_BASE_URL="$RELEASE_URL/$PNAME/jdk"
+JDK_MAJOR="${JAVA_VERSION%%.*}"
 BUNDLE_PARALLEL="${BUNDLE_PARALLEL:-3}"
 PKGS="$WORK/src"       # 重打包后的 no-jdk 包
 OUT="$WORK/out"        # bundle 产物
 FAIL_DIR="$WORK/fail"; LOGDIR="$WORK/logs"
 mkdir -p "$DEST" "$BUILD_JDKS" "$PKGS" "$OUT" "$FAIL_DIR" "$LOGDIR"
 
-echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK: $(if [[ "$USE_GRAALVM" == "true" ]]; then echo GraalVM; else echo Zulu; fi)"
+echo "Prepar build bundle files for $PNAME version $VERSION (build number: $BUILD_NUMBER) using JDK major: $JDK_MAJOR (USE_GRAALVM=$USE_GRAALVM)"
 echo "OSS upload: $(should_upload_oss && echo enabled || echo SKIPPED) | stage artifacts: $(should_stage && echo yes || echo no) | parallel: $BUNDLE_PARALLEL"
 
 # ── Plugin dependency map ─────────────────────────────────
@@ -88,13 +123,19 @@ _topo_visit() {
 
 # ── 并行下载 JDK ──────────────────────────────────────────
 download_jdk() {
-  local x="$1" EXT FILE
+  local x="$1" FILE URL SHA_URL brand os arch
   if [[ "$USE_GRAALVM" == "true" ]]; then
-    EXT=tar.gz; [[ $x == windows-* ]] && EXT=zip
-    FILE=graalvm-jdk-${JAVA_VERSION}_${x}_bin.$EXT
-    echo "Download GraalVM JDK with $JDK_BASE_URL/${JAVA_VERSION}/$FILE"
+    brand="$(get_jdk_brand "$JDK_MAJOR" "$x")"
+    os="${x%%-*}"
+    arch="${x#*-}"
+    FILE="$(get_jdk_filename "$brand" "$JDK_MAJOR" "$x")"
+    URL="$(get_release_url "$brand" "$JDK_MAJOR" "$os" "$arch")"
+    SHA_URL="$(get_release_url "$brand" "$JDK_MAJOR" "$os" "$arch" sha512)"
+    echo "Download $brand JDK ($JDK_MAJOR $x): $URL"
     if [ ! -e "$BUILD_JDKS/$FILE" ]; then
-      wget -nv -t 3 "$JDK_BASE_URL/${JAVA_VERSION}/$FILE" -P "$BUILD_JDKS" || { rm -f "$BUILD_JDKS/$FILE"; return 1; }
+      curl -fsSL --retry 3 -o "$BUILD_JDKS/$FILE" "$URL" || { rm -f "$BUILD_JDKS/$FILE"; return 1; }
+      curl -fsSL --retry 3 -o "$BUILD_JDKS/$FILE.sha512" "$SHA_URL" || { rm -f "$BUILD_JDKS/$FILE" "$BUILD_JDKS/$FILE.sha512"; return 1; }
+      (cd "$BUILD_JDKS" && sha512sum -c "$FILE.sha512") || { rm -f "$BUILD_JDKS/$FILE" "$BUILD_JDKS/$FILE.sha512"; return 1; }
     fi
   else
     FILE=$ZULU_JAVA_VERSION-$x.tar.gz
@@ -122,7 +163,7 @@ cp -rf $DEST/$PNAME-$VERSION-$BUILD_NUMBER-* "$PKGS"
 # ── 单个平台 bundle（在后台子 shell 中运行）───────────────
 bundle_one() {
   local x="$1"
-  local FNAME DNAME JARK JNAME W P TOP_DIR URL HTTP_STATUS
+  local FNAME DNAME JARK JBRAND JNAME W P TOP_DIR URL HTTP_STATUS jdk_sub
   local -a ITEMS
   # 这两个变量被 _topo_visit 通过动态作用域读写，必须是本函数的局部变量
   local -A _vis=()
@@ -138,7 +179,9 @@ bundle_one() {
 
   if [[ "$USE_GRAALVM" == "true" ]]; then
     JARK=$(echo "$x" | sed -e 's/-amd64/-x64/;s/-arm64/-aarch64/;s/mac/macos/')
-    JNAME=$(find $BUILD_JDKS -name "graalvm*_$JARK*" | head -n 1)
+    JBRAND="$(get_jdk_brand "$JDK_MAJOR" "$JARK")"
+    JNAME="$BUILD_JDKS/$(get_jdk_filename "$JBRAND" "$JDK_MAJOR" "$JARK")"
+    [ -f "$JNAME" ] || JNAME=""
   else
     JARK=$(echo "$x" | sed -e 's/-amd64/_x64/;s/-arm64/_aarch64/;s/mac/macosx/;s/windows/win/')
     JNAME=$(find $BUILD_JDKS -name "$ZULU_JAVA_VERSION-$JARK*" | head -n 1)
@@ -174,14 +217,15 @@ bundle_one() {
     fi
   fi
 
-  # 配置 jdk
+  # 配置 jdk（解压到独立目录，避免不同品牌 JDK 顶层目录名不一致）
   if [[ "$USE_MACOS_TARGZ" == "true" && "$x" == mac-* ]]; then
     echo "Mac JDK detected, keep as tar.gz (no extract, no transform)"
   else
+    mkdir -p "$W/jdk_tmp"
     if [ "${JNAME##*.}" == "gz" ]; then
-      tar -zxf "$JNAME" || return 1
+      tar -zxf "$JNAME" -C "$W/jdk_tmp" || return 1
     else
-      unzip -q "$JNAME" || return 1
+      unzip -q "$JNAME" -d "$W/jdk_tmp" || return 1
     fi
   fi
 
@@ -234,9 +278,11 @@ bundle_one() {
     mv "$JNAME" $P/jdk.tar.gz
   else
     if [[ "$USE_GRAALVM" == "true" ]]; then
-      mv graalvm* $P/jdk || return 1
+      jdk_sub="$(find "$W/jdk_tmp" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+      [ -n "$jdk_sub" ] || { echo "Error: extracted JDK directory not found in $W/jdk_tmp" >&2; return 1; }
+      mv "$jdk_sub" "$P/jdk" || return 1
     else
-      mv zulu* $P/jdk || return 1
+      mv "$W/jdk_tmp"/zulu* "$P/jdk" || return 1
     fi
   fi
 
