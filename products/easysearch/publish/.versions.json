@@ -7,7 +7,7 @@
       "mac-arm64",
       "windows-amd64"
     ],
-    "build_number": 3093
+    "build_number": 3096
   },
   "2.5.1": {
     "platforms": [
