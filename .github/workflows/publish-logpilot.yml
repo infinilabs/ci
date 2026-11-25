@@ -107,6 +107,11 @@ jobs:
           git clone --depth 1 $SSH_GITHUB_REPO/$PNAME $GITHUB_WORKSPACE/$PNAME
           cd $GITHUB_WORKSPACE/$PNAME && echo Checkout $PNAME repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
 
+      - name: Checkout ui-common code
+        run: |
+          git clone --depth 1 $SSH_GITHUB_REPO/ui-common $GITHUB_WORKSPACE/ui-common
+          cd $GITHUB_WORKSPACE/ui-common && echo Checkout ui-common repo $(git log -1 --pretty=format:"%h, %ad" --date=iso)
+
 
       - name: Setup ${{ matrix.product }} env
         run: |
